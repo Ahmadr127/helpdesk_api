@@ -343,7 +343,7 @@
                         <div class="mt-3 pl-4 border-l-2 border-green-500">
                             <p class="text-sm font-medium text-green-600">Balasan Admin:</p>
                             <p class="text-sm text-gray-600">{{ $feedback->admin_reply }}</p>
-                            <p class="text-xs text-gray-400 mt-1">{{ $feedback->replied_at->format('d M Y') }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ $feedback->replied_at ? \Illuminate\Support\Carbon::parse($feedback->replied_at)->format('d M Y') : '-' }}</p>
                         </div>
                         @endif
                     </div>

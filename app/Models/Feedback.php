@@ -19,8 +19,10 @@ class Feedback extends Model
         'replied_at'
     ];
 
-    protected $dates = [
-        'replied_at'
+    protected $casts = [
+        'replied_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function user()
