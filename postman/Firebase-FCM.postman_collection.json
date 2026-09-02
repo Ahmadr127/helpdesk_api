@@ -1,0 +1,193 @@
+{
+  "info": {
+    "name": "Firebase FCM",
+    "description": "Collection untuk Firebase Cloud Messaging - Helpdesk RS Azra. Covers: send single, send queue, send many, topic, subscribe/unsubscribe. Auth via Bearer Token (Sanctum). Base URL di variable {{base_url}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "fcm_token", "value": "REPLACE_WITH_REAL_FCM_TOKEN", "type": "string" },
+    { "key": "fcm_token_2", "value": "REPLACE_WITH_SECOND_FCM_TOKEN", "type": "string" },
+    { "key": "fcm_topic", "value": "news", "type": "string" },
+    { "key": "auth_token", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth - Login to get token",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin\",\n  \"password\": \"123\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+        "description": "Login untuk mendapatkan Bearer token. Token otomatis disimpan ke variable auth_token via Tests script."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const json = pm.response.json();",
+              "  const token = json.data?.token || json.token;",
+              "  if (token) { pm.collectionVariables.set('auth_token', token); console.log('auth_token set', token); }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Send Notification",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{fcm_token}}\",\n  \"notification\": {\n    \"title\": \"Test Notification\",\n    \"body\": \"Hello from Laravel\"\n  },\n  \"data\": {\n    \"type\": \"test\",\n    \"screen\": \"home\"\n  }\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/notification/send", "host": ["{{base_url}}"], "path": ["api", "firebase", "notification", "send"] },
+        "description": "Synchronous send to single token. Expect 200 success or 422 invalid token."
+      },
+      "response": []
+    },
+    {
+      "name": "Send Notification - Queue",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{fcm_token}}\",\n  \"notification\": {\n    \"title\": \"Test Queue\",\n    \"body\": \"Notification via queue\"\n  },\n  \"data\": {\n    \"type\": \"test\"\n  },\n  \"queue\": true\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/notification/send", "host": ["{{base_url}}"], "path": ["api", "firebase", "notification", "send"] },
+        "description": "Queue mode - should return queued:true and dispatch SendFirebaseNotificationJob to notifications queue. Verify via: php artisan queue:work --queue=notifications OR Horizon dashboard /horizon"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Notification - Multiple Tokens",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokens\": [\"{{fcm_token}}\", \"{{fcm_token_2}}\"],\n  \"notification\": {\n    \"title\": \"Multi Test\",\n    \"body\": \"Hello multiple devices\"\n  },\n  \"data\": {\n    \"type\": \"broadcast\",\n    \"screen\": \"home\"\n  }\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/notification/send-many", "host": ["{{base_url}}"], "path": ["api", "firebase", "notification", "send-many"] },
+        "description": "Send to multiple tokens. Also supports queue:true for async."
+      },
+      "response": []
+    },
+    {
+      "name": "Send Notification - Multiple Tokens - Queue",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokens\": [\"{{fcm_token}}\", \"{{fcm_token_2}}\"],\n  \"notification\": {\n    \"title\": \"Multi Queue\",\n    \"body\": \"Queued multicast\"\n  },\n  \"data\": {\n    \"type\": \"broadcast\"\n  },\n  \"queue\": true\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/notification/send-many", "host": ["{{base_url}}"], "path": ["api", "firebase", "notification", "send-many"] },
+        "description": "Queued multicast - each token dispatched as separate job on notifications queue."
+      },
+      "response": []
+    },
+    {
+      "name": "Send Notification - Topic",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"{{fcm_topic}}\",\n  \"notification\": {\n    \"title\": \"Topic News\",\n    \"body\": \"Hello topic subscribers\"\n  },\n  \"data\": {\n    \"type\": \"topic\",\n    \"topic\": \"{{fcm_topic}}\"\n  }\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/notification/topic", "host": ["{{base_url}}"], "path": ["api", "firebase", "notification", "topic"] },
+        "description": "Send to all devices subscribed to topic. Supports queue:true."
+      },
+      "response": []
+    },
+    {
+      "name": "Send Notification - Topic - Queue",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"{{fcm_topic}}\",\n  \"notification\": {\n    \"title\": \"Topic Queue\",\n    \"body\": \"Queued topic message\"\n  },\n  \"data\": {\n    \"type\": \"topic_queued\"\n  },\n  \"queue\": true\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/notification/topic", "host": ["{{base_url}}"], "path": ["api", "firebase", "notification", "topic"] },
+        "description": "Queued topic send - job on notifications queue."
+      },
+      "response": []
+    },
+    {
+      "name": "Subscribe Topic",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"{{fcm_topic}}\",\n  \"tokens\": [\"{{fcm_token}}\", \"{{fcm_token_2}}\"]\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/topic/subscribe", "host": ["{{base_url}}"], "path": ["api", "firebase", "topic", "subscribe"] },
+        "description": "Subscribe tokens to topic. Alternative: use single token field {\"topic\":\"news\",\"token\":\"FCM_TOKEN\"}"
+      },
+      "response": []
+    },
+    {
+      "name": "Unsubscribe Topic",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topic\": \"{{fcm_topic}}\",\n  \"tokens\": [\"{{fcm_token}}\"]\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/firebase/topic/unsubscribe", "host": ["{{base_url}}"], "path": ["api", "firebase", "topic", "unsubscribe"] },
+        "description": "Unsubscribe tokens from topic."
+      },
+      "response": []
+    }
+  ]
+}

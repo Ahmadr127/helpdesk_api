@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\UserManagementController as AdminUserControll
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\FirebaseNotificationController;
 use App\Http\Middleware\Api\AdminApiMiddleware;
 use App\Http\Middleware\Api\AdministrasiUmumApiMiddleware;
 
@@ -143,6 +144,19 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::post('/{orderPerbaikan}/start', [AdminOrderController::class, 'start'])->name('start');
         });
         Route::get('/stats', [DashboardController::class, 'administrasiDashboard'])->name('stats');
+    });
+
+    // Firebase FCM - accessible to any authenticated user (adjust middleware as needed)
+    Route::prefix('firebase')->name('api.firebase.')->group(function(){
+        Route::prefix('notification')->name('notification.')->group(function(){
+            Route::post('/send', [FirebaseNotificationController::class, 'send'])->name('send');
+            Route::post('/send-many', [FirebaseNotificationController::class, 'sendMany'])->name('sendMany');
+            Route::post('/topic', [FirebaseNotificationController::class, 'sendToTopic'])->name('topic');
+        });
+        Route::prefix('topic')->name('topic.')->group(function(){
+            Route::post('/subscribe', [FirebaseNotificationController::class, 'subscribe'])->name('subscribe');
+            Route::post('/unsubscribe', [FirebaseNotificationController::class, 'unsubscribe'])->name('unsubscribe');
+        });
     });
 });
 
