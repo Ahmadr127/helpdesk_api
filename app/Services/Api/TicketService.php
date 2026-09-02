@@ -9,6 +9,7 @@ use App\Models\Ticket;
 use App\Models\TicketPhoto;
 use App\Models\User;
 use App\Notifications\TicketRespondedNotification;
+use App\Support\Notifications\Notify;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -95,7 +96,7 @@ class TicketService
             throw new \Exception('Kategori yang dipilih harus kategori dari unit SIRS.');
         }
 
-        return DB::transaction(function() use ($user, $data, $photoFile, $userDepartment, $location, $category){
+        $ticket = DB::transaction(function() use ($user, $data, $photoFile, $userDepartment, $location, $category){
             $date = date('dm');
             $lastTicket = Ticket::where('ticket_number','like',"T-{$date}-%")->orderBy('ticket_number','desc')->first();
             if ($lastTicket) {
@@ -135,6 +136,11 @@ class TicketService
 
             return $ticket->load(['user','photos']);
         });
+
+        // Simple FCM: notify Admin IT — 1 baris
+        Notify::ticketToAdmins($ticket, 'ticket_created', $user);
+
+        return $ticket;
     }
 
     public function updateUserTicket(User $user, Ticket $ticket, array $data, $photoFile = null): Ticket
@@ -223,11 +229,14 @@ class TicketService
             'user_replies' => json_encode($replies)
         ]);
 
-        // Notify admins
+        // Notify admins (DB)
         $admins = User::where('role','admin')->get();
         foreach ($admins as $admin) {
             $admin->notify(new TicketRespondedNotification($ticket, $user, "User has replied to ticket #{$ticket->ticket_number}", false, 'replied'));
         }
+
+        // FCM 1 baris — ke Admin IT
+        Notify::ticketToAdmins($ticket->fresh(), 'ticket_replied', $user);
 
         return $ticket->fresh();
     }
@@ -267,6 +276,7 @@ class TicketService
             foreach ($admins as $admin) {
                 $admin->notify(new TicketRespondedNotification($ticket, $user, "User has confirmed ticket #{$ticket->ticket_number} as completed", false, 'confirmed'));
             }
+            Notify::ticketToAdmins($ticket->fresh(), 'ticket_confirmed', $user);
         } else {
             $ticket->status = 'in_progress';
             $ticket->user_confirmation = false;
@@ -277,6 +287,7 @@ class TicketService
             foreach ($admins as $admin) {
                 $admin->notify(new TicketRespondedNotification($ticket, $user, "User has rejected ticket #{$ticket->ticket_number}", false, 'rejected'));
             }
+            Notify::ticketToAdmins($ticket->fresh(), 'ticket_rejected', $user);
         }
 
         return $ticket->fresh();
@@ -312,6 +323,9 @@ class TicketService
         ]);
 
         $ticket->user->notify(new TicketRespondedNotification($ticket, $admin, $notes, true, 'responded'));
+
+        // FCM ke pengaju
+        Notify::ticketToUser($ticket->fresh(), 'ticket_responded', $admin, $notes);
 
         return $ticket->fresh();
     }
@@ -349,6 +363,8 @@ class TicketService
             }
 
             $ticket->user->notify(new TicketRespondedNotification($ticket, $admin, $notes, true, $action === 'reply' ? 'replied' : 'updated'));
+            $event = $action === 'reply' ? 'ticket_replied' : 'ticket_updated';
+            Notify::ticketToUser($ticket->fresh(), $event, $admin, $notes);
             return $ticket->fresh();
         });
     }

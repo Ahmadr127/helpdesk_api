@@ -28,13 +28,15 @@ class OrderPerbaikanStatusUpdated extends Notification implements ShouldQueue
     {
         $statusMessages = [
             'pending' => 'menunggu persetujuan',
+            'open' => 'telah dibuat',
             'in_progress' => 'sedang dalam proses',
             'completed' => 'telah selesai',
+            'confirmed' => 'telah dikonfirmasi',
             'rejected' => 'ditolak'
         ];
 
-        $message = "Order perbaikan Anda dengan nomor {$this->orderPerbaikan->nomor} " . 
-                  $statusMessages[$this->orderPerbaikan->status];
+        $message = "Order perbaikan Anda dengan nomor {$this->orderPerbaikan->nomor} " .
+                  ($statusMessages[$this->orderPerbaikan->status] ?? 'telah diperbarui ke status '.$this->orderPerbaikan->status);
 
         return (new MailMessage)
             ->subject('Update Status Order Perbaikan')

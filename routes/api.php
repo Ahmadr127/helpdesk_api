@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FirebaseNotificationController;
+use App\Http\Controllers\Api\FcmTokenController;
+use App\Http\Controllers\Api\NotificationInboxController;
 use App\Http\Middleware\Api\AdminApiMiddleware;
 use App\Http\Middleware\Api\AdministrasiUmumApiMiddleware;
 
@@ -144,6 +146,22 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::post('/{orderPerbaikan}/start', [AdminOrderController::class, 'start'])->name('start');
         });
         Route::get('/stats', [DashboardController::class, 'administrasiDashboard'])->name('stats');
+    });
+
+    // FCM Token (for Flutter)
+    Route::prefix('user')->name('api.user.')->group(function(){
+        Route::post('/fcm-token', [FcmTokenController::class, 'store'])->name('fcmToken.store');
+        Route::delete('/fcm-token', [FcmTokenController::class, 'destroy'])->name('fcmToken.destroy');
+        Route::get('/fcm-tokens', [FcmTokenController::class, 'index'])->name('fcmTokens.index');
+    });
+
+    // Notification Inbox (database notifications) - Flutter UI
+    Route::prefix('notifications')->name('api.notifications.')->group(function(){
+        Route::get('/', [NotificationInboxController::class, 'index'])->name('index');
+        Route::get('/unread-count', [NotificationInboxController::class, 'unreadCount'])->name('unreadCount');
+        Route::post('/{id}/read', [NotificationInboxController::class, 'markRead'])->name('markRead');
+        Route::post('/read-all', [NotificationInboxController::class, 'markAllRead'])->name('markAllRead');
+        Route::delete('/{id}', [NotificationInboxController::class, 'destroy'])->name('destroy');
     });
 
     // Firebase FCM - accessible to any authenticated user (adjust middleware as needed)

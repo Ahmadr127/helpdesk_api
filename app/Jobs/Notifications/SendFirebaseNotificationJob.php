@@ -112,11 +112,19 @@ class SendFirebaseNotificationJob implements ShouldQueue
             'attempts'  => $this->attempts(),
         ]);
 
-        // Integration point: if you have device_tokens table, mark token invalid here
-        // Example (uncomment if table exists):
-        // if (FirebaseNotificationException::isInvalidTokenError($exception)) {
-        //     \App\Models\DeviceToken::where('token', $this->token)->update(['is_valid' => false]);
-        // }
+        if (str_starts_with($this->token, 'topic://')) {
+            return;
+        }
+
+        try {
+            if (FirebaseNotificationException::isInvalidTokenError($exception)) {
+                \App\Models\DeviceToken::where('token', $this->token)->update(['is_valid' => false]);
+                // Also clear legacy column if matches
+                \App\Models\User::where('fcm_token', $this->token)->update(['fcm_token' => null, 'fcm_token_updated_at' => null]);
+            }
+        } catch (\Throwable $e) {
+            Log::channel($this->logChannel())->error('failed to mark token invalid', ['error' => $e->getMessage()]);
+        }
     }
 
     private function maskToken(string $token): string
@@ -133,7 +141,11 @@ class SendFirebaseNotificationJob implements ShouldQueue
 
     private function logChannel(): string
     {
-        $channels = config('logging.channels', []);
-        return isset($channels['firebase']) ? 'firebase' : config('logging.default', 'stack');
+        try {
+            $channels = config('logging.channels', []);
+            return isset($channels['firebase']) ? 'firebase' : config('logging.default', 'stack');
+        } catch (\Throwable $e) {
+            return 'stack';
+        }
     }
 }

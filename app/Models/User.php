@@ -27,6 +27,8 @@ class User extends Authenticatable
         'status',
         'password',
         'department',
+        'fcm_token',
+        'fcm_token_updated_at',
     ];
 
     /**
@@ -48,10 +50,43 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'status' => 'integer',
+        'fcm_token_updated_at' => 'datetime',
     ];
 
     public function notificationSetting()
     {
         return $this->morphOne(NotificationSetting::class, 'notifiable');
+    }
+
+    public function deviceTokens()
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
+
+    public function validDeviceTokens()
+    {
+        return $this->hasMany(DeviceToken::class)->where('is_valid', true);
+    }
+
+    /**
+     * Get all FCM tokens for user (merge legacy fcm_token + device_tokens).
+     */
+    public function getAllFcmTokens(): array
+    {
+        $tokens = $this->validDeviceTokens()->pluck('token')->filter()->toArray();
+        if (!empty($this->fcm_token) && !in_array($this->fcm_token, $tokens, true)) {
+            $tokens[] = $this->fcm_token;
+        }
+        return array_values(array_filter($tokens));
+    }
+
+    public function scopeAdminIT($query)
+    {
+        return $query->where('role', 'admin')->whereRaw('LOWER(position) = ?', ['it']);
+    }
+
+    public function scopeAdminUmum($query)
+    {
+        return $query->where('role', 'admin')->whereRaw('LOWER(position) = ?', ['administrasi']);
     }
 }

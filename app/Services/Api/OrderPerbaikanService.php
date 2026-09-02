@@ -6,6 +6,7 @@ use App\Models\Location;
 use App\Models\OrderPerbaikan;
 use App\Models\UnitProses;
 use App\Models\User;
+use App\Support\Notifications\Notify;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -103,7 +104,7 @@ class OrderPerbaikanService
 
     public function create(User $user, array $validated, $fotoFile = null): OrderPerbaikan
     {
-        return DB::transaction(function() use ($user, $validated, $fotoFile){
+        $order = DB::transaction(function() use ($user, $validated, $fotoFile){
             $today = now();
             $prefix = 'OP/RTG/MTC-' . $today->format('Ymd');
             $lastOrder = OrderPerbaikan::withTrashed()->where('nomor','like',$prefix.'%')->orderBy('nomor','desc')->first();
@@ -150,6 +151,11 @@ class OrderPerbaikanService
 
             return $order->load(['creator','history','location']);
         });
+
+        // 1 baris FCM ke Admin Umum
+        Notify::orderToAdmins($order, $user);
+
+        return $order;
     }
 
     public function update(User $user, OrderPerbaikan $order, array $validated, $fotoFile = null): OrderPerbaikan
@@ -212,7 +218,7 @@ class OrderPerbaikanService
 
     public function updateStatus(User $admin, OrderPerbaikan $order, array $data): OrderPerbaikan
     {
-        return DB::transaction(function() use ($admin, $order, $data){
+        $order = DB::transaction(function() use ($admin, $order, $data){
             if ($order->status === 'open' && $data['status'] === 'in_progress') {
                 if (empty($data['nama_penanggung_jawab'])) {
                     throw new \Exception('nama_penanggung_jawab required when moving open -> in_progress', 422);
@@ -247,11 +253,21 @@ class OrderPerbaikanService
 
             return $order->fresh()->load(['creator','history','location']);
         });
+
+        Notify::orderToUser($order, 'order_status_updated', $admin);
+
+        // Also DB notification for inbox
+        $creator = $order->creator ?? User::find($order->created_by);
+        if ($creator) {
+            $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        return $order;
     }
 
     public function confirm(User $admin, OrderPerbaikan $order): OrderPerbaikan
     {
-        return DB::transaction(function() use ($admin, $order){
+        $order = DB::transaction(function() use ($admin, $order){
             $order->update([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
                 'nama_penanggung_jawab' => $admin->name,
@@ -262,13 +278,21 @@ class OrderPerbaikanService
                 'keterangan' => 'Order dikonfirmasi via API',
                 'created_by' => $admin->id
             ]);
-            return $order->fresh();
+            return $order->fresh()->load(['creator']);
         });
+
+        Notify::orderToUser($order, 'order_confirmed', $admin);
+        $creator = $order->creator ?? User::find($order->created_by);
+        if ($creator) {
+            $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        return $order;
     }
 
     public function reject(User $admin, OrderPerbaikan $order): OrderPerbaikan
     {
-        return DB::transaction(function() use ($admin, $order){
+        $order = DB::transaction(function() use ($admin, $order){
             $order->update([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
                 'nama_penanggung_jawab' => $admin->name,
@@ -279,13 +303,21 @@ class OrderPerbaikanService
                 'keterangan' => 'Order ditolak via API',
                 'created_by' => $admin->id
             ]);
-            return $order->fresh();
+            return $order->fresh()->load(['creator']);
         });
+
+        Notify::orderToUser($order, 'order_rejected', $admin);
+        $creator = $order->creator ?? User::find($order->created_by);
+        if ($creator) {
+            $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        return $order;
     }
 
     public function start(User $admin, OrderPerbaikan $order): OrderPerbaikan
     {
-        return DB::transaction(function() use ($admin, $order){
+        $order = DB::transaction(function() use ($admin, $order){
             $order->update([
                 'status' => 'in_progress',
                 'nama_penanggung_jawab' => $admin->name,
@@ -296,8 +328,15 @@ class OrderPerbaikanService
                 'keterangan' => 'Pengerjaan order dimulai via API',
                 'created_by' => $admin->id
             ]);
-            // notify creator if needed
-            return $order->fresh();
+            return $order->fresh()->load(['creator']);
         });
+
+        Notify::orderToUser($order, 'order_started', $admin);
+        $creator = $order->creator ?? User::find($order->created_by);
+        if ($creator) {
+            $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        return $order;
     }
 }

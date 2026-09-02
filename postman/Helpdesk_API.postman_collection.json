@@ -5,10 +5,36 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
-    { "key": "user_token", "value": "", "type": "string" },
-    { "key": "admin_token", "value": "", "type": "string" },
-    { "key": "admin_adm_token", "value": "", "type": "string" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_adm_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fcm_token",
+      "value": "REPLACE_WITH_FCM_TOKEN",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "REPLACE_WITH_NOTIFICATION_ID",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -19,7 +45,16 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{base_url}}/api/health", "host": ["{{base_url}}"], "path": ["api","health"] },
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
             "description": "Cek API running"
           },
           "response": []
@@ -49,9 +84,32 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin\",\n  \"password\": \"123\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
             "description": "Login sebagai admin IT (role=admin, position=IT). Token disimpan ke {{admin_token}}"
           },
           "response": []
@@ -74,9 +132,32 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"administrasi\",\n  \"password\": \"123\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"administrasi\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
           },
           "response": []
         },
@@ -98,9 +179,32 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"123\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
             "description": "Login user biasa (buat dulu via register jika belum ada)"
           },
           "response": []
@@ -123,13 +227,32 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Test User Baru\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"123\",\n  \"password_confirmation\": \"123\",\n  \"phone\": \"08123456789\",\n  \"position\": \"user\",\n  \"role\": \"user\",\n  \"department\": \"IT\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api","auth","register"] }
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
           },
           "response": []
         },
@@ -138,10 +261,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api","auth","me"] }
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
           },
           "response": []
         },
@@ -150,10 +289,26 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/auth/logout", "host": ["{{base_url}}"], "path": ["api","auth","logout"] }
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
           },
           "response": []
         },
@@ -162,10 +317,26 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/auth/logout-all", "host": ["{{base_url}}"], "path": ["api","auth","logout-all"] }
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout-all"
+              ]
+            }
           },
           "response": []
         }
@@ -179,10 +350,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/dashboard/user", "host": ["{{base_url}}"], "path": ["api","dashboard","user"] }
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/user",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "user"
+              ]
+            }
           },
           "response": []
         },
@@ -191,10 +378,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/dashboard/admin", "host": ["{{base_url}}"], "path": ["api","dashboard","admin"] }
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/admin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "admin"
+              ]
+            }
           },
           "response": []
         },
@@ -203,10 +406,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/dashboard/administrasi", "host": ["{{base_url}}"], "path": ["api","dashboard","administrasi"] }
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/administrasi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "administrasi"
+              ]
+            }
           },
           "response": []
         }
@@ -221,21 +440,265 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/lookup/categories?unit_proses_code=SIRS", "host": ["{{base_url}}"], "path": ["api","lookup","categories"], "query": [{ "key": "unit_proses_code", "value": "SIRS" }] }
+            "url": {
+              "raw": "{{base_url}}/api/lookup/categories?unit_proses_code=SIRS",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "unit_proses_code",
+                  "value": "SIRS"
+                }
+              ]
+            }
           },
           "response": []
         },
-        { "name": "GET Departments", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/departments", "host": ["{{base_url}}"], "path": ["api","lookup","departments"] } }, "response": [] },
-        { "name": "GET Buildings", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/buildings", "host": ["{{base_url}}"], "path": ["api","lookup","buildings"] } }, "response": [] },
-        { "name": "GET Locations", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/locations", "host": ["{{base_url}}"], "path": ["api","lookup","locations"] } }, "response": [] },
-        { "name": "GET Unit Proses (exclude SIRS)", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/unit-proses?exclude_sirs=1", "host": ["{{base_url}}"], "path": ["api","lookup","unit-proses"], "query": [{ "key": "exclude_sirs", "value": "1" }] } }, "response": [] },
-        { "name": "GET Positions", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/positions", "host": ["{{base_url}}"], "path": ["api","lookup","positions"] } }, "response": [] },
-        { "name": "GET Priorities", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/priorities", "host": ["{{base_url}}"], "path": ["api","lookup","priorities"] } }, "response": [] },
-        { "name": "GET Ticket Statuses", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/ticket-statuses", "host": ["{{base_url}}"], "path": ["api","lookup","ticket-statuses"] } }, "response": [] },
-        { "name": "GET Order Statuses", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/lookup/order-statuses", "host": ["{{base_url}}"], "path": ["api","lookup","order-statuses"] } }, "response": [] }
+        {
+          "name": "GET Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "departments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Buildings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/buildings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "buildings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Locations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/locations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "locations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Unit Proses (exclude SIRS)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/unit-proses?exclude_sirs=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "unit-proses"
+              ],
+              "query": [
+                {
+                  "key": "exclude_sirs",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Positions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/positions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "positions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Priorities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/priorities",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "priorities"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Ticket Statuses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/ticket-statuses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "ticket-statuses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Order Statuses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/order-statuses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "order-statuses"
+              ]
+            }
+          },
+          "response": []
+        }
       ]
     },
     {
@@ -247,10 +710,35 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/tickets?status=all&per_page=15", "host": ["{{base_url}}"], "path": ["api","tickets"], "query": [{ "key": "status", "value": "all" }, { "key": "per_page", "value": "15" }] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets?status=all&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -259,20 +747,57 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "category_id", "value": "2", "type": "text", "description": "Harus kategori SIRS" },
-                { "key": "location_id", "value": "1", "type": "text" },
-                { "key": "description", "value": "Komputer di UGD tidak menyala", "type": "text" },
-                { "key": "priority", "value": "high", "type": "text", "description": "low,medium,high" },
-                { "key": "photo", "type": "file", "src": [] }
+                {
+                  "key": "category_id",
+                  "value": "2",
+                  "type": "text",
+                  "description": "Harus kategori SIRS"
+                },
+                {
+                  "key": "location_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Komputer di UGD tidak menyala",
+                  "type": "text"
+                },
+                {
+                  "key": "priority",
+                  "value": "high",
+                  "type": "text",
+                  "description": "low,medium,high"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
-            "url": { "raw": "{{base_url}}/api/tickets", "host": ["{{base_url}}"], "path": ["api","tickets"] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            }
           },
           "response": []
         },
@@ -281,10 +806,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/tickets/1", "host": ["{{base_url}}"], "path": ["api","tickets","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -293,15 +834,34 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"description\": \"Update deskripsi\",\n  \"category_id\": 1,\n  \"department_id\": 1,\n  \"location_id\": 1,\n  \"priority\": \"medium\"\n}"
             },
-            "url": { "raw": "{{base_url}}/api/tickets/1", "host": ["{{base_url}}"], "path": ["api","tickets","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -310,10 +870,26 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/tickets/1", "host": ["{{base_url}}"], "path": ["api","tickets","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -322,17 +898,42 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "message", "value": "Mohon segera diperbaiki", "type": "text" },
-                { "key": "photo", "type": "file", "src": [] }
+                {
+                  "key": "message",
+                  "value": "Mohon segera diperbaiki",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
-            "url": { "raw": "{{base_url}}/api/tickets/1/reply", "host": ["{{base_url}}"], "path": ["api","tickets","1","reply"] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets/1/reply",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "1",
+                "reply"
+              ]
+            }
           },
           "response": []
         },
@@ -341,18 +942,48 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "confirmation_notes", "value": "Sudah bagus, terima kasih", "type": "text" },
-                { "key": "action", "value": "confirm", "type": "text", "description": "confirm or reject" },
-                { "key": "photo", "type": "file", "src": [] }
+                {
+                  "key": "confirmation_notes",
+                  "value": "Sudah bagus, terima kasih",
+                  "type": "text"
+                },
+                {
+                  "key": "action",
+                  "value": "confirm",
+                  "type": "text",
+                  "description": "confirm or reject"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
-            "url": { "raw": "{{base_url}}/api/tickets/1/confirm", "host": ["{{base_url}}"], "path": ["api","tickets","1","confirm"] }
+            "url": {
+              "raw": "{{base_url}}/api/tickets/1/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "1",
+                "confirm"
+              ]
+            }
           },
           "response": []
         },
@@ -361,10 +992,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/tickets/filter/open", "host": ["{{base_url}}"], "path": ["api","tickets","filter","open"] },
+            "url": {
+              "raw": "{{base_url}}/api/tickets/filter/open",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "filter",
+                "open"
+              ]
+            },
             "description": "status: all,open,in_progress,closed,confirmed"
           },
           "response": []
@@ -379,31 +1027,111 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/tickets?status=all&per_page=15", "host": ["{{base_url}}"], "path": ["api","admin","tickets"], "query": [{ "key": "status", "value": "all" }] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets?status=all&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                }
+              ]
+            }
           },
           "response": []
         },
-        { "name": "GET Admin Show", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/1", "host": ["{{base_url}}"], "path": ["api","admin","tickets","1"] } }, "response": [] },
+        {
+          "name": "GET Admin Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "POST Admin Respond (in_progress/closed)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "notes", "value": "Kami proses perbaikan", "type": "text" },
-                { "key": "status", "value": "in_progress", "type": "text" },
-                { "key": "photo", "type": "file", "src": [] }
+                {
+                  "key": "notes",
+                  "value": "Kami proses perbaikan",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "in_progress",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
-            "url": { "raw": "{{base_url}}/api/admin/tickets/1/respond", "host": ["{{base_url}}"], "path": ["api","admin","tickets","1","respond"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/1/respond",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "1",
+                "respond"
+              ]
+            }
           },
           "response": []
         },
@@ -412,24 +1140,213 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"notes\": \"Update notes\",\n  \"status\": \"closed\",\n  \"action\": null\n}"
             },
-            "url": { "raw": "{{base_url}}/api/admin/tickets/1", "host": ["{{base_url}}"], "path": ["api","admin","tickets","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "1"
+              ]
+            }
           },
           "response": []
         },
-        { "name": "GET History Confirmed", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/history", "host": ["{{base_url}}"], "path": ["api","admin","tickets","history"] } }, "response": [] },
-        { "name": "GET History Show", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/history/1", "host": ["{{base_url}}"], "path": ["api","admin","tickets","history","1"] } }, "response": [] },
-        { "name": "GET All", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/all", "host": ["{{base_url}}"], "path": ["api","admin","tickets","all"] } }, "response": [] },
-        { "name": "GET Open", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/open", "host": ["{{base_url}}"], "path": ["api","admin","tickets","open"] } }, "response": [] },
-        { "name": "GET In Progress", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/in-progress", "host": ["{{base_url}}"], "path": ["api","admin","tickets","in-progress"] } }, "response": [] },
-        { "name": "GET Closed", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/admin/tickets/closed", "host": ["{{base_url}}"], "path": ["api","admin","tickets","closed"] } }, "response": [] }
+        {
+          "name": "GET History Confirmed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/history",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "history"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET History Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/history/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "history",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Open",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/open",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "open"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET In Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/in-progress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "in-progress"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Closed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tickets/closed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "closed"
+              ]
+            }
+          },
+          "response": []
+        }
       ]
     },
     {
@@ -441,10 +1358,31 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/order-perbaikan?status=all&per_page=15", "host": ["{{base_url}}"], "path": ["api","order-perbaikan"], "query": [{ "key": "status", "value": "all" }] }
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan?status=all&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -453,45 +1391,227 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "unit_proses_code", "value": "SRNS", "type": "text", "description": "Cannot be SIRS" },
-                { "key": "jenis_barang", "value": "Inventaris", "type": "text" },
-                { "key": "kode_inventaris", "value": "INV-001", "type": "text" },
-                { "key": "nama_barang", "value": "AC Rusak", "type": "text" },
-                { "key": "lokasi", "value": "1", "type": "text" },
-                { "key": "keluhan", "value": "Tidak dingin", "type": "text" },
-                { "key": "prioritas", "value": "RENDAH", "type": "text" },
-                { "key": "tanggal", "value": "2026-08-28 10:00:00", "type": "text" },
-                { "key": "foto", "type": "file", "src": [] }
+                {
+                  "key": "unit_proses_code",
+                  "value": "SRNS",
+                  "type": "text",
+                  "description": "Cannot be SIRS"
+                },
+                {
+                  "key": "jenis_barang",
+                  "value": "Inventaris",
+                  "type": "text"
+                },
+                {
+                  "key": "kode_inventaris",
+                  "value": "INV-001",
+                  "type": "text"
+                },
+                {
+                  "key": "nama_barang",
+                  "value": "AC Rusak",
+                  "type": "text"
+                },
+                {
+                  "key": "lokasi",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "keluhan",
+                  "value": "Tidak dingin",
+                  "type": "text"
+                },
+                {
+                  "key": "prioritas",
+                  "value": "RENDAH",
+                  "type": "text"
+                },
+                {
+                  "key": "tanggal",
+                  "value": "2026-08-28 10:00:00",
+                  "type": "text"
+                },
+                {
+                  "key": "foto",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
-            "url": { "raw": "{{base_url}}/api/order-perbaikan", "host": ["{{base_url}}"], "path": ["api","order-perbaikan"] }
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan"
+              ]
+            }
           },
           "response": []
         },
-        { "name": "GET Show", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/order-perbaikan/1", "host": ["{{base_url}}"], "path": ["api","order-perbaikan","1"] } }, "response": [] },
+        {
+          "name": "GET Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "PUT Update (only open)",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"jenis_barang\": \"Inventaris\",\n  \"kode_inventaris\": \"INV-001\",\n  \"nama_barang\": \"AC Updated\",\n  \"lokasi\": 1,\n  \"keluhan\": \"Update keluhan\",\n  \"prioritas\": \"TINGGI/URGENT\"\n}" },
-            "url": { "raw": "{{base_url}}/api/order-perbaikan/1", "host": ["{{base_url}}"], "path": ["api","order-perbaikan","1"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jenis_barang\": \"Inventaris\",\n  \"kode_inventaris\": \"INV-001\",\n  \"nama_barang\": \"AC Updated\",\n  \"lokasi\": 1,\n  \"keluhan\": \"Update keluhan\",\n  \"prioritas\": \"TINGGI/URGENT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan",
+                "1"
+              ]
+            }
           },
           "response": []
         },
-        { "name": "DELETE (only open)", "request": { "method": "DELETE", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/order-perbaikan/1", "host": ["{{base_url}}"], "path": ["api","order-perbaikan","1"] } }, "response": [] },
-        { "name": "GET Konfirmasi", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/order-perbaikan/konfirmasi", "host": ["{{base_url}}"], "path": ["api","order-perbaikan","konfirmasi"] } }, "response": [] },
-        { "name": "GET Rejected", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/order-perbaikan/rejected", "host": ["{{base_url}}"], "path": ["api","order-perbaikan","rejected"] } }, "response": [] }
+        {
+          "name": "DELETE (only open)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Konfirmasi",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan/konfirmasi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan",
+                "konfirmasi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Rejected",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/order-perbaikan/rejected",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "order-perbaikan",
+                "rejected"
+              ]
+            }
+          },
+          "response": []
+        }
       ]
     },
     {
@@ -502,38 +1622,308 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan?status=open&per_page=15", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan"], "query": [{ "key": "status", "value": "open" }] }
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan?status=open&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "open"
+                }
+              ]
+            }
           },
           "response": []
         },
-        { "name": "GET Show Admin", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","1"] } }, "response": [] },
-        { "name": "GET Statistics", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/statistics", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","statistics"] } }, "response": [] },
-        { "name": "GET In Progress", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/in-progress", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","in-progress"] } }, "response": [] },
-        { "name": "GET Confirmed", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/confirmed", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","confirmed"] } }, "response": [] },
-        { "name": "GET Rejected", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/rejected", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","rejected"] } }, "response": [] },
+        {
+          "name": "GET Show Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/statistics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "statistics"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET In Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/in-progress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "in-progress"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Confirmed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/confirmed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "confirmed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Rejected",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/rejected",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "rejected"
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "PUT Update Status",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"in_progress\",\n  \"follow_up\": \"Sedang dikerjakan\",\n  \"nama_penanggung_jawab\": \"Teknisi A\",\n  \"prioritas\": \"SEDANG\"\n}"
             },
-            "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/status", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","1","status"] }
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "1",
+                "status"
+              ]
+            }
           },
           "response": []
         },
-        { "name": "POST Start", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/start", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","1","start"] } }, "response": [] },
-        { "name": "POST Confirm", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/confirm", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","1","confirm"] } }, "response": [] },
-        { "name": "POST Reject", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_adm_token}}" }], "url": { "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/reject", "host": ["{{base_url}}"], "path": ["api","administrasi-umum","order-perbaikan","1","reject"] } }, "response": [] }
+        {
+          "name": "POST Start",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "1",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Confirm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "1",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_adm_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/administrasi-umum/order-perbaikan/1/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "administrasi-umum",
+                "order-perbaikan",
+                "1",
+                "reject"
+              ]
+            }
+          },
+          "response": []
+        }
       ]
     },
     {
@@ -545,10 +1935,33 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/master/categories?per_page=15&status=1", "host": ["{{base_url}}"], "path": ["api","admin","master","categories"], "query": [{ "key": "per_page", "value": "15" }] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/categories?per_page=15&status=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -557,12 +1970,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Software\",\n  \"status\": true,\n  \"unit_proses_id\": 3\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/categories", "host": ["{{base_url}}"], "path": ["api","admin","master","categories"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Software\",\n  \"status\": true,\n  \"unit_proses_id\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "categories"
+              ]
+            }
           },
           "response": []
         },
@@ -571,10 +2007,28 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/master/categories/1", "host": ["{{base_url}}"], "path": ["api","admin","master","categories","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/categories/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "categories",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -583,12 +2037,36 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Software Updated\",\n  \"status\": true,\n  \"unit_proses_id\": 3\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/categories/1", "host": ["{{base_url}}"], "path": ["api","admin","master","categories","1"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Software Updated\",\n  \"status\": true,\n  \"unit_proses_id\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/categories/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "categories",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -597,10 +2075,28 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/master/categories/1", "host": ["{{base_url}}"], "path": ["api","admin","master","categories","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/categories/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "categories",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -609,12 +2105,36 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"action\": \"deactivate\",\n  \"selected\": [1,2]\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/categories/bulk-action", "host": ["{{base_url}}"], "path": ["api","admin","master","categories","bulk-action"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deactivate\",\n  \"selected\": [1,2]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/categories/bulk-action",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "categories",
+                "bulk-action"
+              ]
+            }
           },
           "response": []
         },
@@ -623,12 +2143,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Keuangan\",\n  \"code\": \"KEU\",\n  \"status\": true\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/departments", "host": ["{{base_url}}"], "path": ["api","admin","master","departments"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Keuangan\",\n  \"code\": \"KEU\",\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "departments"
+              ]
+            }
           },
           "response": []
         },
@@ -637,12 +2180,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Gedung B\",\n  \"code\": \"B\",\n  \"status\": true\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/buildings", "host": ["{{base_url}}"], "path": ["api","admin","master","buildings"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gedung B\",\n  \"code\": \"B\",\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/buildings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "buildings"
+              ]
+            }
           },
           "response": []
         },
@@ -651,12 +2217,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Ruang OK\",\n  \"building_id\": 1,\n  \"status\": true\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/locations", "host": ["{{base_url}}"], "path": ["api","admin","master","locations"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ruang OK\",\n  \"building_id\": 1,\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/locations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "locations"
+              ]
+            }
           },
           "response": []
         },
@@ -665,12 +2254,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"IPSRS Baru\",\n  \"code\": \"IPSRS\",\n  \"status\": true\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/unit-proses", "host": ["{{base_url}}"], "path": ["api","admin","master","unit-proses"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"IPSRS Baru\",\n  \"code\": \"IPSRS\",\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/unit-proses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "unit-proses"
+              ]
+            }
           },
           "response": []
         },
@@ -679,12 +2291,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dokter\",\n  \"code\": \"DR\",\n  \"status\": true\n}" },
-            "url": { "raw": "{{base_url}}/api/admin/master/positions", "host": ["{{base_url}}"], "path": ["api","admin","master","positions"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dokter\",\n  \"code\": \"DR\",\n  \"status\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/positions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "positions"
+              ]
+            }
           },
           "response": []
         }
@@ -698,10 +2333,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/users?per_page=15", "host": ["{{base_url}}"], "path": ["api","admin","users"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/users?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            }
           },
           "response": []
         },
@@ -710,15 +2361,34 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser2@example.com\",\n  \"password\": \"123\",\n  \"password_confirmation\": \"123\",\n  \"role\": \"user\",\n  \"department\": \"IT\",\n  \"status\": true,\n  \"phone\": \"08123456789\",\n  \"position\": \"user\"\n}"
             },
-            "url": { "raw": "{{base_url}}/api/admin/users", "host": ["{{base_url}}"], "path": ["api","admin","users"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            }
           },
           "response": []
         },
@@ -727,10 +2397,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/users/1", "host": ["{{base_url}}"], "path": ["api","admin","users","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -739,15 +2426,35 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"newuser2@example.com\",\n  \"role\": \"user\",\n  \"department\": \"IT\",\n  \"status\": true,\n  \"phone\": \"08123456789\",\n  \"position\": \"user\"\n}"
             },
-            "url": { "raw": "{{base_url}}/api/admin/users/1", "host": ["{{base_url}}"], "path": ["api","admin","users","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "1"
+              ]
+            }
           },
           "response": []
         },
@@ -756,10 +2463,27 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/admin/users/1", "host": ["{{base_url}}"], "path": ["api","admin","users","1"] }
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "1"
+              ]
+            }
           },
           "response": []
         }
@@ -773,10 +2497,25 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/feedback", "host": ["{{base_url}}"], "path": ["api","feedback"] }
+            "url": {
+              "raw": "{{base_url}}/api/feedback",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "feedback"
+              ]
+            }
           },
           "response": []
         },
@@ -785,34 +2524,471 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{user_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"rating\": 5,\n  \"category\": \"Pelayanan\",\n  \"subject\": \"Sangat bagus\",\n  \"message\": \"Pelayanan IT sangat cepat\"\n}"
             },
-            "url": { "raw": "{{base_url}}/api/feedback", "host": ["{{base_url}}"], "path": ["api","feedback"] }
+            "url": {
+              "raw": "{{base_url}}/api/feedback",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "feedback"
+              ]
+            }
           },
           "response": []
         },
-        { "name": "GET Show Feedback", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{user_token}}" }], "url": { "raw": "{{base_url}}/api/feedback/1", "host": ["{{base_url}}"], "path": ["api","feedback","1"] } }, "response": [] },
+        {
+          "name": "GET Show Feedback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/feedback/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "feedback",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "POST Reply Feedback (Admin IT only)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"admin_reply\": \"Terima kasih atas feedbacknya\"\n}" },
-            "url": { "raw": "{{base_url}}/api/feedback/1/reply", "host": ["{{base_url}}"], "path": ["api","feedback","1","reply"] }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admin_reply\": \"Terima kasih atas feedbacknya\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/feedback/1/reply",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "feedback",
+                "1",
+                "reply"
+              ]
+            }
           },
           "response": []
         },
-        { "name": "DELETE Feedback (Admin)", "request": { "method": "DELETE", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/feedback/1", "host": ["{{base_url}}"], "path": ["api","feedback","1"] } }, "response": [] }
+        {
+          "name": "DELETE Feedback (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/feedback/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "feedback",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11 - Notifications & FCM (New)",
+      "description": "FCM token register + inbox + Firebase manual (ID helpdesk). All require Bearer token.",
+      "item": [
+        {
+          "name": "POST Register FCM Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{fcm_token}}\",\n  \"platform\": \"android\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/user/fcm-token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "fcm-token"
+              ]
+            },
+            "description": "Simpan FCM token untuk user login. Panggil setelah Firebase getToken() dan onTokenRefresh. Platform: android/ios/web"
+          },
+          "response": []
+        },
+        {
+          "name": "GET List FCM Tokens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/user/fcm-tokens",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "fcm-tokens"
+              ]
+            },
+            "description": "Lihat token terdaftar"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE FCM Token (single)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{fcm_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/user/fcm-token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "fcm-token"
+              ]
+            },
+            "description": "Hapus token single (saat logout device)"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE All FCM Tokens",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/user/fcm-token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "fcm-token"
+              ]
+            },
+            "description": "Hapus semua token user (logout all)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Notification Inbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            },
+            "description": "Inbox database notifications (untuk UI Flutter). Return data, meta, unread_count"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/unread-count",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Untuk badge di top bar / drawer"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Mark Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/{{notification_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            },
+            "description": "Tandai satu notifikasi sudah dibaca. Ganti {{notification_id}} dengan id dari inbox"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/read-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Tandai semua sudah dibaca"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/{{notification_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notification_id}}"
+              ]
+            },
+            "description": "Hapus satu notifikasi"
+          },
+          "response": []
+        },
+        {
+          "name": "Firebase - Send Test (manual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{fcm_token}}\",\n  \"notification\": {\"title\":\"Manual Test\",\"body\":\"Hello\"},\n  \"data\": {\"type\":\"test\",\"deep_link\":\"helpdesk://ticket/1\"}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/firebase/notification/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "firebase",
+                "notification",
+                "send"
+              ]
+            },
+            "description": "Manual Firebase send (any auth). Untuk queue tambah \"queue\":true"
+          },
+          "response": []
+        }
       ]
     }
   ]
