@@ -152,8 +152,12 @@ class OrderPerbaikanService
             return $order->load(['creator','history','location']);
         });
 
-        // 1 baris FCM ke Admin Umum
+        // 1 baris FCM ke Admin Umum + DB inbox
         Notify::orderToAdmins($order, $user);
+        $admins = User::adminUmum()->get();
+        foreach ($admins as $adm) {
+            $adm->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
 
         return $order;
     }
@@ -218,11 +222,12 @@ class OrderPerbaikanService
 
     public function updateStatus(User $admin, OrderPerbaikan $order, array $data): OrderPerbaikan
     {
+        // Auto-fill penanggung jawab dengan data login jika kosong (frontend sudah auto-fill, ini fallback)
+        if (empty($data['nama_penanggung_jawab'])) {
+            $data['nama_penanggung_jawab'] = $admin->name;
+        }
         $order = DB::transaction(function() use ($admin, $order, $data){
             if ($order->status === 'open' && $data['status'] === 'in_progress') {
-                if (empty($data['nama_penanggung_jawab'])) {
-                    throw new \Exception('nama_penanggung_jawab required when moving open -> in_progress', 422);
-                }
                 $updateData = [
                     'status' => $data['status'],
                     'nama_penanggung_jawab' => $data['nama_penanggung_jawab'],

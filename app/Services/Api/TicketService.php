@@ -139,6 +139,11 @@ class TicketService
 
         // Simple FCM: notify Admin IT — 1 baris
         Notify::ticketToAdmins($ticket, 'ticket_created', $user);
+        // DB inbox juga — agar lonceng Flutter tetap muncul meski FCM token belum ada / queue belum jalan
+        $admins = User::adminIT()->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new TicketRespondedNotification($ticket, $user, "Tiket baru #{$ticket->ticket_number}: {$ticket->description}", false, 'created'));
+        }
 
         return $ticket;
     }

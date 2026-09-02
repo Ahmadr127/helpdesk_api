@@ -95,6 +95,7 @@
                 </svg>
                 <span class="text-gray-800">Report SIRS</span>
             </a>
+
         </div>
 
         <form action="{{ route('logout') }}" method="POST" class="absolute bottom-5 w-[inherit] mb-4">

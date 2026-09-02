@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FirebaseNotificationController;
 use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\NotificationInboxController;
+use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Middleware\Api\AdminApiMiddleware;
 use App\Http\Middleware\Api\AdministrasiUmumApiMiddleware;
 
@@ -175,6 +176,15 @@ Route::middleware('auth:sanctum')->group(function(){
             Route::post('/subscribe', [FirebaseNotificationController::class, 'subscribe'])->name('subscribe');
             Route::post('/unsubscribe', [FirebaseNotificationController::class, 'unsubscribe'])->name('unsubscribe');
         });
+    });
+
+    // Monitoring Manual - Logs, Jobs, FCM, Notifikasi (admin only)
+    Route::prefix('monitoring')->name('api.monitoring.')->middleware(AdminApiMiddleware::class)->group(function(){
+        Route::get('/overview', [MonitoringController::class, 'overview'])->name('overview');
+        Route::get('/logs', [MonitoringController::class, 'logs'])->name('logs');
+        Route::get('/jobs', [MonitoringController::class, 'jobs'])->name('jobs');
+        Route::get('/fcm', [MonitoringController::class, 'fcm'])->name('fcm');
+        Route::get('/notifications', [MonitoringController::class, 'notifications'])->name('notifications');
     });
 });
 

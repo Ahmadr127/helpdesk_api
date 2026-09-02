@@ -2,15 +2,12 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\OrderPerbaikan;
 
-class OrderPerbaikanStatusUpdated extends Notification implements ShouldQueue
+class OrderPerbaikanStatusUpdated extends Notification
 {
-    use Queueable;
 
     protected $orderPerbaikan;
 
@@ -21,6 +18,10 @@ class OrderPerbaikanStatusUpdated extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
+        // Jika email tidak valid (mis. "administrasi" tanpa domain), jangan kirim mail agar tidak error 500 saat sync
+        if (!filter_var($notifiable->email ?? '', FILTER_VALIDATE_EMAIL)) {
+            return ['database'];
+        }
         return ['database', 'mail'];
     }
 
@@ -47,11 +48,22 @@ class OrderPerbaikanStatusUpdated extends Notification implements ShouldQueue
 
     public function toArray($notifiable)
     {
+        $typeMap = [
+            'open' => 'order_created',
+            'in_progress' => 'order_status_updated',
+            'confirmed' => 'order_confirmed',
+            'rejected' => 'order_rejected',
+        ];
+        $type = $typeMap[$this->orderPerbaikan->status] ?? 'order_status_updated';
         return [
             'order_id' => $this->orderPerbaikan->id,
             'nomor' => $this->orderPerbaikan->nomor,
             'status' => $this->orderPerbaikan->status,
-            'message' => "Order perbaikan {$this->orderPerbaikan->nomor} telah diupdate ke status " . 
+            'type' => $type,
+            'deep_link' => "helpdesk://order/{$this->orderPerbaikan->id}",
+            'url' => route('user.administrasi-umum.order-perbaikan.show', $this->orderPerbaikan),
+            'title' => "Order {$this->orderPerbaikan->nomor} - ".ucfirst($this->orderPerbaikan->status),
+            'message' => "Order perbaikan {$this->orderPerbaikan->nomor} telah diupdate ke status " .
                         strtoupper($this->orderPerbaikan->status)
         ];
     }

@@ -26,7 +26,7 @@ Baca `.env`:
 QUEUE_CONNECTION=database   // project saat ini pakai database
 ```
 
-**JANGAN** otomatis ubah ke `redis` tanpa alasan. Jika sudah ada Redis, gunakan Redis. Jika pakai database, pertahankan database kecuali butuh Horizon.
+**JANGAN** otomatis ubah ke `redis` tanpa alasan. Pertahankan `database` queue sesuai `.env` yang sudah berjalan.
 
 Cek config:
 
@@ -102,7 +102,7 @@ SendFirebaseNotificationJob::dispatch($token, $notification->toQueuePayload())->
 
 Facade sudah otomatis `onQueue('notifications')`.
 
-Keuntungan: Horizon bisa monitor terpisah, worker bisa dedicated.
+Keuntungan: queue `notifications` terpisah, worker bisa dedicated `queue:work --queue=notifications`.
 
 ## Menjalankan Queue
 
@@ -179,12 +179,11 @@ Atau dispatch langsung:
 SendFirebaseNotificationJob::dispatch($token, $dto->toQueuePayload())->onQueue('notifications');
 ```
 
-## Horizon vs Database Queue
+## Database Queue
 
-- `database` queue: sederhana, tidak butuh Redis, cukup `php artisan queue:work`. Monitoring via `queue:failed`, log.
-- `redis` + Horizon: butuh Redis server, install `laravel/horizon`, publish config, jalankan `php artisan horizon`, dashboard `/horizon`. Lihat `docs/firebase-horizon.md`.
+- `database` queue: sederhana, tidak butuh Redis, cukup `php artisan queue:work`. Monitoring via `php artisan queue:failed` dan log `storage/logs/firebase.log`.
 
-Project saat ini: `QUEUE_CONNECTION=database` → tetap pakai database queue, Horizon opsional (butuh Redis).
+Project saat ini: `QUEUE_CONNECTION=database` → pakai database queue.
 
 ## Troubleshooting Queue
 
@@ -197,4 +196,4 @@ Project saat ini: `QUEUE_CONNECTION=database` → tetap pakai database queue, Ho
 
 ## Command Deployment
 
-Di produksi, jangan jalankan `queue:work` manual. Gunakan Supervisor atau systemd (lihat horizon docs).
+Di produksi, jangan jalankan `queue:work` manual. Gunakan Supervisor atau systemd untuk keep `queue:work --queue=notifications` tetap jalan.

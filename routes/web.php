@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\UnitProsesController;
 use App\Http\Controllers\User\FeedbackController as UserFeedbackController;
 use App\Http\Controllers\Admin\ReportSirsController;
 use App\Http\Controllers\Admin\PositionController;
+use App\Http\Controllers\Admin\FcmMonitoringController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -211,6 +212,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('tickets/history', [TicketAdminController::class, 'history'])->name('tickets.history.index');
         Route::post('tickets/history/export', [TicketAdminController::class, 'exportHistory'])->name('tickets.history.export');
         Route::get('tickets/history/{ticket}', [TicketAdminController::class, 'historyShow'])->name('tickets.history.show');
+
+        // FCM Monitoring - Manual Logs/Jobs/FCM/Notifications
+        Route::prefix('fcm')->name('fcm.')->group(function () {
+            Route::get('/', [FcmMonitoringController::class, 'index'])->name('index');
+            Route::get('/logs', [FcmMonitoringController::class, 'logs'])->name('logs');
+            Route::post('/logs/clear', [FcmMonitoringController::class, 'clearLog'])->name('logs.clear');
+            Route::post('/jobs/retry/{id}', [FcmMonitoringController::class, 'retryFailed'])->name('jobs.retryFailed');
+            Route::post('/jobs/forget/{id}', [FcmMonitoringController::class, 'forgetFailed'])->name('jobs.forgetFailed');
+            Route::post('/jobs/flush', [FcmMonitoringController::class, 'flushFailed'])->name('jobs.flushFailed');
+            Route::post('/test', [FcmMonitoringController::class, 'sendTest'])->name('test');
+        });
     });
 
     // User Notification Routes
@@ -221,6 +233,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/delete-old', [UserNotificationController::class, 'deleteOld'])->name('delete-old');
         Route::post('/settings', [UserNotificationController::class, 'updateSettings'])->name('settings.update');
     });
+
+    // FCM Manual Monitoring at /fcm (alias for admin, requires admin)
+    Route::get('/fcm', [FcmMonitoringController::class, 'index'])->name('fcm.index')->middleware(AdminMiddleware::class);
+    Route::get('/fcm/logs', [FcmMonitoringController::class, 'logs'])->name('fcm.logs')->middleware(AdminMiddleware::class);
+    Route::post('/fcm/logs/clear', [FcmMonitoringController::class, 'clearLog'])->name('fcm.logs.clear')->middleware(AdminMiddleware::class);
+    Route::post('/fcm/test', [FcmMonitoringController::class, 'sendTest'])->name('fcm.test')->middleware(AdminMiddleware::class);
+    Route::post('/fcm/jobs/retry/{id}', [FcmMonitoringController::class, 'retryFailed'])->name('fcm.jobs.retryFailed')->middleware(AdminMiddleware::class);
+    Route::post('/fcm/jobs/forget/{id}', [FcmMonitoringController::class, 'forgetFailed'])->name('fcm.jobs.forgetFailed')->middleware(AdminMiddleware::class);
+    Route::post('/fcm/jobs/flush', [FcmMonitoringController::class, 'flushFailed'])->name('fcm.jobs.flushFailed')->middleware(AdminMiddleware::class);
 });
 
 // Administrasi Umum Routes
