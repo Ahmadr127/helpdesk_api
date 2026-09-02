@@ -1,5 +1,10 @@
 # Firebase Queue - Dokumentasi
 
+
+# pake ini buat supervisor
+
+php artisan queue:work --queue=default,notifications
+
 ## Flow
 
 ```
