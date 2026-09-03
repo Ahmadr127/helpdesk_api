@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketPhoto;
 use App\Exports\TicketsExport;
+use App\Services\Api\TicketService;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -184,7 +185,7 @@ class TicketAdminController extends Controller
         return back()->with('success', 'Ticket has been marked as resolved.');
     }
 
-    public function respond(Request $request, Ticket $ticket)
+    public function respond(Request $request, Ticket $ticket, TicketService $service)
     {
         $validated = $request->validate([
             'notes' => 'required|string',
@@ -192,54 +193,13 @@ class TicketAdminController extends Controller
             'status' => 'required|in:in_progress,closed'
         ]);
 
-        $response = [
-            'notes' => $validated['notes'],
-            'timestamp' => now(),
-            'status' => $validated['status']
-        ];
-
-        // Get existing responses or initialize empty array
-        $responses = json_decode($ticket->admin_responses, true) ?? [];
-
-        // Handle photo upload if provided
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('ticket-responses', 'public');
-            
-            // Create ticket photo record
-            TicketPhoto::create([
-                'ticket_id' => $ticket->id,
-                'photo_path' => $path,
-                'type' => 'admin_response'
-            ]);
-            
-            $response['photo'] = $path;
-        }
-
-        // Add new response to array
-        $responses[] = $response;
-
-        // Update ticket
-        $ticket->update([
-            'admin_responses' => json_encode($responses),
-            'status' => $validated['status'],
-            'in_progress_at' => $validated['status'] === 'in_progress' ? now() : $ticket->in_progress_at,
-            'closed_at' => $validated['status'] === 'closed' ? now() : $ticket->closed_at,
-        ]);
-
-        // Send notification to user
-        $ticket->user->notify(new TicketRespondedNotification(
-            $ticket,
-            auth()->user(),
-            $validated['notes'],
-            true,
-            'responded'
-        ));
+        $service->adminRespond(auth()->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photo'));
 
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
     }
 
-    public function update(Request $request, Ticket $ticket)
+    public function update(Request $request, Ticket $ticket, TicketService $service)
     {
         $validated = $request->validate([
             'notes' => 'required|string',
@@ -248,68 +208,10 @@ class TicketAdminController extends Controller
             'action' => 'nullable|in:reply'
         ]);
 
-        try {
-            DB::beginTransaction();
+        $service->adminUpdate(auth()->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photo'));
 
-            // Get existing responses or initialize
-            $responses = $ticket->admin_responses ? json_decode($ticket->admin_responses, true) : [];
-            $timestamp = now();
-
-            // Create new response
-            $response = [
-                'notes' => $validated['notes'],
-                'timestamp' => $timestamp->toDateTimeString(),
-            ];
-
-            // Handle photo
-            if ($request->hasFile('photo')) {
-                $path = $request->file('photo')->store('ticket-responses', 'public');
-                
-                TicketPhoto::create([
-                    'ticket_id' => $ticket->id,
-                    'photo_path' => $path,
-                    'type' => 'admin_response',
-                    'created_at' => $timestamp
-                ]);
-                
-                $response['photo'] = $path;
-            }
-
-            // Add response to array
-            $responses[] = $response;
-
-            // Update ticket based on action
-            if ($request->action === 'reply') {
-                // Just add the reply without changing status
-                $ticket->update([
-                    'admin_responses' => json_encode($responses),
-                ]);
-            } else {
-                // Handle status change
-                $ticket->update([
-                    'admin_responses' => json_encode($responses),
-                    'status' => $validated['status'],
-                    'in_progress_at' => $validated['status'] === 'in_progress' ? $timestamp : $ticket->in_progress_at,
-                    'closed_at' => $validated['status'] === 'closed' ? $timestamp : $ticket->closed_at,
-                ]);
-            }
-
-            // Send notification to user
-            $ticket->user->notify(new TicketRespondedNotification(
-                $ticket,
-                auth()->user(),
-                $validated['notes'],
-                true,
-                $request->action === 'reply' ? 'replied' : 'updated'
-            ));
-
-            DB::commit();
-            return redirect()->route('admin.tickets.show', $ticket)
-                ->with('success', $request->action === 'reply' ? 'Reply sent successfully.' : 'Ticket berhasil diperbarui.');
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Terjadi kesalahan saat memperbarui ticket.');
-        }
+        return redirect()->route('admin.tickets.show', $ticket)
+            ->with('success', $request->input('action') === 'reply' ? 'Reply sent successfully.' : 'Ticket berhasil diperbarui.');
     }
 
     public function all(Request $request)

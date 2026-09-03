@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Notifications\TicketRejectedNotification;
 use App\Models\TicketPhoto;
 use App\Notifications\TicketRespondedNotification;
+use App\Services\Api\TicketService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -60,7 +61,7 @@ class TicketController extends Controller
         return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, TicketService $service)
     {
         // Check if user has a department
         if (!auth()->user()->department) {
@@ -86,90 +87,15 @@ class TicketController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Get the authenticated user's department
-            $userDepartment = Department::where('code', auth()->user()->department)->first();
-            
-            if (!$userDepartment) {
-                throw new \Exception('Data departemen tidak ditemukan. Mohon perbarui profil Anda.');
-            }
-            
-            // Get the location and its associated building
-            $location = Location::with('building')->findOrFail($validated['location_id']);
-
-            // Generate ticket number
-            $date = date('dm'); // Format: DDMM (tanggal dan bulan saja)
-            
-            // Get the last ticket number for today
-            $lastTicket = Ticket::where('ticket_number', 'like', "T-{$date}-%")
-                ->orderBy('ticket_number', 'desc')
-                ->first();
-            
-            if ($lastTicket) {
-                // Extract the sequence number and increment it
-                $lastSequence = (int) substr($lastTicket->ticket_number, -3);
-                $sequence = str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
-            } else {
-                // If no ticket exists for today, start with 001
-                $sequence = '001';
-            }
-            
-            $ticketNumber = "T-{$date}-{$sequence}";
-
-            // Get display names from related models
-            $category = Category::find($validated['category_id']);
-
-            $ticket = Ticket::create([
-                'user_id' => auth()->id(),
-                'ticket_number' => $ticketNumber,
-                'description' => $validated['description'],
-                'category_id' => $validated['category_id'],
-                'category' => $category->name,
-                'department_id' => $userDepartment->id,
-                'department' => $userDepartment->name,
-                'building_id' => $location->building->id,
-                'building' => $location->building->name,
-                'location_id' => $location->id,
-                'location' => $location->name,
-                'priority' => $validated['priority'],
-                'status' => 'open'
-            ]);
-
-            // Handle photo upload if provided
-            if ($request->hasFile('photo')) {
-                $photo = $request->file('photo');
-                
-                // Generate unique filename with original extension
-                $extension = $photo->getClientOriginalExtension();
-                $filename = 'ticket_' . uniqid() . '_' . time() . '.' . $extension;
-                    
-                // Store the file in the public disk
-                $path = $photo->storeAs('ticket-photos', $filename, 'public');
-            
-                // Create ticket photo record with the correct path
-                        $photoRecord = TicketPhoto::create([
-                            'ticket_id' => $ticket->id,
-                            'photo_path' => $path,
-                            'type' => 'initial'
-                        ]);
-                        
-                \Log::info('Photo upload successful', [
-                            'photo_id' => $photoRecord->id,
-                            'ticket_id' => $ticket->id,
-                    'path' => $path,
-                    'full_path' => storage_path('app/public/' . $path),
-                    'exists' => Storage::disk('public')->exists($path)
-                    ]);
-            }
-
-            DB::commit();
+            $ticket = $service->create(auth()->user(), $validated, $request->file('photo'));
             return redirect()->route('user.ticket.index')
                 ->with('success', 'Ticket created successfully.');
-
         } catch (\Exception $e) {
-            DB::rollback();
             \Log::error('Error creating ticket: ' . $e->getMessage());
+            $code = $e->getCode();
+            if ($code === 422 || str_contains($e->getMessage(), 'SIRS')) {
+                return back()->withInput()->with('error', $e->getMessage());
+            }
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create ticket. Please try again. Error: ' . $e->getMessage());
@@ -210,19 +136,8 @@ class TicketController extends Controller
         return view('user.ticket.edit', compact('ticket', 'categories', 'locations'));
     }
 
-    public function update(Request $request, Ticket $ticket)
+    public function update(Request $request, Ticket $ticket, TicketService $service)
     {
-        // Check if user owns the ticket
-        if ($ticket->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        // Check if ticket is still editable (open status)
-        if ($ticket->status !== 'open') {
-            return redirect()->route('user.ticket.show', $ticket)
-                ->with('error', 'Ticket can only be edited when in open status.');
-        }
-
         $validated = $request->validate([
             'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
@@ -233,57 +148,14 @@ class TicketController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Get related models
-            $category = Category::findOrFail($validated['category_id']);
-            $department = Department::findOrFail($validated['department_id']);
-            $location = Location::with('building')->findOrFail($validated['location_id']);
-
-            $ticket->update([
-                'description' => $validated['description'],
-                'category_id' => $validated['category_id'],
-                'category' => $category->name,
-                'department_id' => $validated['department_id'],
-                'department' => $department->name,
-                'building_id' => $location->building->id,
-                'building' => $location->building->name,
-                'location_id' => $validated['location_id'],
-                'location' => $location->name,
-                'priority' => $validated['priority']
-            ]);
-
-            // Handle photo update if provided
-            if ($request->hasFile('photo')) {
-                // Delete old photo if exists
-                $oldPhoto = $ticket->photos()->where('type', 'initial')->first();
-                if ($oldPhoto) {
-                    Storage::disk('public')->delete($oldPhoto->photo_path);
-                    $oldPhoto->delete();
-                }
-
-                // Upload new photo
-                $photo = $request->file('photo');
-                $extension = $photo->getClientOriginalExtension();
-                $filename = 'ticket_' . uniqid() . '_' . time() . '.' . $extension;
-                $path = $photo->storeAs('ticket-photos', $filename, 'public');
-
-                // Create new photo record
-                TicketPhoto::create([
-                    'ticket_id' => $ticket->id,
-                    'photo_path' => $path,
-                    'type' => 'initial'
-                ]);
-            }
-
-            DB::commit();
+            $ticket = $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photo'));
             return redirect()->route('user.ticket.show', $ticket)
                 ->with('success', 'Ticket has been updated successfully.');
-
         } catch (\Exception $e) {
-            DB::rollback();
             \Log::error('Ticket update error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to update ticket: ' . $e->getMessage()])->withInput();
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'Unauthorized') || str_contains($msg, '403')) abort(403);
+            return back()->withErrors(['error' => 'Failed to update ticket: ' . $msg])->withInput();
         }
     }
 
@@ -314,130 +186,38 @@ class TicketController extends Controller
         return back()->with('success', 'Ticket status updated successfully.');
     }
 
-    public function confirm(Request $request, Ticket $ticket)
+    public function confirm(Request $request, Ticket $ticket, TicketService $service)
     {
-        if ($ticket->user_id !== auth()->id()) {
-            abort(403);
-        }
-
         $validated = $request->validate([
             'confirmation_notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
+            'action' => 'required|in:confirm,reject',
         ]);
 
-        $replies = $ticket->user_replies ? json_decode($ticket->user_replies, true) : [];
-        
-        $reply = [
-            'type' => $request->input('action'), // 'confirm' or 'reject'
-            'notes' => $validated['confirmation_notes'],
-            'timestamp' => now()->toDateTimeString(),
-        ];
-
-        // Save response photo if exists
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('ticket-responses', 'public');
-            $reply['photo'] = $path; // Add photo path to reply array
-            
-            TicketPhoto::create([
-                'ticket_id' => $ticket->id,
-                'photo_path' => $path,
-                'type' => $request->input('action') === 'confirm' ? 'user_response' : 'user_rejection'
-            ]);
+        try {
+            $service->confirm(auth()->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photo'));
+            return redirect()->route('user.ticket.show', $ticket)
+                ->with('success', $validated['action'] === 'confirm' ? 'Ticket has been confirmed as completed.' : 'Ticket has been returned to in progress status.');
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Unauthorized')) abort(403);
+            return back()->with('error', $e->getMessage())->withInput();
         }
-
-        $replies[] = $reply;
-        $ticket->user_replies = json_encode($replies);
-
-        if ($request->input('action') === 'confirm') {
-            $ticket->update([
-                'status' => 'confirmed',
-                'user_confirmation' => true,
-                'user_confirmed_at' => now(),
-            ]);
-
-            // Send notification to all admins
-            $admins = User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                $admin->notify(new TicketRespondedNotification(
-                    $ticket,
-                    auth()->user(),
-                    "User has confirmed ticket #{$ticket->ticket_number} as completed",
-                    false,
-                    'confirmed'
-                ));
-            }
-        } else {
-            $ticket->update([
-                'status' => 'in_progress',
-                'user_confirmation' => false,
-                'rejection_count' => $ticket->rejection_count + 1,
-                'last_rejection_at' => now(),
-            ]);
-
-            // Send notification to all admins
-            $admins = User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                $admin->notify(new TicketRespondedNotification(
-                    $ticket,
-                    auth()->user(),
-                    "User has rejected ticket #{$ticket->ticket_number}",
-                    false,
-                    'rejected'
-                ));
-            }
-        }
-
-        $ticket->save();
-
-        return redirect()->route('user.ticket.show', $ticket)
-            ->with('success', $request->input('action') === 'confirm' ? 
-                'Ticket has been confirmed as completed.' : 
-                'Ticket has been returned to in progress status.');
     }
 
-    public function reply(Request $request, Ticket $ticket)
+    public function reply(Request $request, Ticket $ticket, TicketService $service)
     {
-        // Validate ownership
-        if ($ticket->user_id !== auth()->id()) {
-            abort(403);
-        }
-
         $validated = $request->validate([
             'message' => 'required|string',
             'photo' => 'nullable|image|max:5120', // 5MB max
         ]);
 
-        $reply = [
-            'message' => $validated['message'],
-            'timestamp' => now(),
-        ];
-
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('ticket-replies', 'public');
-            $reply['photo'] = $path;
+        try {
+            $service->reply(auth()->user(), $ticket, $validated['message'], $request->file('photo'));
+            return back()->with('success', 'Reply sent successfully.');
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Unauthorized')) abort(403);
+            return back()->with('error', $e->getMessage())->withInput();
         }
-
-        // Get existing replies or create new array
-        $replies = $ticket->user_replies ? json_decode($ticket->user_replies, true) : [];
-        $replies[] = $reply;
-
-        $ticket->update([
-            'user_replies' => json_encode($replies)
-        ]);
-
-        // Send notification to all admins
-        $admins = User::where('role', 'admin')->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new TicketRespondedNotification(
-                $ticket,
-                auth()->user(),
-                "User has replied to ticket #{$ticket->ticket_number}",
-                false,
-                'replied'
-            ));
-        }
-
-        return back()->with('success', 'Reply sent successfully.');
     }
 
     public function filterByStatus($status = 'all', Request $request)
@@ -509,26 +289,19 @@ class TicketController extends Controller
         ));
     }
 
-    public function destroy(Ticket $ticket)
+    public function destroy(Ticket $ticket, TicketService $service)
     {
-        // Check if user owns the ticket
-        if ($ticket->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        // Check if ticket can be deleted (only open tickets)
-        if ($ticket->status !== 'open') {
-            return redirect()->route('user.ticket.show', $ticket)
-                ->with('error', 'Only open tickets can be deleted.');
-        }
-
         try {
-            $ticket->delete();
+            $service->deleteUserTicket(auth()->user(), $ticket);
             return redirect()->route('user.dashboard')
                 ->with('success', 'Ticket has been deleted successfully.');
         } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Unauthorized')) abort(403);
+            if (str_contains($e->getMessage(), 'Only open')) {
+                return redirect()->route('user.ticket.show', $ticket)->with('error', $e->getMessage());
+            }
             \Log::error('Ticket deletion error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to delete ticket.']);
+            return back()->withErrors(['error' => 'Failed to delete ticket: ' . $e->getMessage()]);
         }
     }
 } 
