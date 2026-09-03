@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Location;
 use App\Models\UnitProses;
+use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Support\Facades\Storage;
 
 class AdministrasiUmumController extends Controller
@@ -384,7 +385,7 @@ class AdministrasiUmumController extends Controller
         }
     }
 
-    public function storeOrderPerbaikan(Request $request)
+    public function storeOrderPerbaikan(Request $request, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
             'unit_proses_code' => [
@@ -407,84 +408,21 @@ class AdministrasiUmumController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Generate nomor order with today's date
-            $today = now();
-            $prefix = 'OP/RTG/MTC-' . $today->format('Ymd');
-            
-            // Get the last order number for today, including soft deleted records
-            $lastOrder = OrderPerbaikan::withTrashed()
-                ->where('nomor', 'like', $prefix . '%')
-                ->orderBy('nomor', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = (int) substr($lastOrder->nomor, -3);
-                $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-            } else {
-                $newNumber = '001';
-            }
-
-            $nomor = $prefix . $newNumber;
-
-            // Get unit proses data
-            $unitProses = UnitProses::where('code', $validated['unit_proses_code'])->firstOrFail();
-
-            // Handle foto upload
-            $fotoPath = null;
-            if ($request->hasFile('foto')) {
-                $foto = $request->file('foto');
-                $filename = 'order_' . time() . '_' . $foto->getClientOriginalName();
-                $fotoPath = $foto->storeAs('order-photos', $filename, 'public');
-            }
-
-            // Get logged in user's data
-            $user = auth()->user();
-
-            $orderPerbaikan = OrderPerbaikan::create([
-                'nomor' => $nomor,
-                'tanggal' => $validated['tanggal'],
-                'unit_proses' => $unitProses->code,
-                'unit_proses_name' => $unitProses->name,
-                'unit_penerima' => 'MTC',
-                'nip_peminta' => $user->nip,
-                'nama_peminta' => $user->name,
-                'jenis_barang' => $validated['jenis_barang'],
-                'kode_inventaris' => $validated['kode_inventaris'],
-                'nama_barang' => $validated['nama_barang'],
-                'lokasi' => $validated['lokasi'],
-                'keluhan' => $validated['keluhan'],
-                'prioritas' => $validated['prioritas'],
-                'foto' => $fotoPath,
-                'status' => 'open',
-                'created_by' => auth()->id(),
-            ]);
-
-            // Add history entry for the creation
-            $orderPerbaikan->history()->create([
-                'status' => 'open',
-                'keterangan' => 'Order dibuat',
-                'created_by' => auth()->id(),
-            ]);
-
-            DB::commit();
+            $orderPerbaikan = $service->create(auth()->user(), $validated, $request->file('foto'));
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Order perbaikan berhasil dibuat dengan nomor: ' . $nomor,
+                    'message' => 'Order perbaikan berhasil dibuat dengan nomor: ' . $orderPerbaikan->nomor,
                     'data' => $orderPerbaikan
                 ]);
             }
 
             return redirect()
                 ->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
-                ->with('success', 'Order perbaikan berhasil dibuat dengan nomor: ' . $nomor);
+                ->with('success', 'Order perbaikan berhasil dibuat dengan nomor: ' . $orderPerbaikan->nomor);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -529,24 +467,8 @@ class AdministrasiUmumController extends Controller
         return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations'));
     }
 
-    public function updateOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan)
+    public function updateOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
-        // Check if the current user is authorized to update this order
-        if ($orderPerbaikan->created_by !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized action.'
-            ], 403);
-        }
-
-        // Check if the order is still editable (open status)
-        if ($orderPerbaikan->status !== 'open') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Hanya order dengan status open yang dapat diedit.'
-            ], 422);
-        }
-
         $validated = $request->validate([
             'jenis_barang' => 'required|in:Umum,Inventaris',
             'kode_inventaris' => 'required|string',
@@ -558,115 +480,46 @@ class AdministrasiUmumController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Handle foto upload if provided
-            if ($request->hasFile('foto')) {
-                // Delete old foto if exists
-                if ($orderPerbaikan->foto) {
-                    Storage::disk('public')->delete($orderPerbaikan->foto);
-                }
-                
-                $foto = $request->file('foto');
-                $filename = 'order_' . time() . '_' . $foto->getClientOriginalName();
-                $fotoPath = $foto->storeAs('order-photos', $filename, 'public');
-                $validated['foto'] = $fotoPath;
-            }
-
-            $orderPerbaikan->update([
-                'jenis_barang' => $validated['jenis_barang'],
-                'kode_inventaris' => $validated['kode_inventaris'],
-                'nama_barang' => $validated['nama_barang'],
-                'lokasi' => $validated['lokasi'],
-                'keluhan' => $validated['keluhan'],
-                'prioritas' => $validated['prioritas'],
-                'foto' => $validated['foto'] ?? $orderPerbaikan->foto,
-                'updated_by' => auth()->id(),
-            ]);
-
-            // Add history entry for the update
-            $orderPerbaikan->history()->create([
-                'status' => $orderPerbaikan->status,
-                'keterangan' => 'Order diperbarui',
-                'created_by' => auth()->id(),
-            ]);
-
-            DB::commit();
+            $order = $service->update(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'));
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Order perbaikan berhasil diperbarui',
-                    'data' => $orderPerbaikan->fresh()
+                    'data' => $order
                 ]);
             }
 
             return redirect()
-                ->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
+                ->route('user.administrasi-umum.order-perbaikan.show', $order)
                 ->with('success', 'Order perbaikan berhasil diperbarui');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
+            $code = $e->getCode() === 403 ? 403 : ($e->getCode() === 422 ? 422 : 500);
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terjadi kesalahan saat memperbarui order: ' . $e->getMessage()
-                ], 500);
+                    'message' => $e->getMessage()
+                ], $code);
             }
-
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan saat memperbarui order: ' . $e->getMessage())
-                ->withInput();
+            return redirect()->back()->with('error', $e->getMessage())->withInput();
         }
     }
 
-    public function deleteOrderPerbaikan(OrderPerbaikan $orderPerbaikan)
+    public function deleteOrderPerbaikan(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
-        // Check if the current user is authorized to delete this order
-        if ($orderPerbaikan->created_by !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized action.'
-            ], 403);
-        }
-
-        // Check if the order can be deleted (only open status)
-        if ($orderPerbaikan->status !== 'open') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Hanya order dengan status open yang dapat dihapus.'
-            ], 422);
-        }
-
         try {
-            DB::beginTransaction();
-
-            // Delete related records first
-            $orderPerbaikan->history()->delete();
-            
-            // Delete the photo if exists
-            if ($orderPerbaikan->foto) {
-                Storage::disk('public')->delete($orderPerbaikan->foto);
-            }
-
-            // Force delete the order (bypass soft delete)
-            $orderPerbaikan->forceDelete();
-
-            DB::commit();
-
+            $service->delete(auth()->user(), $orderPerbaikan);
             return response()->json([
                 'success' => true,
                 'message' => 'Order perbaikan berhasil dihapus'
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
+            $code = $e->getCode() === 403 ? 403 : ($e->getCode() === 422 ? 422 : 500);
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menghapus order: ' . $e->getMessage()
-            ], 500);
+                'message' => $e->getMessage()
+            ], $code);
         }
     }
 }

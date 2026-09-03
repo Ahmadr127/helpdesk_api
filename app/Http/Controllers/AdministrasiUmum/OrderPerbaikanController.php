@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrderPerbaikan;
 use App\Models\Department;
+use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -275,134 +276,47 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, OrderPerbaikan $orderPerbaikan)
+    public function updateStatus(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
-        // Validate the request
-        $request->validate([
+        $validated = $request->validate([
             'status' => 'required|in:in_progress,confirmed,rejected',
             'follow_up' => 'required|string',
             'prioritas' => 'sometimes|required|in:RENDAH,SEDANG,TINGGI/URGENT',
+            'nama_penanggung_jawab' => 'nullable|string',
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // If status is changing from open to in_progress, require penanggung jawab
-            if ($orderPerbaikan->status === 'open' && $request->status === 'in_progress') {
-                $request->validate([
-                    'nama_penanggung_jawab' => 'required|string',
-                ]);
-
-                $updateData = [
-                    'status' => $request->status,
-                    'nama_penanggung_jawab' => $request->nama_penanggung_jawab,
-                    'follow_up' => $request->follow_up,
-                    'updated_by' => auth()->id(),
-                ];
-
-                // Update prioritas if provided
-                if ($request->has('prioritas')) {
-                    $updateData['prioritas'] = $request->prioritas;
-                }
-
-                $orderPerbaikan->update($updateData);
-            } else {
-                // For other status updates, keep the existing penanggung jawab
-                $updateData = [
-                    'status' => $request->status,
-                    'follow_up' => $request->follow_up,
-                    'updated_by' => auth()->id(),
-                ];
-
-                // Update prioritas if provided
-                if ($request->has('prioritas')) {
-                    $updateData['prioritas'] = $request->prioritas;
-                }
-
-                $orderPerbaikan->update($updateData);
-            }
-
-            // Add history entry
-            $orderPerbaikan->history()->create([
-                'status' => $request->status,
-                'keterangan' => $request->follow_up . ($request->has('prioritas') ? " (Prioritas diubah menjadi {$request->prioritas})" : ""),
-                'created_by' => auth()->id(),
+            $service->updateStatus(auth()->user(), $orderPerbaikan, [
+                'status' => $validated['status'],
+                'follow_up' => $validated['follow_up'],
+                'prioritas' => $validated['prioritas'] ?? null,
+                'nama_penanggung_jawab' => $validated['nama_penanggung_jawab'] ?? $request->input('nama_penanggung_jawab'),
             ]);
-
-            DB::commit();
-
             return redirect()
                 ->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)
                 ->with('success', 'Status order berhasil diperbarui');
-
         } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan saat memperbarui status: ' . $e->getMessage())
-                ->withInput();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status: ' . $e->getMessage())->withInput();
         }
     }
 
-    public function confirm(OrderPerbaikan $orderPerbaikan)
+    public function confirm(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         try {
-            DB::beginTransaction();
-
-            $orderPerbaikan->update([
-                'status' => OrderPerbaikan::STATUS_CONFIRMED,
-                'nama_penanggung_jawab' => auth()->user()->name,
-                'updated_by' => auth()->id()
-            ]);
-
-            // Add history entry
-            $orderPerbaikan->history()->create([
-                'status' => OrderPerbaikan::STATUS_CONFIRMED,
-                'keterangan' => 'Order dikonfirmasi',
-                'created_by' => auth()->id()
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)
-                ->with('success', 'Order berhasil dikonfirmasi.');
-
+            $service->confirm(auth()->user(), $orderPerbaikan);
+            return redirect()->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil dikonfirmasi.');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->with('error', 'Terjadi kesalahan saat mengkonfirmasi order: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat mengkonfirmasi order: ' . $e->getMessage());
         }
     }
 
-    public function reject(OrderPerbaikan $orderPerbaikan)
+    public function reject(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         try {
-            DB::beginTransaction();
-
-            $orderPerbaikan->update([
-                'status' => OrderPerbaikan::STATUS_REJECTED,
-                'nama_penanggung_jawab' => auth()->user()->name,
-                'updated_by' => auth()->id()
-            ]);
-
-            // Add history entry
-            $orderPerbaikan->history()->create([
-                'status' => OrderPerbaikan::STATUS_REJECTED,
-                'keterangan' => 'Order ditolak',
-                'created_by' => auth()->id()
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)
-                ->with('success', 'Order berhasil ditolak.');
-
+            $service->reject(auth()->user(), $orderPerbaikan);
+            return redirect()->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil ditolak.');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->with('error', 'Terjadi kesalahan saat menolak order: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menolak order: ' . $e->getMessage());
         }
     }
 
@@ -434,29 +348,12 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function start(OrderPerbaikan $orderPerbaikan)
+    public function start(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
-        DB::beginTransaction();
         try {
-            $orderPerbaikan->update([
-                'status' => 'in_progress',
-                'nama_penanggung_jawab' => auth()->user()->name,
-                'updated_by' => Auth::id(),
-                'started_at' => now()
-            ]);
-
-            $orderPerbaikan->history()->create([
-                'status' => 'in_progress',
-                'follow_up' => 'Pengerjaan order dimulai',
-                'created_by' => Auth::id()
-            ]);
-
-            $orderPerbaikan->creator->notify(new OrderPerbaikanStatusUpdated($orderPerbaikan));
-
-            DB::commit();
+            $service->start(auth()->user(), $orderPerbaikan);
             return redirect()->back()->with('success', 'Order berhasil dimulai.');
         } catch (\Exception $e) {
-            DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
