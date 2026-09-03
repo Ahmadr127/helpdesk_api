@@ -99,7 +99,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{ticket}/confirm', [TicketController::class, 'confirm'])->name('confirm');
         Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
     });
-    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply');
+    // FIX duplicate name user.ticket.reply (sebelumnya bentrok dengan ticket/{ticket}/reply di atas) — ganti jadi user.ticket.reply.legacy agar artisan optimize bisa cache
+    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy');
     Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy');
     
     Route::get('/faq', [FAQController::class, 'index'])->name('user.faq');
