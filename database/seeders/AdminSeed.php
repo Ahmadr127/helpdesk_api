@@ -25,7 +25,7 @@ class AdminSeed extends Seeder
         User::create([
             'name' => 'Admin IT',
             'email' => 'adminIT',
-            'password' => Hash::make('123'),
+            'password' => Hash::make('rsazra'),
             'phone' => '1234567890',
             'position' => 'IT',
             'role' => 'admin',
@@ -36,7 +36,7 @@ class AdminSeed extends Seeder
         User::create([
             'name' => 'Admin Administrasi',
             'email' => 'administrasi2',
-            'password' => Hash::make('1234'),
+            'password' => Hash::make('rsazra'),
             'phone' => '1234567890',
             'position' => 'Administrasi',
             'role' => 'admin',

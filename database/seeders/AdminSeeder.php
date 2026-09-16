@@ -35,7 +35,7 @@ class AdminSeeder extends Seeder
         // Create Admin IT
         User::firstOrCreate(['email' => 'admin'], [
             'name' => 'Admin IT',
-            'password' => Hash::make('123'),
+            'password' => Hash::make('rsazra'),
             'phone' => '1234567890',
             'position' => 'IT',
             'role' => 'admin',
@@ -45,7 +45,7 @@ class AdminSeeder extends Seeder
         ]);
         User::firstOrCreate(['email' => 'administrasi'], [
             'name' => 'Admin Administrasi',
-            'password' => Hash::make('123'),
+            'password' => Hash::make('rsazra'),
             'phone' => '1234567890',
             'position' => 'Administrasi',
             'role' => 'admin',
@@ -54,38 +54,38 @@ class AdminSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
         // Create regular user untuk testing Postman & API
-        User::firstOrCreate(['email' => 'user@rsazra.com'], [
-            'name' => 'User Regular',
-            'password' => Hash::make('123'),
-            'phone' => '08123456789',
-            'position' => 'user',
-            'role' => 'user',
-            'status' => 1,
-            'department' => $itDepartment->code,
-            'email_verified_at' => now(),
-        ]);
-        // Alias untuk kompatibilitas koleksi lama / test: user@example.com
-        User::firstOrCreate(['email' => 'user@example.com'], [
-            'name' => 'User Example',
-            'password' => Hash::make('123'),
-            'phone' => '08123456788',
-            'position' => 'user',
-            'role' => 'user',
-            'status' => 1,
-            'department' => $itDepartment->code,
-            'email_verified_at' => now(),
-        ]);
-        // Additional user with general department
-        $generalDept = Department::firstOrCreate(['code' => 'GENERAL'], ['name' => 'GENERAL']);
-        User::firstOrCreate(['email' => 'user2@rsazra.com'], [
-            'name' => 'User 2',
-            'password' => Hash::make('123'),
-            'phone' => '08123456780',
-            'position' => 'STF_IT',
-            'role' => 'user',
-            'status' => 1,
-            'department' => $generalDept->code,
-            'email_verified_at' => now(),
-        ]);
+        // User::firstOrCreate(['email' => 'user@rsazra.com'], [
+        //     'name' => 'User Regular',
+        //     'password' => Hash::make('rsazra'),
+        //     'phone' => '08123456789',
+        //     'position' => 'user',
+        //     'role' => 'user',
+        //     'status' => 1,
+        //     'department' => $itDepartment->code,
+        //     'email_verified_at' => now(),
+        // ]);
+        // // Alias untuk kompatibilitas koleksi lama / test: user@example.com
+        // User::firstOrCreate(['email' => 'user@example.com'], [
+        //     'name' => 'User Example',
+        //     'password' => Hash::make('rsazra'),
+        //     'phone' => '08123456788',
+        //     'position' => 'user',
+        //     'role' => 'user',
+        //     'status' => 1,
+        //     'department' => $itDepartment->code,
+        //     'email_verified_at' => now(),
+        // ]);
+        // // Additional user with general department
+        // $generalDept = Department::firstOrCreate(['code' => 'GENERAL'], ['name' => 'GENERAL']);
+        // User::firstOrCreate(['email' => 'user2@rsazra.com'], [
+        //     'name' => 'User 2',
+        //     'password' => Hash::make('rsazra'),
+        //     'phone' => '08123456780',
+        //     'position' => 'STF_IT',
+        //     'role' => 'user',
+        //     'status' => 1,
+        //     'department' => $generalDept->code,
+        //     'email_verified_at' => now(),
+        // ]);
     }
 }
