@@ -41,7 +41,7 @@
     @endif
 
     <div class="card bg-white shadow-lg rounded-xl overflow-hidden">
-        <div class="bg-gradient-to-r from-white to-blue-300 p-6">
+        <div class="bg-white p-6 border-b border-gray-100">
             <h2 class="text-xl font-semibold text-gray-800 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -105,9 +105,17 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                        <input type="text" name="email" value="{{ old('email', $user->email) }}" required
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username <span class="text-xs text-gray-500">(login)</span></label>
+                        <input type="text" name="username" value="{{ old('username', $user->username) }}" placeholder="username"
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors">
+                        @error('username')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors">
                         @error('email')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -235,7 +243,7 @@
                     Cancel
                 </a>
                 <button type="submit"
-                    class="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-gray-500 to-blue-500 hover:from-gray-600 hover:to-blue-600 rounded-lg transition-all duration-200 flex items-center shadow-sm">
+                    class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 flex items-center shadow-sm">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>

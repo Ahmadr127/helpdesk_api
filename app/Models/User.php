@@ -20,6 +20,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'phone',
         'position',
@@ -27,6 +28,7 @@ class User extends Authenticatable
         'status',
         'password',
         'department',
+        'department_id',
         'fcm_token',
         'fcm_token_updated_at',
     ];
@@ -88,5 +90,72 @@ class User extends Authenticatable
     public function scopeAdminUmum($query)
     {
         return $query->where('role', 'admin')->whereRaw('LOWER(position) = ?', ['administrasi']);
+    }
+
+    // Permissions relationships & helpers
+    public function permissions()
+    {
+        return $this->belongsToMany(\App\Models\Permission::class, 'permission_user', 'user_id', 'permission_id')->withTimestamps();
+    }
+
+    public function hasPermission(string $slug): bool
+    {
+        // Direct user permission
+        if ($this->relationLoaded('permissions')) {
+            if ($this->permissions->contains('slug', $slug)) return true;
+        } else {
+            if ($this->permissions()->where('slug', $slug)->exists()) return true;
+        }
+        // Role-based permission (via role_permissions table)
+        $role = $this->role;
+        $position = $this->position ? strtolower($this->position) : null;
+        // Check exact role+position, then role wildcard
+        $exists = \Illuminate\Support\Facades\DB::table('role_permissions')
+            ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
+            ->where('permissions.slug', $slug)
+            ->where(function($q) use ($role, $position){
+                $q->where(function($qq) use ($role, $position){
+                    $qq->where('role_permissions.role', $role)
+                       ->whereRaw('LOWER(role_permissions.position) = ?', [$position]);
+                })->orWhere(function($qq) use ($role){
+                    $qq->where('role_permissions.role', $role)
+                       ->whereNull('role_permissions.position');
+                });
+            })->exists();
+        if ($exists) return true;
+        // Fallback: admin IT has all if no permission system seeded yet (graceful)
+        if (\Illuminate\Support\Facades\Schema::hasTable('permissions') && \Illuminate\Support\Facades\DB::table('permissions')->count()===0) {
+            return true;
+        }
+        return false;
+    }
+
+    public function hasAnyPermission(array $slugs): bool
+    {
+        foreach ($slugs as $s) if ($this->hasPermission($s)) return true;
+        return false;
+    }
+
+    public function hasAllPermissions(array $slugs): bool
+    {
+        foreach ($slugs as $s) if (!$this->hasPermission($s)) return false;
+        return true;
+    }
+
+    public function isAdminIT(): bool
+    {
+        return $this->role === 'admin' && strtolower($this->position ?? '') === 'it';
+    }
+    public function isAdminUmum(): bool
+    {
+        return $this->role === 'admin' && strtolower($this->position ?? '') === 'administrasi';
+    }
+
+    /**
+     * Get identifier for login (username or email)
+     */
+    public function getUsernameAttributeForLogin(): string
+    {
+        return $this->username ?? $this->email;
     }
 }

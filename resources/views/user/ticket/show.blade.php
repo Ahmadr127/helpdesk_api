@@ -9,7 +9,7 @@
     <!-- Back Button -->
     <div class="mb-4">
         <a href="{{ route('user.ticket.index') }}"
-            class="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md">
+            class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
                 </path>
@@ -88,7 +88,7 @@
         <div class="lg:col-span-2">
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden ticket-container">
                 <!-- Status Bar -->
-                <div class="bg-gradient-to-r from-green-600 to-blue-400 px-4 py-3 rounded-t-lg">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-4 py-3 rounded-t-lg">
                     <div class="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="px-3 py-1 text-sm leading-5 font-medium rounded-full 
@@ -233,7 +233,7 @@
                                     <!-- Created -->
                                     <div class="relative flex flex-col items-center">
                                         <div
-                                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-green-500 text-white">
+                                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-400 to-blue-500 text-white">
                                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                                                 xmlns="http://www.w3.org/2000/svg">
                                                 <path fill-rule="evenodd"
@@ -304,7 +304,7 @@
                                     @if($ticket->user_confirmed_at)
                                     <div class="relative flex flex-col items-center">
                                         <div
-                                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white">
+                                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                                                 xmlns="http://www.w3.org/2000/svg">
                                                 <path fill-rule="evenodd"
@@ -764,7 +764,7 @@ function openConfirmationModal(action) {
     // Update modal title and button based on action
     if (action === 'confirm') {
         modalTitle.textContent = 'Konfirmasi Penyelesaian Tiket';
-        submitButton.className = 'px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700';
+        submitButton.className = 'px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700';
         submitButton.textContent = 'Konfirmasi';
     } else {
         modalTitle.textContent = 'Laporkan Masalah';

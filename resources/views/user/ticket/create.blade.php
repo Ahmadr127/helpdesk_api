@@ -35,11 +35,11 @@
 
         <div class="">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <!-- Header -->
-                <div class="bg-gradient-to-r from-green-600 to-blue-300 px-6 py-4 flex justify-between items-center">
+                <!-- Header - BLUE theme for Ticket IT -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-white">Buat Tiket Dukungan Baru</h2>
                     <a href="{{ route('user.ticket.index') }}"
-                        class="inline-flex items-center px-4 py-2 bg-green-600 bg-opacity-80 rounded-lg text-white hover:bg-opacity-30 transition-colors">
+                        class="inline-flex items-center px-4 py-2 bg-blue-700 bg-opacity-90 rounded-lg text-white hover:bg-blue-800 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -60,7 +60,7 @@
                             <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi
                                 Masalah</label>
                             <textarea name="description" id="description" rows="4"
-                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 placeholder="Jelaskan masalah yang Anda alami..."
                                 required>{{ old('description') }}</textarea>
                             @error('description')
@@ -74,7 +74,7 @@
                                 <label for="category_id"
                                     class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                                 <select name="category_id" id="category_id"
-                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     required>
                                     <option value="">Pilih Kategori</option>
                                     @foreach($categories as $category)
@@ -91,10 +91,11 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
+                                @if(isset($userDepartment) && $userDepartment)
                                 <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
                                     <div class="flex-1">
-                                        <p class="text-gray-900">{{ $userDepartment->name }}</p>
-                                        <p class="text-xs text-gray-500">Kode: {{ $userDepartment->code }}</p>
+                                        <p class="text-gray-900">{{ $userDepartment->name ?? $userDepartment->code ?? auth()->user()->department }}</p>
+                                        <p class="text-xs text-gray-500">Kode: {{ $userDepartment->code ?? '-' }}</p>
                                     </div>
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -103,6 +104,14 @@
                                     </svg>
                                 </div>
                                 <input type="hidden" name="department_id" value="{{ $userDepartment->id }}">
+                                @else
+                                <div class="flex items-center px-4 py-2 rounded-lg border border-red-200 bg-red-50">
+                                    <div class="flex-1">
+                                        <p class="text-red-700 text-sm">Departemen tidak ditemukan: {{ auth()->user()->department ?? '-' }}</p>
+                                        <p class="text-xs text-red-500">Silakan perbarui di <a href="{{ route('user.settings') }}" class="underline">pengaturan profil</a>.</p>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                         </div>
 
@@ -112,7 +121,7 @@
                                 <label for="location_id"
                                     class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
                                 <select name="location_id" id="location_id"
-                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     required onchange="updateBuilding()">
                                     <option value="">Pilih Lokasi</option>
                                     @foreach($locations as $location)
@@ -149,7 +158,7 @@
                                 <label for="priority"
                                     class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                                 <select name="priority" id="priority"
-                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     required>
                                     <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Rendah</option>
                                     <option value="medium" {{ old('priority') == 'medium' ? 'selected' : '' }}>Sedang
@@ -192,7 +201,7 @@
                                 Batal
                             </a>
                             <button type="submit"
-                                class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                                 Buat Tiket
                             </button>
                         </div>

@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             MasterDataSeeder::class,
             UnitProsesSeeder::class,
             AdminSeeder::class,
+            PermissionSeeder::class,
         ]);
     }
 }

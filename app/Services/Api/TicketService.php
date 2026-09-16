@@ -82,9 +82,41 @@ class TicketService
             throw new \Exception('Mohon lengkapi data departemen Anda terlebih dahulu.');
         }
 
-        $userDepartment = Department::where('code', $user->department)->first();
+        // Robust lookup: support department_id FK, code, name, and case-insensitive match
+        $userDepartment = null;
+        if (!empty($user->department_id)) {
+            $userDepartment = Department::find($user->department_id);
+        }
+        if (!$userDepartment && $user->department) {
+            $deptValue = $user->department;
+            $userDepartment = Department::where('code', $deptValue)->first()
+                ?? Department::where('name', $deptValue)->first()
+                ?? Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                ?? Department::whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        }
         if (!$userDepartment) {
-            throw new \Exception('Data departemen tidak ditemukan.');
+            // Last resort: try to auto-create from the raw department string (imported SIMUTU nama_unit)
+            if (!empty($user->department)) {
+                $deptValue = trim($user->department);
+                $exists = Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])
+                    ->orWhereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+                if ($exists) {
+                    $userDepartment = $exists;
+                } else {
+                    try {
+                        $userDepartment = Department::create([
+                            'code' => strtoupper(str_replace(' ', '_', $deptValue)),
+                            'name' => $deptValue,
+                            'status' => 1,
+                        ]);
+                    } catch (\Throwable $e) {
+                        \Log::warning('TicketService auto-create department failed: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
+        if (!$userDepartment) {
+            throw new \Exception('Data departemen "' . $user->department . '" tidak ditemukan di master data. Silakan perbarui departemen di pengaturan profil.');
         }
 
         $location = Location::with('building')->findOrFail($data['location_id']);

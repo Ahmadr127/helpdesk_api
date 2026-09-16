@@ -27,7 +27,7 @@ function previewImage(input) {
 <div class="container mx-auto max-w-6xl p-2 mt-6">
     <div class="bg-white rounded-lg shadow-lg mb-4">
         <!-- Header Section -->
-        <div class="bg-gradient-to-r from-green-400 to-blue-300 p-3 rounded-t-lg">
+        <div class="bg-gradient-to-r from-green-600 to-emerald-400 p-3 rounded-t-lg">
             <div class="flex justify-between items-center">
                 <h1 class="text-xl font-semibold text-white">Edit Order Perbaikan</h1>
                 <a href="{{ route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan) }}"
@@ -92,7 +92,7 @@ function previewImage(input) {
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang</label>
                         <select name="jenis_barang"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                             <option value="Umum"
                                 {{ old('jenis_barang', $orderPerbaikan->jenis_barang) === 'Umum' ? 'selected' : '' }}>
                                 Umum</option>
@@ -104,7 +104,7 @@ function previewImage(input) {
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                         <select name="prioritas"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                             <option value="RENDAH"
                                 {{ old('prioritas', $orderPerbaikan->prioritas) === 'RENDAH' ? 'selected' : '' }}>RENDAH
                             </option>
@@ -123,13 +123,13 @@ function previewImage(input) {
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
                         <input type="text" name="kode_inventaris"
                             value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
                         <input type="text" name="nama_barang"
                             value="{{ old('nama_barang', $orderPerbaikan->nama_barang) }}"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                     </div>
                 </div>
 
@@ -137,7 +137,7 @@ function previewImage(input) {
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
                         <select name="lokasi"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                             @foreach($locations as $location)
                             <option value="{{ $location->id }}"
                                 {{ old('lokasi', $orderPerbaikan->lokasi) == $location->id ? 'selected' : '' }}>
@@ -150,7 +150,7 @@ function previewImage(input) {
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
                         <textarea name="keluhan" rows="1"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-blue-500 focus:border-blue-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
                     </div>
                 </div>
 
@@ -203,11 +203,11 @@ function previewImage(input) {
             <!-- Submit Buttons -->
             <div class="flex justify-end space-x-2 pt-2">
                 <a href="{{ route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan) }}"
-                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Batal
                 </a>
                 <button type="submit"
-                    class="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    class="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Simpan Perubahan
                 </button>
             </div>

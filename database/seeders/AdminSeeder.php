@@ -54,16 +54,16 @@ class AdminSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
         // Create regular user untuk testing Postman & API
-        // User::firstOrCreate(['email' => 'user@rsazra.com'], [
-        //     'name' => 'User Regular',
-        //     'password' => Hash::make('rsazra'),
-        //     'phone' => '08123456789',
-        //     'position' => 'user',
-        //     'role' => 'user',
-        //     'status' => 1,
-        //     'department' => $itDepartment->code,
-        //     'email_verified_at' => now(),
-        // ]);
+        User::firstOrCreate(['email' => 'user@rsazra.com'], [
+            'name' => 'User Regular',
+            'password' => Hash::make('rsazra'),
+            'phone' => '08123456789',
+            'position' => 'user',
+            'role' => 'user',
+            'status' => 1,
+            'department' => $itDepartment->code,
+            'email_verified_at' => now(),
+        ]);
         // // Alias untuk kompatibilitas koleksi lama / test: user@example.com
         // User::firstOrCreate(['email' => 'user@example.com'], [
         //     'name' => 'User Example',

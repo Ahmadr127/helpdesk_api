@@ -58,13 +58,24 @@
                         </div>
 
                         <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="email">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="username">
                                 Username
                             </label>
                             <input
                                 class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                                id="email" type="text" name="email" value="{{ old('email') }}"
-                                placeholder="Enter your username" required>
+                                id="username" type="text" name="username" value="{{ old('username') }}"
+                                placeholder="Enter your username (optional, auto from email if empty)">
+                            <p class="text-xs text-gray-500 mt-1">Kosongkan akan generate otomatis dari email</p>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="email">
+                                Email
+                            </label>
+                            <input
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                id="email" type="email" name="email" value="{{ old('email') }}"
+                                placeholder="Enter your email" required>
                         </div>
 
                         <div class="mb-6">

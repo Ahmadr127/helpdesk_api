@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-6">
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <!-- Header with back button -->
-        <div class="bg-gradient-to-r from-blue-200 to-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">
+        <div class="bg-gradient-to-r from-green-200 to-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">
             <div class="flex items-center">
                 <a href="{{ route('administrasi-umum.order-perbaikan.index') }}"
                     class="mr-4 text-gray-700 hover:text-gray-900">
@@ -40,7 +40,7 @@
         <!-- Advanced Filter Form -->
         <div class="mb-6">
             <form id="filterForm" action="{{ route('administrasi-umum.order-perbaikan.total') }}" method="GET"
-                class="bg-gradient-to-r from-blue-200 to-gray-200 p-4 rounded-lg border border-gray-200">
+                class="bg-gradient-to-r from-green-200 to-gray-200 p-4 rounded-lg border border-gray-200">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Date Range -->
                     <div>
@@ -97,7 +97,7 @@
         <!-- Orders Table -->
         <div class="overflow-x-auto rounded-lg border border-gray-200">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gradient-to-r from-blue-200 to-gray-200 border-b border-gray-200 rounded-t-lg">
+                <thead class="bg-gradient-to-r from-green-200 to-gray-200 border-b border-gray-200 rounded-t-lg">
                     <tr>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">No.

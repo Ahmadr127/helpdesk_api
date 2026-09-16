@@ -7,9 +7,9 @@
 @include('user.partials.notification')
 
 <div class="container mx-auto px-4 py-8 max-w-8xl">
-    <!-- Filter Section -->
+    <!-- Filter Section - BLUE theme -->
     <div class="mb-8 rounded-xl shadow-sm bg-white border border-gray-100 overflow-hidden">
-        <div class="bg-gradient-to-r from-green-600 to-blue-200 px-5 py-4 mb-5">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-5 py-4 mb-5">
             <h2 class="text-lg font-semibold text-white">Filter Tiket</h2>
         </div>
         <div class="p-5">
@@ -18,7 +18,7 @@
                     <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
                     <div class="relative">
                         <select name="category" id="category"
-                            class="w-full md:w-48 px-4 py-2.5 border border-gray-200 rounded-lg appearance-none pr-10 bg-white focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
+                            class="w-full md:w-48 px-4 py-2.5 border border-gray-200 rounded-lg appearance-none pr-10 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors">
                             <option value="">Semua Kategori</option>
                             @foreach($categories as $category)
                             <option value="{{ $category->name }}"
@@ -43,7 +43,7 @@
                     <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">Prioritas</label>
                     <div class="relative">
                         <select name="priority" id="priority"
-                            class="w-full md:w-48 px-4 py-2.5 border border-gray-200 rounded-lg appearance-none pr-10 bg-white focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
+                            class="w-full md:w-48 px-4 py-2.5 border border-gray-200 rounded-lg appearance-none pr-10 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors">
                             <option value="">Semua Prioritas</option>
                             <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>Tinggi</option>
                             <option value="medium" {{ request('priority') == 'medium' ? 'selected' : '' }}>Sedang
@@ -64,7 +64,7 @@
 
                 <div class="w-full md:w-auto flex items-end">
                     <button type="submit"
-                        class="bg-green-500 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                         Terapkan Filter
                     </button>
                     @if(request('category') || request('priority'))
@@ -83,7 +83,7 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-semibold text-gray-800">Tiket Dukungan</h1>
             <a href="{{ route('user.ticket.create') }}"
-                class="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors shadow-sm flex items-center">
+                class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                     xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-            <div class="bg-gradient-to-r from-green-600 to-blue-200 px-6 py-4">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4">
                 <h2 class="text-base font-semibold text-white">Tiket Aktif</h2>
             </div>
             <div class="overflow-x-auto">
@@ -272,7 +272,7 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-            <div class="bg-gradient-to-r from-green-600 to-blue-200 px-6 py-4">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4">
                 <h2 class="text-base font-semibold text-white">Tiket Selesai</h2>
             </div>
 
@@ -301,7 +301,7 @@
                     @forelse($confirmedTickets as $ticket)
                     <div
                         class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden">
-                        <div class="bg-gradient-to-r from-green-600 to-blue-200 p-4">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-400 p-4">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold text-white">#{{ $ticket->ticket_number }}</h3>
                                 <span

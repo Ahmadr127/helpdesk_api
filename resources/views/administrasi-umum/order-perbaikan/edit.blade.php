@@ -7,7 +7,7 @@
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <!-- Header with back button -->
         <div
-            class="bg-gradient-to-r from-blue-200 to-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">
+            class="bg-gradient-to-r from-green-200 to-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">
             <div class="flex items-center">
                 <a href="{{ route('administrasi-umum.order-perbaikan.index') }}"
                     class="mr-4 text-gray-700 hover:text-gray-900">

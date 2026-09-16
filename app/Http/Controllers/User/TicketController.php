@@ -55,8 +55,51 @@ class TicketController extends Controller
         $buildings = Building::where('status', 1)->get();
         $locations = Location::where('status', 1)->with('building')->get();
 
-        // Get the authenticated user's department
-        $userDepartment = Department::where('code', auth()->user()->department)->first();
+        // Get the authenticated user's department — robust lookup (support code, name, case-insensitive, and department_id)
+        $user = auth()->user();
+        $deptValue = $user->department;
+        $userDepartment = null;
+
+        // Prefer department_id FK if present and valid
+        if (!empty($user->department_id)) {
+            $userDepartment = Department::find($user->department_id);
+        }
+
+        if (!$userDepartment && $deptValue) {
+            $userDepartment = Department::where('code', $deptValue)->first()
+                ?? Department::where('name', $deptValue)->first()
+                ?? Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                ?? Department::whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        }
+
+        // Graceful fallback instead of 500: redirect to settings if department not resolvable
+        if (!$userDepartment) {
+            // Auto-create missing department on-the-fly to unblock user (code=name=deptValue)
+            // Only if deptValue looks like a valid identifier and not empty
+            if ($deptValue && is_string($deptValue)) {
+                try {
+                    // Avoid duplicate code — check again case-insensitive
+                    $exists = Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])
+                        ->orWhereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+                    if ($exists) {
+                        $userDepartment = $exists;
+                    } else {
+                        $userDepartment = Department::create([
+                            'code' => strtoupper(str_replace(' ', '_', trim($deptValue))),
+                            'name' => trim($deptValue),
+                            'status' => 1,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('Auto-create department failed for value ' . $deptValue . ': ' . $e->getMessage());
+                }
+            }
+        }
+
+        if (!$userDepartment) {
+            return redirect()->route('user.settings')
+                ->with('error', 'Departemen "' . e($deptValue) . '" tidak ditemukan di master data. Silakan perbarui departemen Anda di pengaturan profil atau hubungi administrator.');
+        }
 
         return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
     }

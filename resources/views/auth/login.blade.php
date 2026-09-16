@@ -34,7 +34,7 @@
     <div class="min-h-screen flex items-center justify-center p-6 lg:p-8 ">
         <div class="w-full max-w-6xl auth-container rounded-2xl shadow-lg flex overflow-hidden">
             <!-- Left Side - Image with Gradient -->
-            <div class="hidden lg:block lg:w-1/2 bg-gradient-to-r from-blue-100 to-white relative">
+            <div class="hidden lg:block lg:w-1/2 bg-blue-100 relative">
                 <div class="absolute inset-0 bg-opacity-60 flex items-center justify-center">
                     <img src="{{ asset('images/logoazra.png') }}" alt="Logo" class="w-3/4 h-auto">
                 </div>
@@ -61,16 +61,20 @@
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
                         <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="email">
-                                Username
+                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="login">
+                                Username / Email
                             </label>
                             <input
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors @error('email') border-red-500 @enderror"
-                                id="email" type="text" name="email" value="{{ old('email') }}"
-                                placeholder="Masukkan username" required>
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors @error('login') border-red-500 @enderror @error('email') border-red-500 @enderror"
+                                id="login" type="text" name="login" value="{{ old('login', old('email')) }}"
+                                placeholder="Masukkan username atau email" required autofocus>
+                            @error('login')
+                            <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
+                            @enderror
                             @error('email')
                             <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
                             @enderror
+                            <p class="text-xs text-gray-500 mt-1">Gunakan <strong>username</strong> atau email untuk login</p>
                         </div>
 
                         <div class="mb-6">

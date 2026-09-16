@@ -20,34 +20,73 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|string',
+            'login' => 'required|string',
             'password' => 'required'
         ]);
 
-        $email = $request->email;
+        $login = trim($request->input('login'));
+        $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL) !== false;
+
+        // Backwards compat: support old field name 'email'
+        if (empty($login) && $request->filled('email')) {
+            $login = trim($request->input('email'));
+            $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL) !== false;
+        }
         
-        // Check user status before login
-        $user = User::where('email', $email)->first();
+        // Check user status before login - search by username OR email
+        $userQuery = User::query();
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'username')) {
+            $userQuery->where(function($q) use ($login, $isEmail){
+                if ($isEmail) {
+                    $q->where('email', $login)->orWhere('username', $login);
+                } else {
+                    $q->where('username', $login)->orWhere('email', $login);
+                }
+            });
+        } else {
+            $userQuery->where('email', $login);
+        }
+        $user = $userQuery->first();
 
         if (!$user) {
             return back()->withErrors([
+                'login' => 'Username tidak ditemukan.',
                 'email' => 'Username tidak ditemukan.',
             ])->withInput($request->except('password'));
         }
 
-        if ($user->status === 0) {
+        if ((int)$user->status === 0) {
             return back()->withErrors([
+                'login' => 'Akun anda telah dinonaktifkan. Silahkan hubungi administrator.',
                 'email' => 'Akun anda telah dinonaktifkan. Silahkan hubungi administrator.',
             ])->withInput($request->except('password'));
         }
 
-        if (Auth::attempt(['email' => $email, 'password' => $request->password])) {
-            $request->session()->regenerate();
-            
-            return $this->redirectBasedOnRole(Auth::user());
+        // Determine credentials for Auth::attempt
+        $credentials = ['password' => $request->password];
+        // Try username first if input is not email and username column exists
+        $attempts = [];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'username')) {
+            if ($isEmail) {
+                $attempts[] = ['email' => $login, 'password' => $request->password];
+                $attempts[] = ['username' => $login, 'password' => $request->password];
+            } else {
+                $attempts[] = ['username' => $login, 'password' => $request->password];
+                $attempts[] = ['email' => $login, 'password' => $request->password];
+            }
+        } else {
+            $attempts[] = ['email' => $login, 'password' => $request->password];
+        }
+
+        foreach ($attempts as $cred) {
+            if (Auth::attempt($cred)) {
+                $request->session()->regenerate();
+                return $this->redirectBasedOnRole(Auth::user());
+            }
         }
 
         return back()->withErrors([
+            'login' => 'Username atau password salah.',
             'email' => 'Username atau password salah.',
         ])->withInput($request->except('password'));
     }

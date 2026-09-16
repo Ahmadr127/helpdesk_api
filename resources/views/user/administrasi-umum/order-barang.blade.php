@@ -8,17 +8,17 @@
 <div class="min-h-screen bg-gradient-to-r from-green-50 to-blue-50 pb-24">
     <div class="container mx-auto px-4 py-6">
         <!-- Header Halaman dengan Filter -->
-        <div class="mb-6 bg-white bg-gradient-to-r from-green-600 to-blue-300 rounded-lg p-6 shadow-sm">
+        <div class="mb-6 bg-green-600 rounded-lg p-6 shadow-sm">
             <div class="flex flex-col space-y-4">
                 <!-- Judul dan Tombol Aksi -->
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-3xl font-bold text-white">Order Perbaikan</h1>
+                        <h1 class="text-3xl font-bold text-white">Order Maintenance</h1>
                         <p class="mt-2 text-sm text-white">Kelola permintaan perbaikan barang dan peralatan</p>
                     </div>
                     <div class="flex space-x-3">
                         <a href="{{ route('user.administrasi-umum.order-barang.konfirmasi') }}"
-                            class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
+                            class="inline-flex items-center px-4 py-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-lg">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M5 13l4 4L19 7"></path>
@@ -33,14 +33,14 @@
                             </svg>
                             Order Ditolak
                         </a>
-                        <button onclick="showNewOrderForm()"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition duration-150 ease-in-out shadow-sm hover:shadow transform hover:-translate-y-0.5">
+                        <a href="{{ route('user.administrasi-umum.order-perbaikan.create') }}"
+                            class="inline-flex items-center px-4 py-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-lg transition duration-150 ease-in-out shadow-sm hover:shadow transform hover:-translate-y-0.5">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 4v16m8-8H4"></path>
                             </svg>
                             Buat Order Baru
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -103,7 +103,7 @@
         <!-- Open Orders Table Card -->
         <div class="bg-white rounded-lg shadow-sm">
             <!-- Table Header Card -->
-            <div class="bg-gradient-to-r from-green-600 to-blue-200 p-4 rounded-t-lg">
+            <div class="bg-green-600 p-4 rounded-t-lg">
                 <h2 class="text-xl font-semibold text-white">Daftar Order</h2>
                 <p class="text-sm text-white opacity-80">Kelola dan pantau status order Anda</p>
             </div>
@@ -161,13 +161,13 @@
                 </div>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Belum Ada Order</h3>
                 <p class="text-gray-500 mb-6">Mulai dengan membuat order perbaikan baru</p>
-                <button onclick="showNewOrderForm()"
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition duration-150 ease-in-out transform hover:-translate-y-0.5">
+                <a href="{{ route('user.administrasi-umum.order-perbaikan.create') }}"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition duration-150 ease-in-out transform hover:-translate-y-0.5">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Buat Order Baru
-                </button>
+                </a>
             </div>
         </div>
     </div>

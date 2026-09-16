@@ -64,8 +64,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
     Route::get('/information', [InformationController::class, 'index'])->name('user.information');
     
-    // User Administrasi Umum routes
-    Route::prefix('user/administrasi-umum')->name('user.administrasi-umum.')->group(function () {
+    // User Administrasi Umum routes - GREEN theme (Maintenance) permission protected
+    Route::prefix('user/administrasi-umum')->name('user.administrasi-umum.')->middleware('permission:order.view')->group(function () {
         Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'index'])->name('index');
         Route::get('/order-barang', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarang'])->name('order-barang');
         Route::get('/order-barang/konfirmasi', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarangKonfirmasi'])->name('order-barang.konfirmasi');
@@ -74,25 +74,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/formulir', [App\Http\Controllers\User\AdministrasiUmumController::class, 'formulir'])->name('formulir');
         Route::get('/prosedur', [App\Http\Controllers\User\AdministrasiUmumController::class, 'prosedur'])->name('prosedur');
         
-        // Order Perbaikan Routes
+        // Order Perbaikan Routes - page terpisah for create (GREEN)
         Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
             Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'indexOrderPerbaikan'])->name('index');
-            Route::get('/create', [App\Http\Controllers\User\AdministrasiUmumController::class, 'createOrderPerbaikan'])->name('create');
-            Route::post('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'storeOrderPerbaikan'])->name('store');
+            Route::get('/create', [App\Http\Controllers\User\AdministrasiUmumController::class, 'createOrderPerbaikan'])->name('create')->middleware('permission:order.create');
+            Route::post('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'storeOrderPerbaikan'])->name('store')->middleware('permission:order.create');
             Route::get('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'showOrderPerbaikan'])->name('show');
-            Route::get('/{orderPerbaikan}/edit', [App\Http\Controllers\User\AdministrasiUmumController::class, 'editOrderPerbaikan'])->name('edit');
-            Route::put('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'updateOrderPerbaikan'])->name('update');
-            Route::delete('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'deleteOrderPerbaikan'])->name('delete');
+            Route::get('/{orderPerbaikan}/edit', [App\Http\Controllers\User\AdministrasiUmumController::class, 'editOrderPerbaikan'])->name('edit')->middleware('permission:order.edit.own|order.manage');
+            Route::put('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'updateOrderPerbaikan'])->name('update')->middleware('permission:order.edit.own|order.manage');
+            Route::delete('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'deleteOrderPerbaikan'])->name('delete')->middleware('permission:order.edit.own|order.manage');
         });
     });
 
-    Route::prefix('ticket')->name('user.ticket.')->group(function () {
+    Route::prefix('ticket')->name('user.ticket.')->middleware('permission:ticket.view')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');
-        Route::get('/create', [TicketController::class, 'create'])->name('create');
-        Route::post('/store', [TicketController::class, 'store'])->name('store');
+        Route::get('/create', [TicketController::class, 'create'])->name('create')->middleware('permission:ticket.create');
+        Route::post('/store', [TicketController::class, 'store'])->name('store')->middleware('permission:ticket.create');
         Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
-        Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit');
-        Route::put('/{ticket}', [TicketController::class, 'update'])->name('update');
+        Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit')->middleware('permission:ticket.edit.own|ticket.manage');
+        Route::put('/{ticket}', [TicketController::class, 'update'])->name('update')->middleware('permission:ticket.edit.own|ticket.manage');
         Route::get('/status/{status}', [TicketController::class, 'filterByStatus'])
             ->name('filter.status')
             ->where('status', 'all|open|pending|in_progress|closed|confirmed');
@@ -100,11 +100,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
     });
     // FIX duplicate name user.ticket.reply (sebelumnya bentrok dengan ticket/{ticket}/reply di atas) — ganti jadi user.ticket.reply.legacy agar artisan optimize bisa cache
-    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy');
-    Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy');
+    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy')->middleware('permission:ticket.view');
+    Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy')->middleware('permission:ticket.edit.own|ticket.manage');
     
-    Route::get('/faq', [FAQController::class, 'index'])->name('user.faq');
-    Route::get('/knowledge-base', [KnowledgeBaseController::class, 'index'])->name('user.knowledge-base');
+    Route::get('/faq', [FAQController::class, 'index'])->name('user.faq')->middleware('permission:faq.view');
+    Route::get('/knowledge-base', [KnowledgeBaseController::class, 'index'])->name('user.knowledge-base')->middleware('permission:knowledge.view');
     Route::get('/profile', [UserController::class, 'profile'])->name('user.profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
     Route::put('/change-password', [UserController::class, 'changePassword'])->name('user.password.update');
@@ -117,37 +117,48 @@ Route::middleware(['auth'])->group(function () {
     
     // Admin routes
     Route::prefix('admin')->name('admin.')->middleware(AdminMiddleware::class)->group(function () {
-        // Dashboard
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        // Dashboard - IT blue theme, requires permission
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard')->middleware('permission:admin.dashboard|ticket.manage');
         
-        // Master Data Routes
-        Route::prefix('master')->name('master.')->group(function () {
+        // Permission Management
+        Route::prefix('permissions')->name('permissions.')->middleware('permission:user.manage')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\PermissionController::class, 'store'])->name('store');
+            Route::delete('/{permission}', [\App\Http\Controllers\Admin\PermissionController::class, 'destroy'])->name('destroy');
+            Route::post('/role', [\App\Http\Controllers\Admin\PermissionController::class, 'updateRole'])->name('role.update');
+            Route::put('/user/{user}', [\App\Http\Controllers\Admin\PermissionController::class, 'updateUser'])->name('user.update');
+        });
+        
+        // Master Data Routes - GREEN not for admin IT? Keep BLUE for IT but permission protected
+        Route::prefix('master')->name('master.')->middleware('permission:master.view|master.manage')->group(function () {
             Route::get('/', [MasterDataController::class, 'index'])->name('index');
-            Route::resource('categories', CategoryController::class);
-            Route::resource('departments', DepartmentController::class);
-            Route::resource('buildings', BuildingController::class);
-            Route::resource('locations', LocationController::class);
-            Route::resource('unit-proses', UnitProsesController::class);
-            Route::resource('positions', PositionController::class);
-            Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status');
+            Route::resource('categories', CategoryController::class)->middleware('permission:master.manage');
+            Route::resource('departments', DepartmentController::class)->middleware('permission:master.manage');
+            Route::resource('buildings', BuildingController::class)->middleware('permission:master.manage');
+            Route::resource('locations', LocationController::class)->middleware('permission:master.manage');
+            Route::resource('unit-proses', UnitProsesController::class)->middleware('permission:master.manage');
+            Route::resource('positions', PositionController::class)->middleware('permission:master.manage');
+            Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status')->middleware('permission:master.manage');
             
             // Bulk action dan update limit routes
-            Route::post('/{type}/bulk-action', [MasterDataController::class, 'bulkAction'])->name('bulk-action');
-            Route::post('/{type}/update-limit', [MasterDataController::class, 'updateLimit'])->name('update-limit');
-            Route::post('/save-settings', [MasterDataController::class, 'saveSettings'])->name('saveSettings');
+            Route::post('/{type}/bulk-action', [MasterDataController::class, 'bulkAction'])->name('bulk-action')->middleware('permission:master.manage');
+            Route::post('/{type}/update-limit', [MasterDataController::class, 'updateLimit'])->name('update-limit')->middleware('permission:master.manage');
+            Route::post('/save-settings', [MasterDataController::class, 'saveSettings'])->name('saveSettings')->middleware('permission:master.manage');
             Route::get('/{type}/data', [MasterDataController::class, 'getData'])->name('getData');
         });
 
-        // User Management routes
-        Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
-        Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
-        Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+        // User Management routes - permission protected
+        Route::middleware('permission:user.view|user.manage')->group(function(){
+            Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+            Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create')->middleware('permission:user.manage');
+            Route::post('/users', [UserManagementController::class, 'store'])->name('users.store')->middleware('permission:user.manage');
+            Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit')->middleware('permission:user.manage');
+            Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update')->middleware('permission:user.manage');
+            Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy')->middleware('permission:user.manage');
+        });
         
-        // Admin ticket routes
-        Route::prefix('tickets')->name('tickets.')->group(function () {
+        // Admin ticket routes - BLUE theme (ticket IT) permission protected
+        Route::prefix('tickets')->name('tickets.')->middleware('permission:ticket.manage')->group(function () {
             Route::get('/all', [TicketAdminController::class, 'all'])->name('all');
             Route::get('/open', [TicketAdminController::class, 'open'])->name('open');
             Route::get('/in-progress', [TicketAdminController::class, 'inProgress'])->name('in-progress');
@@ -163,8 +174,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{ticket}/respond', [TicketAdminController::class, 'respond'])->name('respond');
         });
 
-        // Admin ticket routes
-        Route::prefix('ticket')->name('ticket.')->group(function () {
+        // Admin ticket routes (legacy) - BLUE
+        Route::prefix('ticket')->name('ticket.')->middleware('permission:ticket.manage')->group(function () {
             Route::get('/', [TicketController::class, 'index'])->name('index');
             Route::get('/create', [TicketController::class, 'create'])->name('create');
             Route::post('/store', [TicketController::class, 'store'])->name('store');
@@ -175,28 +186,28 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{ticket}/confirm', [TicketController::class, 'confirm'])->name('confirm');
         });
 
-        // Reports routes
-        Route::prefix('reports')->name('reports.')->group(function () {
+        // Reports routes - permission protected
+        Route::prefix('reports')->name('reports.')->middleware('permission:report.view|report.manage')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
             Route::get('/{report}/screenshot', [ReportController::class, 'viewScreenshot'])->name('view-screenshot');
             Route::get('/{report}/download', [ReportController::class, 'download'])->name('download');
-            Route::post('/generate', [ReportController::class, 'generate'])->name('generate');
-            Route::delete('/{report}', [ReportController::class, 'destroy'])->name('destroy');
+            Route::post('/generate', [ReportController::class, 'generate'])->name('generate')->middleware('permission:report.manage');
+            Route::delete('/{report}', [ReportController::class, 'destroy'])->name('destroy')->middleware('permission:report.manage');
         });
 
-        // Report SIRS routes
-        Route::prefix('report-sirs')->name('report-sirs.')->group(function () {
+        // Report SIRS routes - BLUE theme
+        Route::prefix('report-sirs')->name('report-sirs.')->middleware('permission:report.sirs|report.manage')->group(function () {
             Route::get('/', [ReportSirsController::class, 'index'])->name('index');
             Route::post('/export', [ReportSirsController::class, 'export'])->name('export');
         });
         
-        // Feedback routes
-        Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
-        Route::post('/feedback/{feedback}/reply', [FeedbackController::class, 'reply'])->name('feedback.reply');
-        Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
+        // Feedback routes - permission protected
+        Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index')->middleware('permission:feedback.view|feedback.manage');
+        Route::post('/feedback/{feedback}/reply', [FeedbackController::class, 'reply'])->name('feedback.reply')->middleware('permission:feedback.manage');
+        Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('feedback.destroy')->middleware('permission:feedback.manage');
 
-        // Admin Notifications routes
-        Route::prefix('notifications')->name('notifications.')->group(function () {
+        // Admin Notifications routes - permission
+        Route::prefix('notifications')->name('notifications.')->middleware('permission:notification.view')->group(function () {
             Route::get('/', [AdminNotificationController::class, 'index'])->name('index');
             Route::post('/{id}/mark-as-read', [AdminNotificationController::class, 'markAsRead'])->name('mark-as-read');
             Route::post('/mark-all-as-read', [AdminNotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
@@ -214,8 +225,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('tickets/history/export', [TicketAdminController::class, 'exportHistory'])->name('tickets.history.export');
         Route::get('tickets/history/{ticket}', [TicketAdminController::class, 'historyShow'])->name('tickets.history.show');
 
-        // FCM Monitoring - Manual Logs/Jobs/FCM/Notifications
-        Route::prefix('fcm')->name('fcm.')->group(function () {
+        // FCM Monitoring - Manual Logs/Jobs/FCM/Notifications - BLUE
+        Route::prefix('fcm')->name('fcm.')->middleware('permission:fcm.manage')->group(function () {
             Route::get('/', [FcmMonitoringController::class, 'index'])->name('index');
             Route::get('/logs', [FcmMonitoringController::class, 'logs'])->name('logs');
             Route::post('/logs/clear', [FcmMonitoringController::class, 'clearLog'])->name('logs.clear');
@@ -245,13 +256,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/fcm/jobs/flush', [FcmMonitoringController::class, 'flushFailed'])->name('fcm.jobs.flushFailed')->middleware(AdminMiddleware::class);
 });
 
-// Administrasi Umum Routes
-Route::prefix('administrasi-umum')->name('administrasi-umum.')->middleware(AdministrasiUmumMiddleware::class)->group(function () {
+// Administrasi Umum Routes - GREEN theme IPSRS, permission protected
+Route::prefix('administrasi-umum')->name('administrasi-umum.')->middleware([AdministrasiUmumMiddleware::class, 'permission:ipsrs.dashboard|order.manage'])->group(function () {
     Route::get('/', [AdministrasiUmumDashboardController::class, 'index'])->name('dashboard');
     Route::get('/stats', [AdministrasiUmumDashboardController::class, 'stats'])->name('dashboard.stats');
     
-    // Order Perbaikan routes
-    Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
+    // Order Perbaikan routes - GREEN IPSRS, permission order.manage
+    Route::prefix('order-perbaikan')->name('order-perbaikan.')->middleware('permission:order.manage')->group(function () {
         Route::get('/', [OrderPerbaikanController::class, 'index'])->name('index');
         Route::get('/filter/{type}/{value}', [OrderPerbaikanController::class, 'filterOrders'])->name('filter');
         Route::get('/in-progress', [OrderPerbaikanController::class, 'inProgress'])->name('in-progress');

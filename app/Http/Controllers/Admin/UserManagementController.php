@@ -54,7 +54,8 @@ class UserManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|max:255|unique:users',
+            'username' => 'nullable|string|max:255|unique:users,username',
+            'email' => 'required|string|max:255|unique:users,email',
             'password' => ['required', 'string', 'confirmed', 'min:3'],
             'role' => 'required|in:admin,user',
             'department' => ['required','string','max:255', function($attr,$val,$fail){
@@ -63,14 +64,23 @@ class UserManagementController extends Controller
             'status' => 'required|boolean',
             'phone' => 'required|string|max:20',
             'position' => ['required','string','max:255', function($attr,$val,$fail){
-                // imported position dari SIMUTU (nama_role) mungkin belum ada di positions, izinkan tapi cek jika ada maka valid, jika tidak tetap izinkan untuk kompatibilitas import
-                // jika ingin strict: if (!Position::where('code',$val)->orWhere('name',$val)->exists()) $fail('Position tidak valid.');
                 if (empty($val)) $fail('Position wajib diisi.');
             }],
         ]);
 
+        // Auto-generate username if not provided
+        $username = $validated['username'] ?? null;
+        if (empty($username)) {
+            $base = explode('@', $validated['email'])[0];
+            $base = preg_replace('/[^A-Za-z0-9._-]/', '', strtolower($base));
+            $username = $base;
+            $i=1;
+            while (User::where('username', $username)->exists()) { $username = $base.$i++; }
+        }
+
         $user = User::create([
             'name' => $validated['name'],
+            'username' => $username,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
@@ -98,6 +108,7 @@ class UserManagementController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:255',
+            'username' => ['nullable', 'string','max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role' => 'required|in:admin,user',
             'department' => ['required','string','max:255', function($attr,$val,$fail){
@@ -116,7 +127,7 @@ class UserManagementController extends Controller
 
         $validated = $request->validate($rules);
 
-        $user->update([
+        $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
@@ -124,7 +135,19 @@ class UserManagementController extends Controller
             'status' => (int)$validated['status'],
             'phone' => $validated['phone'],
             'position' => $validated['position']
-        ]);
+        ];
+        if (!empty($validated['username'])) {
+            $updateData['username'] = $validated['username'];
+        } elseif (empty($user->username)) {
+            // auto-generate if still empty
+            $base = explode('@', $validated['email'])[0];
+            $base = preg_replace('/[^A-Za-z0-9._-]/', '', strtolower($base));
+            $username = $base; $i=1;
+            while (User::where('username', $username)->where('id','!=',$user->id)->exists()) { $username = $base.$i++; }
+            $updateData['username'] = $username;
+        }
+
+        $user->update($updateData);
 
         if ($request->filled('password')) {
             $user->update([

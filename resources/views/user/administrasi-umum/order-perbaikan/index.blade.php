@@ -17,7 +17,7 @@
     </div>
 
     <h2 class="my-6 text-2xl font-semibold text-gray-700">
-        Order Perbaikan
+        Order Maintenance
     </h2>
 
     <!-- Statistics Cards -->
@@ -68,17 +68,17 @@
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700">Tanggal Mulai</label>
                     <input type="date" name="start_date" value="{{ request('start_date') }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700">Tanggal Berakhir</label>
                     <input type="date" name="end_date" value="{{ request('end_date') }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700">Nomor Order</label>
                     <input type="text" name="order_number" value="{{ request('order_number') }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
                         placeholder="Cari nomor order...">
                 </div>
             </div>
@@ -88,7 +88,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Status</label>
                     <select name="status"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
                         <option value="">Semua Status</option>
                         <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
                         <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Diproses
@@ -102,7 +102,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Prioritas</label>
                     <select name="priority"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
                         <option value="">Semua Prioritas</option>
                         <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>Rendah</option>
                         <option value="medium" {{ request('priority') == 'medium' ? 'selected' : '' }}>Sedang</option>
@@ -112,7 +112,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Departemen</label>
                     <select name="department"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
                         <option value="">Semua Departemen</option>
                         @foreach($departments ?? [] as $department)
                         <option value="{{ $department }}" {{ request('department') == $department ? 'selected' : '' }}>
@@ -122,7 +122,7 @@
                     </select>
                 </div>
                 <div class="flex items-end space-x-4">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    <button type="submit" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                         Terapkan Filter
                     </button>
                     <button type="button" id="resetFilter"

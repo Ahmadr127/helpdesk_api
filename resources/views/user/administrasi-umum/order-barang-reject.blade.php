@@ -4,10 +4,10 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="min-h-screen bg-gradient-to-r from-green-50 to-blue-50 pb-24">
+<div class="min-h-screen bg-gradient-to-r from-green-50 to-emerald-50 pb-24">
     <div class="container mx-auto px-4 py-6">
         <!-- Page Header -->
-        <div class="mb-6 bg-gradient-to-r from-green-600 to-blue-300 rounded-lg p-6 shadow-sm">
+        <div class="mb-6 bg-gradient-to-r from-green-600 to-emerald-400 rounded-lg p-6 shadow-sm">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-white">Permintaan Barang - Ditolak</h1>
@@ -56,7 +56,7 @@
                         </div>
                         <div>
                             <button id="filterDate"
-                                class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                class="w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 <i class="fas fa-filter mr-1"></i> Terapkan Filter
                             </button>
                         </div>
@@ -104,7 +104,7 @@
             <!-- Empty State -->
             <div id="emptyState" class="hidden p-12 text-center">
                 <div
-                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">

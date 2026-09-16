@@ -19,7 +19,7 @@
     <!-- Main Card -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <!-- Header with status badge -->
-        <div class="relative bg-gradient-to-r from-blue-300 to-gray-200 px-6 py-4">
+        <div class="relative bg-gradient-to-r from-green-300 to-gray-200 px-6 py-4">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div class="flex flex-col">
                     <h1 class="text-xl md:text-2xl font-bold text-gray-700">Order #{{ $orderPerbaikan->nomor }}</h1>
@@ -42,7 +42,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Order Info Card -->
                 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden h-full">
-                    <div class="px-4 py-3 bg-gradient-to-r from-blue-300 to-gray-200 border-b border-gray-200">
+                    <div class="px-4 py-3 bg-gradient-to-r from-green-300 to-gray-200 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-700">Informasi Order</h2>
                     </div>
                     <div class="p-4">
@@ -78,7 +78,7 @@
 
                 <!-- Item Details Card -->
                 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden h-full">
-                    <div class="px-4 py-3 bg-gradient-to-r from-blue-300 to-gray-200 border-b border-gray-200">
+                    <div class="px-4 py-3 bg-gradient-to-r from-green-300 to-gray-200 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-700">Detail Barang</h2>
                     </div>
                     <div class="p-4">
@@ -106,7 +106,7 @@
 
                 <!-- Photo Card -->
                 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden h-full">
-                    <div class="px-4 py-3 bg-gradient-to-r from-blue-300 to-gray-200 border-b border-gray-200">
+                    <div class="px-4 py-3 bg-gradient-to-r from-green-300 to-gray-200 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-700">Foto Barang</h2>
                     </div>
                     <div class="p-4">
@@ -144,7 +144,7 @@
 
                 <!-- Status Update Form -->
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-                    <div class="bg-gradient-to-r from-blue-300 to-gray-200 px-6 py-3 border-b border-gray-200">
+                    <div class="bg-gradient-to-r from-green-300 to-gray-200 px-6 py-3 border-b border-gray-200">
                         <h3 class="text-lg font-medium text-gray-700">Update Status</h3>
                     </div>
                     <div class="p-6">
@@ -238,7 +238,7 @@
 
             <!-- History Timeline (Full Width) -->
             <div class="mt-6 bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-4 py-3 bg-gradient-to-r from-blue-300 to-gray-200 border-b border-gray-200">
+                <div class="px-4 py-3 bg-gradient-to-r from-green-300 to-gray-200 border-b border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-800">Timeline</h2>
                 </div>
                 <div class="p-4">

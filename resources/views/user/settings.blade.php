@@ -106,8 +106,8 @@
                                 <option value="">Select Department</option>
                                 @foreach($departments as $department)
                                 <option value="{{ $department->code }}"
-                                    {{ old('department', $user->department) == $department->code ? 'selected' : '' }}>
-                                    {{ $department->name }}
+                                    {{ (old('department', $user->department) == $department->code || old('department', $user->department) == $department->name || strtolower(old('department', $user->department) ?? '') == strtolower($department->code) || strtolower(old('department', $user->department) ?? '') == strtolower($department->name)) ? 'selected' : '' }}>
+                                    {{ $department->name }} ({{ $department->code }})
                                 </option>
                                 @endforeach
                             </select>

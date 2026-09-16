@@ -40,7 +40,11 @@ class UserSettingsController extends Controller
             }],
             'phone' => 'required|string|max:15',
             'position' => 'nullable|exists:positions,code',
-            'department' => 'nullable|exists:departments,code',
+            'department' => ['nullable','string','max:255', function ($attr, $val, $fail) {
+                if (!empty($val) && !\App\Models\Department::where('code',$val)->orWhere('name',$val)->exists()) {
+                    $fail('Department tidak valid.');
+                }
+            }],
             'new_password' => 'nullable|min:3|confirmed',
         ]);
 

@@ -7,7 +7,7 @@
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <!-- Header with back button -->
         <div
-            class="bg-gradient-to-r from-blue-200 to-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">
+            class="bg-gradient-to-r from-green-200 to-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <a href="{{ route('administrasi-umum.order-perbaikan.index') }}"
@@ -132,7 +132,7 @@
         <!-- Orders Table -->
         <div class="overflow-x-auto rounded-lg border border-gray-200">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gradient-to-r from-blue-200 to-gray-200">
+                <thead class="bg-gradient-to-r from-green-200 to-gray-200">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-700">
                             <span class="sr-only">Select</span>

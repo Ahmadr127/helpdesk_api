@@ -24,14 +24,28 @@ class RegisterController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|max:255|unique:users',
+            'username' => 'nullable|string|max:255|unique:users,username',
+            'email' => 'required|string|max:255|unique:users,email',
             'password' => 'required|string|min:3|confirmed',
             'phone' => 'required|string|max:255',
             'position' => 'required|exists:positions,code',
         ]);
 
+        // Generate username if not provided: from email prefix
+        $username = $request->username;
+        if (empty($username)) {
+            $base = explode('@', $request->email)[0];
+            $base = preg_replace('/[^A-Za-z0-9._-]/', '', strtolower($base));
+            $username = $base;
+            $i=1;
+            while (User::where('username', $username)->exists()) {
+                $username = $base.$i++;
+            }
+        }
+
         $user = User::create([
             'name' => $request->name,
+            'username' => $username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
