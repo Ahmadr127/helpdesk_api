@@ -16,10 +16,14 @@ class UpdateUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => ['required','string','max:255', Rule::unique('users')->ignore($userId)],
             'role' => 'required|in:admin,user',
-            'department' => 'required|exists:departments,code',
+            'department' => ['required','string','max:255', function($attr,$val,$fail){
+                if (!\App\Models\Department::where('code',$val)->orWhere('name',$val)->exists()) $fail('Department tidak valid.');
+            }],
             'status' => 'required|boolean',
             'phone' => 'required|string|max:20',
-            'position' => 'required|exists:positions,code',
+            'position' => ['required','string','max:255', function($attr,$val,$fail){
+                if (empty($val)) $fail('Position wajib diisi.');
+            }],
             'password' => ['nullable','string','min:3','confirmed'],
         ];
     }

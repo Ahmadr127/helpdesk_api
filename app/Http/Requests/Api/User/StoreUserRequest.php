@@ -16,10 +16,14 @@ class StoreUserRequest extends FormRequest
             'password' => ['required','string','confirmed','min:3'],
             'password_confirmation' => 'required|string',
             'role' => 'required|in:admin,user',
-            'department' => 'required|exists:departments,code',
+            'department' => ['required','string','max:255', function($attr,$val,$fail){
+                if (!\App\Models\Department::where('code',$val)->orWhere('name',$val)->exists()) $fail('Department tidak valid.');
+            }],
             'status' => 'required|boolean',
             'phone' => 'required|string|max:20',
-            'position' => 'required|exists:positions,code',
+            'position' => ['required','string','max:255', function($attr,$val,$fail){
+                if (empty($val)) $fail('Position wajib diisi.');
+            }],
         ];
     }
 }

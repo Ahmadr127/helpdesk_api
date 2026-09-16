@@ -13,9 +13,30 @@ use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->paginate(10);
+        $query = User::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            // use ILIKE for pgsql (case-insensitive), LIKE for others
+            $like = (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') ? 'ilike' : 'like';
+            $query->where(function($q) use ($search, $like){
+                $q->where('name',$like,"%{$search}%")
+                  ->orWhere('email',$like,"%{$search}%")
+                  ->orWhere('phone',$like,"%{$search}%")
+                  ->orWhere('department',$like,"%{$search}%")
+                  ->orWhere('position',$like,"%{$search}%");
+            });
+        }
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+        if ($request->filled('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
         return view('admin.users_management.index', compact('users'));
     }
 
@@ -36,10 +57,16 @@ class UserManagementController extends Controller
             'email' => 'required|string|max:255|unique:users',
             'password' => ['required', 'string', 'confirmed', 'min:3'],
             'role' => 'required|in:admin,user',
-            'department' => 'required|exists:departments,code',
+            'department' => ['required','string','max:255', function($attr,$val,$fail){
+                if (!Department::where('code',$val)->orWhere('name',$val)->exists()) $fail('Department tidak valid.');
+            }],
             'status' => 'required|boolean',
             'phone' => 'required|string|max:20',
-            'position' => 'required|exists:positions,code',
+            'position' => ['required','string','max:255', function($attr,$val,$fail){
+                // imported position dari SIMUTU (nama_role) mungkin belum ada di positions, izinkan tapi cek jika ada maka valid, jika tidak tetap izinkan untuk kompatibilitas import
+                // jika ingin strict: if (!Position::where('code',$val)->orWhere('name',$val)->exists()) $fail('Position tidak valid.');
+                if (empty($val)) $fail('Position wajib diisi.');
+            }],
         ]);
 
         $user = User::create([
@@ -73,10 +100,14 @@ class UserManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role' => 'required|in:admin,user',
-            'department' => 'required|exists:departments,code',
+            'department' => ['required','string','max:255', function($attr,$val,$fail){
+                if (!Department::where('code',$val)->orWhere('name',$val)->exists()) $fail('Department tidak valid.');
+            }],
             'status' => 'required|boolean',
             'phone' => 'required|string|max:20',
-            'position' => 'required|exists:positions,code',
+            'position' => ['required','string','max:255', function($attr,$val,$fail){
+                if (empty($val)) $fail('Position wajib diisi.');
+            }],
         ];
 
         if ($request->filled('password')) {

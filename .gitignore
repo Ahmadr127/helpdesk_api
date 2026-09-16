@@ -25,3 +25,4 @@ yarn-error.log
 # Firebase Service Account - private credential, do not commit
 /storage/app/firebase-auth.json
 /storage/app/private/firebase-auth.json
+/graphify-out

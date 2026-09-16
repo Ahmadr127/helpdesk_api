@@ -18,10 +18,10 @@
 
     <div class="card bg-white shadow-md rounded-xl overflow-hidden">
         <div class="p-6">
-            <!-- Search and Filter Bar -->
-            <div class="mb-6 flex flex-col sm:flex-row gap-4">
+            <!-- Search and Filter Bar (server-side, support pagination 334 users) -->
+            <form method="GET" action="{{ route('admin.users.index') }}" id="filter-form" class="mb-6 flex flex-col sm:flex-row gap-4">
                 <div class="relative flex-1">
-                    <input type="text" id="search-users" placeholder="Search users..."
+                    <input type="text" name="search" id="search-users" value="{{ request('search') }}" placeholder="Search users (nama, email, phone, dept, position)..."
                         class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,20 +31,27 @@
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <select id="filter-role"
+                    <select name="role" id="filter-role"
                         class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
                         <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="user">User</option>
+                        <option value="admin" {{ request('role')==='admin'?'selected':'' }}>Admin</option>
+                        <option value="user" {{ request('role')==='user'?'selected':'' }}>User</option>
                     </select>
-                    <select id="filter-status"
+                    <select name="status" id="filter-status"
                         class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
                         <option value="">All Status</option>
-                        <option value="1">Active</option>
-                        <option value="0">Inactive</option>
+                        <option value="1" {{ request('status')==='1'?'selected':'' }}>Active</option>
+                        <option value="0" {{ request('status')==='0'?'selected':'' }}>Inactive</option>
                     </select>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Cari</button>
+                    @if(request('search') || request('role') !== null && request('role') !== '' || request('status') !== null && request('status') !== '')
+                        <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
+                    @endif
                 </div>
-            </div>
+            </form>
+            @if(request('search'))
+                <div class="mb-4 text-sm text-gray-600">Hasil pencarian untuk "<strong>{{ request('search') }}</strong>" — {{ $users->total() }} user ditemukan</div>
+            @endif
 
             <div class="overflow-x-auto rounded-lg shadow-sm border border-gray-100">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -161,43 +168,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-users');
     const filterRole = document.getElementById('filter-role');
     const filterStatus = document.getElementById('filter-status');
-    const tableRows = document.querySelectorAll('tbody tr');
+    const form = document.getElementById('filter-form');
 
-    // Combine filters function
-    function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const roleFilter = filterRole.value.toLowerCase();
-        const statusFilter = filterStatus.value;
-
-        tableRows.forEach(row => {
-            const name = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-            const email = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const role = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-            const statusText = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
-            let status = '';
-
-            if (statusText.includes('active')) {
-                status = '1';
-            } else {
-                status = '0';
-            }
-
-            const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
-            const matchesRole = roleFilter === '' || role.includes(roleFilter);
-            const matchesStatus = statusFilter === '' || status === statusFilter;
-
-            if (matchesSearch && matchesRole && matchesStatus) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    // Add event listeners
-    searchInput.addEventListener('input', applyFilters);
-    filterRole.addEventListener('change', applyFilters);
-    filterStatus.addEventListener('change', applyFilters);
+    // Auto-submit dengan debounce untuk search, instant untuk select
+    let timeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => form.submit(), 600);
+    });
+    filterRole.addEventListener('change', () => form.submit());
+    filterStatus.addEventListener('change', () => form.submit());
 });
 </script>
 @endpush

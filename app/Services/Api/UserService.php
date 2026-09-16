@@ -13,10 +13,13 @@ class UserService
         $query = User::query();
         if (!empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search){
-                $q->where('name','like',"%{$search}%")
-                  ->orWhere('email','like',"%{$search}%")
-                  ->orWhere('phone','like',"%{$search}%");
+            $like = (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') ? 'ilike' : 'like';
+            $query->where(function($q) use ($search, $like){
+                $q->where('name',$like,"%{$search}%")
+                  ->orWhere('email',$like,"%{$search}%")
+                  ->orWhere('phone',$like,"%{$search}%")
+                  ->orWhere('department',$like,"%{$search}%")
+                  ->orWhere('position',$like,"%{$search}%");
             });
         }
         if (!empty($filters['role'])) {
