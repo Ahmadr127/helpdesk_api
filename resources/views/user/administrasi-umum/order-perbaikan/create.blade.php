@@ -42,49 +42,20 @@
         <form action="{{ route('user.administrasi-umum.order-perbaikan.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
             @csrf
             <div class="space-y-6">
-                <!-- Nomor & Tanggal -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nomor <span class="text-red-500">*</span></label>
-                        <input type="text" name="nomor_display" value="{{ $nomor ?? '' }}" readonly
-                               class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-mono">
-                        <p class="text-xs text-gray-500 mt-1">Auto-generated: OP/RTG/MTC-YYYYMMDD001</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-                        <input type="text" value="{{ \Carbon\Carbon::parse($tanggal ?? now())->format('d-m-Y H:i') }}" readonly
-                               class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm">
-                        <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
-                    </div>
-                </div>
+                <!-- Auto-generated fields (hidden) -->
+                <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
+                <input type="hidden" name="unit_proses_code" value="{{ $unitPengajuCode ?? ($user->department ?? 'GENERAL') }}">
+                <input type="hidden" name="unit_proses_name" value="{{ $unitPengajuName ?? ($user->department ?? 'GENERAL') }}">
 
-                <!-- Unit Proses & Penerima -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Proses <span class="text-red-500">*</span></label>
-                        <select id="unit_proses_code" name="unit_proses_code" required
-                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                            <option value="">Pilih Unit Proses</option>
-                            @foreach($unitProses as $unit)
-                                <option value="{{ $unit->code }}" data-name="{{ $unit->name }}" {{ old('unit_proses_code')==$unit->code ? 'selected':'' }}>
-                                    {{ $unit->code }} - {{ $unit->name }}
-                                </option>
-                            @endforeach
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang <span class="text-red-500">*</span></label>
+                        <select name="jenis_barang" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
+                            <option value="">Pilih Jenis</option>
+                            <option value="Inventaris" {{ old('jenis_barang')=='Inventaris' ? 'selected':'' }}>Inventaris</option>
+                            <option value="Umum" {{ old('jenis_barang')=='Umum' ? 'selected':'' }}>Umum</option>
                         </select>
-                        @error('unit_proses_code') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Penerima</label>
-                        <input type="text" value="MTC" readonly class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm">
-                    </div>
-                </div>
-
-                <!-- Peminta & Prioritas -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Peminta</label>
-                        <input type="text" value="{{ $user->name ?? auth()->user()->name }}" readonly
-                               class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm">
+                        @error('jenis_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas <span class="text-red-500">*</span></label>
@@ -96,81 +67,71 @@
                         </select>
                         @error('prioritas') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                </div>
 
-                <!-- Jenis Barang & Kode -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang <span class="text-red-500">*</span></label>
-                        <select name="jenis_barang" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                            <option value="">Pilih Jenis</option>
-                            <option value="Inventaris" {{ old('jenis_barang')=='Inventaris' ? 'selected':'' }}>Inventaris</option>
-                            <option value="Umum" {{ old('jenis_barang')=='Umum' ? 'selected':'' }}>Umum</option>
-                        </select>
-                        @error('jenis_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris <span class="text-red-500">*</span></label>
-                        <input type="text" name="kode_inventaris" value="{{ old('kode_inventaris') }}" required placeholder="Contoh: INV-001"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang <span class="text-red-500">*</span></label>
+                        <input type="text" name="nama_barang" value="{{ old('nama_barang') }}" required placeholder="Nama barang / peralatan"
                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        @error('kode_inventaris') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('nama_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang <span class="text-red-500">*</span></label>
-                    <input type="text" name="nama_barang" value="{{ old('nama_barang') }}" required placeholder="Nama barang / peralatan"
-                           class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                    @error('nama_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
-                    <div class="relative">
-                        <input type="text" id="lokasi_search"
-                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                               placeholder="Ketik untuk cari lokasi..." autocomplete="off"
-                               value="{{ old('lokasi') ? ($locations->firstWhere('id', old('lokasi'))->name ?? '') : '' }}">
-                        <div id="lokasi_results" class="absolute z-20 w-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto"></div>
-                        <select name="lokasi" id="lokasi_select" required class="hidden">
-                            <option value="">Pilih Lokasi</option>
-                            @foreach($locations as $loc)
-                                <option value="{{ $loc->id }}" {{ old('lokasi')==$loc->id ? 'selected':'' }}>{{ $loc->name }}</option>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
+                        <select name="kategori_order" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
+                            <option value="">Pilih Kategori</option>
+                            @foreach($kategoriOrders as $kat)
+                                <option value="{{ $kat->name }}" {{ old('kategori_order')==$kat->name ? 'selected':'' }}>{{ $kat->name }}</option>
                             @endforeach
                         </select>
+                        @error('kategori_order') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="text" id="lokasi_search"
+                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                   placeholder="Ketik untuk cari lokasi..." autocomplete="off"
+                                   value="{{ old('lokasi') ? ($locations->firstWhere('id', old('lokasi'))->name ?? '') : '' }}">
+                            <div id="lokasi_results" class="absolute z-20 w-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto"></div>
+                            <select name="lokasi" id="lokasi_select" required class="hidden">
+                                <option value="">Pilih Lokasi</option>
+                                @foreach($locations as $loc)
+                                    <option value="{{ $loc->id }}" {{ old('lokasi')==$loc->id ? 'selected':'' }}>{{ $loc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan <span class="text-red-500">*</span></label>
-                    <textarea name="keluhan" rows="4" required placeholder="Jelaskan keluhan / kerusakan..."
-                              class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ old('keluhan') }}</textarea>
-                    @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan <span class="text-red-500">*</span></label>
+                        <textarea name="keluhan" rows="4" required placeholder="Jelaskan keluhan / kerusakan..."
+                                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ old('keluhan') }}</textarea>
+                        @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional, max 10MB)</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-400 transition-colors" id="dropZone">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                            <div class="flex text-sm text-gray-600 justify-center">
-                                <label for="foto" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500">
-                                    <span>Upload foto</span>
-                                    <input id="foto" name="foto" type="file" class="sr-only" accept="image/*">
-                                </label>
-                                <p class="pl-1">atau drag & drop</p>
-                            </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                            <p id="file-name" class="text-sm text-green-600 font-medium hidden"></p>
-                            <div id="preview-container" class="hidden mt-3">
-                                <img id="preview-image" src="#" alt="Preview" class="w-40 h-40 object-cover rounded-lg mx-auto border">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional, max 10MB)</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-400 transition-colors" id="dropZone">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600 justify-center">
+                                    <label for="foto" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500">
+                                        <span>Upload foto</span>
+                                        <input id="foto" name="foto" type="file" class="sr-only" accept="image/*">
+                                    </label>
+                                    <p class="pl-1">atau drag & drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                <p id="file-name" class="text-sm text-green-600 font-medium hidden"></p>
+                                <div id="preview-container" class="hidden mt-3">
+                                    <img id="preview-image" src="#" alt="Preview" class="w-24 h-24 object-cover rounded-lg mx-auto border">
+                                </div>
                             </div>
                         </div>
+                        @error('foto') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    @error('foto') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 

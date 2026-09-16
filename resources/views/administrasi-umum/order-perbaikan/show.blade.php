@@ -88,6 +88,10 @@
                                 <p class="font-medium">{{ $orderPerbaikan->jenis_barang }}</p>
                             </div>
                             <div class="space-y-1">
+                                <p class="text-sm font-medium text-gray-500">Kategori Order</p>
+                                <p class="font-medium">{{ $orderPerbaikan->kategori_order ?? '-' }}</p>
+                            </div>
+                            <div class="space-y-1 md:col-span-2">
                                 <p class="text-sm font-medium text-gray-500">Kode Inventaris</p>
                                 <p class="font-medium">{{ $orderPerbaikan->kode_inventaris }}</p>
                             </div>

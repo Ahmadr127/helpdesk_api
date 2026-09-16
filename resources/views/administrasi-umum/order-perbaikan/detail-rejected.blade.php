@@ -66,6 +66,11 @@
                         <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Jenis Barang</p>
                         <p class="text-base text-gray-800">{{ $order->jenis_barang }}</p>
                     </div>
+                    
+                    <div>
+                        <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Kategori Order</p>
+                        <p class="text-base text-gray-800">{{ $order->kategori_order ?: '-' }}</p>
+                    </div>
                 </div>
 
                 <!-- Right Column -->

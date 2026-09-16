@@ -283,6 +283,43 @@
                 </table>
             </div>
         </div>
+    <!-- Kategori Order Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+            <div class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-gray-800">Kategori Order</h2>
+                <a href="{{ route('admin.master.kategori-order.index') }}" class="p-3 rounded-full hover:bg-amber-500 transition-all duration-200">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="kategoriOrderTable">
+                        @foreach($kategoriOrders as $kategori)
+                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                            <td class="px-6 py-4">{{ $kategori->name }}</td>
+                            <td class="px-6 py-4">{{ $kategori->code ?? '-' }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $kategori->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                    {{ $kategori->status ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">{{ $kategori->created_at->format('d M Y') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

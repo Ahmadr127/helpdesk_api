@@ -120,18 +120,26 @@ function previewImage(input) {
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
-                        <input type="text" name="kode_inventaris"
-                            value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
                         <input type="text" name="nama_barang"
                             value="{{ old('nama_barang', $orderPerbaikan->nama_barang) }}"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
+                        <select name="kategori_order"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="">Pilih Kategori</option>
+                            @foreach($kategoriOrders as $kat)
+                            <option value="{{ $kat->name }}"
+                                {{ old('kategori_order', $orderPerbaikan->kategori_order) == $kat->name ? 'selected' : '' }}>
+                                {{ $kat->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
+                <input type="hidden" name="kode_inventaris" value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}">
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>

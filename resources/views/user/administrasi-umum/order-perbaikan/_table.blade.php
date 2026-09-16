@@ -25,6 +25,9 @@
         <div class="text-xs text-gray-500">{{ $order->keluhan }}</div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm text-gray-900">{{ $order->kategori_order ?? '-' }}</div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
         <span class="px-2 py-1 text-xs font-medium rounded-full {{ $order->getStatusBadgeClass() }}">
             {{ $order->getStatusText() }}
         </span>
@@ -46,7 +49,7 @@
 </tr>
 @empty
 <tr>
-    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+    <td colspan="8" class="px-6 py-4 text-center text-gray-500">
         Tidak ada order yang ditemukan
     </td>
 </tr>

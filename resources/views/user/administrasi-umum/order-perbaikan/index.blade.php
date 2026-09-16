@@ -84,7 +84,7 @@
             </div>
 
             <!-- Advanced Filters Row -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Status</label>
                     <select name="status"
@@ -107,6 +107,18 @@
                         <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>Rendah</option>
                         <option value="medium" {{ request('priority') == 'medium' ? 'selected' : '' }}>Sedang</option>
                         <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>Tinggi</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Kategori</label>
+                    <select name="kategori_order"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                        <option value="">Semua Kategori</option>
+                        @foreach($kategoriOrders as $kat)
+                        <option value="{{ $kat->name }}" {{ request('kategori_order') == $kat->name ? 'selected' : '' }}>
+                            {{ $kat->name }}
+                        </option>
+                        @endforeach
                     </select>
                 </div>
                 <div>
@@ -143,6 +155,7 @@
                         class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase border-b bg-gray-50">
                         <th class="px-4 py-3">Nomor Order</th>
                         <th class="px-4 py-3">Nama Barang</th>
+                        <th class="px-4 py-3">Kategori</th>
                         <th class="px-4 py-3">Departemen</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3">Prioritas</th>
@@ -155,6 +168,7 @@
                     <tr class="text-gray-700">
                         <td class="px-4 py-3">{{ $order->nomor }}</td>
                         <td class="px-4 py-3">{{ $order->nama_barang }}</td>
+                        <td class="px-4 py-3">{{ $order->kategori_order ?? '-' }}</td>
                         <td class="px-4 py-3">{{ $order->unit_proses_name }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full

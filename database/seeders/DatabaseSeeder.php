@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,
             MasterDataSeeder::class,
             UnitProsesSeeder::class,
+            KategoriOrderSeeder::class,
             AdminSeeder::class,
             PermissionSeeder::class,
         ]);

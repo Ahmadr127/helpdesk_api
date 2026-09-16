@@ -26,7 +26,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Manage Maintenance Orders', 'slug' => 'order.manage', 'group' => 'Maintenance (IPSRS)', 'description' => 'Kelola order perbaikan (admin IPSRS)'],
             // Master Data
             ['name' => 'View Master Data', 'slug' => 'master.view', 'group' => 'Master Data', 'description' => 'Lihat master data'],
-            ['name' => 'Manage Master Data', 'slug' => 'master.manage', 'group' => 'Master Data', 'description' => 'Kelola master data (categories, departments, buildings, locations, positions, unit proses)'],
+            ['name' => 'Manage Master Data', 'slug' => 'master.manage', 'group' => 'Master Data', 'description' => 'Kelola master data (categories, departments, buildings, locations, positions, unit proses, kategori order)'],
             // User Management
             ['name' => 'View Users', 'slug' => 'user.view', 'group' => 'User Management', 'description' => 'Lihat daftar user'],
             ['name' => 'Manage Users', 'slug' => 'user.manage', 'group' => 'User Management', 'description' => 'Kelola users (create/edit/delete)'],

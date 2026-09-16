@@ -9,6 +9,7 @@ use App\Models\Building;
 use App\Models\Location;
 use App\Models\UnitProses;
 use App\Models\Position;
+use App\Models\KategoriOrder;
 use Illuminate\Http\Request;
 
 class MasterDataController extends Controller
@@ -24,6 +25,7 @@ class MasterDataController extends Controller
         $locations = Location::with('building')->latest()->limit($limit)->get();
         $unitProses = UnitProses::latest()->limit($limit)->get();
         $positions = Position::latest()->limit($limit)->get();
+        $kategoriOrders = KategoriOrder::latest()->limit($limit)->get();
 
         return view('admin.master.index', compact(
             'categories',
@@ -31,7 +33,8 @@ class MasterDataController extends Controller
             'buildings',
             'locations',
             'unitProses',
-            'positions'
+            'positions',
+            'kategoriOrders'
         ));
     }
 
@@ -49,6 +52,7 @@ class MasterDataController extends Controller
             'buildings' => Building::query(),
             'locations' => Location::with('building'),
             'positions' => Position::query(),
+            'kategori-order' => KategoriOrder::query(),
         };
 
         // Terapkan filter
@@ -113,6 +117,10 @@ class MasterDataController extends Controller
             case 'categories':
                 $model = Category::whereIn('id', $selected);
                 $typeMessage = "Kategori";
+                break;
+            case 'kategori-order':
+                $model = KategoriOrder::whereIn('id', $selected);
+                $typeMessage = "Kategori Order";
                 break;
             default:
                 return redirect()->back()->with('error', 'Tipe data tidak valid');

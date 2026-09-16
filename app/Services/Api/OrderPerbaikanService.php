@@ -22,10 +22,11 @@ class OrderPerbaikanService
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function($q) use ($search){
-                $q->where('nomor','like',"%{$search}%")
-                  ->orWhere('nama_barang','like',"%{$search}%")
-                  ->orWhere('keluhan','like',"%{$search}%")
-                  ->orWhere('kode_inventaris','like',"%{$search}%");
+$q->where('nomor','like',"%{$search}%")
+              ->orWhere('nama_barang','like',"%{$search}%")
+              ->orWhere('keluhan','like',"%{$search}%")
+              ->orWhere('kode_inventaris','like',"%{$search}%")
+              ->orWhere('kategori_order','like',"%{$search}%");
             });
         }
         if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
@@ -33,6 +34,9 @@ class OrderPerbaikanService
         }
         if (!empty($filters['prioritas'])) {
             $query->where('prioritas', $filters['prioritas']);
+        }
+        if (!empty($filters['kategori_order'])) {
+            $query->where('kategori_order', $filters['kategori_order']);
         }
 
         return $query->orderBy('created_at','desc')->paginate($perPage);
@@ -116,7 +120,9 @@ class OrderPerbaikanService
             }
             $nomor = $prefix . $newNumber;
 
-            $unitProses = UnitProses::where('code', $validated['unit_proses_code'])->firstOrFail();
+            $unitProsesCode = $validated['unit_proses_code'] ?? null;
+            $unitProsesName = $validated['unit_proses_name'] ?? null;
+            $unitProses = $unitProsesCode ? UnitProses::where('code', $unitProsesCode)->first() : null;
 
             $fotoPath = null;
             if ($fotoFile) {
@@ -127,14 +133,15 @@ class OrderPerbaikanService
             $order = OrderPerbaikan::create([
                 'nomor' => $nomor,
                 'tanggal' => $validated['tanggal'],
-                'unit_proses' => $unitProses->code,
-                'unit_proses_name' => $unitProses->name,
+                'unit_proses' => $unitProses ? $unitProses->code : $unitProsesCode,
+                'unit_proses_name' => $unitProses ? $unitProses->name : ($unitProsesName ?: $unitProsesCode),
                 'unit_penerima' => 'MTC',
                 'nip_peminta' => $user->nip ?? null,
                 'nama_peminta' => $user->name,
                 'jenis_barang' => $validated['jenis_barang'],
-                'kode_inventaris' => $validated['kode_inventaris'],
+                'kode_inventaris' => $validated['kode_inventaris'] ?? '-',
                 'nama_barang' => $validated['nama_barang'],
+                'kategori_order' => $validated['kategori_order'] ?? null,
                 'lokasi' => $validated['lokasi'],
                 'keluhan' => $validated['keluhan'],
                 'prioritas' => $validated['prioritas'],
@@ -185,6 +192,7 @@ class OrderPerbaikanService
                 'jenis_barang' => $validated['jenis_barang'],
                 'kode_inventaris' => $validated['kode_inventaris'],
                 'nama_barang' => $validated['nama_barang'],
+                'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
                 'lokasi' => $validated['lokasi'],
                 'keluhan' => $validated['keluhan'],
                 'prioritas' => $validated['prioritas'],

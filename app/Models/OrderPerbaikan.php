@@ -27,6 +27,7 @@ class OrderPerbaikan extends Model
         'jenis_barang',
         'kode_inventaris',
         'nama_barang',
+        'kategori_order',
         'lokasi',
         'keluhan',
         'prioritas',

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Location;
 use App\Models\UnitProses;
+use App\Models\Department;
+use App\Models\KategoriOrder;
 use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,8 +32,14 @@ class AdministrasiUmumController extends Controller
                 $q->where('nomor', 'like', "%{$search}%")
                   ->orWhere('nama_barang', 'like', "%{$search}%")
                   ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%");
+                  ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                  ->orWhere('kategori_order', 'like', "%{$search}%");
             });
+        }
+
+        // Add kategori filter for in progress orders
+        if ($request->kategori_order) {
+            $inProgressQuery->where('kategori_order', $request->kategori_order);
         }
 
         // Add date filter for in progress orders
@@ -56,8 +64,14 @@ class AdministrasiUmumController extends Controller
                 $q->where('nomor', 'like', "%{$search}%")
                   ->orWhere('nama_barang', 'like', "%{$search}%")
                   ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%");
+                  ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                  ->orWhere('kategori_order', 'like', "%{$search}%");
             });
+        }
+
+        // Add kategori filter for open orders
+        if ($request->kategori_order) {
+            $query->where('kategori_order', $request->kategori_order);
         }
 
         // Filter tanggal for open orders
@@ -73,6 +87,7 @@ class AdministrasiUmumController extends Controller
         $unitProses = UnitProses::where('status', 1)
             ->where('code', '!=', 'SIRS')
             ->get();
+        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
 
         if (request()->ajax()) {
             return response()->json([
@@ -82,7 +97,7 @@ class AdministrasiUmumController extends Controller
             ]);
         }
 
-        return view('user.administrasi-umum.order-barang', compact('orders', 'inProgressOrders', 'locations', 'unitProses'));
+        return view('user.administrasi-umum.order-barang', compact('orders', 'inProgressOrders', 'locations', 'unitProses', 'kategoriOrders'));
     }
 
     public function orderBarangKonfirmasi(Request $request)
@@ -290,8 +305,14 @@ class AdministrasiUmumController extends Controller
                 $q->where('nomor', 'like', "%{$search}%")
                   ->orWhere('nama_barang', 'like', "%{$search}%")
                   ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%");
+                  ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                  ->orWhere('kategori_order', 'like', "%{$search}%");
             });
+        }
+
+        // Filter by kategori
+        if ($request->kategori_order) {
+            $query->where('kategori_order', $request->kategori_order);
         }
 
         // Filter by date range
@@ -307,6 +328,7 @@ class AdministrasiUmumController extends Controller
         $unitProses = UnitProses::where('status', 1)
             ->where('code', '!=', 'SIRS')
             ->get();
+        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
 
         // Get statistics excluding soft-deleted records
         $stats = [
@@ -323,7 +345,7 @@ class AdministrasiUmumController extends Controller
             ]);
         }
 
-        return view('user.administrasi-umum.order-perbaikan.index', compact('orders', 'locations', 'unitProses', 'status', 'stats'));
+        return view('user.administrasi-umum.order-perbaikan.index', compact('orders', 'locations', 'unitProses', 'status', 'stats', 'kategoriOrders'));
     }
 
     public function createOrderPerbaikan()
@@ -351,9 +373,14 @@ class AdministrasiUmumController extends Controller
             $unitProses = UnitProses::where('status', 1)
                 ->where('code', '!=', 'SIRS')
                 ->get();
+            $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
 
             // Get user data
             $user = auth()->user();
+
+            // Unit pengaju otomatis dari departemen user
+            $unitPengajuCode = $user->department ?? 'GENERAL';
+            $unitPengajuName = Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
 
             if (request()->ajax()) {
                 return response()->json([
@@ -362,7 +389,9 @@ class AdministrasiUmumController extends Controller
                         'nomor' => $nomor,
                         'tanggal' => $currentDate->format('Y-m-d H:i:s'),
                         'locations' => $locations,
-                        'unitProses' => $unitProses,
+                        'unitPengajuCode' => $unitPengajuCode,
+                        'unitPengajuName' => $unitPengajuName,
+                        'kategoriOrders' => $kategoriOrders,
                         'user' => [
                             'nip' => $user->nip,
                             'name' => $user->name
@@ -372,7 +401,7 @@ class AdministrasiUmumController extends Controller
             }
 
             return view('user.administrasi-umum.order-perbaikan.create', 
-                compact('nomor', 'locations', 'unitProses', 'user'));
+                compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders'));
 
         } catch (\Exception $e) {
             if (request()->ajax()) {
@@ -388,18 +417,12 @@ class AdministrasiUmumController extends Controller
     public function storeOrderPerbaikan(Request $request, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'unit_proses_code' => [
-                'required',
-                'exists:unit_proses,code',
-                function ($attribute, $value, $fail) {
-                    if ($value === 'SIRS') {
-                        $fail('Unit proses SIRS tidak dapat dipilih untuk order barang.');
-                    }
-                },
-            ],
+            'unit_proses_code' => 'nullable|string',
+            'unit_proses_name' => 'nullable|string',
             'jenis_barang' => 'required|in:Umum,Inventaris',
-            'kode_inventaris' => 'required|string',
+            'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',
+            'kategori_order' => 'nullable|string',
             'lokasi' => 'required|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
@@ -464,7 +487,8 @@ class AdministrasiUmumController extends Controller
         }
 
         $locations = Location::orderBy('name', 'asc')->get();
-        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations'));
+        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'kategoriOrders'));
     }
 
     public function updateOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
@@ -473,6 +497,7 @@ class AdministrasiUmumController extends Controller
             'jenis_barang' => 'required|in:Umum,Inventaris',
             'kode_inventaris' => 'required|string',
             'nama_barang' => 'required|string',
+            'kategori_order' => 'nullable|string',
             'lokasi' => 'required|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',

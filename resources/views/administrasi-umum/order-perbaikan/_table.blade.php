@@ -14,6 +14,9 @@
                 Barang
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Kategori
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
@@ -35,6 +38,9 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ $order->nama_barang }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ $order->kategori_order ?? '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-3 py-1.5 text-xs font-medium rounded-full 
@@ -70,7 +76,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 bg-white">
+            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 bg-white">
                 Tidak ada order untuk prioritas ini
             </td>
         </tr>

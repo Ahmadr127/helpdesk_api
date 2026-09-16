@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="container mx-auto p-4">
     <div class="bg-white rounded-lg shadow-lg">
         <!-- Header Section -->
-        <div class="bg-gradient-to-r from-green-600 to-emerald-400 px-4 py-3 rounded-t-2xl">
+        <div class="bg-green-600 px-4 py-3 rounded-t-2xl">
             <div class="flex justify-between items-center">
                 <h1 class="text-xl font-semibold text-white">Detail Order Perbaikan</h1>
                 <div class="flex space-x-2">
@@ -209,6 +209,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p class="text-sm font-medium">{{ $order->kode_inventaris }}</p>
                         </div>
                         <div class="space-y-0.5">
+                            <p class="text-xs text-gray-500">Kategori Order</p>
+                            <p class="text-sm font-medium">{{ $order->kategori_order ?? '-' }}</p>
+                        </div>
+                        <div class="space-y-0.5">
                             <p class="text-xs text-gray-500">Nama Barang</p>
                             <p class="text-sm font-medium">{{ $order->nama_barang }}</p>
                         </div>
@@ -230,10 +234,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 @if($order->foto)
                 <div class="bg-gray-50 p-2.5 rounded-lg">
                     <h3 class="text-base font-semibold mb-2">Foto</h3>
-                    <div class="flex justify-center items-center h-[200px]">
-                        <div class="relative group w-full h-full">
+                    <div class="flex justify-center items-center">
+                        <div class="relative group">
                             <img src="{{ Storage::url($order->foto) }}" alt="Foto Order Perbaikan"
-                                class="rounded-lg w-full h-full object-contain mx-auto bg-white shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
+                                class="rounded-lg w-48 h-36 object-cover bg-white shadow-sm cursor-zoom-in hover:opacity-95 hover:scale-105 transition-all duration-200"
                                 onclick="openImageModal(this.src)">
                             <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1">
                                 <button onclick="openImageModal('{{ Storage::url($order->foto) }}')"
@@ -370,10 +374,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Image Modal - Improved with animation -->
 <div id="imageModal"
     class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center p-4 transition-opacity duration-300">
-    <div class="relative max-w-4xl w-full">
+    <div class="relative max-w-3xl w-full">
         <div class="bg-white p-1 rounded-lg shadow-lg">
             <img id="modalImage" src="" alt="Foto Order Perbaikan"
-                class="max-h-[80vh] max-w-full object-contain mx-auto rounded">
+                class="max-h-[60vh] max-w-full object-contain mx-auto rounded">
         </div>
         <button onclick="closeImageModal()"
             class="absolute -top-3 -right-3 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200">
