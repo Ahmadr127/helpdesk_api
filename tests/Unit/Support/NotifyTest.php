@@ -14,11 +14,12 @@ use App\Models\OrderPerbaikan;
 use App\Support\Notifications\Notify;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class NotifyTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected Department $department;
     protected Building $building;
@@ -29,6 +30,7 @@ class NotifyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         $this->department = Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
         Position::create(['name' => 'IT', 'code' => 'IT', 'status' => true]);
         Position::create(['name' => 'Administrasi', 'code' => 'Administrasi', 'status' => true]);
@@ -130,7 +132,7 @@ class NotifyTest extends TestCase
         $adminUmum = User::create([
             'name' => 'Admin Umum', 'email' => 'adm@test.com',
             'password' => bcrypt('123'), 'phone' => '0811',
-            'position' => 'Administrasi', 'role' => 'admin', 'department' => 'IT', 'status' => 1,
+            'position' => 'Administrasi', 'role' => 'ipsrs', 'department' => 'IT', 'status' => 1,
             'fcm_token' => 'admin_umum_token_1234567890'
         ]);
         $user = User::create([

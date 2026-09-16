@@ -25,21 +25,6 @@
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">{{ session('error') }}</div>
     @endif
 
-    <!-- Create new permission -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-        <h2 class="font-semibold text-gray-800 mb-4">Tambah Permission Baru</h2>
-        <form action="{{ route('admin.permissions.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            @csrf
-            <input type="text" name="name" placeholder="Nama (e.g. Kelola Tiket)" required class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none">
-            <input type="text" name="slug" placeholder="Slug (e.g. ticket.manage)" required class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none">
-            <input type="text" name="group" placeholder="Group (e.g. Tiket IT)" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">Tambah</button>
-            <div class="md:col-span-4">
-                <input type="text" name="description" placeholder="Deskripsi opsional" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none">
-            </div>
-        </form>
-    </div>
-
     <!-- Role Permissions with Search Select -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
          x-data="{
@@ -47,14 +32,13 @@
             search: '',
             selectedKey: '',
             selectedLabel: '',
-            allRoles: @js(collect($roleList)->map(fn($r) => array_merge($r, ['key' => $r['role'].'|'.($r['position'] ?? 'null')]))->values()),
+            allRoles: @js($roles->map(fn($r) => ['key' => $r['slug'], 'slug' => $r['slug'], 'label' => $r['label']])->values()),
             filteredRoles() {
                 if (!this.search) return this.allRoles;
                 const q = this.search.toLowerCase();
                 return this.allRoles.filter(r =>
                     r.label.toLowerCase().includes(q) ||
-                    r.role.toLowerCase().includes(q) ||
-                    (r.position && r.position.toLowerCase().includes(q))
+                    r.slug.toLowerCase().includes(q)
                 );
             },
             selectRole(role) {
@@ -82,11 +66,7 @@
                 }
                 // if old input exists (validation error), override
                 @if(old('role'))
-                    const oldKey = '{{ old('role') }}|{{ old('position') ?? 'null' }}';
-                    // normalize empty position to null
-                    const normalizedOldKey = oldKey.replace('|', '|').replace('||', '|null').replace('|null', '|null');
-                    // find matching role (fallback to oldKey directly)
-                    let targetKey = '{{ old('role') }}|{{ old('position') ?: 'null' }}';
+                    const targetKey = '{{ old('role') }}';
                     if (this.allRoles.some(r => r.key === targetKey)) {
                         const r = this.allRoles.find(r => r.key === targetKey);
                         this.selectedKey = targetKey;
@@ -113,7 +93,7 @@
                     x-model="search"
                     @focus="open = true"
                     @input="open = true"
-                    placeholder="Cari role (ketik: User, Admin IT, IPSRS...)"
+                    placeholder="Cari role..."
                     autocomplete="off"
                     class="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors text-sm">
                 <button x-show="search" x-cloak @click="clearSelection()" type="button"
@@ -142,12 +122,11 @@
                         <div>
                             <div class="text-sm font-medium text-gray-900" x-text="role.label"></div>
                             <div class="text-xs text-gray-500">
-                                role=<span x-text="role.role"></span>, position=<span x-text="role.position ?? 'any'"></span>
+                                role=<span x-text="role.slug"></span>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="px-2 py-1 text-xs rounded-full"
-                                :class="role.role === 'user' ? 'bg-gray-100 text-gray-700' : (role.position === 'IT' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')"
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200"
                                 x-text="role.label"></span>
                             <svg x-show="selectedKey === role.key" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -186,34 +165,27 @@
             <p class="text-xs text-gray-500 mt-1">Gunakan kotak pencarian di atas untuk memilih role yang akan diatur permission-nya</p>
         </div>
 
-        @foreach($roleList as $roleInfo)
-            @php
-                $role = $roleInfo['role'];
-                $position = $roleInfo['position'];
-                $key = $role.'|'.($position ?? 'null');
-                $assigned = isset($roles[$key]) ? $roles[$key]->pluck('slug')->toArray() : [];
-            @endphp
-            <div x-show="selectedKey === '{{ $key }}'" x-cloak x-transition class="border border-gray-200 rounded-lg p-4 bg-white">
+        @foreach($roles as $roleInfo)
+            <div x-show="selectedKey === '{{ $roleInfo['slug'] }}'" x-cloak x-transition class="border border-gray-200 rounded-lg p-4 bg-white">
                 <h3 class="font-medium text-gray-900 mb-3 flex items-center flex-wrap gap-2">
-                    <span class="px-3 py-1 text-xs rounded-full {{ $role==='user' ? 'bg-gray-100 text-gray-700' : ($position==='IT' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700') }} border">
+                    <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200">
                         {{ $roleInfo['label'] }}
                     </span>
-                    <span class="text-xs text-gray-500">role={{ $role }}, position={{ $position ?? 'any' }}</span>
-                    <span class="ml-auto text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ count($assigned) }} permission aktif</span>
+                    <span class="text-xs text-gray-500">role={{ $roleInfo['slug'] }}</span>
+                    <span class="ml-auto text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ count($roleInfo['assigned']) }} permission aktif</span>
                 </h3>
 
                 <form action="{{ route('admin.permissions.role.update') }}" method="POST">
                     @csrf
-                    <input type="hidden" name="role" value="{{ $role }}">
-                    <input type="hidden" name="position" value="{{ $position }}">
+                    <input type="hidden" name="role" value="{{ $roleInfo['slug'] }}">
 
                     @foreach($permissions as $group => $perms)
                         <div class="mb-4">
                             <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">{{ $group }}</p>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                                 @foreach($perms as $perm)
-                                    <label class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors {{ in_array($perm->slug, $assigned) ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white' }}">
-                                        <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" {{ in_array($perm->slug, $assigned) ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
+                                    <label class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors {{ in_array($perm->slug, $roleInfo['assigned']) ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white' }}">
+                                        <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" {{ in_array($perm->slug, $roleInfo['assigned']) ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
                                         <span class="text-sm">
                                             <span class="font-medium text-gray-800">{{ $perm->name }}</span>
                                             <span class="text-xs text-gray-500 block">{{ $perm->slug }}</span>

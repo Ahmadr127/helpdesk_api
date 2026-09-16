@@ -5,19 +5,26 @@ namespace App\Http\Controllers\AdministrasiUmum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrderPerbaikan;
-use App\Models\Department;
 use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\OrderPerbaikanStatusUpdated;
 use App\Exports\OrderPerbaikanExport;
-use App\Models\OrderPerbaikanHistory;
 use App\Models\Location;
-use App\Models\UnitProses;
 
 class OrderPerbaikanController extends Controller
 {
+    /**
+     * View namespace bervariasi per route: admin.* memakai admin.order-perbaikan.*,
+     * administrasi-umum.* memakai administrasi-umum.order-perbaikan.* (legacy).
+     */
+    private function viewNamespace(?Request $request = null): string
+    {
+        $request ??= request();
+
+        return $request->routeIs('admin.*') ? 'admin.order-perbaikan' : 'administrasi-umum.order-perbaikan';
+    }
+
     private function getStatistics()
     {
         return [
@@ -84,7 +91,7 @@ class OrderPerbaikanController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('administrasi-umum.order-perbaikan.index', array_merge(
+        return view($this->viewNamespace().'.index', array_merge(
             [
                 'orders' => $orders,
                 'locations' => $locations
@@ -108,7 +115,7 @@ class OrderPerbaikanController extends Controller
         }
 
         $orders = $query->latest()->paginate(10);
-        return view('administrasi-umum.order-perbaikan.index', array_merge(
+        return view($this->viewNamespace().'.index', array_merge(
             ['orders' => $orders],
             $this->getStatistics()
         ));
@@ -156,14 +163,14 @@ class OrderPerbaikanController extends Controller
             ->get();
 
         if ($request->ajax()) {
-            return view('administrasi-umum.order-perbaikan.in-progress', [
+            return view($this->viewNamespace().'.in-progress', [
                 'orders' => $orders,
                 'inProgressOrders' => $inProgressOrders,
                 'locations' => $locations
             ])->render();
         }
 
-        return view('administrasi-umum.order-perbaikan.in-progress', [
+        return view($this->viewNamespace().'.in-progress', [
             'orders' => $orders,
             'inProgressOrders' => $inProgressOrders,
             'locations' => $locations
@@ -197,12 +204,12 @@ class OrderPerbaikanController extends Controller
         $orders = $query->latest()->paginate(10)->withQueryString();
 
         if ($request->ajax()) {
-            return view('administrasi-umum.order-perbaikan.confirmed', [
+            return view($this->viewNamespace().'.confirmed', [
                 'orders' => $orders
             ])->render();
         }
 
-        return view('administrasi-umum.order-perbaikan.confirmed', array_merge(
+        return view($this->viewNamespace().'.confirmed', array_merge(
             ['orders' => $orders],
             $this->getStatistics()
         ));
@@ -235,12 +242,12 @@ class OrderPerbaikanController extends Controller
         $orders = $query->latest()->paginate(10)->withQueryString();
 
         if ($request->ajax()) {
-            return view('administrasi-umum.order-perbaikan.rejected', [
+            return view($this->viewNamespace().'.rejected', [
                 'orders' => $orders
             ])->render();
         }
 
-        return view('administrasi-umum.order-perbaikan.rejected', array_merge(
+        return view($this->viewNamespace().'.rejected', array_merge(
             ['orders' => $orders],
             $this->getStatistics()
         ));
@@ -268,11 +275,11 @@ class OrderPerbaikanController extends Controller
         // Direct to specific view based on status
         switch($orderPerbaikan->status) {
             case 'confirmed':
-                return view('administrasi-umum.order-perbaikan.detail-confirmed', ['order' => $orderPerbaikan]);
+                return view($this->viewNamespace().'.detail-confirmed', ['order' => $orderPerbaikan]);
             case 'rejected':
-                return view('administrasi-umum.order-perbaikan.detail-rejected', ['order' => $orderPerbaikan]);
+                return view($this->viewNamespace().'.detail-rejected', ['order' => $orderPerbaikan]);
             default:
-                return view('administrasi-umum.order-perbaikan.show', ['orderPerbaikan' => $orderPerbaikan]);
+                return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
         }
     }
 
@@ -293,7 +300,7 @@ class OrderPerbaikanController extends Controller
                 'nama_penanggung_jawab' => $validated['nama_penanggung_jawab'] ?? $request->input('nama_penanggung_jawab'),
             ]);
             return redirect()
-                ->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)
+                ->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)
                 ->with('success', 'Status order berhasil diperbarui');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status: ' . $e->getMessage())->withInput();
@@ -304,7 +311,7 @@ class OrderPerbaikanController extends Controller
     {
         try {
             $service->confirm(auth()->user(), $orderPerbaikan);
-            return redirect()->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil dikonfirmasi.');
+            return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil dikonfirmasi.');
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan saat mengkonfirmasi order: ' . $e->getMessage());
         }
@@ -314,7 +321,7 @@ class OrderPerbaikanController extends Controller
     {
         try {
             $service->reject(auth()->user(), $orderPerbaikan);
-            return redirect()->route('administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil ditolak.');
+            return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil ditolak.');
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan saat menolak order: ' . $e->getMessage());
         }
@@ -338,12 +345,12 @@ class OrderPerbaikanController extends Controller
 
             DB::commit();
 
-            return redirect()->route('administrasi-umum.order-perbaikan.index')
+            return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.index' : 'administrasi-umum.order-perbaikan.index')
                 ->with('success', 'Order berhasil diselesaikan');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('administrasi-umum.order-perbaikan.index')
+            return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.index' : 'administrasi-umum.order-perbaikan.index')
                 ->with('error', 'Terjadi kesalahan saat menyelesaikan order: ' . $e->getMessage());
         }
     }
@@ -389,12 +396,12 @@ class OrderPerbaikanController extends Controller
         $orders = $query->latest()->paginate(10)->withQueryString();
 
         if ($request->ajax()) {
-            return view('administrasi-umum.order-perbaikan.total', [
+            return view($this->viewNamespace().'.total', [
                 'orders' => $orders
             ])->render();
         }
 
-        return view('administrasi-umum.order-perbaikan.total', array_merge(
+        return view($this->viewNamespace().'.total', array_merge(
             ['orders' => $orders],
             $this->getStatistics()
         ));

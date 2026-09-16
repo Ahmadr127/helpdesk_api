@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
@@ -18,7 +19,7 @@ class RegisterRequest extends FormRequest
             'password_confirmation' => 'required|string',
             'phone' => 'nullable|string|max:20',
             'position' => 'nullable|exists:positions,code',
-            'role' => 'nullable|in:admin,user',
+            'role' => ['nullable', 'string', Rule::exists('roles', 'slug')],
             'department' => 'nullable|exists:departments,code',
         ];
     }

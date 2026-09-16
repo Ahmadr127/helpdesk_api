@@ -67,7 +67,7 @@
     <div class="max-w-9xl mx-auto">
         <div class="flex justify-between items-center mb-6">
             <a href="{{ route('admin.tickets.index') }}"
-                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg shadow hover:from-gray-600 hover:to-gray-700 transition-all">
+                class="inline-flex items-center px-4 py-2 bg-slate-500 text-white rounded-lg shadow hover:bg-slate-600 transition-all">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                     xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -79,12 +79,12 @@
 
         <!-- Filter Section -->
         <div class="mb-6 rounded-xl shadow-md p-5 bg-white border border-gray-100 overflow-hidden">
-            <div class="card-header -mx-5 -mt-5 px-5 py-4 mb-5 bg-gradient-to-r from-green-50 to-blue-50 border-b border-gray-200 flex justify-between items-center">
+            <div class="card-header -mx-5 -mt-5 px-5 py-4 mb-5 bg-slate-50 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-800">Notification Filters</h2>
                 <form action="{{ route('admin.notifications.mark-all-as-read') }}" method="POST">
                     @csrf
                     <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg shadow hover:from-green-600 hover:to-blue-600 transition-all duration-200 text-sm">
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:from-green-600 hover:to-blue-600 transition-all duration-200 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -146,7 +146,7 @@
 
                 <div class="flex justify-end">
                     <button type="submit"
-                        class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-blue-600 transition-colors shadow-sm">
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-blue-600 transition-colors shadow-sm">
                         Apply Filters
                     </button>
                 </div>
@@ -157,7 +157,7 @@
             <!-- Notifications List -->
             <div class="lg:col-span-3">
                 <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col">
-                    <div class="bg-gradient-to-r from-green-50 to-blue-50 p-6 border-b border-gray-200">
+                    <div class="bg-slate-50 p-6 border-b border-gray-200">
                         <h1 class="text-xl font-bold text-gray-800">All Notifications</h1>
                         <p class="text-gray-600">View and manage your notifications</p>
                     </div>
@@ -167,7 +167,7 @@
                         <div class="divide-y divide-gray-200">
                             @forelse($notifications as $notification)
                             <div
-                                class="p-5 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }} hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all">
+                                class="p-5 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }} hover:bg-slate-50 transition-all">
                                 <a href="{{ route('admin.tickets.show', ['ticket' => $notification->data['ticket_id']]) }}"
                                     class="block"
                                     onclick="event.preventDefault(); markAsRead('{{ $notification->id }}', '{{ route('admin.tickets.show', ['ticket' => $notification->data['ticket_id']]) }}')">
@@ -175,7 +175,7 @@
                                         <div class="flex-shrink-0 mt-1">
                                             @if(!$notification->read_at)
                                             <div
-                                                class="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500 shadow-sm">
+                                                class="w-3 h-3 rounded-full bg-blue-600 shadow-sm">
                                             </div>
                                             @else
                                             <div class="w-3 h-3 rounded-full bg-gray-300"></div>
@@ -202,18 +202,18 @@
                                                 </div>
                                                 <div>
                                                     <span class="px-3 py-1 rounded-full text-xs 
-                                            {{ $notification->data['ticket_status'] === 'open' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800' : 
-                                               ($notification->data['ticket_status'] === 'in_progress' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800' : 
-                                               ($notification->data['ticket_status'] === 'closed' ? 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800' : 
-                                               'bg-gradient-to-r from-green-100 to-green-200 text-green-800')) }}">
+                                            {{ $notification->data['ticket_status'] === 'open' ? 'bg-blue-100 text-blue-800' : 
+                                               ($notification->data['ticket_status'] === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
+                                               ($notification->data['ticket_status'] === 'closed' ? 'bg-gray-100 text-gray-800' : 
+                                               'bg-green-100 text-green-800')) }}">
                                                         {{ ucfirst(str_replace('_', ' ', $notification->data['ticket_status'])) }}
                                                     </span>
                                                 </div>
                                                 <div>
                                                     <span class="px-3 py-1 rounded-full text-xs 
-                                            {{ $notification->data['ticket_priority'] === 'low' ? 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800' : 
-                                               ($notification->data['ticket_priority'] === 'medium' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800' : 
-                                               'bg-gradient-to-r from-red-100 to-red-200 text-red-800') }}">
+                                            {{ $notification->data['ticket_priority'] === 'low' ? 'bg-gray-100 text-gray-800' : 
+                                               ($notification->data['ticket_priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
+                                               'bg-red-100 text-red-800') }}">
                                                         Priority: {{ ucfirst($notification->data['ticket_priority']) }}
                                                     </span>
                                                 </div>
@@ -221,7 +221,7 @@
                                             @if(isset($notification->data['responder_name']))
                                             <div class="mt-2 text-xs text-gray-500">
                                                 <span
-                                                    class="bg-gradient-to-r from-gray-100 to-blue-50 px-3 py-1 rounded-full">
+                                                    class="bg-slate-100 px-3 py-1 rounded-full">
                                                     Responder: {{ $notification->data['responder_name'] }}
                                                     ({{ ucfirst($notification->data['responder_role']) }})
                                                 </span>
@@ -234,7 +234,7 @@
                             @empty
                             <div class="p-8 text-center">
                                 <div
-                                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-green-50 to-blue-100 text-green-500 mb-4">
+                                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 text-green-500 mb-4">
                                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -250,7 +250,7 @@
 
                     <!-- Pagination Section -->
                     @if($notifications->hasPages())
-                    <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-blue-50 border-t border-gray-200 mt-auto">
+                    <div class="px-6 py-4 bg-slate-50 border-t border-gray-200 mt-auto">
                         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div class="text-sm text-gray-600">
                                 Showing {{ $notifications->firstItem() ?? 0 }}-{{ $notifications->lastItem() ?? 0 }} of
@@ -296,7 +296,7 @@
             <!-- Settings Panel -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-                    <div class="bg-gradient-to-r from-green-50 to-blue-50 px-4 py-3 border-b border-gray-200">
+                    <div class="bg-slate-50 px-4 py-3 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-800">Notification Settings</h2>
                     </div>
                     <div class="p-4">
@@ -347,7 +347,7 @@
 
                             <div class="pt-3">
                                 <button type="submit"
-                                    class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-md hover:from-green-600 hover:to-blue-600 transition-colors shadow-sm">
+                                    class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:from-green-600 hover:to-blue-600 transition-colors shadow-sm">
                                     Save Settings
                                 </button>
                             </div>
@@ -381,7 +381,7 @@
                                 </div>
 
                                 <button type="submit"
-                                    class="w-full bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-md hover:from-red-600 hover:to-red-700 transition-colors mt-1 shadow-sm">
+                                    class="w-full bg-red-500 text-white px-4 py-2 rounded-md hover:from-red-600 hover:to-red-700 transition-colors mt-1 shadow-sm">
                                     Delete Old Notifications
                                 </button>
                             </form>

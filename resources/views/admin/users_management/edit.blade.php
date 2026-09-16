@@ -168,10 +168,11 @@
                         <div class="relative">
                             <select name="role" required
                                 class="appearance-none w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors pr-10">
-                                <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>User
+                                @foreach($roles as $role)
+                                <option value="{{ $role->slug }}" {{ $selectedRole === $role->slug ? 'selected' : '' }}>
+                                    {{ $role->name ?: $role->slug }}
                                 </option>
-                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin
-                                </option>
+                                @endforeach
                             </select>
                             <div
                                 class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">

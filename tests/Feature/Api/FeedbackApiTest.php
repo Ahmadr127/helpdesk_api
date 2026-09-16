@@ -8,11 +8,12 @@ use App\Models\User;
 use App\Models\Feedback;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class FeedbackApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected User $user;
     protected User $admin;
@@ -20,6 +21,7 @@ class FeedbackApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         Department::create(['name'=>'IT','code'=>'IT','status'=>1]);
         Position::create(['name'=>'IT','code'=>'IT','status'=>true]);
         Position::create(['name'=>'User','code'=>'user','status'=>true]);

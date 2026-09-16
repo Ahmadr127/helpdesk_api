@@ -10,7 +10,7 @@
 ### 1.1 Login & Validasi Awal
 1. User buka `/` → redirect `login` (`routes/web.php:37`).
 2. Login `app/Http/Controllers/Auth/LoginController.php:20` validasi `email+password`, cek `users.status===0` → tolak `Akun dinonaktifkan`, lalu `Auth::attempt`.
-3. `redirectBasedOnRole:55` → `role=admin && position=IT` → `admin.dashboard`, `admin+Administrasi` → `administrasi-umum.dashboard`, else `user.dashboard`.
+3. `redirectBasedOnRole` → permission `admin.dashboard` → `admin.dashboard`, `ipsrs.dashboard` → `admin.ipsrs.dashboard`, else `user.dashboard`.
 4. Jika `users.department` kosong → `TicketController.php:44` / `TicketService.php:20` tolak buat tiket: *“Mohon lengkapi data departemen”*.
 
 ### 1.2 User Buat Keluhan (2 Jalur Berbeda Unit Proses)
@@ -47,7 +47,7 @@ User buka `tickets/{id}/show` atau `order-perbaikan/{id}/show` lihat `follow_up`
 
 ### 1.5 Selesai & Arsip
 
-- Ticket `confirmed` masuk `GET /admin/tickets/history` (`TicketAdminController.php:140`) filter `date_from/to`, paginate `user_confirmed_at desc`, export `TicketsExport` (`exportHistory`). Order `confirmed/rejected` masuk list `administrasi-umum/order-perbaikan/confirmed/rejected` bisa export `OrderPerbaikanExport`.
+- Ticket `confirmed` masuk `GET /admin/tickets/history` (`TicketAdminController.php:140`) filter `date_from/to`, paginate `user_confirmed_at desc`, export `TicketsExport` (`exportHistory`). Order `confirmed/rejected` masuk list `admin/order-perbaikan/confirmed/rejected` (legacy URL `administrasi-umum/*` 301 → `admin/*`) bisa export `OrderPerbaikanExport`.
 - **Feedback** `POST /feedback` (`StoreFeedbackRequest` `rating 1-5`), Admin IT `POST /feedback/{id}/reply` (`admin_reply`).
 - **Master Data** Admin IT `POST /admin/master/{type}` (`categories/departments/buildings/locations/unit-proses/positions`) + bulk `activate/deactivate/delete`.
 - **Dashboard** `DashboardController.php:10` User: `my_tickets/my_orders`, Admin: `users/tickets_by_priority/orders`, Administrasi: `orders by status`.
@@ -61,14 +61,14 @@ User buka `tickets/{id}/show` atau `order-perbaikan/{id}/show` lihat `follow_up`
 
 ## 2. Role & Permission Matrix
 
-| Role | `users.role` | `users.position` | Middleware | Akses |
-|------|--------------|------------------|------------|-------|
-| User | `user` | `user`/any | `auth:sanctum` + owner check `ticket.user_id==auth.id` | CRUD own Ticket/Order, Reply/Confirm, Feedback create, Lookup read, User Dashboard |
-| Admin IT | `admin` | `IT` (`strtolower=it`) | `AdminApiMiddleware.php:10` / `AdminMiddleware.php:18` | Master Data CRUD+bulk, User Management CRUD, Ticket Admin all, Feedback manage, Admin Dashboard |
-| Admin Administrasi | `admin` | `Administrasi` (`ADMINISTRASI`) | `AdministrasiUmumApiMiddleware.php:10` | Order Perbaikan manage all, Statistik, Administrasi Dashboard |
-| Guest | - | - | - | `POST /api/auth/login` (cek `status=0`), `POST /api/auth/register` |
+| Role | `users.role` (FK → `roles.slug`) | Gate | Akses |
+|------|-------------------------------|------|-------|
+| User | `user` | `auth:sanctum` + owner check `ticket.user_id==auth.id` | CRUD own Ticket/Order, Reply/Confirm, Feedback create, Lookup read, User Dashboard |
+| Admin IT | `admin` | `AdminApiMiddleware` (`admin.dashboard`/`ticket.manage`) / `AdminMiddleware` + `permission:` | Master Data CRUD+bulk, User Management CRUD, Ticket Admin all, Feedback manage, Admin Dashboard |
+| Admin IPSRS | `ipsrs` | `AdministrasiUmumApiMiddleware` (`ipsrs.dashboard`/`order.manage`) + `permission:` | Order Perbaikan manage all, Statistik, Dashboard IPSRS (`admin.ipsrs.dashboard`) |
+| Guest | - | - | `POST /api/auth/login` (cek `status=0`), `POST /api/auth/register` |
 
-Seeder akun (`AdminSeeder.php:35`): `admin/123` IT admin, `administrasi/123` ADMINISTRASI admin, `user@rsazra.com/123` (alias `user@example.com/123`) user IT, `user2@rsazra.com/123` STF_IT GENERAL. Position `IT`/`user`/`ADMINISTRASI` sudah `firstOrCreate`.
+`users.position` display-only (tidak pernah jadi gate). Seeder (`RoleSeeder → PermissionSeeder → AdminSeeder`, pass `rsazra`): `admin` (IT), `administrasi` (`ipsrs`), `user@rsazra.com` (user). Web admin satu shell (`admin.layouts.*`); legacy `administrasi-umum/*` 301 → `admin/*`; API `admin/*` + `administrasi-umum/*` tetap untuk Flutter.
 
 ---
 

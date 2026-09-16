@@ -17,7 +17,7 @@
     <style>
     body {
         font-family: 'Poppins', sans-serif;
-        background-image: linear-gradient(to right, #ecfdf5, #eff6ff);
+        background-color: #f8fafc;
         background-attachment: fixed;
     }
 
@@ -54,9 +54,9 @@
     }
 
     .card-header {
-        background-image: linear-gradient(to right, #ecfdf5, #d1fae5);
+        background-color: #f8fafc;
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid rgba(209, 250, 229, 0.5);
+        border-bottom: 1px solid #e2e8f0;
     }
 
     @keyframes slideInDown {
@@ -160,13 +160,13 @@
         <div class="flex-1 px-4 py-8 md:ml-60">
             <!-- Header bar -->
             <div
-                class="mb-8 bg-white rounded-xl shadow-sm p-4 flex justify-between items-center bg-gradient-to-r from-gray-50 to-blue-200">
+                class="mb-8 bg-white rounded-xl shadow-sm p-4 flex justify-between items-center">
                 <h1 class="text-xl font-semibold text-gray-800">@yield('title', 'Dashboard')</h1>
                 <div class="flex items-center space-x-4">
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" class="flex items-center focus:outline-none">
                             <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-400 text-white flex items-center justify-center mr-2">
+                                class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center mr-2">
                                 <span
                                     class="text-sm font-bold">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                             </div>
@@ -262,7 +262,7 @@
     <div id="back-to-top"
         class="fixed bottom-6 right-6 opacity-0 invisible transition-all duration-300 transform translate-y-10">
         <button onclick="scrollToTop()"
-            class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl focus:outline-none">
+            class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18">
                 </path>

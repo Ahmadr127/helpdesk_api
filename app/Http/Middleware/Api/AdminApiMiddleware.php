@@ -14,7 +14,7 @@ class AdminApiMiddleware
         if (!$user) {
             return response()->json(['success'=>false,'message'=>'Unauthenticated'], 401);
         }
-        if ($user->role !== 'admin' || strtolower($user->position) !== 'it') {
+        if (! $user->hasAnyPermission(['admin.dashboard', 'ticket.manage'])) {
             return response()->json(['success'=>false,'message'=>'Forbidden - Admin IT only'], 403);
         }
         return $next($request);

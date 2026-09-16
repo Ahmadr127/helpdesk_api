@@ -148,7 +148,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="bg-gradient-to-r from-white to-blue-300 p-5">
+        <div class="bg-white p-5">
             <div class="flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-800">Tiket Terbaru</h2>
                 <a href="{{ route('admin.tickets.index') }}"
@@ -214,7 +214,7 @@
     </div>
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="bg-gradient-to-r from-blue-300 to-white p-5">
+        <div class="bg-white p-5">
             <div class="flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-800">Pengguna Terbaru</h2>
                 <a href="{{ route('admin.users.index') }}"

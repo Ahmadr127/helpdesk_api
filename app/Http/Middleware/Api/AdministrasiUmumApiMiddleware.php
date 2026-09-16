@@ -14,7 +14,7 @@ class AdministrasiUmumApiMiddleware
         if (!$user) {
             return response()->json(['success'=>false,'message'=>'Unauthenticated'], 401);
         }
-        if ($user->role !== 'admin' || strtolower($user->position) !== 'administrasi') {
+        if (! $user->hasAnyPermission(['ipsrs.dashboard', 'order.manage'])) {
             return response()->json(['success'=>false,'message'=>'Forbidden - Administrasi Umum only'], 403);
         }
         return $next($request);

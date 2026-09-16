@@ -33,9 +33,12 @@
                 <div class="flex gap-3">
                     <select name="role" id="filter-role"
                         class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
-                        <option value="">All Roles</option>
-                        <option value="admin" {{ request('role')==='admin'?'selected':'' }}>Admin</option>
-                        <option value="user" {{ request('role')==='user'?'selected':'' }}>User</option>
+                        <option value="">Semua Role</option>
+                        @foreach($roles as $role)
+                        <option value="{{ $role->slug }}" {{ request('role') === $role->slug ? 'selected' : '' }}>
+                            {{ $role->name ?: $role->slug }}
+                        </option>
+                        @endforeach
                     </select>
                     <select name="status" id="filter-status"
                         class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
@@ -44,7 +47,7 @@
                         <option value="0" {{ request('status')==='0'?'selected':'' }}>Inactive</option>
                     </select>
                     <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Cari</button>
-                    @if(request('search') || request('role') !== null && request('role') !== '' || request('status') !== null && request('status') !== '')
+                    @if(request('search') || (request('role') !== null && request('role') !== '') || (request('status') !== null && request('status') !== ''))
                         <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
                     @endif
                 </div>
@@ -64,10 +67,10 @@
                                 Email
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Position</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Role
+                                Username
                             </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Role</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Department</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -94,19 +97,20 @@
                                 <div class="text-sm text-gray-900">{{ $user->email }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-3 py-1 text-xs rounded-full 
-                                    {{ in_array($user->position, ['System Administrator', 'IT Staff']) ? 'bg-purple-100 text-purple-800 border border-purple-200' : 
-                                       (in_array($user->position, ['Doctor', 'Nurse', 'Pharmacist', 'Lab Technician']) ? 'bg-blue-100 text-blue-800 border border-blue-200' : 
-                                       (in_array($user->position, ['Customer Service', 'Receptionist']) ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 
-                                       'bg-gray-100 text-gray-800 border border-gray-200')) }}">
-                                    {{ $user->position }}
-                                </span>
+                                <div class="text-sm text-gray-900">{{ $user->username ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span
-                                    class="px-3 py-1 text-xs rounded-full 
-                                    {{ $user->role === 'admin' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-800 border border-gray-200' }}">
-                                    {{ ucfirst(str_replace('_', ' ', $user->role)) }}
+                                @php
+                                    $roleModel = $roles->firstWhere('slug', $user->role);
+                                    $roleLabel = $roleModel?->name ?: ucfirst($user->role ?? 'user');
+                                    $badge = match ($user->role) {
+                                        'admin' => 'bg-blue-100 text-blue-700 border border-blue-200',
+                                        'ipsrs' => 'bg-green-100 text-green-700 border border-green-200',
+                                        default => 'bg-gray-100 text-gray-800 border border-gray-200',
+                                    };
+                                @endphp
+                                <span class="px-3 py-1 text-xs rounded-full {{ $badge }}">
+                                    {{ $roleLabel }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

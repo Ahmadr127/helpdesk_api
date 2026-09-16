@@ -267,7 +267,7 @@ class TicketService
         ]);
 
         // Notify admins (DB)
-        $admins = User::where('role','admin')->get();
+        $admins = User::adminIT()->get();
         foreach ($admins as $admin) {
             $admin->notify(new TicketRespondedNotification($ticket, $user, "User has replied to ticket #{$ticket->ticket_number}", false, 'replied'));
         }
@@ -309,7 +309,7 @@ class TicketService
             $ticket->user_confirmation = true;
             $ticket->user_confirmed_at = now();
             $ticket->save();
-            $admins = User::where('role','admin')->get();
+            $admins = User::adminIT()->get();
             foreach ($admins as $admin) {
                 $admin->notify(new TicketRespondedNotification($ticket, $user, "User has confirmed ticket #{$ticket->ticket_number} as completed", false, 'confirmed'));
             }
@@ -320,7 +320,7 @@ class TicketService
             $ticket->rejection_count = $ticket->rejection_count + 1;
             $ticket->last_rejection_at = now();
             $ticket->save();
-            $admins = User::where('role','admin')->get();
+            $admins = User::adminIT()->get();
             foreach ($admins as $admin) {
                 $admin->notify(new TicketRespondedNotification($ticket, $user, "User has rejected ticket #{$ticket->ticket_number}", false, 'rejected'));
             }

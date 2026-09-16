@@ -22,7 +22,7 @@
                 @if(auth()->user()->hasPermission('order.view'))
                 <a href="{{ route('user.administrasi-umum.order-barang') }}"
                     class="flex items-center {{ request()->routeIs('user.administrasi-umum.order-barang*') || request()->routeIs('user.administrasi-umum.order-perbaikan.*') ? 'text-green-600' : 'text-gray-900 hover:text-green-600' }}">
-                    <span class="ml-2">IPSRS <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-1">MTC</span></span>
+                    <span class="ml-2">IPSRS <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-1">UMUM</span></span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('faq.view'))

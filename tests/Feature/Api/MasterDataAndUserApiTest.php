@@ -11,11 +11,12 @@ use App\Models\UnitProses;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class MasterDataAndUserApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected User $admin;
     protected User $user;
@@ -23,6 +24,7 @@ class MasterDataAndUserApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         Department::create(['name'=>'IT','code'=>'IT','status'=>1]);
         Position::create(['name'=>'IT','code'=>'IT','status'=>true]);
         Position::create(['name'=>'User','code'=>'user','status'=>true]);
@@ -180,7 +182,7 @@ class MasterDataAndUserApiTest extends TestCase
         $userForbiddenAdminDash->assertStatus(403);
 
         // administrasi dashboard
-        $adminAdm = User::create(['name'=>'Adm Umum','email'=>'admumum','password'=>Hash::make('123'),'phone'=>'0814','position'=>'Administrasi','role'=>'admin','department'=>'IT','status'=>1]);
+        $adminAdm = User::create(['name'=>'Adm Umum','email'=>'admumum','password'=>Hash::make('123'),'phone'=>'0814','position'=>'Administrasi','role'=>'ipsrs','department'=>'IT','status'=>1]);
         $admDash = $this->actingAs($adminAdm, 'sanctum')->getJson('/api/dashboard/administrasi');
         $admDash->assertStatus(200);
 

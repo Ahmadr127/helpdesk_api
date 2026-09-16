@@ -40,7 +40,7 @@ class DashboardController extends BaseApiController
                 'total'=> User::count(),
                 'active'=> User::where('status',1)->count(),
                 'inactive'=> User::where('status',0)->count(),
-                'admin'=> User::where('role','admin')->count(),
+                'admin'=> User::adminIT()->count(),
             ],
             'tickets'=>[
                 'total'=> Ticket::count(),

@@ -3,90 +3,56 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StorePermissionRequest;
+use App\Http\Requests\Admin\SyncRolePermissionsRequest;
+use App\Http\Requests\Admin\SyncUserPermissionsRequest;
 use App\Models\Permission;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use App\Services\Access\PermissionService;
+use App\Services\Access\RoleService;
 
 class PermissionController extends Controller
 {
+    public function __construct(
+        protected PermissionService $permissions,
+        protected RoleService $roles,
+    ) {}
+
     public function index()
     {
-        $permissions = Permission::orderBy('group')->orderBy('name')->get()->groupBy('group');
-        $roles = DB::table('role_permissions')
-            ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
-            ->select('role_permissions.role', 'role_permissions.position', 'permissions.slug')
-            ->get()
-            ->groupBy(function($row){ return $row->role . '|' . ($row->position ?? 'null'); });
-
-        // Build role list
-        $roleList = [
-            ['role' => 'user', 'position' => null, 'label' => 'User (Regular)'],
-            ['role' => 'admin', 'position' => 'IT', 'label' => 'Admin IT'],
-            ['role' => 'admin', 'position' => 'Administrasi', 'label' => 'Admin IPSRS / Administrasi Umum'],
-        ];
-
-        return view('admin.permissions.index', compact('permissions', 'roles', 'roleList'));
-    }
-
-    public function updateRole(Request $request)
-    {
-        $request->validate([
-            'role' => 'required|in:user,admin',
-            'position' => 'nullable|string|max:100',
-            'permissions' => 'array',
-            'permissions.*' => 'exists:permissions,id',
+        $grouped = $this->permissions->grouped();
+        $roles = $this->roles->all()->map(fn ($role) => [
+            'slug' => $role->slug,
+            'label' => $role->name ?: $this->roles->label($role->slug),
+            'assigned' => $this->permissions->slugsForRole($role->slug),
         ]);
 
-        $role = $request->role;
-        $position = $request->position ?: null;
-        // Normalize empty string to null for unique constraint
-        if ($position === '') $position = null;
+        return view('admin.permissions.index', [
+            'permissions' => $grouped,
+            'roles' => $roles,
+        ]);
+    }
 
-        DB::transaction(function() use ($role, $position, $request){
-            DB::table('role_permissions')->where('role', $role)->where(function($q) use ($position){
-                if (is_null($position)) $q->whereNull('position');
-                else $q->where('position', $position);
-            })->delete();
-
-            $perms = $request->input('permissions', []);
-            foreach ($perms as $permId) {
-                DB::table('role_permissions')->insert([
-                    'role' => $role,
-                    'position' => $position,
-                    'permission_id' => $permId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        });
+    public function updateRole(SyncRolePermissionsRequest $request)
+    {
+        $this->permissions->syncRole(
+            $request->validated()['role'],
+            $request->validated()['permissions'] ?? []
+        );
 
         return back()->with('success', 'Permission role berhasil diperbarui.');
     }
 
-    public function updateUser(Request $request, User $user)
+    public function updateUser(SyncUserPermissionsRequest $request, User $user)
     {
-        $request->validate([
-            'permissions' => 'array',
-            'permissions.*' => 'exists:permissions,id',
-        ]);
-
-        $user->permissions()->sync($request->input('permissions', []));
+        $this->permissions->syncUser($user, $request->validated()['permissions'] ?? []);
 
         return back()->with('success', 'Permission user '.$user->name.' berhasil diperbarui.');
     }
 
-    public function store(Request $request)
+    public function store(StorePermissionRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'slug' => 'required|string|max:100|unique:permissions,slug',
-            'group' => 'nullable|string|max:100',
-            'description' => 'nullable|string|max:255',
-        ]);
-
-        Permission::create($request->only(['name','slug','group','description']));
+        Permission::create($request->validated());
 
         return back()->with('success', 'Permission baru berhasil dibuat.');
     }
@@ -94,6 +60,7 @@ class PermissionController extends Controller
     public function destroy(Permission $permission)
     {
         $permission->delete();
+
         return back()->with('success', 'Permission dihapus.');
     }
 }

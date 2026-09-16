@@ -13,11 +13,12 @@ use App\Models\Ticket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class TicketApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected User $user;
     protected User $admin;
@@ -29,6 +30,7 @@ class TicketApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         $this->department = Department::create(['name'=>'IT Department','code'=>'IT','status'=>1]);
         Department::create(['name'=>'Keuangan','code'=>'KEU','status'=>1]);
         Position::create(['name'=>'IT','code'=>'IT','status'=>true]);

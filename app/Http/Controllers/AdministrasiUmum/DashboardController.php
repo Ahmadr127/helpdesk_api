@@ -5,8 +5,6 @@ namespace App\Http\Controllers\AdministrasiUmum;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrderPerbaikan;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -14,6 +12,15 @@ use Illuminate\Support\Facades\Cache;
 class DashboardController extends Controller
 {
     private const CACHE_TTL = 30; // 30 seconds cache
+
+    /**
+     * View namespace bervariasi per route: admin.* memakai admin.ipsrs-dashboard.*,
+     * administrasi-umum.* memakai administrasi-umum.dashboard.* (legacy).
+     */
+    private function viewNamespace(Request $request): string
+    {
+        return $request->routeIs('admin.*') ? 'admin.ipsrs-dashboard' : 'administrasi-umum.dashboard';
+    }
 
     public function index(Request $request)
     {
@@ -23,7 +30,7 @@ class DashboardController extends Controller
         // Get all dashboard data
         $dashboardData = $this->getDashboardData($timeFilter, $statusFilter);
 
-        return view('administrasi-umum.dashboard.index', $dashboardData);
+        return view($this->viewNamespace($request).'.index', $dashboardData);
     }
 
     public function stats(Request $request)
@@ -35,7 +42,7 @@ class DashboardController extends Controller
         $dashboardData = $this->getDashboardData($timeFilter, $statusFilter, true);
 
         // Add HTML for recent orders
-        $dashboardData['recentOrdersHtml'] = view('administrasi-umum.dashboard.partials.recent-orders', [
+        $dashboardData['recentOrdersHtml'] = view($this->viewNamespace($request).'.partials.recent-orders', [
             'recentOrders' => $dashboardData['recentOrders']
         ])->render();
 
@@ -322,17 +329,4 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function profile()
-    {
-        return view('administrasi-umum.profile.index', [
-            'user' => Auth::user()
-        ]);
-    }
-
-    public function settings()
-    {
-        return view('administrasi-umum.settings.index', [
-            'user' => Auth::user()
-        ]);
-    }
 } 

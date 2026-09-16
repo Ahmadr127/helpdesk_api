@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-6">
     <!-- Header with Back Button -->
     <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
-        <div class="bg-gradient-to-r from-white to-blue-300 p-5">
+        <div class="bg-white p-5">
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800">Semua Tiket</h2>
                 <a href="{{ route('admin.tickets.index') }}"
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Filter Section -->
-    <div class="bg-gradient-to-r from-white to-blue-300 rounded-lg shadow-md p-6 mb-6 border border-gray-100">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-100">
         <form action="{{ route('admin.tickets.all') }}" method="GET" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <!-- Status Filter -->
@@ -72,11 +72,11 @@
 
             <div class="flex justify-end space-x-2">
                 <a href="{{ route('admin.tickets.all') }}"
-                    class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 rounded-md hover:from-gray-600 hover:to-gray-700 transition-all shadow-sm">
+                    class="bg-slate-500 text-white px-4 py-2 rounded-md hover:bg-slate-600 transition-all shadow-sm">
                     Atur Ulang
                 </a>
                 <button type="submit"
-                    class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm">
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">
                     Terapkan Filter
                 </button>
             </div>

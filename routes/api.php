@@ -27,8 +27,8 @@ use App\Http\Middleware\Api\AdministrasiUmumApiMiddleware;
 | Roles:
 |  - guest (no token): login, register
 |  - auth (any): me, logout, dashboard/user, lookup, tickets user, orders user, feedback
-|  - admin IT (role=admin, position=IT): master data, user mgmt, ticket admin, feedback admin, dashboard admin
-|  - admin Administrasi (role=admin, position=Administrasi): order perbaikan admin, dashboard administrasi
+|  - admin IT (role=admin, permission ticket.manage/admin.dashboard): master data, user mgmt, ticket admin, feedback admin, dashboard admin
+|  - admin IPSRS (role=ipsrs, permission order.manage/ipsrs.dashboard): order perbaikan admin, dashboard IPSRS
 */
 
 // Public Auth

@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mx-auto px-4 py-8">
     <!-- Dashboard Header with Card/Border -->
-    <div class="bg-gradient-to-r from-white to-blue-200 rounded-lg shadow-md p-6 mb-8 border-l-4 border-blue-500">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-l-4 border-blue-500">
         <h1 class="text-2xl font-semibold text-gray-800">Master Data</h1>
         <p class="text-gray-600 mt-2">Overview of all master data categories in the system</p>
     </div>
@@ -12,7 +12,7 @@
         <!-- Unit Proses Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <div
-                class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Unit Proses</h2>
                 <a href="{{ route('admin.master.unit-proses.index') }}"
                     class="p-3 rounded-full hover:bg-blue-500 transition-all duration-200">
@@ -24,7 +24,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Name</th>
@@ -38,13 +38,13 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="unitProsesTable">
                         @foreach($unitProses as $unit)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $unit->name }}</td>
                             <td class="px-6 py-4">{{ $unit->code }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
-                                    {{ $unit->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                    {{ $unit->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $unit->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
@@ -59,7 +59,7 @@
         <!-- Categories Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <div
-                class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Categories</h2>
                 <a href="{{ route('admin.master.categories.index') }}"
                     class="p-3 rounded-full hover:bg-green-500 transition-all duration-200">
@@ -71,7 +71,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Name</th>
@@ -85,13 +85,13 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($categories as $category)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $category->name }}</td>
                             <td class="px-6 py-4">{{ $category->unitProses ? $category->unitProses->name : '-' }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
-                                    {{ $category->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                    {{ $category->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $category->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
@@ -106,7 +106,7 @@
         <!-- Departments Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <div
-                class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Departments</h2>
                 <a href="{{ route('admin.master.departments.index') }}"
                     class="p-3 rounded-full hover:bg-purple-500 transition-all duration-200">
@@ -118,7 +118,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Name</th>
@@ -132,13 +132,13 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="departmentsTable">
                         @foreach($departments as $department)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $department->name }}</td>
                             <td class="px-6 py-4">{{ $department->code }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
-                                    {{ $department->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                    {{ $department->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $department->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
@@ -153,7 +153,7 @@
         <!-- Buildings Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <div
-                class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Buildings</h2>
                 <a href="{{ route('admin.master.buildings.index') }}"
                     class="p-3 rounded-full hover:bg-yellow-500 transition-all duration-200">
@@ -165,7 +165,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Name</th>
@@ -179,13 +179,13 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="buildingsTable">
                         @foreach($buildings as $building)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $building->name }}</td>
                             <td class="px-6 py-4">{{ $building->code }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
-                                    {{ $building->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                    {{ $building->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $building->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
@@ -200,7 +200,7 @@
         <!-- Locations Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
             <div
-                class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Locations</h2>
                 <a href="{{ route('admin.master.locations.index') }}"
                     class="p-3 rounded-full hover:bg-indigo-500 transition-all duration-200">
@@ -214,7 +214,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Name</th>
@@ -228,13 +228,13 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="locationsTable">
                         @foreach($locations as $location)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $location->name }}</td>
                             <td class="px-6 py-4">{{ $location->building->name }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
-                                    {{ $location->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                    {{ $location->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $location->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
@@ -248,7 +248,7 @@
 
         <!-- Positions Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-            <div class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Positions</h2>
                 <a href="{{ route('admin.master.positions.index') }}" class="p-3 rounded-full hover:bg-pink-500 transition-all duration-200">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +258,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
@@ -268,11 +268,11 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="positionsTable">
                         @foreach($positions as $position)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $position->name }}</td>
                             <td class="px-6 py-4">{{ $position->code }}</td>
                             <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full {{ $position->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $position->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $position->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
@@ -285,7 +285,7 @@
         </div>
     <!-- Kategori Order Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-            <div class="flex justify-between items-center mb-4 bg-gradient-to-r from-gray-100 to-blue-300 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-gray-800">Kategori Order</h2>
                 <a href="{{ route('admin.master.kategori-order.index') }}" class="p-3 rounded-full hover:bg-amber-500 transition-all duration-200">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,7 +295,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-50 to-blue-50">
+                    <thead class="bg-slate-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
@@ -305,11 +305,11 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="kategoriOrderTable">
                         @foreach($kategoriOrders as $kategori)
-                        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+                        <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $kategori->name }}</td>
                             <td class="px-6 py-4">{{ $kategori->code ?? '-' }}</td>
                             <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full {{ $kategori->status ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' }}">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $kategori->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $kategori->status ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>

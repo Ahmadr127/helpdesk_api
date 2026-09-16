@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-4">
     <div class="flex justify-between items-center mb-4">
         <a href="{{ route('admin.tickets.history.index') }}"
-            class="inline-flex items-center px-3 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg shadow hover:from-gray-600 hover:to-gray-700 transition-all text-sm">
+            class="inline-flex items-center px-3 py-2 bg-slate-500 text-white rounded-lg shadow hover:bg-slate-600 transition-all text-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
                 </path>
@@ -16,7 +16,7 @@
     </div>
 
     <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 mb-4">
-        <div class="bg-gradient-to-r from-white to-blue-300 p-4 border-b border-gray-200">
+        <div class="bg-white p-4 border-b border-gray-200">
             <h1 class="text-xl font-bold text-gray-800">Ticket #{{ $ticket->ticket_number }}</h1>
             <p class="text-sm text-gray-600">Submitted by {{ $ticket->user->name }} on
                 {{ $ticket->created_at->format('d M Y H:i') }}</p>
@@ -30,7 +30,7 @@
                     <!-- Created -->
                     <div class="relative flex flex-col items-center">
                         <div
-                            class="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                            class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -49,7 +49,7 @@
                     @if($ticket->in_progress_at)
                     <div class="relative flex flex-col items-center">
                         <div
-                            class="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
+                            class="w-8 h-8 flex items-center justify-center rounded-full bg-yellow-500 text-white">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -69,7 +69,7 @@
                     @if($ticket->closed_at)
                     <div class="relative flex flex-col items-center">
                         <div
-                            class="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                            class="w-8 h-8 flex items-center justify-center rounded-full bg-purple-600 text-white">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -89,7 +89,7 @@
                     @if($ticket->user_confirmed_at)
                     <div class="relative flex flex-col items-center">
                         <div
-                            class="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white">
+                            class="w-8 h-8 flex items-center justify-center rounded-full bg-green-600 text-white">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M5 13l4 4L19 7" />
@@ -105,7 +105,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <h2 class="text-sm font-semibold text-gray-800 mb-2">Ticket Information</h2>
                     <div class="space-y-2">
                         <div class="flex justify-between">
@@ -132,7 +132,7 @@
                 </div>
 
                 @if($ticket->user_confirmed_at)
-                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-lg border border-gray-200">
+                <div class="bg-slate-50 p-3 rounded-lg border border-gray-200">
                     <h2 class="text-sm font-semibold text-gray-800 mb-2">Confirmation Details</h2>
                     <div class="space-y-2">
                         <div class="flex justify-between">
@@ -171,7 +171,7 @@
 
             <div>
                 <h2 class="text-sm font-semibold text-gray-800 mb-2">Processing Time</h2>
-                <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                     @php
                     $start = $ticket->created_at;
                     $end = $ticket->user_confirmed_at;

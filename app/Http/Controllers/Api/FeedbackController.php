@@ -15,10 +15,8 @@ class FeedbackController extends BaseApiController
 
     public function index(Request $request)
     {
-        // if admin, show all; if user show own
         $user = $request->user();
-        $isAdmin = $user->role === 'admin' && strtolower($user->position)==='it';
-        if ($isAdmin) {
+        if ($user->hasPermission('feedback.manage')) {
             $filters = $request->only(['search']);
             $paginator = $this->service->list($filters, (int)$request->get('per_page',15));
         } else {
@@ -45,10 +43,9 @@ class FeedbackController extends BaseApiController
 
     public function show(Feedback $feedback)
     {
-        // user can only see own unless admin
+        // user can only see own unless they can manage feedback
         $user = auth()->user();
-        $isAdmin = $user->role==='admin' && strtolower($user->position)==='it';
-        if (!$isAdmin && $feedback->user_id !== $user->id) {
+        if (!$user->hasPermission('feedback.manage') && $feedback->user_id !== $user->id) {
             return $this->error('Unauthorized',403);
         }
         return $this->success(new FeedbackResource($feedback->load('user')), 'Detail feedback');
@@ -56,9 +53,8 @@ class FeedbackController extends BaseApiController
 
     public function reply(ReplyFeedbackRequest $request, Feedback $feedback)
     {
-        // only admin
         $user = $request->user();
-        if (!($user->role==='admin' && strtolower($user->position)==='it')) {
+        if (!$user->hasPermission('feedback.manage')) {
             return $this->error('Unauthorized - admin only',403);
         }
         $updated = $this->service->reply($feedback, $request->validated()['admin_reply']);
@@ -68,7 +64,7 @@ class FeedbackController extends BaseApiController
     public function destroy(Request $request, Feedback $feedback)
     {
         $user = $request->user();
-        if (!($user->role==='admin' && strtolower($user->position)==='it')) {
+        if (!$user->hasPermission('feedback.manage')) {
             return $this->error('Unauthorized',403);
         }
         $this->service->delete($feedback);

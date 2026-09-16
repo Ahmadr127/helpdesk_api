@@ -170,7 +170,7 @@
                 </svg>
                 Informasi Maintenance
                 <span class="ml-auto">
-                    <a href="{{ route('user.administrasi-umum.order-barang') }}"
+                    <a href="{{ route('user.administrasi-umum.order-perbaikan.create') }}"
                             class="bg-white text-green-600 px-3 py-1.5 text-sm rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

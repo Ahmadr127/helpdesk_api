@@ -1,5 +1,5 @@
 <table class="min-w-full divide-y divide-gray-200">
-    <thead class="bg-gradient-to-r from-green-100 to-blue-100">
+    <thead class="bg-slate-50">
         <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Tiket</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengguna</th>
@@ -17,7 +17,7 @@
     </thead>
     <tbody class="bg-white divide-y divide-gray-200">
         @forelse($tickets as $ticket)
-        <tr class="hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 transition-all">
+        <tr class="hover:bg-slate-50 transition-all">
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->user->name }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->category }}</td>

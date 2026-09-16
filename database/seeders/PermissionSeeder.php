@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PermissionSeeder extends Seeder
 {
@@ -53,67 +55,25 @@ class PermissionSeeder extends Seeder
             Permission::firstOrCreate(['slug' => $p['slug']], $p);
         }
 
-        // Define role + position -> permissions mapping
-        $rolePermissions = [
-            // Regular user (role=user, any position)
-            'user' => [
-                'position' => null,
-                'perms' => [
-                    'dashboard.view',
-                    'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.history',
-                    'order.view', 'order.create', 'order.edit.own',
-                    'faq.view', 'knowledge.view',
-                    'notification.view',
-                    'feedback.view',
-                    'report.view',
-                ],
-            ],
-            // Admin IT (role=admin, position=IT)
-            'admin_IT' => [
-                'role' => 'admin', 'position' => 'IT',
-                'perms' => [
-                    'dashboard.view', 'admin.dashboard',
-                    'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.manage', 'ticket.history',
-                    'order.view', // admin IT can view orders but not manage? allow view
-                    'master.view', 'master.manage',
-                    'user.view', 'user.manage',
-                    'report.view', 'report.manage', 'report.sirs',
-                    'feedback.view', 'feedback.manage',
-                    'faq.view', 'knowledge.view',
-                    'notification.view', 'fcm.manage',
-                ],
-            ],
-            // Admin IPSRS / Administrasi Umum (role=admin, position=Administrasi)
-            'admin_Administrasi' => [
-                'role' => 'admin', 'position' => 'Administrasi',
-                'perms' => [
-                    'dashboard.view', 'ipsrs.dashboard',
-                    'order.view', 'order.create', 'order.edit.own', 'order.manage',
-                    'ticket.view', // can view tickets? limited
-                    'feedback.view',
-                    'faq.view', 'knowledge.view',
-                    'notification.view',
-                    'report.view',
-                ],
-            ],
-        ];
-
         // Clear previous role_permissions to re-seed
         DB::table('role_permissions')->delete();
 
-        foreach ($rolePermissions as $key => $rp) {
-            $role = $rp['role'] ?? ($key === 'user' ? 'user' : 'admin');
-            $position = $rp['position'] ?? ($rp['position'] ?? null);
-            // handle legacy keys
-            if ($key === 'admin_IT') { $role='admin'; $position='IT'; }
-            if ($key === 'admin_Administrasi') { $role='admin'; $position='Administrasi'; }
-            if ($key === 'user') { $role='user'; $position=null; }
+        $hasPositionColumn = Schema::hasColumn('role_permissions', 'position');
 
-            foreach ($rp['perms'] as $slug) {
+        foreach (self::rolePermissionsMap() as $role => $slugs) {
+            // Skip unknown roles so dynamic roles stay manageable via RoleSeeder.
+            if (!Role::where('slug', $role)->exists()) {
+                continue;
+            }
+            foreach ($slugs as $slug) {
                 $perm = Permission::where('slug', $slug)->first();
                 if ($perm) {
+                    $key = ['role' => $role, 'permission_id' => $perm->id];
+                    if ($hasPositionColumn) {
+                        $key['position'] = null;
+                    }
                     DB::table('role_permissions')->updateOrInsert(
-                        ['role' => $role, 'position' => $position, 'permission_id' => $perm->id],
+                        $key,
                         ['created_at' => now(), 'updated_at' => now()]
                     );
                 }
@@ -121,5 +81,40 @@ class PermissionSeeder extends Seeder
         }
 
         $this->command->info('Permissions seeded: '.Permission::count().' permissions, '.DB::table('role_permissions')->count().' role_permissions');
+    }
+
+    public static function rolePermissionsMap(): array
+    {
+        return [
+            'user' => [
+                'dashboard.view',
+                'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.history',
+                'order.view', 'order.create', 'order.edit.own',
+                'faq.view', 'knowledge.view',
+                'notification.view',
+                'feedback.view',
+                'report.view',
+            ],
+            'admin' => [
+                'dashboard.view', 'admin.dashboard',
+                'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.manage', 'ticket.history',
+                'order.view',
+                'master.view', 'master.manage',
+                'user.view', 'user.manage',
+                'report.view', 'report.manage', 'report.sirs',
+                'feedback.view', 'feedback.manage',
+                'faq.view', 'knowledge.view',
+                'notification.view', 'fcm.manage',
+            ],
+            'ipsrs' => [
+                'dashboard.view', 'ipsrs.dashboard',
+                'order.view', 'order.create', 'order.edit.own', 'order.manage',
+                'ticket.view',
+                'feedback.view',
+                'faq.view', 'knowledge.view',
+                'notification.view',
+                'report.view',
+            ],
+        ];
     }
 }

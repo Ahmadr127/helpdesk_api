@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdministrasiUmumController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\LoginController;
@@ -26,8 +25,6 @@ use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\User\NotificationController as UserNotificationController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\AdministrasiUmum\DashboardController as AdministrasiUmumDashboardController;
-use App\Http\Controllers\AdministrasiUmum\OrderController as AdministrasiUmumOrderController;
-use App\Http\Middleware\AdministrasiUmumMiddleware;
 use App\Http\Controllers\AdministrasiUmum\OrderPerbaikanController;
 use App\Http\Controllers\Admin\UnitProsesController;
 use App\Http\Controllers\User\FeedbackController as UserFeedbackController;
@@ -62,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('admin.dashboard');
         }
         if ($user->hasPermission('ipsrs.dashboard')) {
-            return redirect()->route('administrasi-umum.dashboard');
+            return redirect()->route('admin.ipsrs.dashboard');
         }
         return redirect()->route('user.dashboard');
     })->name('dashboard');
@@ -243,6 +240,35 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/jobs/flush', [FcmMonitoringController::class, 'flushFailed'])->name('jobs.flushFailed');
             Route::post('/test', [FcmMonitoringController::class, 'sendTest'])->name('test');
         });
+
+        // IPSRS dashboard + Order Perbaikan di shell admin (pusat).
+        // Controller + logic tetap milik AdministrasiUmum; hanya namespace view
+        // yang bervariasi per route (lihat viewNamespace() di controller).
+        Route::get('/ipsrs-dashboard', [AdministrasiUmumDashboardController::class, 'index'])
+            ->name('ipsrs.dashboard')->middleware('permission:ipsrs.dashboard|order.manage');
+        Route::get('/ipsrs-dashboard/stats', [AdministrasiUmumDashboardController::class, 'stats'])
+            ->name('ipsrs.stats')->middleware('permission:ipsrs.dashboard|order.manage');
+
+        Route::prefix('order-perbaikan')->name('order-perbaikan.')->middleware('permission:order.manage|order.view')->group(function () {
+            Route::get('/', [OrderPerbaikanController::class, 'index'])->name('index');
+            Route::get('/filter/{type}/{value}', [OrderPerbaikanController::class, 'filterOrders'])->name('filter');
+            Route::get('/in-progress', [OrderPerbaikanController::class, 'inProgress'])->name('in-progress');
+            Route::get('/confirmed', [OrderPerbaikanController::class, 'confirmed'])->name('confirmed');
+            Route::get('/rejected', [OrderPerbaikanController::class, 'rejected'])->name('rejected');
+            Route::get('/rendah', [OrderPerbaikanController::class, 'rendah'])->name('rendah');
+            Route::get('/sedang', [OrderPerbaikanController::class, 'sedang'])->name('sedang');
+            Route::get('/tinggi', [OrderPerbaikanController::class, 'tinggi'])->name('tinggi');
+            Route::get('/total', [OrderPerbaikanController::class, 'total'])->name('total');
+
+            Route::post('/export', [OrderPerbaikanController::class, 'export'])->name('export-data');
+
+            Route::get('/{orderPerbaikan}', [OrderPerbaikanController::class, 'show'])->name('show');
+            Route::put('/{orderPerbaikan}/update-status', [OrderPerbaikanController::class, 'updateStatus'])->name('update-status');
+            Route::post('/{orderPerbaikan}/confirm', [OrderPerbaikanController::class, 'confirm'])->name('confirm');
+            Route::post('/{orderPerbaikan}/reject', [OrderPerbaikanController::class, 'reject'])->name('reject');
+            Route::post('/{orderPerbaikan}/complete', [OrderPerbaikanController::class, 'complete'])->name('complete');
+            Route::post('/{orderPerbaikan}/start', [OrderPerbaikanController::class, 'start'])->name('start');
+        });
     });
 
     // User Notification Routes
@@ -264,41 +290,31 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/fcm/jobs/flush', [FcmMonitoringController::class, 'flushFailed'])->name('fcm.jobs.flushFailed')->middleware(AdminMiddleware::class);
 });
 
-// Administrasi Umum Routes - GREEN theme IPSRS, permission protected
-Route::prefix('administrasi-umum')->name('administrasi-umum.')->middleware([AdministrasiUmumMiddleware::class, 'permission:ipsrs.dashboard|order.manage'])->group(function () {
-    Route::get('/', [AdministrasiUmumDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/stats', [AdministrasiUmumDashboardController::class, 'stats'])->name('dashboard.stats');
-    
-    // Order Perbaikan routes - GREEN IPSRS, permission order.manage
-    Route::prefix('order-perbaikan')->name('order-perbaikan.')->middleware('permission:order.manage')->group(function () {
-        Route::get('/', [OrderPerbaikanController::class, 'index'])->name('index');
-        Route::get('/filter/{type}/{value}', [OrderPerbaikanController::class, 'filterOrders'])->name('filter');
-        Route::get('/in-progress', [OrderPerbaikanController::class, 'inProgress'])->name('in-progress');
-        Route::get('/confirmed', [OrderPerbaikanController::class, 'confirmed'])->name('confirmed');
-        Route::get('/rejected', [OrderPerbaikanController::class, 'rejected'])->name('rejected');
-        Route::get('/rendah', [OrderPerbaikanController::class, 'rendah'])->name('rendah');
-        Route::get('/sedang', [OrderPerbaikanController::class, 'sedang'])->name('sedang');
-        Route::get('/tinggi', [OrderPerbaikanController::class, 'tinggi'])->name('tinggi');
-        Route::get('/total', [OrderPerbaikanController::class, 'total'])->name('total');
-        
-        // Export route
-        Route::post('/export', [OrderPerbaikanController::class, 'export'])->name('export-data');
-        
-        Route::get('/{orderPerbaikan}', [OrderPerbaikanController::class, 'show'])->name('show');
-        Route::put('/{orderPerbaikan}/update-status', [OrderPerbaikanController::class, 'updateStatus'])->name('update-status');
-        Route::post('/{orderPerbaikan}/confirm', [OrderPerbaikanController::class, 'confirm'])->name('confirm');
-        Route::post('/{orderPerbaikan}/reject', [OrderPerbaikanController::class, 'reject'])->name('reject');
-        Route::post('/{orderPerbaikan}/complete', [OrderPerbaikanController::class, 'complete'])->name('complete');
-        Route::post('/{orderPerbaikan}/start', [OrderPerbaikanController::class, 'start'])->name('start');
+// Administrasi Umum Routes - LEGACY, redirect permanen ke padanan admin.*.
+// Dipertahankan sementara untuk bookmark/Flutter webview lama.
+Route::prefix('administrasi-umum')->name('administrasi-umum.')->group(function () {
+    Route::get('/', fn () => redirect()->route('admin.ipsrs.dashboard', [], 301))->name('dashboard');
+    Route::get('/stats', fn () => redirect()->route('admin.ipsrs.stats', [], 301))->name('dashboard.stats');
+
+    Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
+        Route::get('/', fn () => redirect()->route('admin.order-perbaikan.index', [], 301))->name('index');
+        Route::get('/filter/{type}/{value}', fn (string $type, string $value) => redirect()->route('admin.order-perbaikan.filter', [$type, $value], 301))->name('filter');
+        Route::get('/in-progress', fn () => redirect()->route('admin.order-perbaikan.in-progress', [], 301))->name('in-progress');
+        Route::get('/confirmed', fn () => redirect()->route('admin.order-perbaikan.confirmed', [], 301))->name('confirmed');
+        Route::get('/rejected', fn () => redirect()->route('admin.order-perbaikan.rejected', [], 301))->name('rejected');
+        Route::get('/rendah', fn () => redirect()->route('admin.order-perbaikan.rendah', [], 301))->name('rendah');
+        Route::get('/sedang', fn () => redirect()->route('admin.order-perbaikan.sedang', [], 301))->name('sedang');
+        Route::get('/tinggi', fn () => redirect()->route('admin.order-perbaikan.tinggi', [], 301))->name('tinggi');
+        Route::get('/total', fn () => redirect()->route('admin.order-perbaikan.total', [], 301))->name('total');
+        Route::get('/{orderPerbaikan}', fn (\App\Models\OrderPerbaikan $orderPerbaikan) => redirect()->route('admin.order-perbaikan.show', $orderPerbaikan, 301))->name('show');
     });
-    
-    // General Routes
-    Route::get('/profile', [App\Http\Controllers\AdministrasiUmum\AdministrasiUmumController::class, 'profile'])->name('profile');
-    Route::get('/settings', [App\Http\Controllers\AdministrasiUmum\AdministrasiUmumController::class, 'settings'])->name('settings');
-    Route::get('/notifications', [App\Http\Controllers\AdministrasiUmum\AdministrasiUmumController::class, 'notifications'])->name('notifications');
-    Route::get('/dokumen', [App\Http\Controllers\AdministrasiUmum\AdministrasiUmumController::class, 'dokumen'])->name('dokumen');
-    Route::get('/formulir', [App\Http\Controllers\AdministrasiUmum\AdministrasiUmumController::class, 'formulir'])->name('formulir');
-    Route::get('/prosedur', [App\Http\Controllers\AdministrasiUmum\AdministrasiUmumController::class, 'prosedur'])->name('prosedur');
+
+    Route::get('/profile', fn () => redirect()->route('admin.ipsrs.dashboard', [], 301))->name('profile');
+    Route::get('/settings', fn () => redirect()->route('admin.ipsrs.dashboard', [], 301))->name('settings');
+    Route::get('/notifications', fn () => redirect()->route('admin.notifications.index', [], 301))->name('notifications');
+    Route::get('/dokumen', fn () => redirect()->route('admin.ipsrs.dashboard', [], 301))->name('dokumen');
+    Route::get('/formulir', fn () => redirect()->route('admin.ipsrs.dashboard', [], 301))->name('formulir');
+    Route::get('/prosedur', fn () => redirect()->route('admin.ipsrs.dashboard', [], 301))->name('prosedur');
 });
 
 Route::fallback(function () {

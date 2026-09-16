@@ -13,11 +13,12 @@ use App\Models\Ticket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class TicketNotificationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected User $user;
     protected User $admin;
@@ -29,6 +30,7 @@ class TicketNotificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         $this->department = Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
         Position::create(['name' => 'User', 'code' => 'user', 'status' => true]);
         Position::create(['name' => 'IT', 'code' => 'IT', 'status' => true]);

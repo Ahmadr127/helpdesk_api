@@ -93,25 +93,14 @@ class LoginController extends Controller
 
     protected function redirectBasedOnRole($user)
     {
-        \Log::info('User Role: ' . $user->role . ', Position: ' . $user->position);
-        
-        if ($user->role === 'admin') {
-            $position = strtolower($user->position);
-            
-            if ($position === 'administrasi') {
-                \Log::info('Redirecting to administrasi-umum.dashboard');
-                return redirect()->route('administrasi-umum.dashboard');
-            } elseif ($position === 'it') {
-                \Log::info('Redirecting to admin.dashboard');
-                return redirect()->route('admin.dashboard');
-            } else {
-                \Log::info('Admin with invalid position, redirecting to user.dashboard');
-                return redirect()->route('user.dashboard')
-                    ->with('error', 'Posisi admin tidak valid. Silakan hubungi administrator.');
-            }
+        if ($user->hasPermission('admin.dashboard')) {
+            return redirect()->route('admin.dashboard');
         }
-        
-        \Log::info('Redirecting to user.dashboard');
+
+        if ($user->hasPermission('ipsrs.dashboard')) {
+            return redirect()->route('admin.ipsrs.dashboard');
+        }
+
         return redirect()->route('user.dashboard');
     }
 

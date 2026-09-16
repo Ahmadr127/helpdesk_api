@@ -12,11 +12,12 @@ use App\Models\OrderPerbaikan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class OrderPerbaikanApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected User $user;
     protected User $adminAdm;
@@ -26,6 +27,7 @@ class OrderPerbaikanApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         Department::create(['name'=>'IT','code'=>'IT','status'=>1]);
         Position::create(['name'=>'User','code'=>'user','status'=>true]);
         Position::create(['name'=>'Administrasi','code'=>'Administrasi','status'=>true]);
@@ -43,7 +45,7 @@ class OrderPerbaikanApiTest extends TestCase
         ]);
         $this->adminAdm = User::create([
             'name'=>'Admin Administrasi','email'=>'administrasi','password'=>Hash::make('123'),
-            'phone'=>'0812','position'=>'Administrasi','role'=>'admin','department'=>'IT','status'=>1
+            'phone'=>'0812','position'=>'Administrasi','role'=>'ipsrs','department'=>'IT','status'=>1
         ]);
     }
 

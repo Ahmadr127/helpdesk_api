@@ -71,14 +71,14 @@
     </div>
 
     <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 mb-8">
-        <div class="bg-gradient-to-r from-white to-blue-300 p-6 border-b border-gray-200">
+        <div class="bg-white p-6 border-b border-gray-200">
             <h1 class="text-2xl font-bold text-gray-800">Report SIRS</h1>
             <p class="text-gray-600">Lihat dan kelola laporan SIRS</p>
         </div>
 
         <div class="p-6">
             <form id="filterForm" action="{{ route('admin.report-sirs.index') }}" method="GET"
-                class="mb-6 bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-lg shadow-sm">
+                class="mb-6 bg-slate-50 p-6 rounded-lg shadow-sm">
                 <div class="flex flex-wrap items-end gap-4">
                     <div class="w-full md:w-auto">
                         <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
@@ -115,7 +115,7 @@
                     </div>
                     <div class="flex gap-2">
                         <button type="submit"
-                            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-md shadow hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -125,7 +125,7 @@
                         </button>
 
                         <button type="button" onclick="exportSelected()"
-                            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-md shadow hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -139,7 +139,7 @@
 
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-green-100 to-blue-300">
+                    <thead class="bg-slate-100">
                         <tr>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

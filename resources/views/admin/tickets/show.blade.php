@@ -7,7 +7,7 @@
     <!-- Back Button -->
     <div class="mb-3">
         <a href="{{ route('admin.tickets.index') }}"
-            class="inline-flex items-center text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+            class="inline-flex items-center text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
                 </path>
@@ -22,7 +22,7 @@
         <div class="lg:col-span-2">
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden ticket-container">
                 <!-- Status Bar -->
-                <div class="bg-gradient-to-r from-white to-blue-300 px-4 py-3 border-b border-gray-100">
+                <div class="bg-white px-4 py-3 border-b border-gray-100">
                     <div class="flex flex-col space-y-3">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
@@ -139,7 +139,7 @@
                                     <!-- Created -->
                                     <div class="relative flex flex-col items-center">
                                         <div
-                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-green-500 text-white">
+                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-green-500 text-white">
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd"
                                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -161,7 +161,7 @@
                                     @if($ticket->in_progress_at)
                                     <div class="relative flex flex-col items-center">
                                         <div
-                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-400 to-purple-500 text-white">
+                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-purple-500 text-white">
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd"
                                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
@@ -184,7 +184,7 @@
                                     @if($ticket->closed_at)
                                     <div class="relative flex flex-col items-center">
                                         <div
-                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white">
+                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-yellow-500 text-white">
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd"
                                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -207,7 +207,7 @@
                                     @if($ticket->user_confirmed_at)
                                     <div class="relative flex flex-col items-center">
                                         <div
-                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white">
+                                            class="w-6 h-6 flex items-center justify-center rounded-full bg-green-600 text-white">
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd"
                                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -233,7 +233,7 @@
         <div class="lg:col-span-1">
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 h-full conversation-container">
                 <!-- Conversation Header -->
-                <div class="bg-gradient-to-r from-blue-300 to-white px-4 py-3 border-b border-gray-100">
+                <div class="bg-white px-4 py-3 border-b border-gray-100">
                     <h3 class="text-base font-medium text-gray-800">Riwayat Percakapan</h3>
                 </div>
 
@@ -332,7 +332,7 @@
 
     <!-- Admin Response Form -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        <div class="bg-gradient-to-r from-white to-blue-300 px-4 py-3 border-b border-gray-200">
+        <div class="bg-white px-4 py-3 border-b border-gray-200">
             <h3 class="text-base font-semibold text-gray-800">
                 @if($ticket->status === 'in_progress')
                 Balasan Admin
@@ -398,20 +398,20 @@
                     <div class="flex space-x-3">
                         @if($ticket->status === 'in_progress')
                         <button type="submit" name="action" value="reply"
-                            class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm text-sm">
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm">
                             Kirim Balasan
                         </button>
                         <button type="submit" name="status" value="closed"
-                            class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm text-sm">
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm">
                             Tutup Tiket
                         </button>
                         @else
                         <button type="submit" name="status" value="in_progress"
-                            class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm text-sm">
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm">
                             Tandai sebagai Dalam Proses
                         </button>
                         <button type="submit" name="status" value="closed"
-                            class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm text-sm">
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm">
                             Tutup Tiket
                         </button>
                         @endif

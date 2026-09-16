@@ -12,11 +12,12 @@ use App\Models\OrderPerbaikan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
+use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
 class OrderNotificationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsAccessControl;
 
     protected User $user;
     protected User $adminUmum;
@@ -26,6 +27,7 @@ class OrderNotificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolePermissions();
         Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
         Position::create(['name' => 'User', 'code' => 'user', 'status' => true]);
         Position::create(['name' => 'Administrasi', 'code' => 'Administrasi', 'status' => true]);
@@ -42,7 +44,7 @@ class OrderNotificationTest extends TestCase
         ]);
         $this->adminUmum = User::create([
             'name' => 'Admin Umum', 'email' => 'adm@example.com', 'password' => Hash::make('123'),
-            'phone' => '0812', 'position' => 'Administrasi', 'role' => 'admin', 'department' => 'IT', 'status' => 1,
+            'phone' => '0812', 'position' => 'Administrasi', 'role' => 'ipsrs', 'department' => 'IT', 'status' => 1,
             'fcm_token' => 'admin_umum_token_1234567890'
         ]);
     }

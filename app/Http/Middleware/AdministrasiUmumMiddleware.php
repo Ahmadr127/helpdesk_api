@@ -15,7 +15,7 @@ class AdministrasiUmumMiddleware
 
         $user = auth()->user();
 
-        if ($user->role !== 'admin' || strtolower($user->position) !== 'administrasi') {
+        if (! $user->hasAnyPermission(['ipsrs.dashboard', 'order.manage'])) {
             return redirect()->route('login')
                 ->with('error', 'Anda tidak memiliki akses ke halaman ini.');
         }

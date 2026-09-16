@@ -82,14 +82,65 @@ class User extends Authenticatable
         return array_values(array_filter($tokens));
     }
 
+    public function roleModel()
+    {
+        return $this->belongsTo(\App\Models\Role::class, 'role', 'slug');
+    }
+
+    public function hasRole(string ...$slugs): bool
+    {
+        return in_array($this->role, $slugs, true);
+    }
+
+    public function assignRole(string $slug): bool
+    {
+        if (!app(\App\Services\Access\RoleService::class)->exists($slug)) {
+            return false;
+        }
+        return $this->update(['role' => $slug]);
+    }
+
+    /**
+     * Admin IT = siapa pun yang memegang permission admin.
+     * Tetap dukung role lama 'admin' agar query notifikasi tidak bocor
+     * saat tabel permissions belum di-seed.
+     */
     public function scopeAdminIT($query)
     {
-        return $query->where('role', 'admin')->whereRaw('LOWER(position) = ?', ['it']);
+        return $query->where(function ($q) {
+            $q->where('role', 'admin')
+                ->orWhereIn('id', function ($sub) {
+                    $sub->select('permission_user.user_id')
+                        ->from('permission_user')
+                        ->join('permissions', 'permissions.id', '=', 'permission_user.permission_id')
+                        ->whereIn('permissions.slug', ['admin.dashboard', 'ticket.manage']);
+                })
+                ->orWhereIn('role', function ($sub) {
+                    $sub->select('role_permissions.role')
+                        ->from('role_permissions')
+                        ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
+                        ->whereIn('permissions.slug', ['admin.dashboard', 'ticket.manage']);
+                });
+        });
     }
 
     public function scopeAdminUmum($query)
     {
-        return $query->where('role', 'admin')->whereRaw('LOWER(position) = ?', ['administrasi']);
+        return $query->where(function ($q) {
+            $q->where('role', 'ipsrs')
+                ->orWhereIn('id', function ($sub) {
+                    $sub->select('permission_user.user_id')
+                        ->from('permission_user')
+                        ->join('permissions', 'permissions.id', '=', 'permission_user.permission_id')
+                        ->whereIn('permissions.slug', ['ipsrs.dashboard', 'order.manage']);
+                })
+                ->orWhereIn('role', function ($sub) {
+                    $sub->select('role_permissions.role')
+                        ->from('role_permissions')
+                        ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
+                        ->whereIn('permissions.slug', ['ipsrs.dashboard', 'order.manage']);
+                });
+        });
     }
 
     // Permissions relationships & helpers
@@ -106,27 +157,17 @@ class User extends Authenticatable
         } else {
             if ($this->permissions()->where('slug', $slug)->exists()) return true;
         }
-        // Role-based permission (via role_permissions table)
+        // Role-based permission (via role_permissions table) - berbasis role saja
         $role = $this->role;
-        $position = $this->position ? strtolower($this->position) : null;
-        // Check exact role+position, then role wildcard
         $exists = \Illuminate\Support\Facades\DB::table('role_permissions')
             ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
             ->where('permissions.slug', $slug)
-            ->where(function($q) use ($role, $position){
-                $q->where(function($qq) use ($role, $position){
-                    $qq->where('role_permissions.role', $role)
-                       ->whereRaw('LOWER(role_permissions.position) = ?', [$position]);
-                })->orWhere(function($qq) use ($role){
-                    $qq->where('role_permissions.role', $role)
-                       ->whereNull('role_permissions.position');
-                });
-            })->exists();
+            ->where('role_permissions.role', $role)
+            ->exists();
         if ($exists) return true;
-        // Fallback: admin IT has all if no permission system seeded yet (graceful)
-        if (\Illuminate\Support\Facades\Schema::hasTable('permissions') && \Illuminate\Support\Facades\DB::table('permissions')->count()===0) {
-            return true;
-        }
+        // Fail-closed: tanpa baris permission yang cocok, akses ditolak.
+        // (Dulu fail-open saat tabel permissions kosong — itu yang membuat
+        // user biasa lolos ke endpoint admin di test.)
         return false;
     }
 
@@ -144,11 +185,13 @@ class User extends Authenticatable
 
     public function isAdminIT(): bool
     {
-        return $this->role === 'admin' && strtolower($this->position ?? '') === 'it';
+        return $this->hasRole('admin')
+            || $this->hasAnyPermission(['admin.dashboard', 'ticket.manage']);
     }
     public function isAdminUmum(): bool
     {
-        return $this->role === 'admin' && strtolower($this->position ?? '') === 'administrasi';
+        return $this->hasRole('ipsrs')
+            || $this->hasAnyPermission(['ipsrs.dashboard', 'order.manage']);
     }
 
     /**

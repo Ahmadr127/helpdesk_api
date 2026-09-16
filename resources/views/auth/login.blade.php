@@ -1,154 +1,215 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Masuk - Help Desk RS AZRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" href="{{ asset('images/logo-ajra.jpg') }}">
-
-    <!-- Tambahkan Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/favicon_azra.png') }}">
     <style>
-    body {
-        font-family: 'Poppins', sans-serif;
-        background-image: url('{{ asset('images/azralogin.jpg') }}');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+        }
 
-    .gradient-background {
-        background: linear-gradient(135deg, rgba(124, 165, 240, 0.99) 0%rgb(27, 212, 74)8 100%);
-    }
+        .auth-left {
+            background: #f8fafc;
+            background-image:
+                linear-gradient(120deg, rgba(0, 119, 116, 0.1), rgba(0, 119, 116, 0.05)),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23007774' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
 
-    .auth-container {
-        background-color: rgba(255, 255, 255, 0.95);
-    }
+        .auth-right {
+            background-color: #007774;
+            background-image: linear-gradient(160deg, #007774 0%, #005f5c 100%);
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem 2.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background: #fff;
+            color: #0f172a;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #007774;
+            box-shadow: 0 0 0 3px rgba(0, 119, 116, 0.15);
+        }
+
+        .input-icon-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            cursor: pointer;
+            font-size: 1.25rem;
+            z-index: 1;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #007774;
+            color: white;
+            border: none;
+            padding: 0.875rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .login-btn:hover {
+            background: #005f5c;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            color: #dc2626;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #dcfce7;
+            color: #007774;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 
-<body class="bg-white">
-    <div class="min-h-screen flex items-center justify-center p-6 lg:p-8 ">
-        <div class="w-full max-w-6xl auth-container rounded-2xl shadow-lg flex overflow-hidden">
-            <!-- Left Side - Image with Gradient -->
-            <div class="hidden lg:block lg:w-1/2 bg-blue-100 relative">
-                <div class="absolute inset-0 bg-opacity-60 flex items-center justify-center">
-                    <img src="{{ asset('images/logoazra.png') }}" alt="Logo" class="w-3/4 h-auto">
-                </div>
+<body class="min-h-screen">
+    <div class="login-container flex flex-col lg:flex-row min-h-screen">
+        <!-- Left Side - Branding Panel -->
+        <div
+            class="auth-right flex flex-col justify-center items-center min-h-[30vh] lg:min-h-screen lg:w-3/5 px-6 py-8 lg:order-1">
+            <div class="hospital-logo">
+                <img src="{{ asset('images/logo-azra-mutu.png') }}" alt="Logo RS Azra"
+                    class="w-40 lg:w-72 h-auto mx-auto mb-4">
             </div>
+            <h1 class="login-title text-3xl lg:text-5xl font-semibold text-white text-center tracking-widest break-words">
+                SISTEM INFORMASI HELP DESK
+            </h1>
+            <p class="login-subtitle text-white text-sm text-center mt-2">
+                Layanan Tiket & Perbaikan Rumah Sakit Azra
+            </p>
+        </div>
 
-            <!-- Right Side - Login Form -->
-            <div class="w-full lg:w-1/2 p-8 lg:p-12">
-                <div class="max-w-md mx-auto">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Selamat Datang Kembali!</h2>
-                    <p class="text-gray-600 mb-8">Help Desk Azra</p>
+        <!-- Right Side - Login Form -->
+        <div class="auth-left flex justify-center items-center min-h-[70vh] lg:min-h-screen lg:w-2/5 px-6 py-8 lg:order-2">
+            <form method="POST" action="{{ route('login') }}" class="w-full max-w-md">
+                @csrf
 
-                    @if(session('error'))
-                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md">
-                        {{ session('error') }}
-                    </div>
-                    @endif
-
-                    @if(session('success'))
-                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md">
-                        {{ session('success') }}
-                    </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('login') }}">
-                        @csrf
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="login">
-                                Username / Email
-                            </label>
-                            <input
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors @error('login') border-red-500 @enderror @error('email') border-red-500 @enderror"
-                                id="login" type="text" name="login" value="{{ old('login', old('email')) }}"
-                                placeholder="Masukkan username atau email" required autofocus>
-                            @error('login')
-                            <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
-                            @enderror
-                            @error('email')
-                            <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
-                            @enderror
-                            <p class="text-xs text-gray-500 mt-1">Gunakan <strong>username</strong> atau email untuk login</p>
-                        </div>
-
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="password">
-                                Password
-                            </label>
-                            <div class="relative">
-                                <input
-                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors @error('password') border-red-500 @enderror"
-                                    id="password" type="password" name="password" placeholder="Enter your password"
-                                    required minlength="3">
-                                <button type="button" onclick="togglePassword()"
-                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" id="eyeIcon" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Password must be minimum 3 characters</p>
-                            @error('password')
-                            <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center">
-                                <input type="checkbox" name="remember" id="remember"
-                                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <label class="ml-2 text-sm text-gray-600" for="remember">
-                                    Remember me
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <button type="submit"
-                                class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
-                                Sign In
-                            </button>
-                            <div class="text-center">
-                                <span class="text-gray-600">Don't have an account?</span>
-                                <a href="{{ route('register') }}"
-                                    class="text-blue-600 hover:text-blue-700 font-semibold ml-1">
-                                    Sign Up
-                                </a>
-                            </div>
-                        </div>
-                    </form>
+                @if(session('error'))
+                <div class="error-message">
+                    <i class="ri-error-warning-line"></i>
+                    <span>{{ session('error') }}</span>
                 </div>
-            </div>
+                @endif
+
+                @if(session('success'))
+                <div class="success-message">
+                    <i class="ri-checkbox-circle-line"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+                @endif
+
+                <h2 class="text-2xl font-semibold text-slate-800 mb-1">Masuk</h2>
+                <p class="text-slate-500 text-sm mb-6">Gunakan akun Anda untuk melanjutkan</p>
+
+                <div class="input-group">
+                    <label for="login">Nama Pengguna</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" name="login" id="login" value="{{ old('login', old('email')) }}" required
+                            autofocus placeholder="Masukkan nama pengguna"
+                            class="@error('login') border-red-400 @enderror @error('email') border-red-400 @enderror">
+                        <i class="ri-user-line input-icon"></i>
+                    </div>
+                    @error('login')
+                    <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Kata Sandi</label>
+                    <div class="input-icon-wrapper">
+                        <input type="password" name="password" id="password" required placeholder="Masukkan kata sandi"
+                            @error('password') class="border-red-400" @enderror>
+                        <i class="ri-lock-line input-icon toggle-password"></i>
+                    </div>
+                    @error('password')
+                    <p class="mt-1 text-red-500 text-sm">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="flex items-center justify-between mb-5">
+                    <label class="flex items-center text-sm text-slate-600 cursor-pointer">
+                        <input type="checkbox" name="remember" id="remember"
+                            class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                        <span class="ml-2">Ingat saya</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="ri-login-circle-line"></i>
+                    Masuk
+                </button>
+
+                
+            </form>
         </div>
     </div>
 
     <script>
-    function togglePassword() {
-        const passwordInput = document.getElementById('password');
-        const eyeIcon = document.getElementById('eyeIcon');
-
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            eyeIcon.innerHTML = `                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                `;
-        } else {
-            passwordInput.type = 'password';
-            eyeIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                `;
-        }
-    }
+        document.querySelector('.toggle-password').addEventListener('click', function() {
+            const input = this.parentElement.querySelector('input');
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.remove('ri-lock-line');
+                this.classList.add('ri-lock-unlock-line');
+            } else {
+                input.type = 'password';
+                this.classList.remove('ri-lock-unlock-line');
+                this.classList.add('ri-lock-line');
+            }
+        });
     </script>
 </body>
 
