@@ -171,7 +171,8 @@
                                         Jawab</label>
                                     <input type="text" name="nama_penanggung_jawab" required
                                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="Masukkan nama penanggung jawab">
+                                        placeholder="Masukkan nama penanggung jawab"
+                                        value="{{ old('nama_penanggung_jawab', auth()->user()->name) }}">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Tindak Lanjut</label>

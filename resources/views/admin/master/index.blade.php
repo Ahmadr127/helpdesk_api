@@ -10,15 +10,21 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Unit Proses Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
             <div
-                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Unit Proses</h2>
-                <a href="{{ route('admin.master.unit-proses.index') }}"
-                    class="p-3 rounded-full hover:bg-blue-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h7" />
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Unit Proses
+                </h2>
+                <a href="{{ route('admin.master.unit-proses.index') }}" title="Kelola Unit Proses"
+                    class="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
@@ -57,15 +63,21 @@
         </div>
 
         <!-- Categories Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-green-200">
             <div
-                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Categories</h2>
-                <a href="{{ route('admin.master.categories.index') }}"
-                    class="p-3 rounded-full hover:bg-green-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex justify-between items-center mb-4 bg-green-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-green-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16m-7 6h7" />
+                            d="M10.29 3.71l1.42 1.42 1.42-1.42 1.42-1.42 1.42 1.42M11 5v4m3 0v3-4 0v1m3 0v5M11 9v5" />
+                    </svg>
+                    Categories
+                </h2>
+                <a href="{{ route('admin.master.categories.index') }}" title="Kelola Categories"
+                    class="p-3 rounded-lg bg-green-500 hover:bg-green-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
@@ -104,15 +116,21 @@
         </div>
 
         <!-- Departments Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-purple-200">
             <div
-                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Departments</h2>
-                <a href="{{ route('admin.master.departments.index') }}"
-                    class="p-3 rounded-full hover:bg-purple-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex justify-between items-center mb-4 bg-purple-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            d="M3.5 18.5v-2.5a2.5 2.5 0 012.5.536.857M6 20a3 3 0 011.215.886L8.93 22.33a2 2 0 011.215-.886V15M13.69 19.22l1.507-1.507 1.718-.9.002-3.907M8.93 16.83V7.5a2.5 2.5 0 012.5-.536.857L8 6.5a.75.75 0 01.78 0L9.034 9.257" />
+                    </svg>
+                    Departments
+                </h2>
+                <a href="{{ route('admin.master.departments.index') }}" title="Kelola Departments"
+                    class="p-3 rounded-lg bg-purple-500 hover:bg-purple-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
@@ -151,15 +169,21 @@
         </div>
 
         <!-- Buildings Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-amber-200">
             <div
-                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Buildings</h2>
-                <a href="{{ route('admin.master.buildings.index') }}"
-                    class="p-3 rounded-full hover:bg-yellow-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex justify-between items-center mb-4 bg-amber-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-amber-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            d="M3 21v18M8 21v12M16 17v8M3 11h13M8 8v8M16 8v5M3 8v5m9 0v8M8 3h15" />
+                    </svg>
+                    Buildings
+                </h2>
+                <a href="{{ route('admin.master.buildings.index') }}" title="Kelola Buildings"
+                    class="p-3 rounded-lg bg-amber-500 hover:bg-amber-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
@@ -198,17 +222,23 @@
         </div>
 
         <!-- Locations Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-indigo-200">
             <div
-                class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Locations</h2>
-                <a href="{{ route('admin.master.locations.index') }}"
-                    class="p-3 rounded-full hover:bg-indigo-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex justify-between items-center mb-4 bg-indigo-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-indigo-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            d="M20.354 8.858l1.002-.354m-5.004 1.5l1.002.354m-1.002-5.354 1.504-.354m5.504-8.146l1.613 1.389m-12.789-2.853 4.285 2.893m5.002-1.704 1.641-.635" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            d="M9.292 3.713l2.125 2.125M9.292.375h4.416m8.958-8.458 2.125 2.125" />
+                    </svg>
+                    Locations
+                </h2>
+                <a href="{{ route('admin.master.locations.index') }}" title="Kelola Locations"
+                    class="p-3 rounded-lg bg-indigo-500 hover:bg-indigo-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
@@ -247,12 +277,17 @@
         </div>
 
         <!-- Positions Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-            <div class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Positions</h2>
-                <a href="{{ route('admin.master.positions.index') }}" class="p-3 rounded-full hover:bg-pink-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        <div class="bg-white rounded-lg shadow-md p-6 border border-pink-200">
+            <div class="flex justify-between items-center mb-4 bg-pink-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-pink-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.5 12a3.5 3.5 0 11-7 0h7M15.5 12v7a5 5 0 010-7 0h7M15.5 12a4 4 0 01-7 0h7M15.5 12v7a4 4 0 01-7 0h7" />
+                    </svg>
+                    Positions
+                </h2>
+                <a href="{{ route('admin.master.positions.index') }}" title="Kelola Positions" class="p-3 rounded-lg bg-pink-500 hover:bg-pink-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
@@ -284,12 +319,17 @@
             </div>
         </div>
     <!-- Kategori Order Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-            <div class="flex justify-between items-center mb-4 bg-slate-100 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-gray-800">Kategori Order</h2>
-                <a href="{{ route('admin.master.kategori-order.index') }}" class="p-3 rounded-full hover:bg-amber-500 transition-all duration-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        <div class="bg-white rounded-lg shadow-md p-6 border border-teal-200">
+            <div class="flex justify-between items-center mb-4 bg-teal-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-teal-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.5 11.5l-1.5 1.5 1.5 1.5 1.5-1.5 1.5-1.5M6.5 11.5h6.5m7.5 11.5a3 3 0 013.5-1.5l.707.707m.414-.414M11.5 6.5v2" />
+                    </svg>
+                    Kategori Order
+                </h2>
+                <a href="{{ route('admin.master.kategori-order.index') }}" title="Kelola Kategori Order" class="p-3 rounded-lg bg-teal-500 hover:bg-teal-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
                 </a>
             </div>
