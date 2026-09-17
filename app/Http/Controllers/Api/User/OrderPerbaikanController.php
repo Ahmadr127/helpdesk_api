@@ -16,7 +16,7 @@ class OrderPerbaikanController extends BaseApiController
 
     public function index(Request $request)
     {
-        $filters = $request->only(['status','search','start_date','end_date','prioritas']);
+        $filters = $request->only(['status','search','start_date','end_date','prioritas','kategori_order']);
         // support 'all' default
         if (!isset($filters['status'])) $filters['status'] = $request->get('status','all');
         $perPage = (int)$request->get('per_page',15);

@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Location;
 use App\Models\Position;
 use App\Models\UnitProses;
+use App\Models\KategoriOrder;
 use Illuminate\Database\Eloquent\Model;
 
 class MasterDataService
@@ -20,6 +21,8 @@ class MasterDataService
         'unit-proses' => UnitProses::class,
         'unit_proses' => UnitProses::class,
         'positions' => Position::class,
+        'kategori_order' => KategoriOrder::class,
+        'kategori-order' => KategoriOrder::class
     ];
 
     public function getModelClass(string $type): string

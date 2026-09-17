@@ -5,7 +5,7 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<div class="max-w-full p-4">
+<div class="max-w-7xl mx-auto py-6">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <!-- Header - GREEN theme for Maintenance -->
         <div class="bg-green-600 p-5 flex justify-between items-center">

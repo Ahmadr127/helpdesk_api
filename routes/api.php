@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('/unit-proses', [LookupController::class, 'unitProses'])->name('unit-proses');
         Route::get('/positions', [LookupController::class, 'positions'])->name('positions');
         Route::get('/priorities', [LookupController::class, 'priorities'])->name('priorities');
+        Route::get('/kategori-order', [LookupController::class, 'kategoriOrders'])->name('kategori-order');
         Route::get('/ticket-statuses', [LookupController::class, 'ticketStatuses'])->name('ticket-statuses');
         Route::get('/order-statuses', [LookupController::class, 'orderStatuses'])->name('order-statuses');
     });
@@ -109,12 +110,12 @@ Route::middleware('auth:sanctum')->group(function(){
 
         // Master Data (categories, departments, buildings, locations, unit-proses, positions)
         Route::prefix('master')->name('master.')->group(function(){
-            Route::get('/{type}', [AdminMasterController::class, 'index'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions')->name('index');
-            Route::post('/{type}', [AdminMasterController::class, 'store'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions')->name('store');
-            Route::get('/{type}/{id}', [AdminMasterController::class, 'show'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions')->name('show');
-            Route::put('/{type}/{id}', [AdminMasterController::class, 'update'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions')->name('update');
-            Route::delete('/{type}/{id}', [AdminMasterController::class, 'destroy'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions')->name('destroy');
-            Route::post('/{type}/bulk-action', [AdminMasterController::class, 'bulkAction'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions')->name('bulk');
+            Route::get('/{type}', [AdminMasterController::class, 'index'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('index');
+            Route::post('/{type}', [AdminMasterController::class, 'store'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('store');
+            Route::get('/{type}/{id}', [AdminMasterController::class, 'show'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('show');
+            Route::put('/{type}/{id}', [AdminMasterController::class, 'update'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('update');
+            Route::delete('/{type}/{id}', [AdminMasterController::class, 'destroy'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('destroy');
+            Route::post('/{type}/bulk-action', [AdminMasterController::class, 'bulkAction'])->where('type','categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('bulk');
         });
 
         // Ticket Admin

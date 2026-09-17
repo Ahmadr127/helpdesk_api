@@ -698,6 +698,34 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "GET Kategori Order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lookup/kategori-order",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lookup",
+                "kategori-order"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1368,7 +1396,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/order-perbaikan?status=all&per_page=15",
+              "raw": "{{base_url}}/api/order-perbaikan?status=all&per_page=15&kategori_order=Perbaikan",
               "host": [
                 "{{base_url}}"
               ],
@@ -1380,6 +1408,10 @@
                 {
                   "key": "status",
                   "value": "all"
+                },
+                {
+                  "key": "kategori_order",
+                  "value": "Perbaikan"
                 }
               ]
             }
@@ -1448,6 +1480,12 @@
                   "key": "foto",
                   "type": "file",
                   "src": []
+                },
+                {
+                  "key": "kategori_order",
+                  "value": "Perbaikan",
+                  "type": "text",
+                  "description": "Harus exists kategori_order.name (lihat lookup/kategori-order)"
                 }
               ]
             },
@@ -1512,7 +1550,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jenis_barang\": \"Inventaris\",\n  \"kode_inventaris\": \"INV-001\",\n  \"nama_barang\": \"AC Updated\",\n  \"lokasi\": 1,\n  \"keluhan\": \"Update keluhan\",\n  \"prioritas\": \"TINGGI/URGENT\"\n}"
+              "raw": "{\n  \"jenis_barang\": \"Inventaris\",\n  \"kode_inventaris\": \"INV-001\",\n  \"nama_barang\": \"AC Updated\",\n  \"kategori_order\": \"Perbaikan\",\n  \"lokasi\": 1,\n  \"keluhan\": \"Update keluhan\",\n  \"prioritas\": \"TINGGI/URGENT\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/order-perbaikan/1",
@@ -2319,6 +2357,214 @@
                 "master",
                 "positions"
               ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET List Kategori Order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/kategori_order?per_page=15&status=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "kategori_order"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Kategori Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/kategori_order",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "kategori_order"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Perbaikan\",\n  \"code\": \"PRB\",\n  \"status\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Show Kategori Order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/kategori_order/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "kategori_order",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Kategori Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/kategori_order/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "kategori_order",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Perbaikan Updated\",\n  \"code\": \"PRB\",\n  \"status\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Kategori Order",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/kategori_order/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "kategori_order",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Bulk Action Kategori Orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/master/kategori_order/bulk-action",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "master",
+                "kategori_order",
+                "bulk-action"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deactivate\",\n  \"selected\": [\n    1\n  ]\n}"
             }
           },
           "response": []

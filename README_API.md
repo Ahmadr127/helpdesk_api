@@ -25,6 +25,41 @@
 - Validasi `OrderPerbaikan/StoreOrderPerbaikanRequest.php:10`: `unit_proses_code` exists `unit_proses,code` + `!=SIRS` (valid `SRNS` Sarana, `RTG` IPSRS, `LOGF`), `jenis_barang Inventaris/Umum`, `lokasi` exists, `prioritas RENDAH/SEDANG/TINGGI/URGENT`, `foto` 10MB.
 - `OrderPerbaikanService.php:20` generate `nomor OP/RTG/MTC-YYYYMMDDxxx` (`OP/RTG/MTC-20250830001`) cari `withTrashed` per hari, simpan `order_perbaikan` (`SoftDeletes`) + `history` `status=open`, `foto` `order-photos`, `status=open`.
 
+#### 1.2 C. Form Input Order Perbaikan (Saat Ini)
+
+**Web** (`user/administrasi-umum/order-perbaikan/create` — `AdministrasiUmumController.php:376-429`, view `resources/views/user/administrasi-umum/order-perbaikan/create.blade.php`):
+
+| Field | Wajib | Tipe Kontrol | Isi / Sumber | Catatan |
+|------|------|--------------|--------------|---------|
+| `tanggal` | ya (hidden) | hidden | `now()` | otomatis, tidak diisi user |
+| `unit_proses_code` | ya (hidden) | hidden | `users.department` user login | otomatis, `!= SIRS` |
+| `unit_proses_name` | ya (hidden) | hidden | nama department user | otomatis |
+| `jenis_barang` | ya | select | `Inventaris` / `Umum` | |
+| `prioritas` | ya | select | `RENDAH` / `SEDANG` / `TINGGI/URGENT` | |
+| `nama_barang` | ya | text | nama barang/peralatan | |
+| `kategori_order` | tidak | select | master `kategori_order` aktif (`KategoriOrderController`) | nilai tersimpan = `kategori_order.name`; validasi web masih `nullable|string` (integer FK belum dipakai) |
+| `lokasi` | ya | search-select | master `locations` aktif | tersimpan `locations.id`, autocomplete di JS |
+| `keluhan` | ya | textarea | deskripsi kerusakan | |
+| `foto` | tidak | file | PNG/JPG/GIF ≤ 10MB | `order-photos` disk `public` |
+| `kode_inventaris` | tidak | - | tidak ada di form web | validasi web `nullable`; service default `'-'` |
+
+**API** (`POST /api/order-perbaikan` / `PUT /api/order-perbaikan/{id}` — `OrderPerbaikan/StoreOrderPerbaikanRequest.php:10`, `UpdateOrderPerbaikanRequest.php`):
+
+| Field | Wajib | Rule |
+|------|------|------|
+| `unit_proses_code` | ya | `exists:unit_proses,code` + closure tolak `SIRS` |
+| `jenis_barang` | ya | `in:Umum,Inventaris` |
+| `kode_inventaris` | ya (API) | `string` (berbeda dengan web yang nullable) |
+| `nama_barang` | ya | `string` |
+| `kategori_order` | tidak | `nullable|string|exists:kategori_order,name` |
+| `lokasi` | ya | `exists:locations,id` |
+| `keluhan` | ya | `string` |
+| `prioritas` | ya | `in:RENDAH,SEDANG,TINGGI/URGENT` |
+| `tanggal` | ya | `date` |
+| `foto` | tidak | `image|mimes:jpeg,png,jpg,gif|max:10240` |
+
+Sumber pilihan: `GET /api/lookup/unit-proses?exclude_sirs=1`, `GET /api/lookup/locations`, `GET /api/lookup/kategori-order`; CRUD kategori order: `GET|POST|PUT|DELETE /api/admin/master/kategori_order[/{id}]` (+ `bulk-action`). List/filter API mendukung `kategori_order` (`GET /api/order-perbaikan?kategori_order=Perbaikan`).
+
 ### 1.3 Proses Admin
 
 **Ticket → Admin IT** (`routes/web.php:148`, `routes/api.php:18` `AdminApiMiddleware`)
@@ -104,11 +139,11 @@ User buka `tickets/{id}/show` atau `order-perbaikan/{id}/show` lihat `follow_up`
 - `POST /api/auth/login` | `POST /api/auth/register` (guest)
 - `GET /api/auth/me`, `POST /api/auth/logout` (`auth:sanctum`)
 - `GET /api/dashboard/user` | `GET /api/dashboard/admin` (Admin IT) | `GET /api/dashboard/administrasi` (Administrasi)
-- `GET /api/lookup/{categories,departments,buildings,locations,unit-proses,positions,priorities,ticket-statuses,order-statuses}`
+- `GET /api/lookup/{categories,departments,buildings,locations,unit-proses,positions,kategori-order,priorities,ticket-statuses,order-statuses}`
 - `GET|POST /api/tickets`, `GET /api/tickets/filter/{status}`, `GET|PUT|DELETE /api/tickets/{ticket}`, `POST /api/tickets/{ticket}/reply`, `POST /api/tickets/{ticket}/confirm`
-- `GET|POST /api/order-perbaikan`, `GET /api/order-perbaikan/konfirmasi|rejected`, `GET|PUT|DELETE /api/order-perbaikan/{id}`
+- `GET|POST /api/order-perbaikan`, `GET /api/order-perbaikan/konfirmasi|rejected`, `GET|PUT|DELETE /api/order-perbaikan/{id}` (payload order: optional `kategori_order` harus `exists:kategori_order,name`)
 - `GET|POST /api/feedback`, `GET /api/feedback/{id}`, `POST /api/feedback/{id}/reply` (Admin), `DELETE /api/feedback/{id}` (Admin)
-- `GET|POST|PUT|DELETE /api/admin/master/{type}/{id}`, `POST /api/admin/master/{type}/bulk-action` (Admin IT)
+- `GET|POST|PUT|DELETE /api/admin/master/{type}/{id}`, `POST /api/admin/master/{type}/bulk-action` (Admin IT, `type` juga `kategori-order`/`kategori_order`)
 - `GET|POST|PUT|DELETE /api/admin/users/{user}` (Admin IT)
 - `GET /api/admin/tickets/*`, `POST /api/admin/tickets/{ticket}/respond`, `PUT /api/admin/tickets/{ticket}`
 - `GET /api/administrasi-umum/order-perbaikan/*`, `PUT /api/administrasi-umum/order-perbaikan/{id}/status`, `POST /.../confirm|reject|start` (Administrasi)

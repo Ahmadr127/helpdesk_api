@@ -9,14 +9,14 @@
 @endpush
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
+<div class="container mx-auto px-4 py-4">
+    {{-- <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Manajemen Permission</h1>
             <p class="text-sm text-gray-500">Kelola hak akses berbasis role</p>
         </div>
         <a href="{{ route('admin.permissions.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">Refresh</a>
-    </div>
+    </div> --}}
 
     @if(session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">{{ session('success') }}</div>
@@ -78,7 +78,6 @@
          }"
          x-init="init()">
         <h2 class="font-semibold text-gray-800 mb-2">Permission per Role</h2>
-        <p class="text-xs text-gray-500 mb-4">Pilih role terlebih dahulu untuk mengatur permission. Perubahan akan langsung mempengaruhi semua user dengan role tersebut.</p>
 
         <!-- Search Select -->
         <div class="relative mb-6">

@@ -51,7 +51,8 @@ $q->where('nomor','like',"%{$search}%")
             $query->where(function($q) use ($search){
                 $q->where('nomor','like',"%{$search}%")
                   ->orWhere('nama_barang','like',"%{$search}%")
-                  ->orWhere('nama_peminta','like',"%{$search}%");
+                  ->orWhere('nama_peminta','like',"%{$search}%")
+                  ->orWhere('kategori_order','like',"%{$search}%");
             });
         }
         if (!empty($filters['date_from'])) {
@@ -76,6 +77,9 @@ $q->where('nomor','like',"%{$search}%")
         }
         if (!empty($filters['location_id'])) {
             $query->where('lokasi', $filters['location_id']);
+        }
+        if (!empty($filters['kategori_order'])) {
+            $query->where('kategori_order', $filters['kategori_order']);
         }
 
         return $query->latest()->paginate($perPage);

@@ -14,6 +14,7 @@ class UpdateOrderPerbaikanRequest extends FormRequest
             'jenis_barang' => 'required|in:Umum,Inventaris',
             'kode_inventaris' => 'required|string',
             'nama_barang' => 'required|string',
+            'kategori_order' => 'nullable|string|exists:kategori_order,name',
             'lokasi' => 'required|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',

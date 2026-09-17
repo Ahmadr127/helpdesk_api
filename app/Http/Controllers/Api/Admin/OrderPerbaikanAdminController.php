@@ -15,7 +15,7 @@ class OrderPerbaikanAdminController extends BaseApiController
 
     public function index(Request $request)
     {
-        $filters = $request->only(['search','date_from','date_to','status','prioritas','location_id']);
+        $filters = $request->only(['search','date_from','date_to','status','prioritas','location_id','kategori_order']);
         // support alternative date_from naming
         if ($request->filled('start_date')) $filters['date_from'] = $request->start_date;
         if ($request->filled('end_date')) $filters['date_to'] = $request->end_date;
@@ -82,7 +82,7 @@ class OrderPerbaikanAdminController extends BaseApiController
 
     public function inProgress(Request $request)
     {
-        $filters = array_merge($request->only(['search','prioritas','location_id']), ['status'=>'in_progress']);
+        $filters = array_merge($request->only(['search','prioritas','location_id','kategori_order']), ['status'=>'in_progress']);
         $paginator = $this->service->listForAdmin($filters, (int)$request->get('per_page',15));
         return response()->json([
             'success'=>true,
@@ -99,7 +99,7 @@ class OrderPerbaikanAdminController extends BaseApiController
 
     public function confirmed(Request $request)
     {
-        $filters = array_merge($request->only(['search','date_from','date_to']), ['status'=>'confirmed']);
+        $filters = array_merge($request->only(['search','date_from','date_to','kategori_order']), ['status'=>'confirmed']);
         $paginator = $this->service->listForAdmin($filters, (int)$request->get('per_page',15));
         return response()->json([
             'success'=>true,
@@ -116,7 +116,7 @@ class OrderPerbaikanAdminController extends BaseApiController
 
     public function rejected(Request $request)
     {
-        $filters = array_merge($request->only(['search','date_from','date_to']), ['status'=>'rejected']);
+        $filters = array_merge($request->only(['search','date_from','date_to','kategori_order']), ['status'=>'rejected']);
         $paginator = $this->service->listForAdmin($filters, (int)$request->get('per_page',15));
         return response()->json([
             'success'=>true,

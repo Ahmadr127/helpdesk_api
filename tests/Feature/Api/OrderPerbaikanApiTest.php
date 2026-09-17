@@ -9,6 +9,7 @@ use App\Models\Position;
 use App\Models\UnitProses;
 use App\Models\User;
 use App\Models\OrderPerbaikan;
+use App\Models\KategoriOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
@@ -47,6 +48,7 @@ class OrderPerbaikanApiTest extends TestCase
             'name'=>'Admin Administrasi','email'=>'administrasi','password'=>Hash::make('123'),
             'phone'=>'0812','position'=>'Administrasi','role'=>'ipsrs','department'=>'IT','status'=>1
         ]);
+        KategoriOrder::create(['name'=>'Perbaikan','code'=>'PRB','status'=>1]);
     }
 
     protected function authHeader(User $user): array
@@ -70,6 +72,60 @@ class OrderPerbaikanApiTest extends TestCase
         $resp->assertStatus(201)->assertJsonPath('success',true);
         $this->assertDatabaseHas('order_perbaikan',['nama_barang'=>'AC Rusak']);
         $this->assertMatchesRegularExpression('/^OP\/RTG\/MTC-\d{8}\d{3}$/', $resp->json('data.nomor'));
+    }
+
+    public function test_user_can_create_order_with_kategori_order()
+    {
+        $headers = $this->authHeader($this->user);
+        $resp = $this->withHeaders($headers)->postJson('/api/order-perbaikan', [
+            'unit_proses_code'=> $this->unitProses->code,
+            'jenis_barang'=>'Inventaris',
+            'kode_inventaris'=>'INV-001',
+            'nama_barang'=>'AC Rusak',
+            'kategori_order'=>'Perbaikan',
+            'lokasi'=>$this->location->id,
+            'keluhan'=>'Tidak dingin',
+            'prioritas'=>'RENDAH',
+            'tanggal'=> now()->format('Y-m-d H:i:s'),
+        ]);
+        $resp->assertStatus(201)->assertJsonPath('data.kategori_order','Perbaikan');
+        $this->assertDatabaseHas('order_perbaikan',['nama_barang'=>'AC Rusak','kategori_order'=>'Perbaikan']);
+    }
+
+    public function test_user_cannot_create_with_invalid_kategori_order()
+    {
+        $headers = $this->authHeader($this->user);
+        $resp = $this->withHeaders($headers)->postJson('/api/order-perbaikan', [
+            'unit_proses_code'=> $this->unitProses->code,
+            'jenis_barang'=>'Inventaris',
+            'kode_inventaris'=>'INV-002',
+            'nama_barang'=>'AC Rusak',
+            'kategori_order'=>'Tidak Ada',
+            'lokasi'=>$this->location->id,
+            'keluhan'=>'Tidak dingin',
+            'prioritas'=>'RENDAH',
+            'tanggal'=> now()->format('Y-m-d H:i:s'),
+        ]);
+        $resp->assertStatus(422);
+    }
+
+    public function test_user_can_filter_orders_by_kategori_order()
+    {
+        OrderPerbaikan::create([
+            'nomor'=>'OP/RTG/MTC-20250101007','tanggal'=>now(),'unit_proses'=>'SRNS','unit_proses_name'=>'Sarana',
+            'unit_penerima'=>'MTC','nama_peminta'=>$this->user->name,'jenis_barang'=>'Umum','kode_inventaris'=>'INV-7',
+            'nama_barang'=>'Kategori A','kategori_order'=>'Perbaikan','lokasi'=>$this->location->id,'keluhan'=>'K','prioritas'=>'RENDAH','status'=>'open','created_by'=>$this->user->id
+        ]);
+        OrderPerbaikan::create([
+            'nomor'=>'OP/RTG/MTC-20250101008','tanggal'=>now(),'unit_proses'=>'SRNS','unit_proses_name'=>'Sarana',
+            'unit_penerima'=>'MTC','nama_peminta'=>$this->user->name,'jenis_barang'=>'Umum','kode_inventaris'=>'INV-8',
+            'nama_barang'=>'Kategori B','lokasi'=>$this->location->id,'keluhan'=>'K','prioritas'=>'RENDAH','status'=>'open','created_by'=>$this->user->id
+        ]);
+
+        $resp = $this->withHeaders($this->authHeader($this->user))->getJson('/api/order-perbaikan?kategori_order=Perbaikan');
+        $resp->assertStatus(200);
+        $this->assertCount(1, $resp->json('data'));
+        $this->assertEquals('Perbaikan', $resp->json('data.0.kategori_order'));
     }
 
     public function test_user_cannot_create_with_sirs()

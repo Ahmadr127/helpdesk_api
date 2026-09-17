@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Location;
 use App\Models\UnitProses;
 use App\Models\Position;
+use App\Models\KategoriOrder;
 use Illuminate\Http\Request;
 
 class LookupController extends BaseApiController
@@ -61,6 +62,13 @@ class LookupController extends BaseApiController
         $query = Position::where('status',1);
         if ($request->filled('search')) $query->where('name','like',"%{$request->search}%");
         return $this->success($query->get(), 'Positions');
+    }
+
+    public function kategoriOrders(Request $request)
+    {
+        $query = KategoriOrder::where('status',1);
+        if ($request->filled('search')) $query->where('name','like',"%{$request->search}%");
+        return $this->success($query->orderBy('name','asc')->get(), 'Kategori Order');
     }
 
     public function priorities()

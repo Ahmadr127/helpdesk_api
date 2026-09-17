@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Location;
 use App\Models\Position;
 use App\Models\UnitProses;
+use App\Models\KategoriOrder;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -107,6 +108,32 @@ class MasterDataAndUserApiTest extends TestCase
         $up->assertStatus(201);
     }
 
+    public function test_admin_can_crud_kategori_order()
+    {
+        $h = $this->authHeader($this->admin);
+
+        $create = $this->withHeaders($h)->postJson('/api/admin/master/kategori_order', [
+            'name'=>'Pengadaan','code'=>'PDA','status'=>true
+        ]);
+        $create->assertStatus(201)->assertJsonPath('data.name','Pengadaan');
+        $id = $create->json('data.id');
+
+        $list = $this->withHeaders($h)->getJson('/api/admin/master/kategori_order');
+        $list->assertStatus(200)->assertJsonCount(1, 'data');
+
+        $show = $this->withHeaders($h)->getJson("/api/admin/master/kategori_order/{$id}");
+        $show->assertStatus(200)->assertJsonPath('data.code','PDA');
+
+        $upd = $this->withHeaders($h)->putJson("/api/admin/master/kategori_order/{$id}", [
+            'name'=>'Pengadaan Baru','code'=>'PDA','status'=>false
+        ]);
+        $upd->assertStatus(200)->assertJsonPath('data.name','Pengadaan Baru');
+
+        $del = $this->withHeaders($h)->deleteJson("/api/admin/master/kategori_order/{$id}");
+        $del->assertStatus(200);
+        $this->assertSoftDeleted('kategori_order',['id'=>$id]);
+    }
+
     public function test_user_cannot_access_admin_master()
     {
         $h = $this->authHeader($this->user);
@@ -123,8 +150,9 @@ class MasterDataAndUserApiTest extends TestCase
         Category::create(['name'=>'Hardware','status'=>1,'unit_proses_id'=>$up->id]);
         $b = Building::create(['name'=>'Gedung A','code'=>'A','status'=>1]);
         Location::create(['name'=>'UGD','building_id'=>$b->id,'status'=>1]);
+        KategoriOrder::create(['name'=>'Perbaikan','code'=>'PRB','status'=>1]);
 
-        foreach (['/api/lookup/categories','/api/lookup/buildings','/api/lookup/locations','/api/lookup/departments','/api/lookup/unit-proses','/api/lookup/positions'] as $url){
+        foreach (['/api/lookup/categories','/api/lookup/buildings','/api/lookup/locations','/api/lookup/departments','/api/lookup/unit-proses','/api/lookup/positions','/api/lookup/kategori-order'] as $url){
             $r = $this->getJson($url, $hUser);
             $r->assertStatus(200)->assertJsonPath('success',true);
         }
