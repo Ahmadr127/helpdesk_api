@@ -16,6 +16,8 @@ class OrderPerbaikan extends Model
 
     const STATUS_IN_PROGRESS = 'in_progress';
 
+    const STATUS_TUTUP = 'tutup';
+
     const STATUS_CONFIRMED = 'confirmed';
 
     const STATUS_REJECTED = 'rejected';

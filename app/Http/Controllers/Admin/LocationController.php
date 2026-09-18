@@ -19,7 +19,7 @@ class LocationController extends Controller
         }
 
         // Filter by status
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
