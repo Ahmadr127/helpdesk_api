@@ -13,14 +13,23 @@ class KategoriOrderController extends Controller
     {
         $query = KategoriOrder::query();
 
+        // Search (case-insensitive) by name or code, LOWER() matches lowercase
+        if ($request->filled('search')) {
+            $search = strtolower(trim($request->search));
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
+            });
+        }
+
         // Apply filters
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        if ($request->has('from_date')) {
+        if ($request->filled('from_date')) {
             $query->whereDate('created_at', '>=', $request->from_date);
         }
-        if ($request->has('to_date')) {
+        if ($request->filled('to_date')) {
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
@@ -34,7 +43,7 @@ class KategoriOrderController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:kategori_order',
             'code' => 'nullable|string|max:50|unique:kategori_order',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         KategoriOrder::create($request->all());
@@ -48,7 +57,7 @@ class KategoriOrderController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('kategori_order')->ignore($kategoriOrder)],
             'code' => ['nullable', 'string', 'max:50', Rule::unique('kategori_order')->ignore($kategoriOrder)],
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         $kategoriOrder->update($request->all());
@@ -61,6 +70,7 @@ class KategoriOrderController extends Controller
     {
         try {
             $kategoriOrder->delete();
+
             return redirect()->route('admin.master.kategori-order.index')
                 ->with('success', 'Kategori Order berhasil dihapus.');
         } catch (\Exception $e) {

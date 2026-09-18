@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketPhoto;
-use Illuminate\Http\Request;
 use App\Notifications\TicketRespondedNotification;
+use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
@@ -32,7 +32,7 @@ class TicketController extends Controller
             TicketPhoto::create([
                 'ticket_id' => $ticket->id,
                 'photo_path' => $path,
-                'type' => 'admin_response'
+                'type' => 'admin_response',
             ]);
         }
 
@@ -90,13 +90,13 @@ class TicketController extends Controller
         $validated = $request->validate([
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
-            'status' => 'required|in:in_progress,closed'
+            'status' => 'required|in:in_progress,closed',
         ]);
 
         $response = [
             'notes' => $validated['notes'],
             'timestamp' => now(),
-            'status' => $validated['status']
+            'status' => $validated['status'],
         ];
 
         // Get existing responses or initialize empty array
@@ -105,12 +105,12 @@ class TicketController extends Controller
         // Handle photo upload if provided
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('ticket-responses', 'public');
-            
+
             // Create ticket photo record
             TicketPhoto::create([
                 'ticket_id' => $ticket->id,
                 'photo_path' => $path,
-                'type' => 'admin_response'
+                'type' => 'admin_response',
             ]);
         }
 
@@ -120,7 +120,7 @@ class TicketController extends Controller
         // Update ticket
         $ticket->update([
             'admin_responses' => json_encode($responses),
-            'status' => $validated['status']
+            'status' => $validated['status'],
         ]);
 
         // Send notification to user
@@ -135,4 +135,4 @@ class TicketController extends Controller
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
     }
-} 
+}

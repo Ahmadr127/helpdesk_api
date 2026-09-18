@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
-use App\Models\Building;
-use App\Models\Location;
-use App\Models\UnitProses;
-use App\Models\Position;
 use App\Models\KategoriOrder;
+use App\Models\Location;
+use App\Models\Position;
+use App\Models\UnitProses;
 use Illuminate\Http\Request;
 
 class MasterDataController extends Controller
@@ -22,7 +22,7 @@ class MasterDataController extends Controller
         $categories = Category::with('unitProses')->latest()->limit($limit)->get();
         $departments = Department::latest()->limit($limit)->get();
         $buildings = Building::latest()->limit($limit)->get();
-        $locations = Location::with('building')->latest()->limit($limit)->get();
+        $locations = Location::query()->latest()->limit($limit)->get();
         $unitProses = UnitProses::latest()->limit($limit)->get();
         $positions = Position::latest()->limit($limit)->get();
         $kategoriOrders = KategoriOrder::latest()->limit($limit)->get();
@@ -46,11 +46,11 @@ class MasterDataController extends Controller
         $toDate = $request->input('to_date');
 
         // Query untuk setiap model
-        $query = match($type) {
+        $query = match ($type) {
             'categories' => Category::query(),
             'departments' => Department::query(),
             'buildings' => Building::query(),
-            'locations' => Location::with('building'),
+            'locations' => Location::query(),
             'positions' => Position::query(),
             'kategori-order' => KategoriOrder::query(),
         };
@@ -59,27 +59,27 @@ class MasterDataController extends Controller
         if ($status !== null && $status !== '') {
             $query->where('status', $status);
         }
-        
+
         if ($fromDate) {
             $query->whereDate('created_at', '>=', $fromDate);
         }
-        
+
         if ($toDate) {
             $query->whereDate('created_at', '<=', $toDate);
         }
 
         // Gunakan limit() sebagai pengganti take() agar lebih fleksibel
         $data = $query->latest()->limit($limit)->get();
-        
+
         // Render partial view
         $html = view("admin.master.partials.{$type}-table", [
-            $type => $data
+            $type => $data,
         ])->render();
 
         return response()->json([
             'success' => true,
             'html' => $html,
-            'count' => $data->count() // Tambahkan informasi jumlah data
+            'count' => $data->count(), // Tambahkan informasi jumlah data
         ]);
     }
 
@@ -88,7 +88,7 @@ class MasterDataController extends Controller
         $request->validate([
             'action' => 'required|in:activate,deactivate,delete',
             'selected' => 'required|array',
-            'selected.*' => 'required|integer'
+            'selected.*' => 'required|integer',
         ]);
 
         $action = $request->input('action');
@@ -100,32 +100,32 @@ class MasterDataController extends Controller
         switch ($type) {
             case 'unit-proses':
                 $model = UnitProses::whereIn('id', $selected);
-                $typeMessage = "Unit Proses";
+                $typeMessage = 'Unit Proses';
                 break;
             case 'departments':
                 $model = Department::whereIn('id', $selected);
-                $typeMessage = "Departemen";
+                $typeMessage = 'Departemen';
                 break;
             case 'buildings':
                 $model = Building::whereIn('id', $selected);
-                $typeMessage = "Gedung";
+                $typeMessage = 'Gedung';
                 break;
             case 'locations':
                 $model = Location::whereIn('id', $selected);
-                $typeMessage = "Lokasi";
+                $typeMessage = 'Lokasi';
                 break;
             case 'categories':
                 $model = Category::whereIn('id', $selected);
-                $typeMessage = "Kategori";
+                $typeMessage = 'Kategori';
                 break;
             case 'kategori-order':
                 $model = KategoriOrder::whereIn('id', $selected);
-                $typeMessage = "Kategori Order";
+                $typeMessage = 'Kategori Order';
                 break;
             default:
                 return redirect()->back()->with('error', 'Tipe data tidak valid');
         }
-        
+
         try {
             switch ($action) {
                 case 'activate':
@@ -144,6 +144,7 @@ class MasterDataController extends Controller
                     $message = "$count $typeMessage berhasil dihapus.";
                     break;
             }
+
             return redirect()->back()->with($status ? 'success' : 'error', $message);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal melakukan tindakan. Beberapa data mungkin sedang digunakan.');
@@ -153,11 +154,11 @@ class MasterDataController extends Controller
     public function updateLimit(Request $request, $type)
     {
         $validated = $request->validate([
-            'limit' => 'required|integer|min:5|max:20'
+            'limit' => 'required|integer|min:5|max:20',
         ]);
 
         session(["${type}_limit" => $validated['limit']]);
-        
+
         return response()->json(['success' => true]);
     }
 

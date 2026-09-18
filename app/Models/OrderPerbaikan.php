@@ -13,15 +13,18 @@ class OrderPerbaikan extends Model
     protected $table = 'order_perbaikan';
 
     const STATUS_OPEN = 'open';
+
     const STATUS_IN_PROGRESS = 'in_progress';
+
     const STATUS_CONFIRMED = 'confirmed';
+
     const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
         'nomor',
         'tanggal',
-        'unit_proses',
-        'unit_proses_name',
+        'department_id',
+        'unit_proses_id',
         'unit_penerima',
         'nama_peminta',
         'jenis_barang',
@@ -36,7 +39,7 @@ class OrderPerbaikan extends Model
         'nama_penanggung_jawab',
         'foto',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     protected $casts = [
@@ -59,9 +62,38 @@ class OrderPerbaikan extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function unitProses()
+    {
+        return $this->belongsTo(UnitProses::class);
+    }
+
     public function location()
     {
         return $this->belongsTo(Location::class, 'lokasi');
+    }
+
+    // Kompatibilitas atribut lama yang dihapus kolomnya
+    public function getUnitProsesAttribute()
+    {
+        if (! $this->relationLoaded('unitProses')) {
+            $this->load('unitProses');
+        }
+
+        return $this->department?->code ?? $this->relations['unitProses']?->code;
+    }
+
+    public function getUnitProsesNameAttribute()
+    {
+        if (! $this->relationLoaded('unitProses')) {
+            $this->load('unitProses');
+        }
+
+        return $this->department?->name ?? $this->relations['unitProses']?->name;
     }
 
     // Status helper methods
@@ -88,7 +120,7 @@ class OrderPerbaikan extends Model
     // Get status badge color
     public function getStatusBadgeClass()
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_OPEN => 'bg-blue-100 text-blue-800',
             self::STATUS_IN_PROGRESS => 'bg-yellow-100 text-yellow-800',
             self::STATUS_CONFIRMED => 'bg-green-100 text-green-800',
@@ -100,7 +132,7 @@ class OrderPerbaikan extends Model
     // Get status badge dot color
     public function getStatusDotClass()
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_OPEN => 'bg-blue-400',
             self::STATUS_IN_PROGRESS => 'bg-yellow-400',
             self::STATUS_CONFIRMED => 'bg-green-400',
@@ -112,7 +144,7 @@ class OrderPerbaikan extends Model
     // Get formatted status text
     public function getStatusText()
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_OPEN => 'Open',
             self::STATUS_IN_PROGRESS => 'In Progress',
             self::STATUS_CONFIRMED => 'Confirmed',
@@ -120,4 +152,4 @@ class OrderPerbaikan extends Model
             default => 'Unknown'
         };
     }
-} 
+}

@@ -53,20 +53,23 @@
                 <!-- Left Column -->
                 <div>
                     <div class="mb-8">
-                        <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Unit Proses</p>
-                        <p class="text-base text-gray-800">{{ $order->unit_proses }}</p>
+                        <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Unit Pengaju</p>
+                        <p class="text-base text-gray-800">{{ $order->department?->name ?? '-' }}</p>
                     </div>
-                    
+
+                    <div class="mb-8">
+                        <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Unit Proses</p>
+                        @php
+                        $unitProsesModel = $order->relationLoaded('unitProses') ? $order->getRelation('unitProses') : $order->unitProses()->getResults();
+                        @endphp
+                        <p class="text-base text-gray-800">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</p>
+                    </div>
+
                     <div class="mb-8">
                         <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Unit Penerima</p>
                         <p class="text-base text-gray-800">{{ $order->unit_penerima }}</p>
                     </div>
-                    
-                    <div>
-                        <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Jenis Barang</p>
-                        <p class="text-base text-gray-800">{{ $order->jenis_barang }}</p>
-                    </div>
-                    
+
                     <div>
                         <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Kategori Order</p>
                         <p class="text-base text-gray-800">{{ $order->kategori_order ?: '-' }}</p>

@@ -22,6 +22,25 @@
         </button>
     </div>
 
+    <!-- Search Section -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
+        <form action="{{ route('admin.master.positions.index') }}" method="GET"
+            class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-3">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ request('search') }}"
+                    placeholder="Cari berdasarkan nama atau kode posisi…"
+                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
+            <div class="flex items-end space-x-2">
+                <button type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Search</button>
+                <a href="{{ route('admin.master.positions.index') }}"
+                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm">Reset</a>
+            </div>
+        </form>
+    </div>
+
     <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-100">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">

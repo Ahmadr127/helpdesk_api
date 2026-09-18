@@ -4,7 +4,6 @@ namespace App\Services\Api;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
@@ -12,13 +11,13 @@ class AuthService
     public function login(array $credentials): array
     {
         $login = $credentials['login'] ?? $credentials['email'] ?? $credentials['username'] ?? null;
-        if (!$login) {
+        if (! $login) {
             throw ValidationException::withMessages(['login' => ['Username / email wajib diisi.']]);
         }
         $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL) !== false;
         $query = User::query();
         if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'username')) {
-            $query->where(function($q) use ($login, $isEmail){
+            $query->where(function ($q) use ($login, $isEmail) {
                 if ($isEmail) {
                     $q->where('email', $login)->orWhere('username', $login);
                 } else {
@@ -30,21 +29,21 @@ class AuthService
         }
         $user = $query->first();
 
-        if (!$user) {
+        if (! $user) {
             throw ValidationException::withMessages([
                 'login' => ['Username tidak ditemukan.'],
                 'email' => ['Username tidak ditemukan.'],
             ]);
         }
 
-        if ((int)$user->status === 0) {
+        if ((int) $user->status === 0) {
             throw ValidationException::withMessages([
                 'login' => ['Akun anda telah dinonaktifkan. Silahkan hubungi administrator.'],
                 'email' => ['Akun anda telah dinonaktifkan. Silahkan hubungi administrator.'],
             ]);
         }
 
-        if (!Hash::check($credentials['password'], $user->password)) {
+        if (! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'login' => ['Username atau password salah.'],
                 'email' => ['Username atau password salah.'],
@@ -63,11 +62,11 @@ class AuthService
     {
         // Auto-generate username if not provided
         $username = $data['username'] ?? null;
-        if (empty($username) && !empty($data['email'])) {
+        if (empty($username) && ! empty($data['email'])) {
             $base = explode('@', $data['email'])[0];
             $base = preg_replace('/[^A-Za-z0-9._-]/', '', strtolower($base));
             $username = $base;
-            $i=1;
+            $i = 1;
             while (User::where('username', $username)->exists()) {
                 $username = $base.$i++;
             }

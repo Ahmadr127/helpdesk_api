@@ -23,7 +23,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($userId)],
             'role' => ['required', 'string', Rule::exists('roles', 'slug')],
             'department' => ['required', 'string', 'max:255', function ($attr, $val, $fail) {
-                if (!Department::where('code', $val)->orWhere('name', $val)->exists()) {
+                if (! Department::where('code', $val)->orWhere('name', $val)->exists()) {
                     $fail('Department tidak valid.');
                 }
             }],

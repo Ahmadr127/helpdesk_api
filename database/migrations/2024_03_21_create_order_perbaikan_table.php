@@ -30,7 +30,7 @@ return new class extends Migration
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->foreign('created_by')->references('id')->on('users');
             $table->foreign('updated_by')->references('id')->on('users');
         });
@@ -40,4 +40,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('order_perbaikan');
     }
-}; 
+};

@@ -120,27 +120,43 @@
                             <div>
                                 <label for="location_id"
                                     class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                                @if(isset($userDepartment) && $userDepartment && $userDepartment->location)
+                                <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
+                                    <div class="flex-1">
+                                        <p class="text-gray-900">{{ $userDepartment->location->name }}</p>
+                                        <p class="text-xs text-gray-500 flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                            Otomatis dari departemen
+                                        </p>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="location_id" value="{{ $userDepartment->location->id }}">
+                                @else
                                 <select name="location_id" id="location_id"
                                     class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                    required onchange="updateBuilding()">
+                                    required>
                                     <option value="">Pilih Lokasi</option>
                                     @foreach($locations as $location)
-                                    <option value="{{ $location->id }}" data-building-id="{{ $location->building_id }}"
-                                        data-building-name="{{ $location->building->name }}">
+                                    <option value="{{ $location->id }}" {{ old('location_id') == $location->id ? 'selected' : '' }}>
                                         {{ $location->name }}
                                     </option>
                                     @endforeach
                                 </select>
+                                @endif
                                 @error('location_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
+                                <label for="building_id" class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
+                                @if(isset($userDepartment) && $userDepartment && $userDepartment->building)
                                 <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
                                     <div class="flex-1">
-                                        <p id="building_display" class="text-gray-900">Pilih lokasi terlebih dahulu</p>
+                                        <p id="building_display" class="text-gray-900">{{ $userDepartment->building->name }}</p>
+                                        <p class="text-xs text-gray-500">Otomatis dari departemen</p>
                                     </div>
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -148,7 +164,15 @@
                                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                     </svg>
                                 </div>
-                                <input type="hidden" name="building_id" id="building_id_hidden">
+                                <input type="hidden" name="building_id" id="building_id_hidden" value="{{ $userDepartment->building->id }}">
+                                @else
+                                <select name="building_id" id="building_id" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                    <option value="">-- Tidak Ada --</option>
+                                    @foreach($buildings as $b)
+                                    <option value="{{ $b->id }}" {{ old('building_id') == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                                    @endforeach
+                                </select>
+                                @endif
                             </div>
                         </div>
 
@@ -214,30 +238,7 @@
 
 @push('scripts')
 <script>
-function updateBuilding() {
-    const locationSelect = document.getElementById('location_id');
-    const buildingDisplay = document.getElementById('building_display');
-    const buildingIdHidden = document.getElementById('building_id_hidden');
-    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
-
-    if (selectedOption.value) {
-        const buildingName = selectedOption.getAttribute('data-building-name');
-        const buildingId = selectedOption.getAttribute('data-building-id');
-        buildingDisplay.textContent = buildingName;
-        buildingIdHidden.value = buildingId;
-    } else {
-        buildingDisplay.textContent = 'Pilih lokasi terlebih dahulu';
-        buildingIdHidden.value = '';
-    }
-}
-
-// Initialize building on page load if location is already selected
 document.addEventListener('DOMContentLoaded', function() {
-    const locationSelect = document.getElementById('location_id');
-    if (locationSelect.value) {
-        updateBuilding();
-    }
-
     // Show selected file name
     const photoInput = document.getElementById('photo-input');
     const fileNameDisplay = document.getElementById('file-name');

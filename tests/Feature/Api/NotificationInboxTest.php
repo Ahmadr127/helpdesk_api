@@ -24,7 +24,7 @@ class NotificationInboxTest extends TestCase
         $this->user = User::create([
             'name' => 'Test', 'email' => 'test@example.com',
             'password' => Hash::make('123'), 'phone' => '0811',
-            'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1
+            'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1,
         ]);
     }
 
@@ -41,6 +41,7 @@ class NotificationInboxTest extends TestCase
             'type' => 'App\Notifications\TicketRespondedNotification',
             'data' => ['title' => 'Test', 'message' => 'Test message', 'ticket_id' => '1'],
         ]);
+
         return $id;
     }
 

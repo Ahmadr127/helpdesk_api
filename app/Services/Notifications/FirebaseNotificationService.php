@@ -9,8 +9,7 @@ class FirebaseNotificationService implements FirebaseNotificationInterface
 {
     public function __construct(
         private readonly FirebaseNotificationInterface $repository
-    ) {
-    }
+    ) {}
 
     public function sendToToken(string $token, FirebaseNotificationData $notification): array
     {

@@ -14,6 +14,7 @@ class LoginController extends Controller
         if (auth()->check()) {
             return $this->redirectBasedOnRole(auth()->user());
         }
+
         return view('auth.login');
     }
 
@@ -21,7 +22,7 @@ class LoginController extends Controller
     {
         $request->validate([
             'login' => 'required|string',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         $login = trim($request->input('login'));
@@ -32,11 +33,11 @@ class LoginController extends Controller
             $login = trim($request->input('email'));
             $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL) !== false;
         }
-        
+
         // Check user status before login - search by username OR email
         $userQuery = User::query();
         if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'username')) {
-            $userQuery->where(function($q) use ($login, $isEmail){
+            $userQuery->where(function ($q) use ($login, $isEmail) {
                 if ($isEmail) {
                     $q->where('email', $login)->orWhere('username', $login);
                 } else {
@@ -48,14 +49,14 @@ class LoginController extends Controller
         }
         $user = $userQuery->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors([
                 'login' => 'Username tidak ditemukan.',
                 'email' => 'Username tidak ditemukan.',
             ])->withInput($request->except('password'));
         }
 
-        if ((int)$user->status === 0) {
+        if ((int) $user->status === 0) {
             return back()->withErrors([
                 'login' => 'Akun anda telah dinonaktifkan. Silahkan hubungi administrator.',
                 'email' => 'Akun anda telah dinonaktifkan. Silahkan hubungi administrator.',
@@ -81,6 +82,7 @@ class LoginController extends Controller
         foreach ($attempts as $cred) {
             if (Auth::attempt($cred)) {
                 $request->session()->regenerate();
+
                 return $this->redirectBasedOnRole(Auth::user());
             }
         }
@@ -109,6 +111,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
-} 
+}

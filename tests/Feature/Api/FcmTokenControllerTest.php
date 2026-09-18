@@ -26,13 +26,14 @@ class FcmTokenControllerTest extends TestCase
         $this->user = User::create([
             'name' => 'Test', 'email' => 'test@example.com',
             'password' => Hash::make('123'), 'phone' => '0811',
-            'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1
+            'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1,
         ]);
     }
 
-    private function authHeader(User $user = null): array
+    private function authHeader(?User $user = null): array
     {
         $u = $user ?? $this->user;
+
         return ['Authorization' => 'Bearer '.$u->createToken('test')->plainTextToken, 'Accept' => 'application/json'];
     }
 
@@ -40,7 +41,7 @@ class FcmTokenControllerTest extends TestCase
     {
         $resp = $this->withHeaders($this->authHeader())->postJson('/api/user/fcm-token', [
             'token' => 'valid_fcm_token_1234567890_abcdef',
-            'platform' => 'android'
+            'platform' => 'android',
         ]);
 
         $resp->assertStatus(200)->assertJsonPath('success', true);
@@ -51,7 +52,7 @@ class FcmTokenControllerTest extends TestCase
     public function test_store_fcm_token_validation_fails(): void
     {
         $resp = $this->withHeaders($this->authHeader())->postJson('/api/user/fcm-token', [
-            'token' => 'short'
+            'token' => 'short',
         ]);
         $resp->assertStatus(422)->assertJsonValidationErrors(['token']);
     }
@@ -59,11 +60,11 @@ class FcmTokenControllerTest extends TestCase
     public function test_store_updates_existing_token(): void
     {
         $this->withHeaders($this->authHeader())->postJson('/api/user/fcm-token', [
-            'token' => 'token_1234567890_aaaa', 'platform' => 'android'
+            'token' => 'token_1234567890_aaaa', 'platform' => 'android',
         ]);
 
         $resp = $this->withHeaders($this->authHeader())->postJson('/api/user/fcm-token', [
-            'token' => 'token_1234567890_aaaa', 'platform' => 'ios'
+            'token' => 'token_1234567890_aaaa', 'platform' => 'ios',
         ]);
         $resp->assertStatus(200);
         $this->assertDatabaseHas('device_tokens', ['token' => 'token_1234567890_aaaa', 'platform' => 'ios']);
@@ -73,7 +74,7 @@ class FcmTokenControllerTest extends TestCase
     public function test_index_returns_tokens(): void
     {
         $this->withHeaders($this->authHeader())->postJson('/api/user/fcm-token', [
-            'token' => 'token_1234567890_1111', 'platform' => 'android'
+            'token' => 'token_1234567890_1111', 'platform' => 'android',
         ]);
         $resp = $this->withHeaders($this->authHeader())->getJson('/api/user/fcm-tokens');
         $resp->assertStatus(200)->assertJsonPath('success', true);
@@ -83,10 +84,10 @@ class FcmTokenControllerTest extends TestCase
     public function test_destroy_single_token(): void
     {
         $this->withHeaders($this->authHeader())->postJson('/api/user/fcm-token', [
-            'token' => 'token_1234567890_2222'
+            'token' => 'token_1234567890_2222',
         ]);
         $resp = $this->withHeaders($this->authHeader())->deleteJson('/api/user/fcm-token', [
-            'token' => 'token_1234567890_2222'
+            'token' => 'token_1234567890_2222',
         ]);
         $resp->assertStatus(200);
         $this->assertDatabaseMissing('device_tokens', ['token' => 'token_1234567890_2222']);

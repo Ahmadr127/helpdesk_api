@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\UnitProses;
+use Illuminate\Database\Seeder;
 
 class UnitProsesSeeder extends Seeder
 {
@@ -16,9 +16,9 @@ class UnitProsesSeeder extends Seeder
             ['name' => 'Sanitasi', 'code' => 'SNT', 'status' => 1],
             ['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1],
         ];
-        
+
         foreach ($unitProses as $unit) {
             UnitProses::firstOrCreate(['code' => $unit['code']], $unit);
         }
     }
-} 
+}

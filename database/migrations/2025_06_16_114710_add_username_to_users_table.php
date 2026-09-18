@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'username')) {
+            if (! Schema::hasColumn('users', 'username')) {
                 $table->string('username')->nullable()->unique()->after('email');
             }
             // Backfill username from email prefix if column newly added and data exists
@@ -29,7 +29,7 @@ return new class extends Migration
                     $username = $base;
                     $i = 1;
                     while (\Illuminate\Support\Facades\DB::table('users')->where('username', $username)->exists()) {
-                        $username = $base . $i++;
+                        $username = $base.$i++;
                     }
                     \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->update(['username' => $username]);
                 });
@@ -47,7 +47,10 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             if (Schema::hasColumn('users', 'username')) {
                 // Drop unique index first if exists
-                try { $table->dropUnique(['username']); } catch (\Throwable $e) {}
+                try {
+                    $table->dropUnique(['username']);
+                } catch (\Throwable $e) {
+                }
                 $table->dropColumn('username');
             }
         });

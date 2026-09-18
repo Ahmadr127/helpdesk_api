@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Department;
-use App\Models\Position;
 
 class UserSettingsController extends Controller
 {
@@ -18,11 +18,11 @@ class UserSettingsController extends Controller
             ->orderBy('name')
             ->get()
             ->pluck('name', 'code');
-        
+
         return view('user.settings', [
             'user' => Auth::user(),
             'departments' => $departments,
-            'positions' => $positions
+            'positions' => $positions,
         ]);
     }
 
@@ -30,7 +30,7 @@ class UserSettingsController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request) {
+            'email' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) {
                 // Check if email is unique except for current user
                 if (\App\Models\User::where('email', $value)
                     ->where('id', '!=', Auth::id())
@@ -40,8 +40,8 @@ class UserSettingsController extends Controller
             }],
             'phone' => 'required|string|max:15',
             'position' => 'nullable|exists:positions,code',
-            'department' => ['nullable','string','max:255', function ($attr, $val, $fail) {
-                if (!empty($val) && !\App\Models\Department::where('code',$val)->orWhere('name',$val)->exists()) {
+            'department' => ['nullable', 'string', 'max:255', function ($attr, $val, $fail) {
+                if (! empty($val) && ! \App\Models\Department::where('code', $val)->orWhere('name', $val)->exists()) {
                     $fail('Department tidak valid.');
                 }
             }],
@@ -63,4 +63,4 @@ class UserSettingsController extends Controller
 
         return back()->with('success', 'Profile updated successfully.');
     }
-} 
+}

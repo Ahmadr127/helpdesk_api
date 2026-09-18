@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
@@ -50,7 +50,7 @@ class Order extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'open' => 'yellow',
             'in_progress' => 'blue',
             'confirmed' => 'green',
@@ -61,7 +61,7 @@ class Order extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'open' => 'Open',
             'in_progress' => 'In Progress',
             'confirmed' => 'Confirmed',
@@ -72,7 +72,7 @@ class Order extends Model
 
     public function getPrioritasColorAttribute(): string
     {
-        return match($this->prioritas) {
+        return match ($this->prioritas) {
             'URGENT' => 'red',
             'SEGERA' => 'yellow',
             'BIASA' => 'gray',
@@ -82,11 +82,11 @@ class Order extends Model
 
     public function getPrioritasLabelAttribute(): string
     {
-        return match($this->prioritas) {
+        return match ($this->prioritas) {
             'URGENT' => 'URGENT',
             'SEGERA' => 'SEGERA',
             'BIASA' => 'BIASA',
             default => 'Unknown',
         };
     }
-} 
+}

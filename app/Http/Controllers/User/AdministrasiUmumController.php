@@ -3,18 +3,15 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\OrderPerbaikan;
-use App\Models\OrderPerbaikanItem;
-use App\Models\OrderPerbaikanHistory;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\Location;
-use App\Models\UnitProses;
 use App\Models\Department;
 use App\Models\KategoriOrder;
+use App\Models\Location;
+use App\Models\OrderPerbaikan;
+use App\Models\UnitProses;
 use App\Services\Api\OrderPerbaikanService;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AdministrasiUmumController extends Controller
 {
@@ -28,12 +25,12 @@ class AdministrasiUmumController extends Controller
         // Add search for in progress orders
         if ($request->search) {
             $search = $request->search;
-            $inProgressQuery->where(function($q) use ($search) {
+            $inProgressQuery->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%")
-                  ->orWhere('kategori_order', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%")
+                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                    ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
 
@@ -45,8 +42,8 @@ class AdministrasiUmumController extends Controller
         // Add date filter for in progress orders
         if ($request->start_date && $request->end_date) {
             $inProgressQuery->whereBetween('tanggal', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -60,12 +57,12 @@ class AdministrasiUmumController extends Controller
         // Add search functionality
         if ($request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%")
-                  ->orWhere('kategori_order', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%")
+                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                    ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
 
@@ -77,8 +74,8 @@ class AdministrasiUmumController extends Controller
         // Filter tanggal for open orders
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('tanggal', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -93,7 +90,7 @@ class AdministrasiUmumController extends Controller
             return response()->json([
                 'success' => true,
                 'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
-                'inProgressHtml' => view('user.administrasi-umum.order-perbaikan._in_progress_cards', compact('inProgressOrders'))->render()
+                'inProgressHtml' => view('user.administrasi-umum.order-perbaikan._in_progress_cards', compact('inProgressOrders'))->render(),
             ]);
         }
 
@@ -109,8 +106,8 @@ class AdministrasiUmumController extends Controller
         // Filter tanggal
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('tanggal', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -119,7 +116,7 @@ class AdministrasiUmumController extends Controller
         if (request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render()
+                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
             ]);
         }
 
@@ -135,8 +132,8 @@ class AdministrasiUmumController extends Controller
         // Filter tanggal
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('tanggal', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -145,7 +142,7 @@ class AdministrasiUmumController extends Controller
         if (request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render()
+                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
             ]);
         }
 
@@ -200,6 +197,7 @@ class AdministrasiUmumController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat membuat order',
                 'error' => $e->getMessage(),
@@ -210,7 +208,7 @@ class AdministrasiUmumController extends Controller
     public function updateOrder(Request $request, OrderPerbaikan $order)
     {
         $request->validate([
-            'nomor' => 'required|unique:order_perbaikan,nomor,' . $order->id,
+            'nomor' => 'required|unique:order_perbaikan,nomor,'.$order->id,
             'tanggal' => 'required|date',
             'unit_proses' => 'required',
             'unit_penerima' => 'required',
@@ -256,6 +254,7 @@ class AdministrasiUmumController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat memperbarui order',
                 'error' => $e->getMessage(),
@@ -273,10 +272,10 @@ class AdministrasiUmumController extends Controller
         $query = OrderPerbaikan::with(['items', 'creator']);
 
         if ($request->search) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('nomor', 'like', "%{$request->search}%")
-                  ->orWhere('unit_proses', 'like', "%{$request->search}%")
-                  ->orWhere('unit_penerima', 'like', "%{$request->search}%");
+                    ->orWhere('unit_proses', 'like', "%{$request->search}%")
+                    ->orWhere('unit_penerima', 'like', "%{$request->search}%");
             });
         }
 
@@ -288,7 +287,7 @@ class AdministrasiUmumController extends Controller
     public function indexOrderPerbaikan(Request $request)
     {
         $status = $request->status ?? 'all';
-        
+
         // Base query
         $query = OrderPerbaikan::with(['creator', 'history'])
             ->where('created_by', auth()->id());
@@ -301,12 +300,12 @@ class AdministrasiUmumController extends Controller
         // Add search functionality
         if ($request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%")
-                  ->orWhere('kategori_order', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%")
+                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                    ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
 
@@ -318,8 +317,8 @@ class AdministrasiUmumController extends Controller
         // Filter by date range
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('tanggal', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -341,7 +340,7 @@ class AdministrasiUmumController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render()
+                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
             ]);
         }
 
@@ -353,11 +352,11 @@ class AdministrasiUmumController extends Controller
         try {
             // Generate nomor otomatis sesuai format: OP/RTG/MTC-YYYYMMDD001
             $currentDate = now();
-            $prefix = 'OP/RTG/MTC-' . $currentDate->format('Ymd');
-            
+            $prefix = 'OP/RTG/MTC-'.$currentDate->format('Ymd');
+
             // Get the last order number for today, including soft deleted records
             $lastOrder = OrderPerbaikan::withTrashed()
-                ->where('nomor', 'like', $prefix . '%')
+                ->where('nomor', 'like', $prefix.'%')
                 ->orderBy('nomor', 'desc')
                 ->first();
 
@@ -368,7 +367,7 @@ class AdministrasiUmumController extends Controller
                 $newNumber = '001';
             }
 
-            $nomor = $prefix . $newNumber;
+            $nomor = $prefix.$newNumber;
             $locations = Location::orderBy('name', 'asc')->get();
             $unitProses = UnitProses::where('status', 1)
                 ->where('code', '!=', 'SIRS')
@@ -378,9 +377,15 @@ class AdministrasiUmumController extends Controller
             // Get user data
             $user = auth()->user();
 
+            // Resolve departemen user (utamakan department_id, fallback lookup string)
+            $department = $this->resolveDepartment($user);
+            $departmentId = $department?->id;
+            $departmentLocation = $department?->location;
+            $departmentBuilding = $department?->building;
+
             // Unit pengaju otomatis dari departemen user
-            $unitPengajuCode = $user->department ?? 'GENERAL';
-            $unitPengajuName = Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
+            $unitPengajuCode = $department?->code ?? $user->department ?? 'GENERAL';
+            $unitPengajuName = $department?->name ?? Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
 
             if (request()->ajax()) {
                 return response()->json([
@@ -391,23 +396,26 @@ class AdministrasiUmumController extends Controller
                         'locations' => $locations,
                         'unitPengajuCode' => $unitPengajuCode,
                         'unitPengajuName' => $unitPengajuName,
+                        'departmentId' => $departmentId,
+                        'defaultLocation' => $departmentLocation,
+                        'defaultBuilding' => $departmentBuilding,
                         'kategoriOrders' => $kategoriOrders,
                         'user' => [
                             'nip' => $user->nip,
-                            'name' => $user->name
-                        ]
-                    ]
+                            'name' => $user->name,
+                        ],
+                    ],
                 ]);
             }
 
-            return view('user.administrasi-umum.order-perbaikan.create', 
-                compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders'));
+            return view('user.administrasi-umum.order-perbaikan.create',
+                compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
 
         } catch (\Exception $e) {
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                    'message' => 'Terjadi kesalahan: '.$e->getMessage(),
                 ], 500);
             }
             throw $e;
@@ -419,7 +427,7 @@ class AdministrasiUmumController extends Controller
         $validated = $request->validate([
             'unit_proses_code' => 'nullable|string',
             'unit_proses_name' => 'nullable|string',
-            'jenis_barang' => 'required|in:Umum,Inventaris',
+            'department_id' => 'nullable|exists:departments,id',
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',
             'kategori_order' => 'nullable|string',
@@ -436,26 +444,26 @@ class AdministrasiUmumController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Order perbaikan berhasil dibuat dengan nomor: ' . $orderPerbaikan->nomor,
-                    'data' => $orderPerbaikan
+                    'message' => 'Order perbaikan berhasil dibuat dengan nomor: '.$orderPerbaikan->nomor,
+                    'data' => $orderPerbaikan,
                 ]);
             }
 
             return redirect()
                 ->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
-                ->with('success', 'Order perbaikan berhasil dibuat dengan nomor: ' . $orderPerbaikan->nomor);
+                ->with('success', 'Order perbaikan berhasil dibuat dengan nomor: '.$orderPerbaikan->nomor);
 
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terjadi kesalahan saat membuat order: ' . $e->getMessage()
+                    'message' => 'Terjadi kesalahan saat membuat order: '.$e->getMessage(),
                 ], 500);
             }
 
             return redirect()
                 ->back()
-                ->with('error', 'Terjadi kesalahan saat membuat order: ' . $e->getMessage())
+                ->with('error', 'Terjadi kesalahan saat membuat order: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -464,7 +472,7 @@ class AdministrasiUmumController extends Controller
     {
         // Load the relationships we need
         $order = $orderPerbaikan->load(['history.creator', 'location', 'creator']);
-        
+
         // Check if the current user is authorized to view this order
         if ($order->created_by !== auth()->id()) {
             abort(403, 'Unauthorized action.');
@@ -488,14 +496,36 @@ class AdministrasiUmumController extends Controller
 
         $locations = Location::orderBy('name', 'asc')->get();
         $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
-        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'kategoriOrders'));
+
+        $department = $this->resolveDepartment(auth()->user());
+        $departmentId = $department?->id;
+        $departmentLocation = $department?->location;
+        $departmentBuilding = $department?->building;
+
+        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+    }
+
+    protected function resolveDepartment($user): ?Department
+    {
+        $department = null;
+        if (! empty($user->department_id)) {
+            $department = Department::with(['location', 'building'])->find($user->department_id);
+        }
+        if (! $department && $user->department) {
+            $deptValue = $user->department;
+            $department = Department::with(['location', 'building'])->where('code', $deptValue)->first()
+                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
+                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        }
+
+        return $department;
     }
 
     public function updateOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'jenis_barang' => 'required|in:Umum,Inventaris',
-            'kode_inventaris' => 'required|string',
+            'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',
             'kategori_order' => 'nullable|string',
             'lokasi' => 'required|exists:locations,id',
@@ -511,7 +541,7 @@ class AdministrasiUmumController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Order perbaikan berhasil diperbarui',
-                    'data' => $order
+                    'data' => $order,
                 ]);
             }
 
@@ -524,9 +554,10 @@ class AdministrasiUmumController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], $code);
             }
+
             return redirect()->back()->with('error', $e->getMessage())->withInput();
         }
     }
@@ -535,15 +566,17 @@ class AdministrasiUmumController extends Controller
     {
         try {
             $service->delete(auth()->user(), $orderPerbaikan);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Order perbaikan berhasil dihapus'
+                'message' => 'Order perbaikan berhasil dihapus',
             ]);
         } catch (\Exception $e) {
             $code = $e->getCode() === 403 ? 403 : ($e->getCode() === 422 ? 422 : 500);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], $code);
         }
     }

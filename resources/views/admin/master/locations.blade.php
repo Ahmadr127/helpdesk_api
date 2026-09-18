@@ -23,7 +23,13 @@
     <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.locations.index') }}" method="GET"
-            class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
+            class="grid grid-cols-1 md:grid-cols-3 gap-4" onsubmit="return validateFilterForm()">
+            <div class="md:col-span-3">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ request('search') }}"
+                    placeholder="Cari berdasarkan nama lokasi…"
+                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" id="filter_status"
@@ -31,18 +37,6 @@
                     <option value="">All Status</option>
                     <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
                     <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                <select name="building_id" id="filter_building"
-                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                    <option value="">All Buildings</option>
-                    @foreach($buildings as $building)
-                    <option value="{{ $building->id }}" {{ request('building_id') == $building->id ? 'selected' : '' }}>
-                        {{ $building->name }}
-                    </option>
-                    @endforeach
                 </select>
             </div>
             <div>
@@ -73,10 +67,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Building</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Floor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Created At</th>
@@ -92,8 +82,6 @@
                                     class="select-item rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             </td>
                             <td class="px-6 py-4">{{ $location->name }}</td>
-                            <td class="px-6 py-4">{{ $location->building->name }}</td>
-                            <td class="px-6 py-4">{{ $location->floor }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
@@ -159,23 +147,6 @@
             </div>
 
             <div class="mb-4">
-                <label for="building_id" class="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                <select name="building_id" id="building_id" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <option value="">Select Building</option>
-                    @foreach($buildings as $building)
-                    <option value="{{ $building->id }}">{{ $building->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label for="floor" class="block text-sm font-medium text-gray-700 mb-1">Floor</label>
-                <input type="text" name="floor" id="floor" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
-            </div>
-
-            <div class="mb-4">
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" id="status"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -198,16 +169,10 @@
 <script>
 function validateFilterForm() {
     const status = document.getElementById('filter_status').value;
-    const building = document.getElementById('filter_building').value;
     const fromDate = document.getElementById('filter_from_date').value;
 
-    if (status || building || fromDate) {
-        if (!status || !building || !fromDate) {
-            alert('Please fill in all filter fields (Status, Building, and From Date) to apply the filter.');
-            return false;
-        }
-    }
-    
+    // Status, pencarian, dan dari tanggal bisa dipakai sendiri-sendiri
+    // atau dikombinasikan; tidak ada lagi aturan "isi semua field".
     return true;
 }
 
@@ -221,8 +186,6 @@ function openModal(location = null) {
         form.action = `{{ url('admin/master/locations') }}/${location.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = location.name;
-        document.getElementById('building_id').value = location.building_id;
-        document.getElementById('floor').value = location.floor;
         document.getElementById('status').value = location.status;
         modalTitle.textContent = 'Edit Location';
     } else {

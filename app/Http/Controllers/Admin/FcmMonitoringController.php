@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\Monitoring\MonitoringService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class FcmMonitoringController extends Controller
@@ -18,17 +17,19 @@ class FcmMonitoringController extends Controller
     public function index(Request $request)
     {
         $tab = $request->query('tab', 'overview');
-        $allowed = ['overview','logs','jobs','fcm','notifications'];
-        if (!in_array($tab, $allowed, true)) $tab = 'overview';
+        $allowed = ['overview', 'logs', 'jobs', 'fcm', 'notifications'];
+        if (! in_array($tab, $allowed, true)) {
+            $tab = 'overview';
+        }
 
         $data = $this->collectData($request);
 
         // If wants JSON
-        if ($request->wantsJson() || $request->query('format')==='json') {
-            return response()->json(['success'=>true, 'tab'=>$tab, 'data'=>$data]);
+        if ($request->wantsJson() || $request->query('format') === 'json') {
+            return response()->json(['success' => true, 'tab' => $tab, 'data' => $data]);
         }
 
-        return view('admin.fcm.index', array_merge($data, ['tab'=>$tab]));
+        return view('admin.fcm.index', array_merge($data, ['tab' => $tab]));
     }
 
     /**
@@ -36,14 +37,14 @@ class FcmMonitoringController extends Controller
      */
     public function logs(Request $request)
     {
-        $channel = $request->query('channel','laravel');
+        $channel = $request->query('channel', 'laravel');
         $lines = (int) $request->query('lines', 200);
         $lines = max(10, min($lines, 1000));
 
         $log = $this->monitoring->getLogLines($channel, $lines);
 
         if ($request->wantsJson()) {
-            return response()->json(['success'=>true, 'data'=>$log]);
+            return response()->json(['success' => true, 'data' => $log]);
         }
 
         $data = $this->collectData($request);
@@ -51,7 +52,7 @@ class FcmMonitoringController extends Controller
         $data['logChannel'] = $channel;
         $data['logLines'] = $lines;
 
-        return view('admin.fcm.index', array_merge($data, ['tab'=>'logs']));
+        return view('admin.fcm.index', array_merge($data, ['tab' => 'logs']));
     }
 
     /**
@@ -59,16 +60,17 @@ class FcmMonitoringController extends Controller
      */
     public function clearLog(Request $request)
     {
-        $channel = $request->input('channel','laravel');
-        $path = match($channel){
+        $channel = $request->input('channel', 'laravel');
+        $path = match ($channel) {
             'firebase' => storage_path('logs/firebase.log'),
             'laravel' => storage_path('logs/laravel.log'),
             default => storage_path("logs/{$channel}.log"),
         };
         if (File::exists($path)) {
-            File::put($path, "[Cleared at ".now()." by ".auth()->user()->email."]".PHP_EOL);
+            File::put($path, '[Cleared at '.now().' by '.auth()->user()->email.']'.PHP_EOL);
         }
-        return redirect()->route('fcm.index', ['tab'=>'logs','channel'=>$channel])->with('success', "Log {$channel} cleared");
+
+        return redirect()->route('fcm.index', ['tab' => 'logs', 'channel' => $channel])->with('success', "Log {$channel} cleared");
     }
 
     /**
@@ -77,21 +79,23 @@ class FcmMonitoringController extends Controller
     public function retryFailed(Request $request, string $id)
     {
         try {
-            \Artisan::call('queue:retry', ['id'=>$id]);
+            \Artisan::call('queue:retry', ['id' => $id]);
             $output = \Artisan::output();
-            return redirect()->route('fcm.index', ['tab'=>'jobs'])->with('success', "Retry {$id}: {$output}");
+
+            return redirect()->route('fcm.index', ['tab' => 'jobs'])->with('success', "Retry {$id}: {$output}");
         } catch (\Throwable $e) {
-            return redirect()->route('fcm.index', ['tab'=>'jobs'])->with('error', $e->getMessage());
+            return redirect()->route('fcm.index', ['tab' => 'jobs'])->with('error', $e->getMessage());
         }
     }
 
     public function forgetFailed(Request $request, string $id)
     {
         try {
-            \Artisan::call('queue:forget', ['id'=>$id]);
-            return redirect()->route('fcm.index', ['tab'=>'jobs'])->with('success', "Forgot {$id}");
+            \Artisan::call('queue:forget', ['id' => $id]);
+
+            return redirect()->route('fcm.index', ['tab' => 'jobs'])->with('success', "Forgot {$id}");
         } catch (\Throwable $e) {
-            return redirect()->route('fcm.index', ['tab'=>'jobs'])->with('error', $e->getMessage());
+            return redirect()->route('fcm.index', ['tab' => 'jobs'])->with('error', $e->getMessage());
         }
     }
 
@@ -99,9 +103,10 @@ class FcmMonitoringController extends Controller
     {
         try {
             \Artisan::call('queue:flush');
-            return redirect()->route('fcm.index', ['tab'=>'jobs'])->with('success', "Flushed all failed jobs");
+
+            return redirect()->route('fcm.index', ['tab' => 'jobs'])->with('success', 'Flushed all failed jobs');
         } catch (\Throwable $e) {
-            return redirect()->route('fcm.index', ['tab'=>'jobs'])->with('error', $e->getMessage());
+            return redirect()->route('fcm.index', ['tab' => 'jobs'])->with('error', $e->getMessage());
         }
     }
 
@@ -111,33 +116,34 @@ class FcmMonitoringController extends Controller
     public function sendTest(Request $request)
     {
         $request->validate([
-            'token' => ['nullable','string','min:10'],
-            'title' => ['nullable','string','max:200'],
-            'body' => ['nullable','string','max:1000'],
+            'token' => ['nullable', 'string', 'min:10'],
+            'title' => ['nullable', 'string', 'max:200'],
+            'body' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $user = $request->user();
         $token = $request->input('token') ?: $user->fcm_token;
 
-        if (!$token) {
+        if (! $token) {
             // try device_tokens
             $token = $user->deviceTokens()->valid()->value('token');
         }
 
-        if (!$token) {
-            return redirect()->route('fcm.index', ['tab'=>'fcm'])->with('error', 'Tidak ada FCM token untuk user ini. Register via Flutter dulu atau isi token manual.');
+        if (! $token) {
+            return redirect()->route('fcm.index', ['tab' => 'fcm'])->with('error', 'Tidak ada FCM token untuk user ini. Register via Flutter dulu atau isi token manual.');
         }
 
         try {
             $title = $request->input('title', 'Test FCM '.now()->format('H:i:s'));
             $body = $request->input('body', 'Hello dari monitoring /fcm');
-            $dto = \App\DTO\Notifications\FirebaseNotificationData::make(title:$title, body:$body, data:['type'=>'test','source'=>'fcm_monitoring','time'=>now()->toIso8601String()]);
+            $dto = \App\DTO\Notifications\FirebaseNotificationData::make(title: $title, body: $body, data: ['type' => 'test', 'source' => 'fcm_monitoring', 'time' => now()->toIso8601String()]);
             // Use queue for async, but for monitoring we send sync to show result immediately
             $service = app(\App\Contracts\Notifications\FirebaseNotificationInterface::class);
             $result = $service->sendToToken($token, $dto);
-            return redirect()->route('fcm.index', ['tab'=>'fcm'])->with('success', "Test terkirim! Message ID: ".($result['message_id'] ?? 'ok')." ke ".substr($token,0,10).'***');
+
+            return redirect()->route('fcm.index', ['tab' => 'fcm'])->with('success', 'Test terkirim! Message ID: '.($result['message_id'] ?? 'ok').' ke '.substr($token, 0, 10).'***');
         } catch (\Throwable $e) {
-            return redirect()->route('fcm.index', ['tab'=>'fcm'])->with('error', 'Gagal kirim: '.$e->getMessage());
+            return redirect()->route('fcm.index', ['tab' => 'fcm'])->with('error', 'Gagal kirim: '.$e->getMessage());
         }
     }
 

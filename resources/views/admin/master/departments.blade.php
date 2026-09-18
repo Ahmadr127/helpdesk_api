@@ -25,6 +25,12 @@
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.departments.index') }}" method="GET"
             class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
+            <div class="md:col-span-4">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ request('search') }}"
+                    placeholder="Cari berdasarkan nama atau kode…"
+                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" id="filter_status"
@@ -69,6 +75,10 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Code</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Lokasi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Gedung</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Created At</th>
@@ -85,6 +95,20 @@
                             </td>
                             <td class="px-6 py-4">{{ $department->name }}</td>
                             <td class="px-6 py-4">{{ $department->code }}</td>
+                            <td class="px-6 py-4">
+                                @if($department->location)
+                                <span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">{{ $department->location->name }}</span>
+                                @else
+                                <span class="text-gray-400 text-sm">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($department->building)
+                                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ $department->building->name }}</span>
+                                @else
+                                <span class="text-gray-400 text-sm">-</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
@@ -156,6 +180,28 @@
             </div>
 
             <div class="mb-4">
+                <label for="location_id" class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-gray-400">(opsional)</span></label>
+                <select name="location_id" id="location_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">-- Tidak Ada --</option>
+                    @foreach($locations as $loc)
+                    <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="building_id" class="block text-sm font-medium text-gray-700 mb-1">Gedung <span class="text-gray-400">(opsional)</span></label>
+                <select name="building_id" id="building_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">-- Tidak Ada --</option>
+                    @foreach($buildings as $b)
+                    <option value="{{ $b->id }}">{{ $b->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-4">
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" id="status"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -188,6 +234,10 @@ function openModal(department = null) {
         document.getElementById('name').value = department.name;
         document.getElementById('code').value = department.code;
         document.getElementById('status').value = department.status;
+        const loc = department.location ? department.location.id : department.location_id;
+        document.getElementById('location_id').value = loc || '';
+        const gedung = department.building ? department.building.id : department.building_id;
+        document.getElementById('building_id').value = gedung || '';
         modalTitle.textContent = 'Edit Department';
     } else {
         form.action = "{{ route('admin.master.departments.store') }}";
@@ -271,19 +321,11 @@ function validateFilterForm() {
     const fromDate = document.getElementById('filter_from_date').value;
     const toDate = document.getElementById('filter_to_date').value;
 
-    // Check if any of the filter fields are filled
-    if (status || fromDate || toDate) {
-        // If any field is filled, all fields must be filled
-        if (!status || !fromDate || !toDate) {
-            alert('Please fill in all filter fields (Status, From Date, and To Date) to apply the filter.');
-            return false;
-        }
-
-        // Validate that from_date is not greater than to_date
-        if (fromDate > toDate) {
-            alert('From Date cannot be greater than To Date');
-            return false;
-        }
+    // Status, pencarian, dan rentang tanggal bisa dipakai sendiri-sendiri
+    // atau dikombinasikan; yang dicek hanya validitas rentang tanggal.
+    if (fromDate && toDate && fromDate > toDate) {
+        alert('From Date cannot be greater than To Date');
+        return false;
     }
 
     return true;

@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -13,7 +11,7 @@ return new class extends Migration
         if (DB::connection()->getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_category_check');
         }
-        
+
         // Migrasi data lama ke kolom yang sudah ada
         DB::table('tickets')->chunkById(100, function ($tickets) {
             foreach ($tickets as $ticket) {
@@ -21,14 +19,14 @@ return new class extends Migration
                 $departmentId = DB::table('departments')->where('code', $ticket->department)->value('id');
                 $buildingId = DB::table('buildings')->where('code', $ticket->building)->value('id');
                 $locationId = DB::table('locations')->where('name', $ticket->location)->value('id');
-                
+
                 DB::table('tickets')
                     ->where('id', $ticket->id)
                     ->update([
                         'category_id' => $categoryId,
                         'department_id' => $departmentId,
                         'building_id' => $buildingId,
-                        'location_id' => $locationId
+                        'location_id' => $locationId,
                     ]);
             }
         });
@@ -41,4 +39,4 @@ return new class extends Migration
             DB::statement("ALTER TABLE tickets ADD CONSTRAINT tickets_category_check CHECK (category IN ('hardware', 'software', 'network', 'termedik', 'printer', 'cctv'))");
         }
     }
-}; 
+};

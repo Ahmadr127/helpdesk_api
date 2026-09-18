@@ -10,7 +10,9 @@ class TicketRejectedNotification extends Notification
     use Queueable;
 
     protected $ticket;
+
     protected $notes;
+
     protected $photo;
 
     public function __construct($ticket, $notes, $photo = null)
@@ -29,7 +31,7 @@ class TicketRejectedNotification extends Notification
     {
         return [
             'ticket_id' => $this->ticket->id,
-            'title' => "Ticket Rejected",
+            'title' => 'Ticket Rejected',
             'message' => "Ticket #{$this->ticket->ticket_number} has been rejected by user",
             'notes' => $this->notes,
             'photo' => $this->photo,
@@ -39,7 +41,7 @@ class TicketRejectedNotification extends Notification
             'category_name' => $this->ticket->categoryRelation ? $this->ticket->categoryRelation->name : $this->ticket->category,
             'department_name' => $this->ticket->departmentRelation ? $this->ticket->departmentRelation->name : $this->ticket->department,
             'building_name' => $this->ticket->buildingRelation ? $this->ticket->buildingRelation->name : $this->ticket->building,
-            'rejection_time' => now()->format('d M Y H:i')
+            'rejection_time' => now()->format('d M Y H:i'),
         ];
     }
-} 
+}

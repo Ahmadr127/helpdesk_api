@@ -37,7 +37,7 @@ class AdminIpsrsNavigationTest extends TestCase
     {
         $this->seedRolePermissions();
         $building = Building::create(['name' => 'Gedung A', 'code' => 'A', 'status' => 1]);
-        $location = Location::create(['name' => 'UGD', 'building_id' => $building->id, 'status' => 1]);
+        $location = Location::create(['name' => 'UGD', 'status' => 1]);
         UnitProses::create(['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1]);
         $user = $this->makeUser('user', 'user@example.com');
         $ipsrs = $this->makeUser('ipsrs', 'ipsrs@example.com');

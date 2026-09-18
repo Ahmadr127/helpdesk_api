@@ -2,13 +2,12 @@
 
 namespace App\Notifications;
 
+use App\Models\OrderPerbaikan;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\OrderPerbaikan;
 
 class OrderPerbaikanStatusUpdated extends Notification
 {
-
     protected $orderPerbaikan;
 
     public function __construct(OrderPerbaikan $orderPerbaikan)
@@ -19,9 +18,10 @@ class OrderPerbaikanStatusUpdated extends Notification
     public function via($notifiable)
     {
         // Jika email tidak valid (mis. "administrasi" tanpa domain), jangan kirim mail agar tidak error 500 saat sync
-        if (!filter_var($notifiable->email ?? '', FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($notifiable->email ?? '', FILTER_VALIDATE_EMAIL)) {
             return ['database'];
         }
+
         return ['database', 'mail'];
     }
 
@@ -33,10 +33,10 @@ class OrderPerbaikanStatusUpdated extends Notification
             'in_progress' => 'sedang dalam proses',
             'completed' => 'telah selesai',
             'confirmed' => 'telah dikonfirmasi',
-            'rejected' => 'ditolak'
+            'rejected' => 'ditolak',
         ];
 
-        $message = "Order perbaikan Anda dengan nomor {$this->orderPerbaikan->nomor} " .
+        $message = "Order perbaikan Anda dengan nomor {$this->orderPerbaikan->nomor} ".
                   ($statusMessages[$this->orderPerbaikan->status] ?? 'telah diperbarui ke status '.$this->orderPerbaikan->status);
 
         return (new MailMessage)
@@ -55,6 +55,7 @@ class OrderPerbaikanStatusUpdated extends Notification
             'rejected' => 'order_rejected',
         ];
         $type = $typeMap[$this->orderPerbaikan->status] ?? 'order_status_updated';
+
         return [
             'order_id' => $this->orderPerbaikan->id,
             'nomor' => $this->orderPerbaikan->nomor,
@@ -63,8 +64,8 @@ class OrderPerbaikanStatusUpdated extends Notification
             'deep_link' => "helpdesk://order/{$this->orderPerbaikan->id}",
             'url' => route('user.administrasi-umum.order-perbaikan.show', $this->orderPerbaikan),
             'title' => "Order {$this->orderPerbaikan->nomor} - ".ucfirst($this->orderPerbaikan->status),
-            'message' => "Order perbaikan {$this->orderPerbaikan->nomor} telah diupdate ke status " .
-                        strtoupper($this->orderPerbaikan->status)
+            'message' => "Order perbaikan {$this->orderPerbaikan->nomor} telah diupdate ke status ".
+                        strtoupper($this->orderPerbaikan->status),
         ];
     }
-} 
+}

@@ -6,7 +6,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
@@ -21,10 +24,10 @@ class LoginRequest extends FormRequest
     protected function prepareForValidation()
     {
         // Normalize login field: accept login / email / username
-        if (!$this->has('login') && $this->has('email')) {
+        if (! $this->has('login') && $this->has('email')) {
             $this->merge(['login' => $this->input('email')]);
         }
-        if (!$this->has('login') && $this->has('username')) {
+        if (! $this->has('login') && $this->has('username')) {
             $this->merge(['login' => $this->input('username')]);
         }
     }

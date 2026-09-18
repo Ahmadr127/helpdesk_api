@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('roles')) {
+        if (! Schema::hasTable('roles')) {
             Schema::create('roles', function (Blueprint $table) {
                 $table->id();
                 $table->string('slug')->unique();
@@ -62,7 +62,7 @@ return new class extends Migration
             $driver = DB::getDriverName();
 
             $knownSlugs = DB::table('roles')->pluck('slug')->all();
-            if (!empty($knownSlugs)) {
+            if (! empty($knownSlugs)) {
                 DB::table('users')->whereNotIn('role', $knownSlugs)->update(['role' => 'user']);
             }
 
@@ -71,7 +71,7 @@ return new class extends Migration
                 DB::statement('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_foreign');
                 // Backfill any role not present in roles table before adding FK.
                 $valid = DB::table('roles')->pluck('slug')->all();
-                if (!empty($valid)) {
+                if (! empty($valid)) {
                     $placeholders = implode(',', array_fill(0, count($valid), '?'));
                     DB::statement(
                         "UPDATE users SET role = 'user' WHERE role NOT IN ({$placeholders})",
@@ -90,7 +90,7 @@ return new class extends Migration
             DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('user','admin','ipsrs'))");
         }
 
-        if (Schema::hasTable('role_permissions') && !Schema::hasColumn('role_permissions', 'position')) {
+        if (Schema::hasTable('role_permissions') && ! Schema::hasColumn('role_permissions', 'position')) {
             Schema::table('role_permissions', function (Blueprint $table) {
                 $table->string('position')->nullable();
             });

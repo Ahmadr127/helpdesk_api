@@ -16,7 +16,7 @@ class Feedback extends Model
         'subject',
         'message',
         'admin_reply',
-        'replied_at'
+        'replied_at',
     ];
 
     protected $casts = [
@@ -29,4 +29,4 @@ class Feedback extends Model
     {
         return $this->belongsTo(User::class);
     }
-} 
+}

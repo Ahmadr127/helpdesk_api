@@ -7,13 +7,17 @@ use Illuminate\Validation\Rule;
 
 class UpdateMasterDataRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         $type = $this->route('type');
         $id = $this->route('id');
-        return match($type) {
+
+        return match ($type) {
             'categories' => [
                 'name' => 'required|string|max:255',
                 'status' => 'required|boolean',
@@ -21,32 +25,33 @@ class UpdateMasterDataRequest extends FormRequest
             ],
             'departments' => [
                 'name' => 'required|string|max:255',
-                'code' => ['required','string','max:50', Rule::unique('departments','code')->ignore($id)],
+                'code' => ['required', 'string', 'max:50', Rule::unique('departments', 'code')->ignore($id)],
+                'location_id' => 'nullable|exists:locations,id',
+                'building_id' => 'nullable|exists:buildings,id',
                 'status' => 'required|boolean',
             ],
             'buildings' => [
                 'name' => 'required|string|max:255',
-                'code' => ['required','string','max:50', Rule::unique('buildings','code')->ignore($id)],
+                'code' => ['required', 'string', 'max:50', Rule::unique('buildings', 'code')->ignore($id)],
                 'status' => 'required|boolean',
             ],
             'locations' => [
                 'name' => 'required|string|max:255',
-                'building_id' => 'required|exists:buildings,id',
                 'status' => 'required|boolean',
             ],
             'unit-proses','unit_proses' => [
                 'name' => 'required|string|max:255',
-                'code' => ['required','string','max:50', Rule::unique('unit_proses','code')->ignore($id)],
+                'code' => ['required', 'string', 'max:50', Rule::unique('unit_proses', 'code')->ignore($id)],
                 'status' => 'required|boolean',
             ],
             'positions' => [
                 'name' => 'required|string|max:255',
-                'code' => ['required','string','max:50', Rule::unique('positions','code')->ignore($id)],
+                'code' => ['required', 'string', 'max:50', Rule::unique('positions', 'code')->ignore($id)],
                 'status' => 'required|boolean',
             ],
             'kategori-order','kategori_order' => [
-                'name' => ['required','string','max:255', Rule::unique('kategori_order','name')->ignore($id)],
-                'code' => ['nullable','string','max:50', Rule::unique('kategori_order','code')->ignore($id)],
+                'name' => ['required', 'string', 'max:255', Rule::unique('kategori_order', 'name')->ignore($id)],
+                'code' => ['nullable', 'string', 'max:50', Rule::unique('kategori_order', 'code')->ignore($id)],
                 'status' => 'required|boolean',
             ],
             default => [

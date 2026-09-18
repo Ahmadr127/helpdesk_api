@@ -3,14 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Building;
 use App\Models\Department;
+use App\Models\Location;
 use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Department::query();
+        $query = Department::with(['location', 'building']);
+
+        // Search (case-insensitive) by name or code, LOWER() matches lowercase
+        if ($request->filled('search')) {
+            $search = strtolower(trim($request->search));
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
+            });
+        }
 
         // Filter by status
         if ($request->has('status')) {
@@ -26,7 +37,10 @@ class DepartmentController extends Controller
         }
 
         $departments = $query->latest()->paginate(10)->withQueryString();
-        return view('admin.master.departments', compact('departments'));
+        $locations = Location::where('status', 1)->orderBy('name')->get();
+        $buildings = Building::where('status', 1)->orderBy('name')->get();
+
+        return view('admin.master.departments', compact('departments', 'locations', 'buildings'));
     }
 
     public function store(Request $request)
@@ -34,10 +48,13 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments',
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
             'status' => 'required|boolean',
         ]);
 
         Department::create($validated);
+
         return redirect()->route('admin.master.departments.index')->with('success', 'Department created successfully');
     }
 
@@ -45,17 +62,21 @@ class DepartmentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:departments,code,' . $department->id,
+            'code' => 'required|string|max:50|unique:departments,code,'.$department->id,
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
             'status' => 'required|boolean',
         ]);
 
         $department->update($validated);
+
         return redirect()->route('admin.master.departments.index')->with('success', 'Department updated successfully');
     }
 
     public function destroy(Department $department)
     {
         $department->delete();
+
         return redirect()->route('admin.master.departments.index')->with('success', 'Department deleted successfully');
     }
-} 
+}

@@ -3,26 +3,29 @@
 namespace App\Exports;
 
 use App\Models\OrderPerbaikan;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class OrderPerbaikanExport
 {
     protected $dateFrom;
+
     protected $dateTo;
+
     protected $selectedIds;
+
     protected $status;
 
     public function __construct($dateFrom = null, $dateTo = null, array $selectedIds = [], $status = null)
     {
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
-        $this->selectedIds = array_filter($selectedIds, function($value) {
+        $this->selectedIds = array_filter($selectedIds, function ($value) {
             return is_numeric($value) && $value > 0;
         });
         $this->status = $status;
@@ -30,7 +33,7 @@ class OrderPerbaikanExport
 
     public function download($fileName)
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // Set headers
@@ -49,7 +52,7 @@ class OrderPerbaikanExport
             'Keluhan',
             'Tindak Lanjut',
             'Penanggung Jawab',
-            'Tanggal Selesai'
+            'Tanggal Selesai',
         ];
 
         // Style the headers
@@ -68,17 +71,17 @@ class OrderPerbaikanExport
         // Set headers
         foreach ($headers as $index => $header) {
             $column = Coordinate::stringFromColumnIndex($index + 1);
-            $sheet->setCellValue($column . '1', $header);
+            $sheet->setCellValue($column.'1', $header);
         }
 
         // Get data
         $query = OrderPerbaikan::query();
-        
+
         // Add necessary relationships
         $query->with(['creator', 'location', 'history']);
 
         // Apply filters
-        if (!empty($this->selectedIds)) {
+        if (! empty($this->selectedIds)) {
             $query->whereIn('id', $this->selectedIds);
         } else {
             if ($this->dateFrom) {
@@ -96,18 +99,18 @@ class OrderPerbaikanExport
         $orders = $query->orderBy('created_at', 'desc')->get();
 
         // Log for debugging
-        Log::info('Export Orders Count: ' . $orders->count(), [
+        Log::info('Export Orders Count: '.$orders->count(), [
             'selected_ids' => $this->selectedIds,
             'date_from' => $this->dateFrom,
             'date_to' => $this->dateTo,
-            'status' => $this->status
+            'status' => $this->status,
         ]);
 
         // Add data rows
         $row = 2;
         foreach ($orders as $order) {
             // Map status to display text
-            $status = match($order->status) {
+            $status = match ($order->status) {
                 'open' => 'Open',
                 'pending' => 'Pending',
                 'in_progress' => 'Dalam Proses',
@@ -125,7 +128,7 @@ class OrderPerbaikanExport
                     ->whereIn('status', ['confirmed', 'completed'])
                     ->orderBy('created_at', 'desc')
                     ->first();
-                
+
                 if ($completionHistory) {
                     $completionDate = Carbon::parse($completionHistory->created_at)->format('d/m/Y H:i');
                 }
@@ -152,12 +155,12 @@ class OrderPerbaikanExport
                 $order->keluhan ?? '-',
                 $latestHistory ? $latestHistory->follow_up : ($order->follow_up ?? '-'),
                 $order->nama_penanggung_jawab ?? '-',
-                $completionDate ?? '-'
+                $completionDate ?? '-',
             ];
 
             foreach ($data as $index => $value) {
                 $column = Coordinate::stringFromColumnIndex($index + 1);
-                $sheet->setCellValue($column . $row, $value);
+                $sheet->setCellValue($column.$row, $value);
             }
             $row++;
         }
@@ -170,7 +173,7 @@ class OrderPerbaikanExport
         // Set borders for all cells
         $lastRow = $sheet->getHighestRow();
         $lastColumn = $sheet->getHighestColumn();
-        $sheet->getStyle('A1:' . $lastColumn . $lastRow)->applyFromArray([
+        $sheet->getStyle('A1:'.$lastColumn.$lastRow)->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -180,14 +183,14 @@ class OrderPerbaikanExport
 
         // Create the writer
         $writer = new Xlsx($spreadsheet);
-        
+
         // Set headers for download
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Content-Disposition: attachment;filename="'.$fileName.'"');
         header('Cache-Control: max-age=0');
 
         // Save to php output
         $writer->save('php://output');
         exit;
     }
-} 
+}

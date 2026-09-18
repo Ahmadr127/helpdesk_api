@@ -11,12 +11,13 @@ class AdminApiMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (!$user) {
-            return response()->json(['success'=>false,'message'=>'Unauthenticated'], 401);
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
         if (! $user->hasAnyPermission(['admin.dashboard', 'ticket.manage'])) {
-            return response()->json(['success'=>false,'message'=>'Forbidden - Admin IT only'], 403);
+            return response()->json(['success' => false, 'message' => 'Forbidden - Admin IT only'], 403);
         }
+
         return $next($request);
     }
 }

@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers\AdministrasiUmum;
 
+use App\Exports\OrderPerbaikanExport;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Location;
 use App\Models\OrderPerbaikan;
 use App\Services\Api\OrderPerbaikanService;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\OrderPerbaikanStatusUpdated;
-use App\Exports\OrderPerbaikanExport;
-use App\Models\Location;
 
 class OrderPerbaikanController extends Controller
 {
@@ -46,10 +44,10 @@ class OrderPerbaikanController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('nama_peminta', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_peminta', 'like', "%{$search}%");
             });
         }
 
@@ -68,25 +66,25 @@ class OrderPerbaikanController extends Controller
             // Default to showing only open and in_progress orders when no status filter
             $query->whereIn('status', ['open', 'in_progress']);
         }
-        
+
         // Apply priority filter
         if ($request->filled('prioritas')) {
             $query->where('prioritas', $request->prioritas);
         }
-        
+
         // Apply location filter
         if ($request->filled('location_id')) {
             $query->where('lokasi', $request->location_id);
         }
 
         $orders = $query->latest()->paginate(10)->withQueryString();
-        
+
         // Get only locations that are used in existing orders
         $locationIds = OrderPerbaikan::whereNotNull('lokasi')
             ->distinct()
             ->pluck('lokasi')
             ->toArray();
-        
+
         $locations = Location::whereIn('id', $locationIds)
             ->orderBy('name')
             ->get();
@@ -94,7 +92,7 @@ class OrderPerbaikanController extends Controller
         return view($this->viewNamespace().'.index', array_merge(
             [
                 'orders' => $orders,
-                'locations' => $locations
+                'locations' => $locations,
             ],
             $this->getStatistics()
         ));
@@ -111,10 +109,11 @@ class OrderPerbaikanController extends Controller
             case 'priority':
                 $query->where('prioritas', $value);
                 break;
-            // Add more filter types as needed
+                // Add more filter types as needed
         }
 
         $orders = $query->latest()->paginate(10);
+
         return view($this->viewNamespace().'.index', array_merge(
             ['orders' => $orders],
             $this->getStatistics()
@@ -125,24 +124,24 @@ class OrderPerbaikanController extends Controller
     {
         $query = OrderPerbaikan::with(['creator', 'location'])
             ->where('status', 'in_progress');
-            
+
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('nama_peminta', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%")
-                  ->orWhere('kode_inventaris', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_peminta', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%")
+                    ->orWhere('kode_inventaris', 'like', "%{$search}%");
             });
         }
-        
+
         // Apply priority filter
         if ($request->filled('prioritas')) {
             $query->where('prioritas', $request->prioritas);
         }
-        
+
         // Apply location filter
         if ($request->filled('location_id')) {
             $query->where('lokasi', $request->location_id);
@@ -150,14 +149,14 @@ class OrderPerbaikanController extends Controller
 
         $orders = $query->latest()->paginate(10)->withQueryString();
         $inProgressOrders = OrderPerbaikan::where('status', 'in_progress')->count();
-        
+
         // Get only locations that are used in existing in-progress orders
         $locationIds = OrderPerbaikan::where('status', 'in_progress')
             ->whereNotNull('lokasi')
             ->distinct()
             ->pluck('lokasi')
             ->toArray();
-        
+
         $locations = Location::whereIn('id', $locationIds)
             ->orderBy('name')
             ->get();
@@ -166,14 +165,14 @@ class OrderPerbaikanController extends Controller
             return view($this->viewNamespace().'.in-progress', [
                 'orders' => $orders,
                 'inProgressOrders' => $inProgressOrders,
-                'locations' => $locations
+                'locations' => $locations,
             ])->render();
         }
 
         return view($this->viewNamespace().'.in-progress', [
             'orders' => $orders,
             'inProgressOrders' => $inProgressOrders,
-            'locations' => $locations
+            'locations' => $locations,
         ]);
     }
 
@@ -185,11 +184,11 @@ class OrderPerbaikanController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('nama_peminta', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_peminta', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%");
             });
         }
 
@@ -205,7 +204,7 @@ class OrderPerbaikanController extends Controller
 
         if ($request->ajax()) {
             return view($this->viewNamespace().'.confirmed', [
-                'orders' => $orders
+                'orders' => $orders,
             ])->render();
         }
 
@@ -223,11 +222,11 @@ class OrderPerbaikanController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('nama_peminta', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_peminta', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%");
             });
         }
 
@@ -243,7 +242,7 @@ class OrderPerbaikanController extends Controller
 
         if ($request->ajax()) {
             return view($this->viewNamespace().'.rejected', [
-                'orders' => $orders
+                'orders' => $orders,
             ])->render();
         }
 
@@ -271,9 +270,9 @@ class OrderPerbaikanController extends Controller
     public function show(OrderPerbaikan $orderPerbaikan)
     {
         $orderPerbaikan->load(['creator', 'history.creator', 'location']);
-        
+
         // Direct to specific view based on status
-        switch($orderPerbaikan->status) {
+        switch ($orderPerbaikan->status) {
             case 'confirmed':
                 return view($this->viewNamespace().'.detail-confirmed', ['order' => $orderPerbaikan]);
             case 'rejected':
@@ -299,11 +298,12 @@ class OrderPerbaikanController extends Controller
                 'prioritas' => $validated['prioritas'] ?? null,
                 'nama_penanggung_jawab' => $validated['nama_penanggung_jawab'] ?? $request->input('nama_penanggung_jawab'),
             ]);
+
             return redirect()
                 ->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)
                 ->with('success', 'Status order berhasil diperbarui');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status: '.$e->getMessage())->withInput();
         }
     }
 
@@ -311,9 +311,10 @@ class OrderPerbaikanController extends Controller
     {
         try {
             $service->confirm(auth()->user(), $orderPerbaikan);
+
             return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil dikonfirmasi.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat mengkonfirmasi order: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat mengkonfirmasi order: '.$e->getMessage());
         }
     }
 
@@ -321,9 +322,10 @@ class OrderPerbaikanController extends Controller
     {
         try {
             $service->reject(auth()->user(), $orderPerbaikan);
+
             return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil ditolak.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat menolak order: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menolak order: '.$e->getMessage());
         }
     }
 
@@ -334,7 +336,7 @@ class OrderPerbaikanController extends Controller
 
             $orderPerbaikan->update([
                 'status' => 'completed',
-                'updated_by' => auth()->id()
+                'updated_by' => auth()->id(),
             ]);
 
             $orderPerbaikan->history()->create([
@@ -350,8 +352,9 @@ class OrderPerbaikanController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.index' : 'administrasi-umum.order-perbaikan.index')
-                ->with('error', 'Terjadi kesalahan saat menyelesaikan order: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan saat menyelesaikan order: '.$e->getMessage());
         }
     }
 
@@ -359,9 +362,10 @@ class OrderPerbaikanController extends Controller
     {
         try {
             $service->start(auth()->user(), $orderPerbaikan);
+
             return redirect()->back()->with('success', 'Order berhasil dimulai.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 
@@ -372,11 +376,11 @@ class OrderPerbaikanController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('nama_peminta', 'like', "%{$search}%")
-                  ->orWhere('keluhan', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_peminta', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%");
             });
         }
 
@@ -397,7 +401,7 @@ class OrderPerbaikanController extends Controller
 
         if ($request->ajax()) {
             return view($this->viewNamespace().'.total', [
-                'orders' => $orders
+                'orders' => $orders,
             ])->render();
         }
 
@@ -415,29 +419,29 @@ class OrderPerbaikanController extends Controller
                 'date_from' => 'nullable|date',
                 'date_to' => 'nullable|date',
                 'status' => 'nullable|string|in:open,in_progress,completed,confirmed,rejected',
-                'selected_ids' => 'nullable|string'
+                'selected_ids' => 'nullable|string',
             ]);
 
             $dateFrom = $request->input('date_from');
             $dateTo = $request->input('date_to');
             $status = $request->input('status', 'confirmed');
-            
+
             // Handle selected IDs if provided
             $selectedIds = [];
             if ($request->filled('selected_ids')) {
                 $selectedIds = array_filter(
                     explode(',', $request->input('selected_ids')),
-                    function($id) {
+                    function ($id) {
                         return is_numeric($id) && intval($id) > 0;
                     }
                 );
-                
+
                 if (empty($selectedIds)) {
                     return back()->with('error', 'ID yang dipilih tidak valid.');
                 }
-                
+
                 $selectedIds = array_map('intval', $selectedIds);
-                
+
                 // Verify the IDs exist in the database
                 $existingIds = OrderPerbaikan::whereIn('id', $selectedIds)->pluck('id')->toArray();
                 if (count($existingIds) !== count($selectedIds)) {
@@ -447,7 +451,7 @@ class OrderPerbaikanController extends Controller
 
             // Build query to check data availability
             $query = OrderPerbaikan::query();
-            if (!empty($selectedIds)) {
+            if (! empty($selectedIds)) {
                 $query->whereIn('id', $selectedIds);
             } else {
                 if ($dateFrom) {
@@ -472,24 +476,25 @@ class OrderPerbaikanController extends Controller
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
                 'status' => $status,
-                'count' => $count
+                'count' => $count,
             ]);
 
             $export = new OrderPerbaikanExport($dateFrom, $dateTo, $selectedIds, $status);
-            return $export->download('order_perbaikan_' . now()->format('Y-m-d_His') . '.xlsx');
-            
+
+            return $export->download('order_perbaikan_'.now()->format('Y-m-d_His').'.xlsx');
+
         } catch (\Exception $e) {
-            \Log::error('Export error: ' . $e->getMessage(), [
+            \Log::error('Export error: '.$e->getMessage(), [
                 'user_id' => auth()->id(),
                 'selected_ids' => $request->input('selected_ids'),
                 'date_from' => $dateFrom ?? null,
                 'date_to' => $dateTo ?? null,
                 'status' => $status ?? null,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
-            return back()->with('error', 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage());
+
+            return back()->with('error', 'Terjadi kesalahan saat mengekspor data: '.$e->getMessage());
         }
     }
-} 
+}

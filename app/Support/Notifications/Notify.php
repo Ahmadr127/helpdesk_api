@@ -26,9 +26,8 @@ class Notify
     /**
      * Notify Admin IT when user creates/replies/confirms/rejects ticket.
      *
-     * @param Ticket $ticket
-     * @param string $event ticket_created|ticket_replied|ticket_confirmed|ticket_rejected
-     * @param User $actor  User yang melakukan aksi
+     * @param  string  $event  ticket_created|ticket_replied|ticket_confirmed|ticket_rejected
+     * @param  User  $actor  User yang melakukan aksi
      */
     public static function ticketToAdmins(Ticket $ticket, string $event, User $actor): void
     {
@@ -43,6 +42,7 @@ class Notify
 
             if (empty($tokens)) {
                 Log::channel(self::logChannel())->info('notify ticketToAdmins no tokens', ['event' => $event, 'ticket_id' => $ticket->id]);
+
                 return;
             }
 
@@ -66,22 +66,23 @@ class Notify
     /**
      * Notify ticket owner (pengaju) when admin responds/updates.
      *
-     * @param string $event ticket_responded|ticket_updated|ticket_replied
+     * @param  string  $event  ticket_responded|ticket_updated|ticket_replied
      */
     public static function ticketToUser(Ticket $ticket, string $event, User $actor, ?string $notes = null): void
     {
         try {
             $user = $ticket->user;
-            if (!$user) {
+            if (! $user) {
                 $user = User::find($ticket->user_id);
             }
-            if (!$user) {
+            if (! $user) {
                 return;
             }
 
             $tokens = $user->getAllFcmTokens();
             if (empty($tokens)) {
                 Log::channel(self::logChannel())->info('notify ticketToUser no tokens', ['event' => $event, 'ticket_id' => $ticket->id, 'user_id' => $user->id]);
+
                 return;
             }
 
@@ -113,6 +114,7 @@ class Notify
 
             if (empty($tokens)) {
                 Log::channel(self::logChannel())->info('notify orderToAdmins no tokens', ['order_id' => $order->id]);
+
                 return;
             }
 
@@ -143,16 +145,17 @@ class Notify
     {
         try {
             $user = $order->creator;
-            if (!$user) {
+            if (! $user) {
                 $user = User::find($order->created_by);
             }
-            if (!$user) {
+            if (! $user) {
                 return;
             }
 
             $tokens = $user->getAllFcmTokens();
             if (empty($tokens)) {
                 Log::channel(self::logChannel())->info('notify orderToUser no tokens', ['event' => $event, 'order_id' => $order->id]);
+
                 return;
             }
 
@@ -210,7 +213,7 @@ class Notify
         return match ($event) {
             'ticket_responded' => ["Admin Membalas {$number}", $notesSnippet ?: "Tiket Anda dibalas oleh {$actor->name} (status: {$ticket->status})", $data],
             'ticket_updated' => ["Tiket Diperbarui {$number}", $notesSnippet ?: "Tiket Anda diperbarui (status: {$ticket->status})", $data],
-            'ticket_replied' => ["Balasan Admin {$number}", $notesSnippet ?: "Ada balasan baru", $data],
+            'ticket_replied' => ["Balasan Admin {$number}", $notesSnippet ?: 'Ada balasan baru', $data],
             default => ["Update Tiket {$number}", $notesSnippet ?: "Status tiket: {$ticket->status}", $data],
         };
     }
@@ -230,8 +233,8 @@ class Notify
 
         return match ($event) {
             'order_status_updated' => ["Order {$order->nomor} → {$order->status}", $follow ?: "Status order diperbarui ke {$order->status} oleh {$actor->name}", array_merge($data, ['type' => $event])],
-            'order_confirmed' => ["Order Dikonfirmasi {$order->nomor}", "Order Anda telah dikonfirmasi", array_merge($data, ['type' => $event])],
-            'order_rejected' => ["Order Ditolak {$order->nomor}", $follow ?: "Order ditolak", array_merge($data, ['type' => $event])],
+            'order_confirmed' => ["Order Dikonfirmasi {$order->nomor}", 'Order Anda telah dikonfirmasi', array_merge($data, ['type' => $event])],
+            'order_rejected' => ["Order Ditolak {$order->nomor}", $follow ?: 'Order ditolak', array_merge($data, ['type' => $event])],
             'order_started' => ["Order Diproses {$order->nomor}", "Pengerjaan dimulai oleh {$actor->name}", array_merge($data, ['type' => $event])],
             default => ["Update Order {$order->nomor}", $follow ?: "Status: {$order->status}", array_merge($data, ['type' => $event])],
         };
@@ -241,30 +244,34 @@ class Notify
     {
         try {
             $photo = $ticket->initialPhoto ?? $ticket->photos()->first();
-            if ($photo && !empty($photo->photo_path)) {
+            if ($photo && ! empty($photo->photo_path)) {
                 // photo_path like ticket-photos/xxx.jpg stored on public disk
                 if (str_starts_with($photo->photo_path, 'http')) {
                     return $photo->photo_path;
                 }
+
                 return Storage::disk('public')->url($photo->photo_path);
             }
         } catch (\Throwable $e) {
             // ignore
         }
+
         return null;
     }
 
     private static function orderImageUrl(OrderPerbaikan $order): ?string
     {
         try {
-            if (!empty($order->foto)) {
+            if (! empty($order->foto)) {
                 if (str_starts_with($order->foto, 'http')) {
                     return $order->foto;
                 }
+
                 return Storage::disk('public')->url($order->foto);
             }
         } catch (\Throwable $e) {
         }
+
         return null;
     }
 
@@ -272,6 +279,7 @@ class Notify
     {
         try {
             $channels = config('logging.channels', []);
+
             return isset($channels['firebase']) ? 'firebase' : config('logging.default', 'stack');
         } catch (\Throwable $e) {
             return 'stack';

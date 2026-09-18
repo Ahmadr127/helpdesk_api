@@ -61,4 +61,4 @@ return new class extends Migration
         Schema::dropIfExists('order_photos');
         Schema::dropIfExists('orders');
     }
-}; 
+};

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Notifications\FirebaseNotificationInterface;
 use App\DTO\Notifications\FirebaseNotificationData;
 use App\Exceptions\FirebaseNotificationException;
 use App\Http\Controllers\Controller;
@@ -9,7 +10,6 @@ use App\Http\Requests\Firebase\FirebaseTopicSubscriptionRequest;
 use App\Http\Requests\Firebase\SendFirebaseNotificationManyRequest;
 use App\Http\Requests\Firebase\SendFirebaseNotificationRequest;
 use App\Http\Requests\Firebase\SendFirebaseTopicNotificationRequest;
-use App\Contracts\Notifications\FirebaseNotificationInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
@@ -17,8 +17,7 @@ class FirebaseNotificationController extends Controller
 {
     public function __construct(
         private readonly FirebaseNotificationInterface $firebase
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/firebase/notification/send
@@ -33,6 +32,7 @@ class FirebaseNotificationController extends Controller
         try {
             if ($useQueue) {
                 $this->firebase->queue($token, $data);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Notification queued',
@@ -66,6 +66,7 @@ class FirebaseNotificationController extends Controller
         try {
             if ($useQueue) {
                 $this->firebase->queueToTokens($tokens, $data);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Notifications queued',
@@ -99,6 +100,7 @@ class FirebaseNotificationController extends Controller
         try {
             if ($useQueue) {
                 $this->firebase->queueToTopic($topic, $data);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Topic notification queued',
@@ -137,6 +139,7 @@ class FirebaseNotificationController extends Controller
 
         try {
             $result = $this->firebase->subscribeToTopic($topic, $tokens);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Subscribed to topic',
@@ -165,6 +168,7 @@ class FirebaseNotificationController extends Controller
 
         try {
             $result = $this->firebase->unsubscribeFromTopic($topic, $tokens);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Unsubscribed from topic',
@@ -226,12 +230,14 @@ class FirebaseNotificationController extends Controller
         if ($len <= 12) {
             return str_repeat('*', $len);
         }
-        return substr($token, 0, 6) . str_repeat('*', $len - 10) . substr($token, -4);
+
+        return substr($token, 0, 6).str_repeat('*', $len - 10).substr($token, -4);
     }
 
     private function logChannel(): string
     {
         $channels = config('logging.channels', []);
+
         return isset($channels['firebase']) ? 'firebase' : config('logging.default', 'stack');
     }
 }

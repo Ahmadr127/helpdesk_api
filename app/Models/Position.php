@@ -9,15 +9,15 @@ class Position extends Model
     protected $fillable = [
         'name',
         'code',
-        'status'
+        'status',
     ];
 
     protected $casts = [
-        'status' => 'boolean'
+        'status' => 'boolean',
     ];
 
     public function users()
     {
         return $this->hasMany(User::class, 'position', 'code');
     }
-} 
+}

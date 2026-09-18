@@ -2,7 +2,7 @@
 
 namespace App\Services\Api;
 
-use App\Models\Location;
+use App\Models\Department;
 use App\Models\OrderPerbaikan;
 use App\Models\UnitProses;
 use App\Models\User;
@@ -14,54 +14,54 @@ class OrderPerbaikanService
 {
     public function listForUser(User $user, array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator','history','location'])->where('created_by', $user->id);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location'])->where('created_by', $user->id);
 
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+        if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
         }
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search){
-$q->where('nomor','like',"%{$search}%")
-              ->orWhere('nama_barang','like',"%{$search}%")
-              ->orWhere('keluhan','like',"%{$search}%")
-              ->orWhere('kode_inventaris','like',"%{$search}%")
-              ->orWhere('kategori_order','like',"%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor', 'like', "%{$search}%")
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('keluhan', 'like', "%{$search}%")
+                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
+                    ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
-        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+        if (! empty($filters['start_date']) && ! empty($filters['end_date'])) {
             $query->whereBetween('tanggal', [$filters['start_date'].' 00:00:00', $filters['end_date'].' 23:59:59']);
         }
-        if (!empty($filters['prioritas'])) {
+        if (! empty($filters['prioritas'])) {
             $query->where('prioritas', $filters['prioritas']);
         }
-        if (!empty($filters['kategori_order'])) {
+        if (! empty($filters['kategori_order'])) {
             $query->where('kategori_order', $filters['kategori_order']);
         }
 
-        return $query->orderBy('created_at','desc')->paginate($perPage);
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator','history','location']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location']);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search){
-                $q->where('nomor','like',"%{$search}%")
-                  ->orWhere('nama_barang','like',"%{$search}%")
-                  ->orWhere('nama_peminta','like',"%{$search}%")
-                  ->orWhere('kategori_order','like',"%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor', 'like', "%{$search}%")
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('nama_peminta', 'like', "%{$search}%")
+                    ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
-        if (!empty($filters['date_from'])) {
-            $query->whereDate('tanggal','>=',$filters['date_from']);
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('tanggal', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
-            $query->whereDate('tanggal','<=',$filters['date_to']);
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('tanggal', '<=', $filters['date_to']);
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         } else {
             // default open+in_progress if no status
@@ -72,13 +72,13 @@ $q->where('nomor','like',"%{$search}%")
                 // $query->whereIn('status', ['open','in_progress']);
             }
         }
-        if (!empty($filters['prioritas'])) {
+        if (! empty($filters['prioritas'])) {
             $query->where('prioritas', $filters['prioritas']);
         }
-        if (!empty($filters['location_id'])) {
+        if (! empty($filters['location_id'])) {
             $query->where('lokasi', $filters['location_id']);
         }
-        if (!empty($filters['kategori_order'])) {
+        if (! empty($filters['kategori_order'])) {
             $query->where('kategori_order', $filters['kategori_order']);
         }
 
@@ -89,61 +89,80 @@ $q->where('nomor','like',"%{$search}%")
     {
         return [
             'totalOrders' => OrderPerbaikan::count(),
-            'openOrders' => OrderPerbaikan::where('status','open')->count(),
-            'inProgressOrders' => OrderPerbaikan::where('status','in_progress')->count(),
-            'confirmedOrders' => OrderPerbaikan::where('status','confirmed')->count(),
-            'rejectedOrders' => OrderPerbaikan::where('status','rejected')->count(),
-            'rendahOrders' => OrderPerbaikan::where('prioritas','RENDAH')->count(),
-            'sedangOrders' => OrderPerbaikan::where('prioritas','SEDANG')->count(),
-            'tinggiOrders' => OrderPerbaikan::where('prioritas','TINGGI/URGENT')->count(),
+            'openOrders' => OrderPerbaikan::where('status', 'open')->count(),
+            'inProgressOrders' => OrderPerbaikan::where('status', 'in_progress')->count(),
+            'confirmedOrders' => OrderPerbaikan::where('status', 'confirmed')->count(),
+            'rejectedOrders' => OrderPerbaikan::where('status', 'rejected')->count(),
+            'rendahOrders' => OrderPerbaikan::where('prioritas', 'RENDAH')->count(),
+            'sedangOrders' => OrderPerbaikan::where('prioritas', 'SEDANG')->count(),
+            'tinggiOrders' => OrderPerbaikan::where('prioritas', 'TINGGI/URGENT')->count(),
         ];
     }
 
     public function userStatistics(User $user): array
     {
         return [
-            'total' => OrderPerbaikan::where('created_by',$user->id)->count(),
-            'open' => OrderPerbaikan::where('created_by',$user->id)->where('status','open')->count(),
-            'in_progress' => OrderPerbaikan::where('created_by',$user->id)->where('status','in_progress')->count(),
-            'confirmed' => OrderPerbaikan::where('created_by',$user->id)->where('status','confirmed')->count(),
-            'rejected' => OrderPerbaikan::where('created_by',$user->id)->where('status','rejected')->count(),
+            'total' => OrderPerbaikan::where('created_by', $user->id)->count(),
+            'open' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'open')->count(),
+            'in_progress' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'in_progress')->count(),
+            'confirmed' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'confirmed')->count(),
+            'rejected' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'rejected')->count(),
         ];
     }
 
     public function create(User $user, array $validated, $fotoFile = null): OrderPerbaikan
     {
-        $order = DB::transaction(function() use ($user, $validated, $fotoFile){
+        $order = DB::transaction(function () use ($user, $validated, $fotoFile) {
             $today = now();
-            $prefix = 'OP/RTG/MTC-' . $today->format('Ymd');
-            $lastOrder = OrderPerbaikan::withTrashed()->where('nomor','like',$prefix.'%')->orderBy('nomor','desc')->first();
+            $prefix = 'OP/RTG/MTC-'.$today->format('Ymd');
+            $lastOrder = OrderPerbaikan::withTrashed()->where('nomor', 'like', $prefix.'%')->orderBy('nomor', 'desc')->first();
             if ($lastOrder) {
                 $lastNumber = (int) substr($lastOrder->nomor, -3);
-                $newNumber = str_pad($lastNumber+1, 3, '0', STR_PAD_LEFT);
+                $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
             } else {
                 $newNumber = '001';
             }
-            $nomor = $prefix . $newNumber;
+            $nomor = $prefix.$newNumber;
 
             $unitProsesCode = $validated['unit_proses_code'] ?? null;
             $unitProsesName = $validated['unit_proses_name'] ?? null;
             $unitProses = $unitProsesCode ? UnitProses::where('code', $unitProsesCode)->first() : null;
 
+            // Unit pengaju disimpan via department_id (web) dengan fallback lookup kode/nama departemen
+            $departmentId = $validated['department_id'] ?? null;
+            if ($departmentId && ! Department::whereKey($departmentId)->exists()) {
+                $departmentId = null;
+            }
+            if (! $departmentId) {
+                $department = null;
+                if (! empty($user->department_id)) {
+                    $department = Department::find($user->department_id);
+                }
+                if (! $department && $user->department) {
+                    $deptValue = $user->department;
+                    $department = Department::where('code', $deptValue)->first()
+                        ?? Department::where('name', $deptValue)->first()
+                        ?? Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                        ?? Department::whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+                }
+                $departmentId = $department?->id;
+            }
+
             $fotoPath = null;
             if ($fotoFile) {
-                $filename = 'order_' . time() . '_' . $fotoFile->getClientOriginalName();
+                $filename = 'order_'.time().'_'.$fotoFile->getClientOriginalName();
                 $fotoPath = $fotoFile->storeAs('order-photos', $filename, 'public');
             }
 
             $order = OrderPerbaikan::create([
                 'nomor' => $nomor,
                 'tanggal' => $validated['tanggal'],
-                'unit_proses' => $unitProses ? $unitProses->code : $unitProsesCode,
-                'unit_proses_name' => $unitProses ? $unitProses->name : ($unitProsesName ?: $unitProsesCode),
+                'department_id' => $departmentId,
+                'unit_proses_id' => $unitProses?->id,
                 'unit_penerima' => 'MTC',
                 'nip_peminta' => $user->nip ?? null,
                 'nama_peminta' => $user->name,
-                'jenis_barang' => $validated['jenis_barang'],
-                'kode_inventaris' => $validated['kode_inventaris'] ?? '-',
+                'kode_inventaris' => $validated['kode_inventaris'] ?? null,
                 'nama_barang' => $validated['nama_barang'],
                 'kategori_order' => $validated['kategori_order'] ?? null,
                 'lokasi' => $validated['lokasi'],
@@ -160,7 +179,7 @@ $q->where('nomor','like',"%{$search}%")
                 'created_by' => $user->id,
             ]);
 
-            return $order->load(['creator','history','location']);
+            return $order->load(['creator', 'history', 'location']);
         });
 
         // 1 baris FCM ke Admin Umum + DB inbox
@@ -182,19 +201,18 @@ $q->where('nomor','like',"%{$search}%")
             throw new \Exception('Hanya order dengan status open yang dapat diedit.', 422);
         }
 
-        return DB::transaction(function() use ($user, $order, $validated, $fotoFile){
+        return DB::transaction(function () use ($user, $order, $validated, $fotoFile) {
             if ($fotoFile) {
                 if ($order->foto) {
                     Storage::disk('public')->delete($order->foto);
                 }
-                $filename = 'order_' . time() . '_' . $fotoFile->getClientOriginalName();
+                $filename = 'order_'.time().'_'.$fotoFile->getClientOriginalName();
                 $fotoPath = $fotoFile->storeAs('order-photos', $filename, 'public');
                 $validated['foto'] = $fotoPath;
             }
 
             $order->update([
-                'jenis_barang' => $validated['jenis_barang'],
-                'kode_inventaris' => $validated['kode_inventaris'],
+                'kode_inventaris' => $validated['kode_inventaris'] ?? $order->kode_inventaris,
                 'nama_barang' => $validated['nama_barang'],
                 'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
                 'lokasi' => $validated['lokasi'],
@@ -210,7 +228,7 @@ $q->where('nomor','like',"%{$search}%")
                 'created_by' => $user->id,
             ]);
 
-            return $order->fresh()->load(['creator','history','location']);
+            return $order->fresh()->load(['creator', 'history', 'location']);
         });
     }
 
@@ -223,7 +241,7 @@ $q->where('nomor','like',"%{$search}%")
             throw new \Exception('Hanya order dengan status open yang dapat dihapus.', 422);
         }
 
-        DB::transaction(function() use ($order){
+        DB::transaction(function () use ($order) {
             $order->history()->delete();
             if ($order->foto) {
                 Storage::disk('public')->delete($order->foto);
@@ -238,7 +256,7 @@ $q->where('nomor','like',"%{$search}%")
         if (empty($data['nama_penanggung_jawab'])) {
             $data['nama_penanggung_jawab'] = $admin->name;
         }
-        $order = DB::transaction(function() use ($admin, $order, $data){
+        $order = DB::transaction(function () use ($admin, $order, $data) {
             if ($order->status === 'open' && $data['status'] === 'in_progress') {
                 $updateData = [
                     'status' => $data['status'],
@@ -246,7 +264,7 @@ $q->where('nomor','like',"%{$search}%")
                     'follow_up' => $data['follow_up'],
                     'updated_by' => $admin->id,
                 ];
-                if (!empty($data['prioritas'])) {
+                if (! empty($data['prioritas'])) {
                     $updateData['prioritas'] = $data['prioritas'];
                 }
                 $order->update($updateData);
@@ -256,7 +274,7 @@ $q->where('nomor','like',"%{$search}%")
                     'follow_up' => $data['follow_up'],
                     'updated_by' => $admin->id,
                 ];
-                if (!empty($data['prioritas'])) {
+                if (! empty($data['prioritas'])) {
                     $updateData['prioritas'] = $data['prioritas'];
                 }
                 $order->update($updateData);
@@ -264,11 +282,11 @@ $q->where('nomor','like',"%{$search}%")
 
             $order->history()->create([
                 'status' => $data['status'],
-                'keterangan' => $data['follow_up'] . (!empty($data['prioritas']) ? " (Prioritas diubah menjadi {$data['prioritas']})" : ""),
+                'keterangan' => $data['follow_up'].(! empty($data['prioritas']) ? " (Prioritas diubah menjadi {$data['prioritas']})" : ''),
                 'created_by' => $admin->id,
             ]);
 
-            return $order->fresh()->load(['creator','history','location']);
+            return $order->fresh()->load(['creator', 'history', 'location']);
         });
 
         Notify::orderToUser($order, 'order_status_updated', $admin);
@@ -284,17 +302,18 @@ $q->where('nomor','like',"%{$search}%")
 
     public function confirm(User $admin, OrderPerbaikan $order): OrderPerbaikan
     {
-        $order = DB::transaction(function() use ($admin, $order){
+        $order = DB::transaction(function () use ($admin, $order) {
             $order->update([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
                 'nama_penanggung_jawab' => $admin->name,
-                'updated_by' => $admin->id
+                'updated_by' => $admin->id,
             ]);
             $order->history()->create([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
                 'keterangan' => 'Order dikonfirmasi via API',
-                'created_by' => $admin->id
+                'created_by' => $admin->id,
             ]);
+
             return $order->fresh()->load(['creator']);
         });
 
@@ -309,17 +328,18 @@ $q->where('nomor','like',"%{$search}%")
 
     public function reject(User $admin, OrderPerbaikan $order): OrderPerbaikan
     {
-        $order = DB::transaction(function() use ($admin, $order){
+        $order = DB::transaction(function () use ($admin, $order) {
             $order->update([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
                 'nama_penanggung_jawab' => $admin->name,
-                'updated_by' => $admin->id
+                'updated_by' => $admin->id,
             ]);
             $order->history()->create([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
                 'keterangan' => 'Order ditolak via API',
-                'created_by' => $admin->id
+                'created_by' => $admin->id,
             ]);
+
             return $order->fresh()->load(['creator']);
         });
 
@@ -334,7 +354,7 @@ $q->where('nomor','like',"%{$search}%")
 
     public function start(User $admin, OrderPerbaikan $order): OrderPerbaikan
     {
-        $order = DB::transaction(function() use ($admin, $order){
+        $order = DB::transaction(function () use ($admin, $order) {
             $order->update([
                 'status' => 'in_progress',
                 'nama_penanggung_jawab' => $admin->name,
@@ -343,8 +363,9 @@ $q->where('nomor','like',"%{$search}%")
             $order->history()->create([
                 'status' => 'in_progress',
                 'keterangan' => 'Pengerjaan order dimulai via API',
-                'created_by' => $admin->id
+                'created_by' => $admin->id,
             ]);
+
             return $order->fresh()->load(['creator']);
         });
 

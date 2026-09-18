@@ -1,37 +1,37 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\Auth\LogoutController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\User\InformationController;
-use App\Http\Controllers\User\TicketController;
-use App\Http\Controllers\User\FAQController;
-use App\Http\Controllers\User\KnowledgeBaseController;
-use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Admin\FeedbackController;
-use App\Http\Controllers\Admin\TicketAdminController;
-use App\Http\Controllers\User\UserSettingsController;
-use App\Http\Controllers\User\UserReportController;
-use App\Http\Controllers\Admin\MasterDataController;
+use App\Http\Controllers\Admin\BuildingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DepartmentController;
-use App\Http\Controllers\Admin\BuildingController;
+use App\Http\Controllers\Admin\FcmMonitoringController;
+use App\Http\Controllers\Admin\FeedbackController;
+use App\Http\Controllers\Admin\KategoriOrderController;
 use App\Http\Controllers\Admin\LocationController;
-use App\Http\Controllers\User\NotificationController as UserNotificationController;
+use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Admin\PositionController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ReportSirsController;
+use App\Http\Controllers\Admin\TicketAdminController;
+use App\Http\Controllers\Admin\UnitProsesController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\AdministrasiUmum\DashboardController as AdministrasiUmumDashboardController;
 use App\Http\Controllers\AdministrasiUmum\OrderPerbaikanController;
-use App\Http\Controllers\Admin\UnitProsesController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\User\FAQController;
 use App\Http\Controllers\User\FeedbackController as UserFeedbackController;
-use App\Http\Controllers\Admin\ReportSirsController;
-use App\Http\Controllers\Admin\PositionController;
-use App\Http\Controllers\Admin\FcmMonitoringController;
-use App\Http\Controllers\Admin\KategoriOrderController;
+use App\Http\Controllers\User\InformationController;
+use App\Http\Controllers\User\KnowledgeBaseController;
+use App\Http\Controllers\User\NotificationController as UserNotificationController;
+use App\Http\Controllers\User\TicketController;
+use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\User\UserReportController;
+use App\Http\Controllers\User\UserSettingsController;
+use App\Http\Middleware\AdminMiddleware;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -51,7 +51,7 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 
 // Middleware auth group untuk semua user yang sudah login
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function() {
+    Route::get('/dashboard', function () {
         $user = auth()->user();
 
         // Dinamis: pilih dashboard sesuai permission di DB
@@ -61,13 +61,14 @@ Route::middleware(['auth'])->group(function () {
         if ($user->hasPermission('ipsrs.dashboard')) {
             return redirect()->route('admin.ipsrs.dashboard');
         }
+
         return redirect()->route('user.dashboard');
     })->name('dashboard');
-    
+
     // User routes
     Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
     Route::get('/information', [InformationController::class, 'index'])->name('user.information');
-    
+
     // User Administrasi Umum routes - GREEN theme (Maintenance) permission protected
     Route::prefix('user/administrasi-umum')->name('user.administrasi-umum.')->middleware('permission:order.view')->group(function () {
         Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'index'])->name('index');
@@ -77,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dokumen', [App\Http\Controllers\User\AdministrasiUmumController::class, 'dokumen'])->name('dokumen');
         Route::get('/formulir', [App\Http\Controllers\User\AdministrasiUmumController::class, 'formulir'])->name('formulir');
         Route::get('/prosedur', [App\Http\Controllers\User\AdministrasiUmumController::class, 'prosedur'])->name('prosedur');
-        
+
         // Order Perbaikan Routes - page terpisah for create (GREEN)
         Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
             Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'indexOrderPerbaikan'])->name('index');
@@ -106,7 +107,7 @@ Route::middleware(['auth'])->group(function () {
     // FIX duplicate name user.ticket.reply (sebelumnya bentrok dengan ticket/{ticket}/reply di atas) — ganti jadi user.ticket.reply.legacy agar artisan optimize bisa cache
     Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy')->middleware('permission:ticket.view');
     Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy')->middleware('permission:ticket.edit.own|ticket.manage');
-    
+
     Route::get('/faq', [FAQController::class, 'index'])->name('user.faq')->middleware('permission:faq.view');
     Route::get('/knowledge-base', [KnowledgeBaseController::class, 'index'])->name('user.knowledge-base')->middleware('permission:knowledge.view');
     Route::get('/profile', [UserController::class, 'profile'])->name('user.profile');
@@ -117,13 +118,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/report', [UserReportController::class, 'index'])->name('user.report');
     Route::post('/report', [UserReportController::class, 'store'])->name('user.report.store');
     Route::post('/feedback', [UserFeedbackController::class, 'store'])
-         ->name('user.feedback.store');
-    
+        ->name('user.feedback.store');
+
     // Admin routes
     Route::prefix('admin')->name('admin.')->middleware(AdminMiddleware::class)->group(function () {
         // Dashboard - IT blue theme, requires permission
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard')->middleware('permission:admin.dashboard|ticket.manage');
-        
+
         // Permission Management
         Route::prefix('permissions')->name('permissions.')->middleware('permission:user.manage')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])->name('index');
@@ -132,7 +133,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/role', [\App\Http\Controllers\Admin\PermissionController::class, 'updateRole'])->name('role.update');
             Route::put('/user/{user}', [\App\Http\Controllers\Admin\PermissionController::class, 'updateUser'])->name('user.update');
         });
-        
+
         // Master Data Routes - GREEN not for admin IT? Keep BLUE for IT but permission protected
         Route::prefix('master')->name('master.')->middleware('permission:master.view|master.manage')->group(function () {
             Route::get('/', [MasterDataController::class, 'index'])->name('index');
@@ -144,7 +145,7 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('kategori-order', KategoriOrderController::class)->middleware('permission:master.manage');
             Route::resource('positions', PositionController::class)->middleware('permission:master.manage');
             Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status')->middleware('permission:master.manage');
-            
+
             // Bulk action dan update limit routes
             Route::post('/{type}/bulk-action', [MasterDataController::class, 'bulkAction'])->name('bulk-action')->middleware('permission:master.manage');
             Route::post('/{type}/update-limit', [MasterDataController::class, 'updateLimit'])->name('update-limit')->middleware('permission:master.manage');
@@ -153,7 +154,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // User Management routes - permission protected
-        Route::middleware('permission:user.view|user.manage')->group(function(){
+        Route::middleware('permission:user.view|user.manage')->group(function () {
             Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
             Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create')->middleware('permission:user.manage');
             Route::post('/users', [UserManagementController::class, 'store'])->name('users.store')->middleware('permission:user.manage');
@@ -161,7 +162,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update')->middleware('permission:user.manage');
             Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy')->middleware('permission:user.manage');
         });
-        
+
         // Admin ticket routes - BLUE theme (ticket IT) permission protected
         Route::prefix('tickets')->name('tickets.')->middleware('permission:ticket.manage')->group(function () {
             Route::get('/all', [TicketAdminController::class, 'all'])->name('all');
@@ -205,7 +206,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [ReportSirsController::class, 'index'])->name('index');
             Route::post('/export', [ReportSirsController::class, 'export'])->name('export');
         });
-        
+
         // Feedback routes - permission protected
         Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index')->middleware('permission:feedback.view|feedback.manage');
         Route::post('/feedback/{feedback}/reply', [FeedbackController::class, 'reply'])->name('feedback.reply')->middleware('permission:feedback.manage');
@@ -222,7 +223,6 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/', [AdminNotificationController::class, 'deleteAll'])->name('delete-all');
         });
 
-        
         Route::get('/dashboard/stats', [AdminController::class, 'getStats']);
 
         // Tickets History

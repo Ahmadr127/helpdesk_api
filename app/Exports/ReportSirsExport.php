@@ -3,19 +3,22 @@
 namespace App\Exports;
 
 use App\Models\Ticket;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ReportSirsExport
 {
     protected $dateFrom;
+
     protected $dateTo;
+
     protected $year;
+
     protected $selectedIds;
+
     protected $categoryId;
 
     public function __construct($dateFrom = null, $dateTo = null, $year = null, array $selectedIds = [], $categoryId = null)
@@ -24,14 +27,14 @@ class ReportSirsExport
         $this->dateTo = $dateTo;
         $this->year = $year;
         $this->categoryId = $categoryId;
-        $this->selectedIds = array_filter($selectedIds, function($value) {
+        $this->selectedIds = array_filter($selectedIds, function ($value) {
             return is_numeric($value) && $value > 0;
         });
     }
 
     public function download($fileName)
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // Set headers
@@ -53,7 +56,7 @@ class ReportSirsExport
             'Total Durasi (Menit)',
             'Waktu Proses (Menit)',
             'Skor Kinerja',
-            'Persentase Kinerja (%)'
+            'Persentase Kinerja (%)',
         ];
 
         // Style the headers
@@ -72,13 +75,13 @@ class ReportSirsExport
         // Set headers
         foreach ($headers as $index => $header) {
             $columnLetter = Coordinate::stringFromColumnIndex($index + 1);
-            $sheet->setCellValue($columnLetter . '1', $header);
+            $sheet->setCellValue($columnLetter.'1', $header);
         }
 
         // Get data
         $query = Ticket::with(['user']);
 
-        if (!empty($this->selectedIds)) {
+        if (! empty($this->selectedIds)) {
             $query->whereIn('id', $this->selectedIds);
         } else {
             if ($this->dateFrom) {
@@ -98,30 +101,30 @@ class ReportSirsExport
         $tickets = $query->orderBy('created_at', 'desc')->get();
 
         // Variables for performance calculation
-        $totalProcessedTickets = $tickets->filter(function($ticket) {
+        $totalProcessedTickets = $tickets->filter(function ($ticket) {
             return $ticket->status === 'closed' || $ticket->status === 'confirmed';
         })->count();
-        
-        $ticketsUnder60Minutes = $tickets->filter(function($ticket) {
-            return ($ticket->status === 'closed' || $ticket->status === 'confirmed') && 
-                   $ticket->in_progress_at && 
-                   $ticket->closed_at && 
+
+        $ticketsUnder60Minutes = $tickets->filter(function ($ticket) {
+            return ($ticket->status === 'closed' || $ticket->status === 'confirmed') &&
+                   $ticket->in_progress_at &&
+                   $ticket->closed_at &&
                    $ticket->in_progress_at->diffInMinutes($ticket->closed_at) <= 60;
         })->count();
-        
-        $performancePercentage = $totalProcessedTickets > 0 
-            ? round(($ticketsUnder60Minutes / $totalProcessedTickets) * 100, 2) 
+
+        $performancePercentage = $totalProcessedTickets > 0
+            ? round(($ticketsUnder60Minutes / $totalProcessedTickets) * 100, 2)
             : 0;
-            
-        $closedTickets = $tickets->filter(function($ticket) {
-            return ($ticket->status === 'closed' || $ticket->status === 'confirmed') && 
-                   $ticket->in_progress_at && 
+
+        $closedTickets = $tickets->filter(function ($ticket) {
+            return ($ticket->status === 'closed' || $ticket->status === 'confirmed') &&
+                   $ticket->in_progress_at &&
                    $ticket->closed_at;
         });
-        
+
         $avgCompletionTime = 0;
         if ($closedTickets->count() > 0) {
-            $totalTime = $closedTickets->sum(function($ticket) {
+            $totalTime = $closedTickets->sum(function ($ticket) {
                 return $ticket->in_progress_at->diffInMinutes($ticket->closed_at);
             });
             $avgCompletionTime = round($totalTime / $closedTickets->count());
@@ -131,8 +134,8 @@ class ReportSirsExport
         $row = 2;
         foreach ($tickets as $ticket) {
             // Calculate durations in minutes
-            $waitingDuration = $ticket->in_progress_at 
-                ? $ticket->created_at->diffInMinutes($ticket->in_progress_at) 
+            $waitingDuration = $ticket->in_progress_at
+                ? $ticket->created_at->diffInMinutes($ticket->in_progress_at)
                 : 0;
 
             $processingDuration = ($ticket->in_progress_at && $ticket->closed_at)
@@ -157,7 +160,7 @@ class ReportSirsExport
             $adminNotes = '';
             if ($ticket->admin_responses) {
                 $responses = json_decode($ticket->admin_responses, true);
-                if (is_array($responses) && !empty($responses)) {
+                if (is_array($responses) && ! empty($responses)) {
                     $lastResponse = end($responses);
                     $adminNotes = $lastResponse['notes'] ?? '';
                 }
@@ -167,7 +170,7 @@ class ReportSirsExport
             $confirmationNotes = '';
             if ($ticket->user_replies) {
                 $replies = json_decode($ticket->user_replies, true);
-                if (is_array($replies) && !empty($replies)) {
+                if (is_array($replies) && ! empty($replies)) {
                     $lastReply = end($replies);
                     if (isset($lastReply['type']) && $lastReply['type'] === 'confirm') {
                         $confirmationNotes = $lastReply['notes'] ?? '';
@@ -193,23 +196,23 @@ class ReportSirsExport
                 $totalDuration,
                 $processingDuration,
                 $performanceScore,
-                $performancePercentage
+                $performancePercentage,
             ];
 
             foreach ($data as $index => $value) {
                 $columnLetter = Coordinate::stringFromColumnIndex($index + 1);
-                $sheet->setCellValue($columnLetter . $row, $value);
+                $sheet->setCellValue($columnLetter.$row, $value);
             }
             $row++;
         }
 
         // Add summary row
         $row++;
-        $sheet->setCellValue('A' . $row, 'Ringkasan Kinerja:');
-        $sheet->setCellValue('B' . $row, "Total Tiket Selesai: {$totalProcessedTickets}");
-        $sheet->setCellValue('C' . $row, "Tiket <= 60 Menit: {$ticketsUnder60Minutes}");
-        $sheet->setCellValue('D' . $row, "Persentase: {$performancePercentage}%");
-        $sheet->setCellValue('E' . $row, "Rata-rata Waktu: {$avgCompletionTime} Menit");
+        $sheet->setCellValue('A'.$row, 'Ringkasan Kinerja:');
+        $sheet->setCellValue('B'.$row, "Total Tiket Selesai: {$totalProcessedTickets}");
+        $sheet->setCellValue('C'.$row, "Tiket <= 60 Menit: {$ticketsUnder60Minutes}");
+        $sheet->setCellValue('D'.$row, "Persentase: {$performancePercentage}%");
+        $sheet->setCellValue('E'.$row, "Rata-rata Waktu: {$avgCompletionTime} Menit");
 
         // Style summary row
         $sheet->getStyle('A'.$row.':E'.$row)->applyFromArray([
@@ -228,7 +231,7 @@ class ReportSirsExport
         // Set borders for all cells
         $lastRow = $sheet->getHighestRow();
         $lastColumn = $sheet->getHighestColumn();
-        $sheet->getStyle('A1:' . $lastColumn . $lastRow)->applyFromArray([
+        $sheet->getStyle('A1:'.$lastColumn.$lastRow)->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -238,14 +241,14 @@ class ReportSirsExport
 
         // Create the writer
         $writer = new Xlsx($spreadsheet);
-        
+
         // Set headers for download
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Content-Disposition: attachment;filename="'.$fileName.'"');
         header('Cache-Control: max-age=0');
 
         // Save to php output
         $writer->save('php://output');
         exit;
     }
-} 
+}

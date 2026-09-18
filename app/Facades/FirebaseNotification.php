@@ -2,8 +2,8 @@
 
 namespace App\Facades;
 
-use Illuminate\Support\Facades\Facade;
 use App\DTO\Notifications\FirebaseNotificationData;
+use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static array sendToToken(string $token, FirebaseNotificationData $notification)

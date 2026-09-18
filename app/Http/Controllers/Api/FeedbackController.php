@@ -11,33 +11,35 @@ use Illuminate\Http\Request;
 
 class FeedbackController extends BaseApiController
 {
-    public function __construct(protected FeedbackService $service){}
+    public function __construct(protected FeedbackService $service) {}
 
     public function index(Request $request)
     {
         $user = $request->user();
         if ($user->hasPermission('feedback.manage')) {
             $filters = $request->only(['search']);
-            $paginator = $this->service->list($filters, (int)$request->get('per_page',15));
+            $paginator = $this->service->list($filters, (int) $request->get('per_page', 15));
         } else {
-            $paginator = $this->service->listForUser($user, (int)$request->get('per_page',15));
+            $paginator = $this->service->listForUser($user, (int) $request->get('per_page', 15));
         }
+
         return response()->json([
-            'success'=>true,
-            'message'=>'Daftar feedback',
-            'data'=> FeedbackResource::collection($paginator->items()),
-            'meta'=>[
-                'current_page'=>$paginator->currentPage(),
-                'last_page'=>$paginator->lastPage(),
-                'per_page'=>$paginator->perPage(),
-                'total'=>$paginator->total(),
-            ]
+            'success' => true,
+            'message' => 'Daftar feedback',
+            'data' => FeedbackResource::collection($paginator->items()),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
         ]);
     }
 
     public function store(StoreFeedbackRequest $request)
     {
         $feedback = $this->service->create($request->user(), $request->validated());
+
         return $this->success(new FeedbackResource($feedback->load('user')), 'Feedback berhasil dikirim', 201);
     }
 
@@ -45,29 +47,32 @@ class FeedbackController extends BaseApiController
     {
         // user can only see own unless they can manage feedback
         $user = auth()->user();
-        if (!$user->hasPermission('feedback.manage') && $feedback->user_id !== $user->id) {
-            return $this->error('Unauthorized',403);
+        if (! $user->hasPermission('feedback.manage') && $feedback->user_id !== $user->id) {
+            return $this->error('Unauthorized', 403);
         }
+
         return $this->success(new FeedbackResource($feedback->load('user')), 'Detail feedback');
     }
 
     public function reply(ReplyFeedbackRequest $request, Feedback $feedback)
     {
         $user = $request->user();
-        if (!$user->hasPermission('feedback.manage')) {
-            return $this->error('Unauthorized - admin only',403);
+        if (! $user->hasPermission('feedback.manage')) {
+            return $this->error('Unauthorized - admin only', 403);
         }
         $updated = $this->service->reply($feedback, $request->validated()['admin_reply']);
+
         return $this->success(new FeedbackResource($updated), 'Balasan berhasil dikirim');
     }
 
     public function destroy(Request $request, Feedback $feedback)
     {
         $user = $request->user();
-        if (!$user->hasPermission('feedback.manage')) {
-            return $this->error('Unauthorized',403);
+        if (! $user->hasPermission('feedback.manage')) {
+            return $this->error('Unauthorized', 403);
         }
         $this->service->delete($feedback);
+
         return $this->success(null, 'Feedback berhasil dihapus');
     }
 }

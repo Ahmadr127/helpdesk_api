@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\NotificationSetting;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
     public function index(Request $request)
     {
         $query = Auth::user()->notifications();
-        
+
         // Filter by read/unread status
         if ($request->filter === 'read') {
             $query->whereNotNull('read_at');
@@ -37,7 +37,7 @@ class NotificationController extends Controller
                     if ($request->start_date && $request->end_date) {
                         $query->whereBetween('created_at', [
                             Carbon::parse($request->start_date)->startOfDay(),
-                            Carbon::parse($request->end_date)->endOfDay()
+                            Carbon::parse($request->end_date)->endOfDay(),
                         ]);
                     }
                     break;
@@ -49,16 +49,16 @@ class NotificationController extends Controller
 
         // Allow user to choose how many notifications per page or use a default of 8
         $perPage = $request->input('per_page', 8);
-        if (!in_array($perPage, [8, 15, 30, 50])) {
+        if (! in_array($perPage, [8, 15, 30, 50])) {
             $perPage = 8;
         }
-        
+
         $notifications = $query->orderBy('created_at', 'desc')->paginate($perPage);
-        
+
         // Maintain all current query parameters in pagination links
         $notifications->appends($request->except('page'));
-        
-        $settings = Auth::user()->notificationSetting ?? new NotificationSetting();
+
+        $settings = Auth::user()->notificationSetting ?? new NotificationSetting;
 
         return view('user.notifications.index', compact('notifications', 'settings', 'perPage'));
     }
@@ -68,26 +68,26 @@ class NotificationController extends Controller
         try {
             $notification = Auth::user()->notifications()->findOrFail($id);
             $notification->markAsRead();
-            
+
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'unreadCount' => Auth::user()->unreadNotifications->count()
+                    'unreadCount' => Auth::user()->unreadNotifications->count(),
                 ]);
             }
-            
+
             // Redirect to ticket detail page
             $ticketId = $notification->data['ticket_id'] ?? null;
             if ($ticketId) {
                 return redirect()->route('user.ticket.show', ['ticket' => $ticketId]);
             }
-            
+
             return redirect()->back()->with('success', 'Notification marked as read');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Notification not found'], 404);
             }
-            
+
             return redirect()->back()->with('error', 'Notification not found');
         }
     }
@@ -95,6 +95,7 @@ class NotificationController extends Controller
     public function markAllAsRead()
     {
         Auth::user()->unreadNotifications->markAsRead();
+
         return redirect()->back()->with('success', 'All notifications marked as read');
     }
 
@@ -131,7 +132,7 @@ class NotificationController extends Controller
             'auto_delete_unread' => 'boolean',
         ]);
 
-        $settings = Auth::user()->notificationSetting ?? new NotificationSetting();
+        $settings = Auth::user()->notificationSetting ?? new NotificationSetting;
         $settings->notifiable_type = get_class(Auth::user());
         $settings->notifiable_id = Auth::id();
         $settings->fill($request->only([
@@ -148,7 +149,9 @@ class NotificationController extends Controller
     protected function cleanupExpiredNotifications()
     {
         $settings = Auth::user()->notificationSetting;
-        if (!$settings) return;
+        if (! $settings) {
+            return;
+        }
 
         if ($settings->auto_delete_read) {
             Auth::user()->notifications()
@@ -164,4 +167,4 @@ class NotificationController extends Controller
                 ->delete();
         }
     }
-} 
+}

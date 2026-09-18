@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
 class InformationController extends Controller
 {
@@ -11,4 +10,4 @@ class InformationController extends Controller
     {
         return view('user.information.index');
     }
-} 
+}

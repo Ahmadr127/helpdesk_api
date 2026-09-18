@@ -2,16 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\TicketsExport;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-use App\Models\TicketPhoto;
-use App\Exports\TicketsExport;
-use App\Services\Api\TicketService;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Notifications\TicketRespondedNotification;
-use App\Notifications\TicketUpdatedNotification;
+use App\Services\Api\TicketService;
+use Illuminate\Http\Request;
 
 class TicketAdminController extends Controller
 {
@@ -22,8 +18,8 @@ class TicketAdminController extends Controller
         $inProgressTickets = Ticket::where('status', 'in_progress')->count();
         $closedTickets = Ticket::whereIn('status', ['closed', 'confirmed'])->count();
         $pendingConfirmationTickets = Ticket::where('status', 'closed')
-                                          ->where('user_confirmation', false)
-                                          ->count();
+            ->where('user_confirmation', false)
+            ->count();
 
         $query = Ticket::with(['user', 'category', 'department'])
             ->whereNotIn('status', ['confirmed']);
@@ -32,12 +28,12 @@ class TicketAdminController extends Controller
             // Apply search filter
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('ticket_number', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhereHas('user', function($q) use ($search) {
-                          $q->where('name', 'like', "%{$search}%");
-                      });
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        });
                 });
             }
 
@@ -141,7 +137,7 @@ class TicketAdminController extends Controller
     public function history()
     {
         $query = Ticket::where('status', 'confirmed')
-                      ->where('user_confirmation', true);
+            ->where('user_confirmation', true);
 
         // Apply date range filters if provided
         if (request('date_from')) {
@@ -152,8 +148,8 @@ class TicketAdminController extends Controller
         }
 
         $tickets = $query->orderBy('user_confirmed_at', 'desc')
-                        ->paginate(10)
-                        ->withQueryString(); // This preserves the query parameters in pagination links
+            ->paginate(10)
+            ->withQueryString(); // This preserves the query parameters in pagination links
 
         return view('admin.tickets.history.index', compact('tickets'));
     }
@@ -172,14 +168,14 @@ class TicketAdminController extends Controller
     public function confirm(Request $request, Ticket $ticket)
     {
         $validated = $request->validate([
-            'confirmation_notes' => 'required|string'
+            'confirmation_notes' => 'required|string',
         ]);
 
         $ticket->update([
             'admin_confirmation' => true,
             'admin_confirmed_at' => now(),
             'admin_confirmation_notes' => $validated['confirmation_notes'],
-            'status' => 'closed'
+            'status' => 'closed',
         ]);
 
         return back()->with('success', 'Ticket has been marked as resolved.');
@@ -190,7 +186,7 @@ class TicketAdminController extends Controller
         $validated = $request->validate([
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120', // 5MB max, optional
-            'status' => 'required|in:in_progress,closed'
+            'status' => 'required|in:in_progress,closed',
         ]);
 
         $service->adminRespond(auth()->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photo'));
@@ -205,7 +201,7 @@ class TicketAdminController extends Controller
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
             'status' => 'nullable|in:in_progress,closed',
-            'action' => 'nullable|in:reply'
+            'action' => 'nullable|in:reply',
         ]);
 
         $service->adminUpdate(auth()->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photo'));
@@ -223,7 +219,7 @@ class TicketAdminController extends Controller
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
                 $query->where('status', 'closed')
-                      ->where('user_confirmation', false);
+                    ->where('user_confirmation', false);
             } else {
                 $query->where('status', $request->status);
             }
@@ -244,7 +240,7 @@ class TicketAdminController extends Controller
                 $query->where('status', 'confirmed');
             } elseif ($request->confirmation === 'pending') {
                 $query->where('status', 'closed')
-                      ->where('user_confirmation', false);
+                    ->where('user_confirmation', false);
             }
         }
 
@@ -261,7 +257,7 @@ class TicketAdminController extends Controller
         // Filter by date range if provided
         if ($request->filled('month')) {
             $query->whereMonth('created_at', $request->month)
-                  ->whereYear('created_at', $request->year ?? now()->year);
+                ->whereYear('created_at', $request->year ?? now()->year);
         }
 
         if ($request->filled('date_from')) {
@@ -275,7 +271,7 @@ class TicketAdminController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
-        
+
         return view('admin.tickets.open', compact('tickets'));
     }
 
@@ -287,7 +283,7 @@ class TicketAdminController extends Controller
         // Filter by date range if provided
         if ($request->filled('month')) {
             $query->whereMonth('created_at', $request->month)
-                  ->whereYear('created_at', $request->year ?? now()->year);
+                ->whereYear('created_at', $request->year ?? now()->year);
         }
 
         if ($request->filled('date_from')) {
@@ -301,7 +297,7 @@ class TicketAdminController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
-        
+
         return view('admin.tickets.in-progress', compact('tickets'));
     }
 
@@ -314,7 +310,7 @@ class TicketAdminController extends Controller
         // Filter by date range if provided
         if ($request->filled('month')) {
             $query->whereMonth('created_at', $request->month)
-                  ->whereYear('created_at', $request->year ?? now()->year);
+                ->whereYear('created_at', $request->year ?? now()->year);
         }
 
         if ($request->filled('date_from')) {
@@ -328,7 +324,7 @@ class TicketAdminController extends Controller
         $tickets = $query->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
-        
+
         return view('admin.tickets.closed', compact('tickets'));
     }
 
@@ -336,7 +332,7 @@ class TicketAdminController extends Controller
     {
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        
+
         // Get selected tickets and ensure they are integers
         $selectedIds = collect($request->input('selected_tickets', []))
             ->map(function ($id) {
@@ -347,9 +343,10 @@ class TicketAdminController extends Controller
             })
             ->toArray();
 
-        $fileName = 'tickets-history-' . now()->format('Y-m-d') . '.xlsx';
-        
+        $fileName = 'tickets-history-'.now()->format('Y-m-d').'.xlsx';
+
         $export = new TicketsExport($dateFrom, $dateTo, $selectedIds);
+
         return $export->download($fileName);
     }
-} 
+}

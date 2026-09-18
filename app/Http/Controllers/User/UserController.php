@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
 use App\Models\Feedback;
+use App\Models\Ticket;
 
 class UserController extends Controller
 {
@@ -12,12 +12,12 @@ class UserController extends Controller
     {
         // Get ticket statistics for current user
         $userId = auth()->id();
-        
+
         // Get total tickets from all statuses
         $totalTickets = Ticket::where('user_id', $userId)
             ->whereIn('status', ['open', 'in_progress', 'closed', 'confirmed'])
             ->count();
-        
+
         $openTickets = Ticket::where('user_id', $userId)
             ->where('status', 'open')
             ->count();
@@ -49,7 +49,7 @@ class UserController extends Controller
         $rejectedOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)
             ->where('status', 'rejected')
             ->count();
-        
+
         // Get recent orders
         $recentOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)
             ->orderBy('created_at', 'desc')
@@ -75,4 +75,4 @@ class UserController extends Controller
             'recentOrders'
         ));
     }
-} 
+}

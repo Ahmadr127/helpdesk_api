@@ -182,9 +182,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h3 class="text-base font-semibold mb-2">Informasi Unit</h3>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="space-y-0.5">
-                            <p class="text-xs text-gray-500">Unit Proses</p>
-                            <p class="text-sm font-medium">{{ $order->unit_proses_name }} ({{ $order->unit_proses }})
+                            <p class="text-xs text-gray-500">Unit Pengaju</p>
+                            <p class="text-sm font-medium">{{ $order->department?->name ?? $order->unit_proses_name }}
                             </p>
+                        </div>
+                        @php
+                            $unitProsesModel = $order->relationLoaded('unitProses') ? $order->getRelation('unitProses') : $order->unitProses()->getResults();
+                        @endphp
+                        <div class="space-y-0.5">
+                            <p class="text-xs text-gray-500">Unit Proses</p>
+                            <p class="text-sm font-medium">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</p>
                         </div>
                         <div class="space-y-0.5">
                             <p class="text-xs text-gray-500">Unit Penerima</p>
@@ -201,12 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h3 class="text-base font-semibold mb-2">Informasi Barang</h3>
                     <div class="grid grid-cols-1 gap-2">
                         <div class="space-y-0.5">
-                            <p class="text-xs text-gray-500">Jenis Barang</p>
-                            <p class="text-sm font-medium">{{ $order->jenis_barang }}</p>
-                        </div>
-                        <div class="space-y-0.5">
                             <p class="text-xs text-gray-500">Kode Inventaris</p>
-                            <p class="text-sm font-medium">{{ $order->kode_inventaris }}</p>
+                            <p class="text-sm font-medium">{{ $order->kode_inventaris ?: '-' }}</p>
                         </div>
                         <div class="space-y-0.5">
                             <p class="text-xs text-gray-500">Kategori Order</p>

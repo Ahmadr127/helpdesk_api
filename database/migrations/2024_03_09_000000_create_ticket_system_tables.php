@@ -24,30 +24,30 @@ return new class extends Migration
             $table->enum('priority', ['low', 'medium', 'high'])->default('low');
             $table->enum('status', ['pending', 'open', 'in_progress', 'closed', 'confirmed'])->default('open');
             $table->text('admin_notes')->nullable();
-            
+
             // Timeline fields
             $table->timestamp('opened_at')->nullable();
             $table->timestamp('in_progress_at')->nullable();
             $table->timestamp('closed_at')->nullable();
             $table->timestamp('confirmed_at')->nullable();
-            
+
             // Rejection fields
             $table->text('rejection_notes')->nullable();
             $table->string('rejection_photo')->nullable();
             $table->timestamp('last_rejection_at')->nullable();
             $table->integer('rejection_count')->default(0);
-            
+
             // Confirmation fields
             $table->text('confirmation_notes')->nullable();
             $table->string('confirmation_photo')->nullable();
             $table->boolean('user_confirmation')->default(false);
             $table->timestamp('user_confirmed_at')->nullable();
             $table->text('user_confirmation_notes')->nullable();
-            
+
             // Additional fields
             $table->string('photo')->nullable();
             $table->json('user_replies')->nullable();
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

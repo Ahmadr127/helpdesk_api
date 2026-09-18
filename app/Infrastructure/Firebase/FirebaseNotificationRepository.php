@@ -7,18 +7,17 @@ use App\DTO\Notifications\FirebaseNotificationData;
 use App\Exceptions\FirebaseNotificationException;
 use App\Jobs\Notifications\SendFirebaseNotificationJob;
 use Illuminate\Support\Facades\Log;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Exception\FirebaseException;
 use Kreait\Firebase\Exception\MessagingException;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 use Throwable;
 
 class FirebaseNotificationRepository implements FirebaseNotificationInterface
 {
     public function __construct(
         private readonly FirebaseClient $client
-    ) {
-    }
+    ) {}
 
     public function sendToToken(string $token, FirebaseNotificationData $notification): array
     {
@@ -32,8 +31,8 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
             $messageId = is_string($result) ? $result : ($result['name'] ?? null);
 
             Log::channel($this->logChannel())->info('firebase notification sent', [
-                'token'      => $this->maskToken($token),
-                'title'      => $notification->title,
+                'token' => $this->maskToken($token),
+                'title' => $notification->title,
                 'message_id' => $messageId,
             ]);
 
@@ -75,8 +74,8 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
                     if ($isSuccess) {
                         $successCount++;
                         $results[] = [
-                            'token'      => $this->maskToken($token),
-                            'success'    => true,
+                            'token' => $this->maskToken($token),
+                            'success' => true,
                             'message_id' => method_exists($item, 'result') ? (is_string($item->result()) ? $item->result() : null) : null,
                         ];
                     } else {
@@ -88,9 +87,9 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
                             $invalidTokens[] = $token;
                         }
                         $results[] = [
-                            'token'   => $this->maskToken($token),
+                            'token' => $this->maskToken($token),
                             'success' => false,
-                            'error'   => $msg,
+                            'error' => $msg,
                         ];
                         Log::channel($this->logChannel())->warning('firebase notification failed for token', [
                             'token' => $this->maskToken($token),
@@ -107,13 +106,13 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
             Log::channel($this->logChannel())->info('firebase multicast sent', [
                 'success_count' => $successCount,
                 'failure_count' => $failureCount,
-                'invalid_tokens' => array_map(fn($t) => $this->maskToken($t), $invalidTokens),
+                'invalid_tokens' => array_map(fn ($t) => $this->maskToken($t), $invalidTokens),
             ]);
 
             return [
-                'success_count'  => $successCount,
-                'failure_count'  => $failureCount,
-                'results'        => $results,
+                'success_count' => $successCount,
+                'failure_count' => $failureCount,
+                'results' => $results,
                 'invalid_tokens' => $invalidTokens,
             ];
         } catch (Throwable $e) {
@@ -135,8 +134,8 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
             $messageId = is_string($result) ? $result : ($result['name'] ?? null);
 
             Log::channel($this->logChannel())->info('firebase topic notification sent', [
-                'topic'      => $topic,
-                'title'      => $notification->title,
+                'topic' => $topic,
+                'title' => $notification->title,
                 'message_id' => $messageId,
             ]);
 
@@ -227,7 +226,7 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
     {
         // Dispatch job with topic prefix - job will detect topic:// prefix
         $this->validateTopic($topic);
-        $job = new SendFirebaseNotificationJob('topic://' . $topic, $notification->toQueuePayload());
+        $job = new SendFirebaseNotificationJob('topic://'.$topic, $notification->toQueuePayload());
         $job->onQueue($queue ?? 'notifications');
         dispatch($job);
     }
@@ -245,7 +244,7 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
 
         $message = CloudMessage::new()->withNotification($notification);
 
-        if (!empty($data->data)) {
+        if (! empty($data->data)) {
             $message = $message->withData($data->data);
         }
 
@@ -257,7 +256,7 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
         if ($data->sound !== null) {
             $androidConfig['notification']['sound'] = $data->sound;
         }
-        if (!empty($androidConfig)) {
+        if (! empty($androidConfig)) {
             $message = $message->withAndroidConfig($androidConfig);
         }
 
@@ -290,7 +289,7 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
         if (trim($topic) === '') {
             throw FirebaseNotificationException::invalidPayload('Topic cannot be empty');
         }
-        if (!preg_match('/^[a-zA-Z0-9\-_\.~%]+$/', $topic)) {
+        if (! preg_match('/^[a-zA-Z0-9\-_\.~%]+$/', $topic)) {
             throw FirebaseNotificationException::invalidPayload('Topic contains invalid characters. Must match [a-zA-Z0-9-_.~%]+');
         }
     }
@@ -303,9 +302,9 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
         $isInvalid = FirebaseNotificationException::isInvalidTokenError($e);
 
         Log::channel($this->logChannel())->error('firebase notification failed', [
-            'token'      => $this->maskToken($token),
-            'title'      => $notification->title,
-            'error'      => $e->getMessage(),
+            'token' => $this->maskToken($token),
+            'title' => $notification->title,
+            'error' => $e->getMessage(),
             'is_invalid_token' => $isInvalid,
         ]);
 
@@ -334,7 +333,8 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
         if ($len <= 12) {
             return str_repeat('*', $len);
         }
-        return substr($token, 0, 6) . str_repeat('*', $len - 10) . substr($token, -4);
+
+        return substr($token, 0, 6).str_repeat('*', $len - 10).substr($token, -4);
     }
 
     private function logChannel(): string
@@ -344,6 +344,7 @@ class FirebaseNotificationRepository implements FirebaseNotificationInterface
             if (isset($channels['firebase'])) {
                 return 'firebase';
             }
+
             return config('logging.default', 'stack');
         } catch (\Throwable $e) {
             return 'stack';

@@ -14,7 +14,7 @@ class FeedbackController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'category' => 'required|string|in:SIRS,IPSRS,Other',
             'subject' => 'required|string|max:255',
-            'message' => 'required|string'
+            'message' => 'required|string',
         ]);
 
         $feedback = Feedback::create([
@@ -22,7 +22,7 @@ class FeedbackController extends Controller
             'rating' => $validated['rating'],
             'category' => $validated['category'],
             'subject' => $validated['subject'],
-            'message' => $validated['message']
+            'message' => $validated['message'],
         ]);
 
         return redirect()->back()->with('success', 'Terima kasih atas feedback Anda!');
@@ -31,8 +31,9 @@ class FeedbackController extends Controller
     public function getUserFeedback()
     {
         $feedback = Feedback::where('user_id', auth()->id())
-                           ->orderBy('created_at', 'desc')
-                           ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return $feedback;
     }
-} 
+}

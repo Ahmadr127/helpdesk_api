@@ -10,7 +10,7 @@ class FeedbackResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user' => $this->whenLoaded('user', fn()=> new UserResource($this->user)),
+            'user' => $this->whenLoaded('user', fn () => new UserResource($this->user)),
             'user_id' => $this->user_id,
             'rating' => $this->rating,
             'category' => $this->category,

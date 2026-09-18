@@ -5,10 +5,10 @@ namespace App\Services\Api;
 use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
+use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\Position;
 use App\Models\UnitProses;
-use App\Models\KategoriOrder;
 use Illuminate\Database\Eloquent\Model;
 
 class MasterDataService
@@ -22,15 +22,16 @@ class MasterDataService
         'unit_proses' => UnitProses::class,
         'positions' => Position::class,
         'kategori_order' => KategoriOrder::class,
-        'kategori-order' => KategoriOrder::class
+        'kategori-order' => KategoriOrder::class,
     ];
 
     public function getModelClass(string $type): string
     {
         $type = strtolower($type);
-        if (!isset($this->map[$type])) {
+        if (! isset($this->map[$type])) {
             throw new \Exception("Tipe data tidak valid: {$type}", 422);
         }
+
         return $this->map[$type];
     }
 
@@ -43,20 +44,23 @@ class MasterDataService
             $query->with('unitProses');
         }
         if ($type === 'locations') {
-            $query->with('building');
+            $query->where('status', 1);
+        }
+        if ($type === 'departments') {
+            $query->with(['location', 'building']);
         }
 
         if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== null) {
             $query->where('status', $filters['status']);
         }
-        if (!empty($filters['search'])) {
-            $query->where('name','like',"%{$filters['search']}%");
+        if (! empty($filters['search'])) {
+            $query->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($filters['search']).'%']);
         }
-        if (!empty($filters['from_date'])) {
-            $query->whereDate('created_at','>=',$filters['from_date']);
+        if (! empty($filters['from_date'])) {
+            $query->whereDate('created_at', '>=', $filters['from_date']);
         }
-        if (!empty($filters['to_date'])) {
-            $query->whereDate('created_at','<=',$filters['to_date']);
+        if (! empty($filters['to_date'])) {
+            $query->whereDate('created_at', '<=', $filters['to_date']);
         }
 
         return $query->latest()->paginate($perPage);
@@ -66,15 +70,23 @@ class MasterDataService
     {
         $class = $this->getModelClass($type);
         $model = $class::find($id);
-        if (!$model) throw new \Exception("Data tidak ditemukan", 404);
-        if ($type === 'categories') $model->load('unitProses');
-        if ($type === 'locations') $model->load('building');
+        if (! $model) {
+            throw new \Exception('Data tidak ditemukan', 404);
+        }
+        if ($type === 'categories') {
+            $model->load('unitProses');
+        }
+        if ($type === 'departments') {
+            $model->load(['location', 'building']);
+        }
+
         return $model;
     }
 
     public function create(string $type, array $data): Model
     {
         $class = $this->getModelClass($type);
+
         return $class::create($data);
     }
 
@@ -82,6 +94,7 @@ class MasterDataService
     {
         $model = $this->find($type, $id);
         $model->update($data);
+
         return $model->fresh();
     }
 
@@ -95,11 +108,11 @@ class MasterDataService
     {
         $class = $this->getModelClass($type);
         $query = $class::whereIn('id', $ids);
-        switch($action){
-            case 'activate': return $query->update(['status'=>1]);
-            case 'deactivate': return $query->update(['status'=>0]);
+        switch ($action) {
+            case 'activate': return $query->update(['status' => 1]);
+            case 'deactivate': return $query->update(['status' => 0]);
             case 'delete': return $query->delete();
-            default: throw new \Exception('Action tidak valid',422);
+            default: throw new \Exception('Action tidak valid', 422);
         }
     }
 }

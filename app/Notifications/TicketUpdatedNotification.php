@@ -4,13 +4,13 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
 
 class TicketUpdatedNotification extends Notification
 {
     use Queueable;
 
     protected $ticket;
+
     protected $action;
 
     public function __construct($ticket, $action)
@@ -28,9 +28,9 @@ class TicketUpdatedNotification extends Notification
     {
         return [
             'ticket_id' => $this->ticket->id,
-            'title' => "Ticket Updated",
+            'title' => 'Ticket Updated',
             'message' => "Your ticket #{$this->ticket->ticket_number} has been {$this->action}",
-            'action' => $this->action
+            'action' => $this->action,
         ];
     }
-} 
+}

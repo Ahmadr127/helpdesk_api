@@ -22,7 +22,10 @@ class BaseApiController extends Controller
             'success' => false,
             'message' => $message,
         ];
-        if ($errors) $payload['errors'] = $errors;
+        if ($errors) {
+            $payload['errors'] = $errors;
+        }
+
         return response()->json($payload, $code);
     }
 
@@ -43,7 +46,7 @@ class BaseApiController extends Controller
                 'last' => $paginator->url($paginator->lastPage()),
                 'prev' => $paginator->previousPageUrl(),
                 'next' => $paginator->nextPageUrl(),
-            ]
+            ],
         ]);
     }
 }

@@ -27,6 +27,12 @@
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.kategori-order.index') }}" method="GET"
             class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
+            <div class="md:col-span-4">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ request('search') }}"
+                    placeholder="Cari berdasarkan nama atau kode kategori…"
+                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" id="filter_status"
@@ -183,12 +189,9 @@ function validateFilterForm() {
     const fromDate = document.getElementById('filter_from_date').value;
     const toDate = document.getElementById('filter_to_date').value;
 
-    if ((status || fromDate || toDate) && (!status || !fromDate || !toDate)) {
-        alert('Mohon isi semua field filter (Status, Dari Tanggal, dan Sampai Tanggal) untuk menerapkan filter.');
-        return false;
-    }
-
-    if (fromDate > toDate) {
+    // Status, pencarian, dan rentang tanggal bisa dipakai sendiri-sendiri
+    // atau dikombinasikan; yang dicek hanya validitas rentang tanggal.
+    if (fromDate && toDate && fromDate > toDate) {
         alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir');
         return false;
     }

@@ -16,7 +16,7 @@ class UserResource extends JsonResource
             'position' => $this->position,
             'role' => $this->role,
             'department' => $this->department,
-            'status' => (bool)$this->status,
+            'status' => (bool) $this->status,
             'email_verified_at' => $this->email_verified_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

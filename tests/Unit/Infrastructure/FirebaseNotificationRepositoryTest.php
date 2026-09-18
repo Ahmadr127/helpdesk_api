@@ -16,14 +16,23 @@ use Tests\TestCase;
 class FakeMessaging
 {
     public $sendReturn = 'projects/notification-azra/messages/msg123';
+
     public $sendException = null;
+
     public $sendAllReturn = [];
+
     public $sendAllException = null;
+
     public $subscribeReturn = ['successCount' => 1];
+
     public $subscribeException = null;
+
     public $unsubscribeReturn = ['successCount' => 1];
+
     public $unsubscribeException = null;
+
     public $lastSendMessage = null;
+
     public $lastSendAllMessages = null;
 
     public function send($message)
@@ -32,6 +41,7 @@ class FakeMessaging
         if ($this->sendException) {
             throw $this->sendException;
         }
+
         return $this->sendReturn;
     }
 
@@ -41,6 +51,7 @@ class FakeMessaging
         if ($this->sendAllException) {
             throw $this->sendAllException;
         }
+
         return $this->sendAllReturn;
     }
 
@@ -49,6 +60,7 @@ class FakeMessaging
         if ($this->subscribeException) {
             throw $this->subscribeException;
         }
+
         return $this->subscribeReturn;
     }
 
@@ -57,6 +69,7 @@ class FakeMessaging
         if ($this->unsubscribeException) {
             throw $this->unsubscribeException;
         }
+
         return $this->unsubscribeReturn;
     }
 }
@@ -64,9 +77,21 @@ class FakeMessaging
 class FakeReport
 {
     public function __construct(private bool $success, private $result = null, private $error = null) {}
-    public function isSuccess(): bool { return $this->success; }
-    public function result() { return $this->result; }
-    public function error() { return $this->error; }
+
+    public function isSuccess(): bool
+    {
+        return $this->success;
+    }
+
+    public function result()
+    {
+        return $this->result;
+    }
+
+    public function error()
+    {
+        return $this->error;
+    }
 }
 
 class FirebaseNotificationRepositoryTest extends TestCase
@@ -90,12 +115,13 @@ class FirebaseNotificationRepositoryTest extends TestCase
     {
         $client = Mockery::mock(FirebaseClient::class);
         $client->shouldReceive('messaging')->andReturn($messaging);
+
         return new FirebaseNotificationRepository($client);
     }
 
     public function test_send_to_token_success(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->sendReturn = 'projects/notification-azra/messages/msg123';
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -109,7 +135,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_send_to_token_invalid_token_throws_exception(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->sendException = new \Exception('Requested entity was not found.');
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -121,7 +147,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_send_to_token_empty_token_validation(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
         $dto = FirebaseNotificationData::make(title: 'Hi', body: 'Hello');
 
@@ -131,7 +157,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_send_to_topic_success(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->sendReturn = 'msg_topic_123';
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -143,7 +169,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_send_to_topic_invalid_topic(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
         $dto = FirebaseNotificationData::make(title: 'Hi', body: 'Hello');
 
@@ -153,7 +179,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_subscribe_to_topic(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->subscribeReturn = ['successCount' => 1];
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -163,7 +189,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_unsubscribe_from_topic(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->unsubscribeReturn = ['successCount' => 1];
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -177,7 +203,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
         $failError = new \Exception('NotRegistered');
         $failReport = new FakeReport(false, null, $failError);
 
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->sendAllReturn = [$successReport, $failReport];
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -191,7 +217,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_firebase_exception_is_wrapped(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $messaging->sendException = new \Exception('Internal server error');
 
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
@@ -203,7 +229,7 @@ class FirebaseNotificationRepositoryTest extends TestCase
 
     public function test_send_to_tokens_empty_throws(): void
     {
-        $messaging = new FakeMessaging();
+        $messaging = new FakeMessaging;
         $repo = $this->makeRepositoryWithFakeMessaging($messaging);
         $dto = FirebaseNotificationData::make(title: 'Hi', body: 'Hello');
 

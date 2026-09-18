@@ -8,12 +8,12 @@ use Illuminate\Contracts\Support\Arrayable;
 class FirebaseNotificationData implements Arrayable
 {
     /**
-     * @param string $title   Notification title (required)
-     * @param string $body    Notification body (required)
-     * @param array  $data    Custom data payload (all values will be cast to string for FCM)
-     * @param string|null $image   Optional image URL
-     * @param string|null $sound   Optional sound (e.g. "default")
-     * @param string|null $channelId Optional Android channel ID
+     * @param  string  $title  Notification title (required)
+     * @param  string  $body  Notification body (required)
+     * @param  array  $data  Custom data payload (all values will be cast to string for FCM)
+     * @param  string|null  $image  Optional image URL
+     * @param  string|null  $sound  Optional sound (e.g. "default")
+     * @param  string|null  $channelId  Optional Android channel ID
      */
     public function __construct(
         public readonly string $title,
@@ -67,6 +67,7 @@ class FirebaseNotificationData implements Arrayable
                 $normalized[$stringKey] = (string) $value;
             }
         }
+
         return $normalized;
     }
 
@@ -85,14 +86,14 @@ class FirebaseNotificationData implements Arrayable
             throw FirebaseNotificationException::invalidPayload('Body must not exceed 1000 characters');
         }
         foreach ($this->data as $k => $v) {
-            if (!is_string($v)) {
+            if (! is_string($v)) {
                 throw FirebaseNotificationException::invalidPayload("Data value for key '{$k}' must be string after normalization");
             }
             if (strlen($k) === 0) {
                 throw FirebaseNotificationException::invalidPayload('Data key cannot be empty string');
             }
         }
-        if ($this->image !== null && !filter_var($this->image, FILTER_VALIDATE_URL)) {
+        if ($this->image !== null && ! filter_var($this->image, FILTER_VALIDATE_URL)) {
             throw FirebaseNotificationException::invalidPayload('Image must be a valid URL');
         }
     }
@@ -100,11 +101,11 @@ class FirebaseNotificationData implements Arrayable
     public function toArray(): array
     {
         return [
-            'title'      => $this->title,
-            'body'       => $this->body,
-            'data'       => $this->data,
-            'image'      => $this->image,
-            'sound'      => $this->sound,
+            'title' => $this->title,
+            'body' => $this->body,
+            'data' => $this->data,
+            'image' => $this->image,
+            'sound' => $this->sound,
             'channel_id' => $this->channelId,
         ];
     }

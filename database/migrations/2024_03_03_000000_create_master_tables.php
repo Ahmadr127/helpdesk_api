@@ -51,4 +51,4 @@ return new class extends Migration
         Schema::dropIfExists('departments');
         Schema::dropIfExists('categories');
     }
-}; 
+};

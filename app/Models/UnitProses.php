@@ -15,4 +15,4 @@ class UnitProses extends Model
     {
         return $this->hasMany(Category::class, 'unit_proses_id');
     }
-} 
+}

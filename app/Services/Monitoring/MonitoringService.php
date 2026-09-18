@@ -19,9 +19,9 @@ class MonitoringService
             default => storage_path("logs/{$channel}.log"),
         };
 
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             // try daily variant
-            $daily = storage_path("logs/{$channel}-".now()->format('Y-m-d').".log");
+            $daily = storage_path("logs/{$channel}-".now()->format('Y-m-d').'.log');
             if (File::exists($daily)) {
                 $path = $daily;
             } else {
@@ -32,6 +32,7 @@ class MonitoringService
         $size = File::size($path);
         // Read last N lines efficiently
         $content = $this->tailFile($path, $lines);
+
         return ['exists' => true, 'path' => $path, 'lines' => $content, 'size' => $size];
     }
 
@@ -39,8 +40,11 @@ class MonitoringService
     {
         $pattern = storage_path('logs/firebase*.log');
         $files = glob($pattern);
-        if (!$files) return storage_path('logs/firebase.log');
-        usort($files, fn($a,$b) => filemtime($b) <=> filemtime($a));
+        if (! $files) {
+            return storage_path('logs/firebase.log');
+        }
+        usort($files, fn ($a, $b) => filemtime($b) <=> filemtime($a));
+
         return $files[0];
     }
 
@@ -51,12 +55,16 @@ class MonitoringService
             $all = File::lines($path);
             $arr = iterator_to_array($all);
             $slice = array_slice($arr, -$lines);
+
             // Reverse to show newest first? Keep chronological (oldest of slice first)
             return array_values($slice);
         } catch (\Throwable $e) {
             $content = @file_get_contents($path);
-            if ($content === false) return ['Error reading log: '.$e->getMessage()];
+            if ($content === false) {
+                return ['Error reading log: '.$e->getMessage()];
+            }
             $exploded = explode("\n", $content);
+
             return array_slice($exploded, -$lines);
         }
     }
@@ -65,13 +73,14 @@ class MonitoringService
     {
         try {
             $pending = DB::table('jobs')->count();
-            $pendingByQueue = DB::table('jobs')->select('queue', DB::raw('count(*) as cnt'))->groupBy('queue')->pluck('cnt','queue')->toArray();
+            $pendingByQueue = DB::table('jobs')->select('queue', DB::raw('count(*) as cnt'))->groupBy('queue')->pluck('cnt', 'queue')->toArray();
             $failed = DB::table('failed_jobs')->count();
             $recentFailed = DB::table('failed_jobs')->orderByDesc('failed_at')->limit(10)->get();
             $batches = DB::table('job_batches')->count();
             // Recent jobs payload preview (first 5)
-            $recentJobs = DB::table('jobs')->orderByDesc('created_at')->limit(5)->get()->map(function($j){
+            $recentJobs = DB::table('jobs')->orderByDesc('created_at')->limit(5)->get()->map(function ($j) {
                 $payload = json_decode($j->payload, true);
+
                 return [
                     'id' => $j->id,
                     'queue' => $j->queue,
@@ -92,7 +101,7 @@ class MonitoringService
                 'recent_jobs' => $recentJobs,
             ];
         } catch (\Throwable $e) {
-            return ['error' => $e->getMessage(), 'pending'=>0,'failed'=>0];
+            return ['error' => $e->getMessage(), 'pending' => 0, 'failed' => 0];
         }
     }
 
@@ -112,7 +121,7 @@ class MonitoringService
             $totalTokens = DB::table('device_tokens')->count();
             $validTokens = DB::table('device_tokens')->where('is_valid', true)->count();
             $invalidTokens = DB::table('device_tokens')->where('is_valid', false)->count();
-            $byPlatform = DB::table('device_tokens')->select('platform', DB::raw('count(*) as cnt'))->groupBy('platform')->pluck('cnt','platform')->toArray();
+            $byPlatform = DB::table('device_tokens')->select('platform', DB::raw('count(*) as cnt'))->groupBy('platform')->pluck('cnt', 'platform')->toArray();
             $legacyUsersWithToken = DB::table('users')->whereNotNull('fcm_token')->count();
             $recentTokens = DB::table('device_tokens')->orderByDesc('last_used_at')->limit(10)->get();
         } catch (\Throwable $e) {
@@ -160,15 +169,16 @@ class MonitoringService
         try {
             $total = DB::table('notifications')->count();
             $unread = DB::table('notifications')->whereNull('read_at')->count();
-            $byType = DB::table('notifications')->select('type', DB::raw('count(*) as cnt'))->groupBy('type')->pluck('cnt','type')->toArray();
+            $byType = DB::table('notifications')->select('type', DB::raw('count(*) as cnt'))->groupBy('type')->pluck('cnt', 'type')->toArray();
             // Simplify type display
             $byTypeShort = [];
-            foreach ($byType as $k=>$v) {
+            foreach ($byType as $k => $v) {
                 $short = class_basename($k);
                 $byTypeShort[$short] = $v;
             }
-            $recent = DB::table('notifications')->orderByDesc('created_at')->limit(10)->get()->map(function($n){
+            $recent = DB::table('notifications')->orderByDesc('created_at')->limit(10)->get()->map(function ($n) {
                 $data = json_decode($n->data, true) ?? [];
+
                 return [
                     'id' => $n->id,
                     'type' => class_basename($n->type),
@@ -180,6 +190,7 @@ class MonitoringService
                 ];
             });
             $perUser = DB::table('notifications')->select('notifiable_id', DB::raw('count(*) as cnt'))->groupBy('notifiable_id')->orderByDesc('cnt')->limit(5)->get();
+
             return [
                 'total' => $total,
                 'unread' => $unread,
@@ -189,17 +200,20 @@ class MonitoringService
                 'top_users' => $perUser,
             ];
         } catch (\Throwable $e) {
-            return ['error'=>$e->getMessage(),'total'=>0,'unread'=>0];
+            return ['error' => $e->getMessage(), 'total' => 0, 'unread' => 0];
         }
     }
 
     private function maskEmail(string $email): string
     {
         $parts = explode('@', $email);
-        if (count($parts)!==2) return '***';
+        if (count($parts) !== 2) {
+            return '***';
+        }
         $name = $parts[0];
         $domain = $parts[1];
-        $masked = substr($name,0,2).str_repeat('*', max(0, strlen($name)-4)).substr($name,-2);
+        $masked = substr($name, 0, 2).str_repeat('*', max(0, strlen($name) - 4)).substr($name, -2);
+
         return $masked.'@'.$domain;
     }
 }

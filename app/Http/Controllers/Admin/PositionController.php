@@ -8,9 +8,21 @@ use Illuminate\Http\Request;
 
 class PositionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $positions = Position::orderBy('name')->get();
+        $positions = Position::query();
+
+        // Search (case-insensitive) by name or code, LOWER() matches lowercase
+        if ($request->filled('search')) {
+            $search = strtolower(trim($request->search));
+            $positions->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
+            });
+        }
+
+        $positions = $positions->orderBy('name')->get();
+
         return view('admin.master.positions', compact('positions'));
     }
 
@@ -18,13 +30,13 @@ class PositionController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:255|unique:positions,code'
+            'code' => 'required|string|max:255|unique:positions,code',
         ]);
 
         Position::create([
             'name' => $request->name,
             'code' => $request->code,
-            'status' => true
+            'status' => true,
         ]);
 
         return back()->with('success', 'Position created successfully.');
@@ -34,12 +46,12 @@ class PositionController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:255|unique:positions,code,' . $position->id
+            'code' => 'required|string|max:255|unique:positions,code,'.$position->id,
         ]);
 
         $position->update([
             'name' => $request->name,
-            'code' => $request->code
+            'code' => $request->code,
         ]);
 
         return back()->with('success', 'Position updated successfully.');
@@ -48,7 +60,7 @@ class PositionController extends Controller
     public function toggleStatus(Position $position)
     {
         $position->update([
-            'status' => !$position->status
+            'status' => ! $position->status,
         ]);
 
         return back()->with('success', 'Position status updated successfully.');
@@ -62,6 +74,7 @@ class PositionController extends Controller
         }
 
         $position->delete();
+
         return back()->with('success', 'Position deleted successfully.');
     }
-} 
+}

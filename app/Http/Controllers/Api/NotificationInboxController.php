@@ -33,6 +33,7 @@ class NotificationInboxController extends Controller
     public function unreadCount(Request $request): JsonResponse
     {
         $user = $request->user();
+
         return response()->json([
             'success' => true,
             'unread_count' => $user->unreadNotifications()->count(),
@@ -44,7 +45,7 @@ class NotificationInboxController extends Controller
         $user = $request->user();
         $notification = $user->notifications()->where('id', $id)->first();
 
-        if (!$notification) {
+        if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Notifikasi tidak ditemukan'], 404);
         }
 
@@ -65,7 +66,7 @@ class NotificationInboxController extends Controller
         $user = $request->user();
         $notification = $user->notifications()->where('id', $id)->first();
 
-        if (!$notification) {
+        if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Notifikasi tidak ditemukan'], 404);
         }
 

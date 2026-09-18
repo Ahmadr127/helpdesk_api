@@ -8,14 +8,22 @@ use Throwable;
 class FirebaseNotificationException extends Exception
 {
     public const CODE_CREDENTIAL_MISSING = 1001;
+
     public const CODE_CREDENTIAL_INVALID = 1002;
-    public const CODE_CONNECTION_ERROR   = 1003;
-    public const CODE_INVALID_TOKEN      = 1004;
-    public const CODE_EXPIRED_TOKEN      = 1005;
-    public const CODE_INVALID_PAYLOAD    = 1006;
-    public const CODE_API_ERROR          = 1007;
-    public const CODE_NETWORK_ERROR      = 1008;
-    public const CODE_TOPIC_ERROR        = 1009;
+
+    public const CODE_CONNECTION_ERROR = 1003;
+
+    public const CODE_INVALID_TOKEN = 1004;
+
+    public const CODE_EXPIRED_TOKEN = 1005;
+
+    public const CODE_INVALID_PAYLOAD = 1006;
+
+    public const CODE_API_ERROR = 1007;
+
+    public const CODE_NETWORK_ERROR = 1008;
+
+    public const CODE_TOPIC_ERROR = 1009;
 
     public function __construct(
         string $message = '',

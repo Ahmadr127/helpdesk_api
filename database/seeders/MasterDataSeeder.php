@@ -2,10 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Category;
-use App\Models\Department;
 use App\Models\Building;
+use App\Models\Category;
 use App\Models\Location;
 use App\Models\UnitProses;
 
@@ -21,7 +19,7 @@ class MasterDataSeeder extends DatabaseSeeder
             ['name' => 'Sanitasi', 'code' => 'SNT', 'status' => 1],
             ['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1],
         ];
-        
+
         foreach ($unitProses as $unit) {
             UnitProses::firstOrCreate(['code' => $unit['code']], $unit);
         }
@@ -38,7 +36,7 @@ class MasterDataSeeder extends DatabaseSeeder
             ['name' => 'Software', 'status' => 1, 'unit_proses_id' => $sirsId],
             ['name' => 'Hardware', 'status' => 1, 'unit_proses_id' => $sirsId],
         ];
-        
+
         foreach ($categories as $category) {
             Category::create($category);
         }

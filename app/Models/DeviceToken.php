@@ -44,6 +44,7 @@ class DeviceToken extends Model
                 'is_valid' => true,
                 'last_used_at' => now(),
             ]);
+
             return $record;
         }
 

@@ -22,4 +22,4 @@ class NotificationSetting extends Model
     {
         return $this->morphTo();
     }
-} 
+}

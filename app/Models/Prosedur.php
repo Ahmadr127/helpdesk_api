@@ -13,6 +13,6 @@ class Prosedur extends Model
         'title',
         'description',
         'file_path',
-        'category'
+        'category',
     ];
-} 
+}

@@ -10,12 +10,13 @@ use Illuminate\Http\Request;
 
 class AuthController extends BaseApiController
 {
-    public function __construct(protected AuthService $authService){}
+    public function __construct(protected AuthService $authService) {}
 
     public function login(LoginRequest $request)
     {
         try {
             $result = $this->authService->login($request->validated());
+
             return $this->success([
                 'user' => new UserResource($result['user']),
                 'token' => $result['token'],
@@ -32,6 +33,7 @@ class AuthController extends BaseApiController
     {
         try {
             $result = $this->authService->register($request->validated());
+
             return $this->success([
                 'user' => new UserResource($result['user']),
                 'token' => $result['token'],
@@ -50,12 +52,14 @@ class AuthController extends BaseApiController
     public function logout(Request $request)
     {
         $this->authService->logout($request->user());
+
         return $this->success(null, 'Logout berhasil');
     }
 
     public function logoutAll(Request $request)
     {
         $this->authService->logoutAll($request->user());
+
         return $this->success(null, 'Logout dari semua device berhasil');
     }
 }

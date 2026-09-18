@@ -14,11 +14,11 @@ class Report extends Model
         'type',
         'description',
         'screenshot',
-        'status'
+        'status',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-} 
+}

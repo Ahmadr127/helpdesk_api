@@ -24,6 +24,12 @@
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.categories.index') }}" method="GET"
             class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
+            <div class="md:col-span-4">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ request('search') }}"
+                    placeholder="Cari berdasarkan nama kategori atau unit proses…"
+                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" id="filter_status"
@@ -277,21 +283,13 @@ function validateFilterForm() {
     const fromDate = document.getElementById('filter_from_date').value;
     const toDate = document.getElementById('filter_to_date').value;
 
-    // Check if any of the filter fields are filled
-    if (status || fromDate || toDate) {
-        // If any field is filled, all fields must be filled
-        if (!status || !fromDate || !toDate) {
-            alert('Please fill in all filter fields (Status, From Date, and To Date) to apply the filter.');
-            return false;
-        }
-        
-        // Validate that from_date is not greater than to_date
-        if (fromDate > toDate) {
-            alert('From Date cannot be greater than To Date');
-            return false;
-        }
+    // Status, pencarian, dan rentang tanggal bisa dipakai sendiri-sendiri
+    // atau dikombinasikan; yang dicek hanya validitas rentang tanggal.
+    if (fromDate && toDate && fromDate > toDate) {
+        alert('From Date cannot be greater than To Date');
+        return false;
     }
-    
+
     return true;
 }
 </script>

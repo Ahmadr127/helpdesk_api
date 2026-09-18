@@ -62,7 +62,7 @@ class PermissionSeeder extends Seeder
 
         foreach (self::rolePermissionsMap() as $role => $slugs) {
             // Skip unknown roles so dynamic roles stay manageable via RoleSeeder.
-            if (!Role::where('slug', $role)->exists()) {
+            if (! Role::where('slug', $role)->exists()) {
                 continue;
             }
             foreach ($slugs as $slug) {

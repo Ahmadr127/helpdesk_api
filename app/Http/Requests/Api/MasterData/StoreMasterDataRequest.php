@@ -6,12 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreMasterDataRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         $type = $this->route('type');
-        return match($type) {
+
+        return match ($type) {
             'categories' => [
                 'name' => 'required|string|max:255',
                 'status' => 'required|boolean',
@@ -20,6 +24,8 @@ class StoreMasterDataRequest extends FormRequest
             'departments' => [
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:50|unique:departments,code',
+                'location_id' => 'nullable|exists:locations,id',
+                'building_id' => 'nullable|exists:buildings,id',
                 'status' => 'required|boolean',
             ],
             'buildings' => [
@@ -29,7 +35,6 @@ class StoreMasterDataRequest extends FormRequest
             ],
             'locations' => [
                 'name' => 'required|string|max:255',
-                'building_id' => 'required|exists:buildings,id',
                 'status' => 'required|boolean',
             ],
             'unit-proses','unit_proses' => [

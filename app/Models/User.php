@@ -76,9 +76,10 @@ class User extends Authenticatable
     public function getAllFcmTokens(): array
     {
         $tokens = $this->validDeviceTokens()->pluck('token')->filter()->toArray();
-        if (!empty($this->fcm_token) && !in_array($this->fcm_token, $tokens, true)) {
+        if (! empty($this->fcm_token) && ! in_array($this->fcm_token, $tokens, true)) {
             $tokens[] = $this->fcm_token;
         }
+
         return array_values(array_filter($tokens));
     }
 
@@ -94,9 +95,10 @@ class User extends Authenticatable
 
     public function assignRole(string $slug): bool
     {
-        if (!app(\App\Services\Access\RoleService::class)->exists($slug)) {
+        if (! app(\App\Services\Access\RoleService::class)->exists($slug)) {
             return false;
         }
+
         return $this->update(['role' => $slug]);
     }
 
@@ -153,9 +155,13 @@ class User extends Authenticatable
     {
         // Direct user permission
         if ($this->relationLoaded('permissions')) {
-            if ($this->permissions->contains('slug', $slug)) return true;
+            if ($this->permissions->contains('slug', $slug)) {
+                return true;
+            }
         } else {
-            if ($this->permissions()->where('slug', $slug)->exists()) return true;
+            if ($this->permissions()->where('slug', $slug)->exists()) {
+                return true;
+            }
         }
         // Role-based permission (via role_permissions table) - berbasis role saja
         $role = $this->role;
@@ -164,7 +170,10 @@ class User extends Authenticatable
             ->where('permissions.slug', $slug)
             ->where('role_permissions.role', $role)
             ->exists();
-        if ($exists) return true;
+        if ($exists) {
+            return true;
+        }
+
         // Fail-closed: tanpa baris permission yang cocok, akses ditolak.
         // (Dulu fail-open saat tabel permissions kosong — itu yang membuat
         // user biasa lolos ke endpoint admin di test.)
@@ -173,13 +182,23 @@ class User extends Authenticatable
 
     public function hasAnyPermission(array $slugs): bool
     {
-        foreach ($slugs as $s) if ($this->hasPermission($s)) return true;
+        foreach ($slugs as $s) {
+            if ($this->hasPermission($s)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
     public function hasAllPermissions(array $slugs): bool
     {
-        foreach ($slugs as $s) if (!$this->hasPermission($s)) return false;
+        foreach ($slugs as $s) {
+            if (! $this->hasPermission($s)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -188,6 +207,7 @@ class User extends Authenticatable
         return $this->hasRole('admin')
             || $this->hasAnyPermission(['admin.dashboard', 'ticket.manage']);
     }
+
     public function isAdminUmum(): bool
     {
         return $this->hasRole('ipsrs')

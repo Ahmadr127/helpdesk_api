@@ -2,18 +2,18 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Contracts\Notifications\FirebaseNotificationInterface;
 use App\Infrastructure\Firebase\FirebaseClient;
 use App\Infrastructure\Firebase\FirebaseNotificationRepository;
 use App\Services\Notifications\FirebaseNotificationService;
+use Illuminate\Support\ServiceProvider;
 
 class FirebaseServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->singleton(FirebaseClient::class, function () {
-            return new FirebaseClient();
+            return new FirebaseClient;
         });
 
         $this->app->singleton(FirebaseNotificationRepository::class, function ($app) {
@@ -36,7 +36,7 @@ class FirebaseServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Global alias for convenient one-line usage: FirebaseNotification::sendToToken(...)
-        if (!class_exists('FirebaseNotification')) {
+        if (! class_exists('FirebaseNotification')) {
             class_alias(\App\Facades\FirebaseNotification::class, 'FirebaseNotification');
         }
     }

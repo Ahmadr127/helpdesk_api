@@ -6,13 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateOrderPerbaikanRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         return [
-            'jenis_barang' => 'required|in:Umum,Inventaris',
-            'kode_inventaris' => 'required|string',
+            'jenis_barang' => 'nullable|in:Umum,Inventaris',
+            'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',
             'kategori_order' => 'nullable|string|exists:kategori_order,name',
             'lokasi' => 'required|exists:locations,id',

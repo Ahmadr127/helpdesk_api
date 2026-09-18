@@ -9,12 +9,12 @@ use Kreait\Firebase\Messaging;
 class FirebaseClient
 {
     private mixed $messagingInstance = null;
+
     private ?Factory $factoryInstance = null;
 
     public function __construct(
         private readonly ?string $credentialsPath = null
-    ) {
-    }
+    ) {}
 
     /**
      * Get Firebase Messaging instance.
@@ -34,7 +34,7 @@ class FirebaseClient
         }
 
         // Resolve storage_path if not absolute
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw FirebaseNotificationException::credentialMissing($path);
         }
 
@@ -44,7 +44,7 @@ class FirebaseClient
                 throw new \RuntimeException('Unable to read credential file');
             }
             $decoded = json_decode($json, true);
-            if (json_last_error() !== JSON_ERROR_NONE || !isset($decoded['project_id'], $decoded['private_key'], $decoded['client_email'])) {
+            if (json_last_error() !== JSON_ERROR_NONE || ! isset($decoded['project_id'], $decoded['private_key'], $decoded['client_email'])) {
                 throw new \RuntimeException('Invalid service account JSON structure');
             }
         } catch (FirebaseNotificationException $e) {
@@ -54,7 +54,7 @@ class FirebaseClient
         }
 
         try {
-            $factory = (new Factory())->withServiceAccount($path);
+            $factory = (new Factory)->withServiceAccount($path);
             $this->factoryInstance = $factory;
             $this->messagingInstance = $factory->createMessaging();
         } catch (\Throwable $e) {
@@ -70,6 +70,7 @@ class FirebaseClient
     public function factory(): Factory
     {
         $this->messaging(); // ensure initialized
+
         return $this->factoryInstance;
     }
 
@@ -79,7 +80,7 @@ class FirebaseClient
     public function getProjectId(): ?string
     {
         $path = $this->credentialsPath ?? config('firebase.credentials');
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return null;
         }
         $json = @file_get_contents($path);
@@ -87,6 +88,7 @@ class FirebaseClient
             return null;
         }
         $data = json_decode($json, true);
+
         return $data['project_id'] ?? null;
     }
 

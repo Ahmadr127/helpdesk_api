@@ -2,6 +2,7 @@
 
 namespace App\Services\Api;
 
+use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Location;
@@ -19,58 +20,58 @@ class TicketService
     {
         $query = Ticket::where('user_id', $user->id)->with(['user', 'photos']);
 
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+        if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
         }
-        if (!empty($filters['priority'])) {
+        if (! empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
         }
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search){
-                $q->where('ticket_number','like',"%{$search}%")
-                  ->orWhere('description','like',"%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('ticket_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
-        if (!empty($filters['start_date'])) {
-            $query->whereDate('created_at','>=',$filters['start_date']);
+        if (! empty($filters['start_date'])) {
+            $query->whereDate('created_at', '>=', $filters['start_date']);
         }
-        if (!empty($filters['end_date'])) {
-            $query->whereDate('created_at','<=',$filters['end_date']);
+        if (! empty($filters['end_date'])) {
+            $query->whereDate('created_at', '<=', $filters['end_date']);
         }
 
-        return $query->orderBy('created_at','desc')->paginate($perPage);
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = Ticket::with(['user','category','department'])->latest();
+        $query = Ticket::with(['user', 'category', 'department'])->latest();
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search){
-                $q->where('ticket_number','like',"%{$search}%")
-                  ->orWhere('description','like',"%{$search}%")
-                  ->orWhereHas('user', fn($q)=>$q->where('name','like',"%{$search}%"));
+            $query->where(function ($q) use ($search) {
+                $q->where('ticket_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
-            if ($filters['status']==='pending') {
-                $query->where('status','closed')->where('user_confirmation', false);
+        if (! empty($filters['status']) && $filters['status'] !== 'all') {
+            if ($filters['status'] === 'pending') {
+                $query->where('status', 'closed')->where('user_confirmation', false);
             } else {
                 $query->where('status', $filters['status']);
             }
         } else {
             // default exclude confirmed? keep all for api flexibility
         }
-        if (!empty($filters['start_date'])) {
-            $query->whereDate('created_at','>=',$filters['start_date']);
+        if (! empty($filters['start_date'])) {
+            $query->whereDate('created_at', '>=', $filters['start_date']);
         }
-        if (!empty($filters['end_date'])) {
-            $query->whereDate('created_at','<=',$filters['end_date']);
+        if (! empty($filters['end_date'])) {
+            $query->whereDate('created_at', '<=', $filters['end_date']);
         }
-        if (!empty($filters['priority'])) {
-            $query->where('priority',$filters['priority']);
+        if (! empty($filters['priority'])) {
+            $query->where('priority', $filters['priority']);
         }
 
         return $query->paginate($perPage);
@@ -78,25 +79,25 @@ class TicketService
 
     public function create(User $user, array $data, $photoFile = null): Ticket
     {
-        if (!$user->department) {
+        if (! $user->department) {
             throw new \Exception('Mohon lengkapi data departemen Anda terlebih dahulu.');
         }
 
         // Robust lookup: support department_id FK, code, name, and case-insensitive match
         $userDepartment = null;
-        if (!empty($user->department_id)) {
+        if (! empty($user->department_id)) {
             $userDepartment = Department::find($user->department_id);
         }
-        if (!$userDepartment && $user->department) {
+        if (! $userDepartment && $user->department) {
             $deptValue = $user->department;
             $userDepartment = Department::where('code', $deptValue)->first()
                 ?? Department::where('name', $deptValue)->first()
                 ?? Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
                 ?? Department::whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
         }
-        if (!$userDepartment) {
+        if (! $userDepartment) {
             // Last resort: try to auto-create from the raw department string (imported SIMUTU nama_unit)
-            if (!empty($user->department)) {
+            if (! empty($user->department)) {
                 $deptValue = trim($user->department);
                 $exists = Department::whereRaw('LOWER(code) = LOWER(?)', [$deptValue])
                     ->orWhereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
@@ -110,27 +111,33 @@ class TicketService
                             'status' => 1,
                         ]);
                     } catch (\Throwable $e) {
-                        \Log::warning('TicketService auto-create department failed: ' . $e->getMessage());
+                        \Log::warning('TicketService auto-create department failed: '.$e->getMessage());
                     }
                 }
             }
         }
-        if (!$userDepartment) {
-            throw new \Exception('Data departemen "' . $user->department . '" tidak ditemukan di master data. Silakan perbarui departemen di pengaturan profil.');
+        if (! $userDepartment) {
+            throw new \Exception('Data departemen "'.$user->department.'" tidak ditemukan di master data. Silakan perbarui departemen di pengaturan profil.');
         }
 
-        $location = Location::with('building')->findOrFail($data['location_id']);
+        // Gedung mengikuti departemen (single source of truth); form boleh override via building_id
+        $userDepartment->loadMissing('building');
+        $building = ! empty($data['building_id'])
+            ? Building::find($data['building_id'])
+            : $userDepartment->building;
+
+        $location = Location::findOrFail($data['location_id']);
         $category = Category::findOrFail($data['category_id']);
 
         // Validate category belongs to SIRS
         $category->load('unitProses');
-        if (!$category->unitProses || $category->unitProses->code !== 'SIRS') {
+        if (! $category->unitProses || $category->unitProses->code !== 'SIRS') {
             throw new \Exception('Kategori yang dipilih harus kategori dari unit SIRS.');
         }
 
-        $ticket = DB::transaction(function() use ($user, $data, $photoFile, $userDepartment, $location, $category){
+        $ticket = DB::transaction(function () use ($user, $data, $photoFile, $userDepartment, $location, $category, $building) {
             $date = date('dm');
-            $lastTicket = Ticket::where('ticket_number','like',"T-{$date}-%")->orderBy('ticket_number','desc')->first();
+            $lastTicket = Ticket::where('ticket_number', 'like', "T-{$date}-%")->orderBy('ticket_number', 'desc')->first();
             if ($lastTicket) {
                 $lastSequence = (int) substr($lastTicket->ticket_number, -3);
                 $sequence = str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
@@ -147,26 +154,26 @@ class TicketService
                 'category' => $category->name,
                 'department_id' => $userDepartment->id,
                 'department' => $userDepartment->name,
-                'building_id' => $location->building->id,
-                'building' => $location->building->name,
+                'building_id' => $building?->id,
+                'building' => $building?->name,
                 'location_id' => $location->id,
                 'location' => $location->name,
                 'priority' => $data['priority'],
-                'status' => 'open'
+                'status' => 'open',
             ]);
 
             if ($photoFile) {
                 $extension = $photoFile->getClientOriginalExtension();
-                $filename = 'ticket_' . uniqid() . '_' . time() . '.' . $extension;
+                $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
                 $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
                 TicketPhoto::create([
                     'ticket_id' => $ticket->id,
                     'photo_path' => $path,
-                    'type' => 'initial'
+                    'type' => 'initial',
                 ]);
             }
 
-            return $ticket->load(['user','photos']);
+            return $ticket->load(['user', 'photos']);
         });
 
         // Simple FCM: notify Admin IT — 1 baris
@@ -189,10 +196,13 @@ class TicketService
             throw new \Exception('Ticket can only be edited when in open status.', 422);
         }
 
-        return DB::transaction(function() use ($ticket, $data, $photoFile){
+        return DB::transaction(function () use ($ticket, $data, $photoFile) {
             $category = Category::findOrFail($data['category_id']);
-            $department = Department::findOrFail($data['department_id']);
-            $location = Location::with('building')->findOrFail($data['location_id']);
+            $department = Department::with('building')->findOrFail($data['department_id']);
+            $location = Location::findOrFail($data['location_id']);
+            $building = ! empty($data['building_id'])
+                ? Building::find($data['building_id'])
+                : $department->building;
 
             $ticket->update([
                 'description' => $data['description'],
@@ -200,30 +210,30 @@ class TicketService
                 'category' => $category->name,
                 'department_id' => $department->id,
                 'department' => $department->name,
-                'building_id' => $location->building->id,
-                'building' => $location->building->name,
+                'building_id' => $building?->id,
+                'building' => $building?->name,
                 'location_id' => $location->id,
                 'location' => $location->name,
-                'priority' => $data['priority']
+                'priority' => $data['priority'],
             ]);
 
             if ($photoFile) {
-                $oldPhoto = $ticket->photos()->where('type','initial')->first();
+                $oldPhoto = $ticket->photos()->where('type', 'initial')->first();
                 if ($oldPhoto) {
                     Storage::disk('public')->delete($oldPhoto->photo_path);
                     $oldPhoto->delete();
                 }
                 $extension = $photoFile->getClientOriginalExtension();
-                $filename = 'ticket_' . uniqid() . '_' . time() . '.' . $extension;
+                $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
                 $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
                 TicketPhoto::create([
                     'ticket_id' => $ticket->id,
                     'photo_path' => $path,
-                    'type' => 'initial'
+                    'type' => 'initial',
                 ]);
             }
 
-            return $ticket->fresh()->load(['user','photos']);
+            return $ticket->fresh()->load(['user', 'photos']);
         });
     }
 
@@ -255,7 +265,7 @@ class TicketService
             TicketPhoto::create([
                 'ticket_id' => $ticket->id,
                 'photo_path' => $path,
-                'type' => 'user_response'
+                'type' => 'user_response',
             ]);
         }
 
@@ -263,7 +273,7 @@ class TicketService
         $replies[] = $reply;
 
         $ticket->update([
-            'user_replies' => json_encode($replies)
+            'user_replies' => json_encode($replies),
         ]);
 
         // Notify admins (DB)
@@ -297,7 +307,7 @@ class TicketService
             TicketPhoto::create([
                 'ticket_id' => $ticket->id,
                 'photo_path' => $path,
-                'type' => $action === 'confirm' ? 'user_response' : 'user_rejection'
+                'type' => $action === 'confirm' ? 'user_response' : 'user_rejection',
             ]);
         }
 
@@ -335,7 +345,7 @@ class TicketService
         $response = [
             'notes' => $notes,
             'timestamp' => now(),
-            'status' => $status
+            'status' => $status,
         ];
 
         $responses = json_decode($ticket->admin_responses, true) ?? [];
@@ -345,7 +355,7 @@ class TicketService
             TicketPhoto::create([
                 'ticket_id' => $ticket->id,
                 'photo_path' => $path,
-                'type' => 'admin_response'
+                'type' => 'admin_response',
             ]);
             $response['photo'] = $path;
         }
@@ -369,7 +379,7 @@ class TicketService
 
     public function adminUpdate(User $admin, Ticket $ticket, string $notes, ?string $status, ?string $action, $photoFile = null): Ticket
     {
-        return DB::transaction(function() use ($admin, $ticket, $notes, $status, $action, $photoFile){
+        return DB::transaction(function () use ($admin, $ticket, $notes, $status, $action, $photoFile) {
             $responses = $ticket->admin_responses ? json_decode($ticket->admin_responses, true) : [];
             $timestamp = now();
             $response = [
@@ -382,7 +392,7 @@ class TicketService
                     'ticket_id' => $ticket->id,
                     'photo_path' => $path,
                     'type' => 'admin_response',
-                    'created_at' => $timestamp
+                    'created_at' => $timestamp,
                 ]);
                 $response['photo'] = $path;
             }
@@ -402,6 +412,7 @@ class TicketService
             $ticket->user->notify(new TicketRespondedNotification($ticket, $admin, $notes, true, $action === 'reply' ? 'replied' : 'updated'));
             $event = $action === 'reply' ? 'ticket_replied' : 'ticket_updated';
             Notify::ticketToUser($ticket->fresh(), $event, $admin, $notes);
+
             return $ticket->fresh();
         });
     }

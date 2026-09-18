@@ -10,7 +10,7 @@ class TicketPhoto extends Model
     protected $fillable = [
         'ticket_id',
         'photo_path',
-        'type'
+        'type',
     ];
 
     protected $appends = ['url'];
@@ -22,9 +22,10 @@ class TicketPhoto extends Model
 
     public function getUrlAttribute()
     {
-        if (!$this->photo_path) {
+        if (! $this->photo_path) {
             return null;
         }
+
         return Storage::disk('public')->url($this->photo_path);
     }
-} 
+}

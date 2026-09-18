@@ -39,4 +39,4 @@ class Category extends Model
     {
         return static::whereNull('parent_id');
     }
-} 
+}

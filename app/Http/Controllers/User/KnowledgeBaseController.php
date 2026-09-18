@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
 class KnowledgeBaseController extends Controller
 {
@@ -11,4 +10,4 @@ class KnowledgeBaseController extends Controller
     {
         return view('user.knowledge-base.index');
     }
-} 
+}

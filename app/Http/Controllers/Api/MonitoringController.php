@@ -30,25 +30,26 @@ class MonitoringController extends Controller
 
     public function logs(Request $request): JsonResponse
     {
-        $channel = $request->query('channel','laravel');
+        $channel = $request->query('channel', 'laravel');
         $lines = (int) $request->query('lines', 100);
         $lines = max(10, min($lines, 1000));
         $data = $this->monitoring->getLogLines($channel, $lines);
-        return response()->json(['success'=>true, 'channel'=>$channel, 'data'=>$data]);
+
+        return response()->json(['success' => true, 'channel' => $channel, 'data' => $data]);
     }
 
     public function jobs(Request $request): JsonResponse
     {
-        return response()->json(['success'=>true, 'data'=>$this->monitoring->getJobsStats()]);
+        return response()->json(['success' => true, 'data' => $this->monitoring->getJobsStats()]);
     }
 
     public function fcm(Request $request): JsonResponse
     {
-        return response()->json(['success'=>true, 'data'=>$this->monitoring->getFcmStats()]);
+        return response()->json(['success' => true, 'data' => $this->monitoring->getFcmStats()]);
     }
 
     public function notifications(Request $request): JsonResponse
     {
-        return response()->json(['success'=>true, 'data'=>$this->monitoring->getNotificationsStats()]);
+        return response()->json(['success' => true, 'data' => $this->monitoring->getNotificationsStats()]);
     }
 }

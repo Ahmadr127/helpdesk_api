@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
@@ -18,20 +16,20 @@ class NotificationController extends Controller
         try {
             $notification = Auth::user()->notifications()->findOrFail($id);
             $notification->markAsRead();
-            
+
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'unreadCount' => Auth::user()->unreadNotifications->count()
+                    'unreadCount' => Auth::user()->unreadNotifications->count(),
                 ]);
             }
-            
+
             return redirect($notification->data['url']);
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Notification not found'], 404);
             }
-            
+
             return redirect()->back()->with('error', 'Notification not found');
         }
     }
@@ -39,6 +37,7 @@ class NotificationController extends Controller
     public function markAllAsRead()
     {
         Auth::user()->unreadNotifications->markAsRead();
+
         return redirect()->back()->with('success', 'All notifications marked as read');
     }
 
@@ -47,20 +46,20 @@ class NotificationController extends Controller
         try {
             $notification = Auth::user()->notifications()->findOrFail($id);
             $notification->delete();
-            
+
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'unreadCount' => Auth::user()->unreadNotifications->count()
+                    'unreadCount' => Auth::user()->unreadNotifications->count(),
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Notification deleted');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Notification not found'], 404);
             }
-            
+
             return redirect()->back()->with('error', 'Notification not found');
         }
     }
@@ -68,6 +67,7 @@ class NotificationController extends Controller
     public function deleteAll()
     {
         Auth::user()->notifications()->delete();
+
         return redirect()->back()->with('success', 'All notifications deleted');
     }
-} 
+}

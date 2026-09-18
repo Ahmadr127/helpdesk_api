@@ -22,7 +22,7 @@ class StoreUserRequest extends FormRequest
             'password' => ['required', 'string', 'confirmed', 'min:3'],
             'role' => ['required', 'string', Rule::exists('roles', 'slug')],
             'department' => ['required', 'string', 'max:255', function ($attr, $val, $fail) {
-                if (!Department::where('code', $val)->orWhere('name', $val)->exists()) {
+                if (! Department::where('code', $val)->orWhere('name', $val)->exists()) {
                     $fail('Department tidak valid.');
                 }
             }],

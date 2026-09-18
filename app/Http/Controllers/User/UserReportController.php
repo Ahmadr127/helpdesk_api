@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Report;
+use Illuminate\Http\Request;
 
 class UserReportController extends Controller
 {
@@ -36,4 +36,4 @@ class UserReportController extends Controller
 
         return redirect()->back()->with('success', 'Report submitted successfully.');
     }
-} 
+}

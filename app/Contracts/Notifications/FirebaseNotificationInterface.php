@@ -16,7 +16,7 @@ interface FirebaseNotificationInterface
     /**
      * Send to multiple FCM tokens.
      *
-     * @param string[] $tokens
+     * @param  string[]  $tokens
      * @return array{success_count: int, failure_count: int, results: array, invalid_tokens: string[]}
      */
     public function sendToTokens(array $tokens, FirebaseNotificationData $notification): array;
@@ -31,16 +31,14 @@ interface FirebaseNotificationInterface
     /**
      * Subscribe tokens to topic.
      *
-     * @param string[] $tokens
-     * @return array
+     * @param  string[]  $tokens
      */
     public function subscribeToTopic(string $topic, array $tokens): array;
 
     /**
      * Unsubscribe tokens from topic.
      *
-     * @param string[] $tokens
-     * @return array
+     * @param  string[]  $tokens
      */
     public function unsubscribeFromTopic(string $topic, array $tokens): array;
 
@@ -52,7 +50,7 @@ interface FirebaseNotificationInterface
     /**
      * Queue notification to multiple tokens.
      *
-     * @param string[] $tokens
+     * @param  string[]  $tokens
      */
     public function queueToTokens(array $tokens, FirebaseNotificationData $notification, ?string $queue = null): void;
 

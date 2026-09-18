@@ -3,31 +3,32 @@
 namespace App\Exports;
 
 use App\Models\Ticket;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class TicketsExport
 {
     protected $dateFrom;
+
     protected $dateTo;
+
     protected $selectedIds;
 
     public function __construct($dateFrom = null, $dateTo = null, array $selectedIds = [])
     {
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
-        $this->selectedIds = array_filter($selectedIds, function($value) {
+        $this->selectedIds = array_filter($selectedIds, function ($value) {
             return is_numeric($value) && $value > 0;
         });
     }
 
     public function download($fileName)
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // Set headers
@@ -47,7 +48,7 @@ class TicketsExport
             'Catatan Admin',
             'Catatan Konfirmasi',
             'Total Durasi (Menit)',
-            'Skor Kinerja'
+            'Skor Kinerja',
         ];
 
         // Style the headers
@@ -66,7 +67,7 @@ class TicketsExport
         // Set headers
         foreach ($headers as $index => $header) {
             $columnLetter = Coordinate::stringFromColumnIndex($index + 1);
-            $sheet->setCellValue($columnLetter . '1', $header);
+            $sheet->setCellValue($columnLetter.'1', $header);
         }
 
         // Get data
@@ -74,7 +75,7 @@ class TicketsExport
             ->where('status', 'confirmed')
             ->where('user_confirmation', true);
 
-        if (!empty($this->selectedIds)) {
+        if (! empty($this->selectedIds)) {
             $query->whereIn('id', $this->selectedIds);
         } else {
             if ($this->dateFrom) {
@@ -91,8 +92,8 @@ class TicketsExport
         $row = 2;
         foreach ($tickets as $ticket) {
             // Calculate durations in minutes
-            $waitingDuration = $ticket->in_progress_at 
-                ? $ticket->created_at->diffInMinutes($ticket->in_progress_at) 
+            $waitingDuration = $ticket->in_progress_at
+                ? $ticket->created_at->diffInMinutes($ticket->in_progress_at)
                 : 0;
 
             $processingDuration = ($ticket->in_progress_at && $ticket->closed_at)
@@ -116,7 +117,7 @@ class TicketsExport
             $adminNotes = '';
             if ($ticket->admin_responses) {
                 $responses = json_decode($ticket->admin_responses, true);
-                if (is_array($responses) && !empty($responses)) {
+                if (is_array($responses) && ! empty($responses)) {
                     $lastResponse = end($responses);
                     $adminNotes = $lastResponse['notes'] ?? '';
                 }
@@ -126,7 +127,7 @@ class TicketsExport
             $confirmationNotes = '';
             if ($ticket->user_replies) {
                 $replies = json_decode($ticket->user_replies, true);
-                if (is_array($replies) && !empty($replies)) {
+                if (is_array($replies) && ! empty($replies)) {
                     $lastReply = end($replies);
                     if (isset($lastReply['type']) && $lastReply['type'] === 'confirm') {
                         $confirmationNotes = $lastReply['notes'] ?? '';
@@ -150,12 +151,12 @@ class TicketsExport
                 $adminNotes,
                 $confirmationNotes,
                 $totalDuration,
-                $performanceScore
+                $performanceScore,
             ];
 
             foreach ($data as $index => $value) {
                 $columnLetter = Coordinate::stringFromColumnIndex($index + 1);
-                $sheet->setCellValue($columnLetter . $row, $value);
+                $sheet->setCellValue($columnLetter.$row, $value);
             }
             $row++;
         }
@@ -168,7 +169,7 @@ class TicketsExport
         // Set borders for all cells
         $lastRow = $sheet->getHighestRow();
         $lastColumn = $sheet->getHighestColumn();
-        $sheet->getStyle('A1:' . $lastColumn . $lastRow)->applyFromArray([
+        $sheet->getStyle('A1:'.$lastColumn.$lastRow)->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -178,14 +179,14 @@ class TicketsExport
 
         // Create the writer
         $writer = new Xlsx($spreadsheet);
-        
+
         // Set headers for download
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Content-Disposition: attachment;filename="'.$fileName.'"');
         header('Cache-Control: max-age=0');
 
         // Save to php output
         $writer->save('php://output');
         exit;
     }
-} 
+}

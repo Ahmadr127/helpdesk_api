@@ -44,18 +44,16 @@
             <div class="space-y-6">
                 <!-- Auto-generated fields (hidden) -->
                 <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
+                <input type="hidden" name="department_id" value="{{ $departmentId ?? '' }}">
                 <input type="hidden" name="unit_proses_code" value="{{ $unitPengajuCode ?? ($user->department ?? 'GENERAL') }}">
                 <input type="hidden" name="unit_proses_name" value="{{ $unitPengajuName ?? ($user->department ?? 'GENERAL') }}">
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang <span class="text-red-500">*</span></label>
-                        <select name="jenis_barang" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                            <option value="">Pilih Jenis</option>
-                            <option value="Inventaris" {{ old('jenis_barang')=='Inventaris' ? 'selected':'' }}>Inventaris</option>
-                            <option value="Umum" {{ old('jenis_barang')=='Umum' ? 'selected':'' }}>Umum</option>
-                        </select>
-                        @error('jenis_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
+                        <input type="text" name="kode_inventaris" value="{{ old('kode_inventaris') }}" placeholder="Kode inventaris (opsional)"
+                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        @error('kode_inventaris') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas <span class="text-red-500">*</span></label>
@@ -86,6 +84,17 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
+                        @if(isset($departmentLocation) && $departmentLocation)
+                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-900">
+                                    {{ $departmentLocation->name }}
+                                </p>
+                                <p class="text-xs text-gray-500">Otomatis dari departemen Anda</p>
+                            </div>
+                        </div>
+                        <input type="hidden" name="lokasi" value="{{ $departmentLocation->id }}">
+                        @else
                         <div class="relative">
                             <input type="text" id="lokasi_search"
                                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -99,7 +108,22 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endif
                         @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
+                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-900" id="gedung_display">
+                                    {{ $departmentBuilding?->name ?? '-' }}
+                                </p>
+                                @if(isset($departmentBuilding) && $departmentBuilding)
+                                <p class="text-xs text-gray-500">Otomatis dari departemen</p>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -165,7 +189,9 @@ document.addEventListener('DOMContentLoaded', function(){
         // set initial if old value
         if(lokasiSelect.value){
             const sel = locations.find(l=>l.id==lokasiSelect.value);
-            if(sel) lokasiSearch.value = sel.name;
+            if(sel){
+                lokasiSearch.value = sel.name;
+            }
         }
         function display(results){
             lokasiResults.innerHTML='';

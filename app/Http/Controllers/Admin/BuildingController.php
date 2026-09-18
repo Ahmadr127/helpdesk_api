@@ -13,6 +13,15 @@ class BuildingController extends Controller
     {
         $query = Building::query();
 
+        // Search (case-insensitive) by name or code, LOWER() matches lowercase
+        if ($request->filled('search')) {
+            $search = strtolower(trim($request->search));
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
+            });
+        }
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -27,6 +36,7 @@ class BuildingController extends Controller
         }
 
         $buildings = $query->latest()->paginate(10)->withQueryString();
+
         return view('admin.master.buildings', compact('buildings'));
     }
 
@@ -35,7 +45,7 @@ class BuildingController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:buildings',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         Building::create($request->all());
@@ -49,7 +59,7 @@ class BuildingController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => ['required', 'string', 'max:50', Rule::unique('buildings')->ignore($building)],
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         $building->update($request->all());
@@ -62,6 +72,7 @@ class BuildingController extends Controller
     {
         try {
             $building->delete();
+
             return redirect()->route('admin.master.buildings.index')
                 ->with('success', 'Gedung berhasil dihapus.');
         } catch (\Exception $e) {
@@ -69,4 +80,4 @@ class BuildingController extends Controller
                 ->with('error', 'Gagal menghapus Gedung. Data mungkin sedang digunakan.');
         }
     }
-} 
+}

@@ -9,8 +9,7 @@ class SendFirebaseNotification
 {
     public function __construct(
         private readonly FirebaseNotificationInterface $notifier
-    ) {
-    }
+    ) {}
 
     /**
      * Synchronous send to token - Use Case layer.

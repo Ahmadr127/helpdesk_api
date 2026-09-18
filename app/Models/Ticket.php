@@ -31,7 +31,7 @@ class Ticket extends Model
         'user_confirmed_at',
         'last_rejection_at',
         'in_progress_at',
-        'closed_at'
+        'closed_at',
     ];
 
     protected $dates = [
@@ -40,7 +40,7 @@ class Ticket extends Model
         'closed_at',
         'created_at',
         'updated_at',
-        'user_confirmed_at'
+        'user_confirmed_at',
     ];
 
     protected $casts = [
@@ -52,39 +52,39 @@ class Ticket extends Model
         'user_confirmation' => 'boolean',
         'user_confirmed_at' => 'datetime',
         'last_rejection_at' => 'datetime',
-        'admin_responses' => 'array'
+        'admin_responses' => 'array',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
-    
+
     public function categoryRelation()
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
-    
+
     public function departmentRelation()
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
-    
+
     public function buildingRelation()
     {
         return $this->belongsTo(Building::class, 'building_id');
     }
-    
+
     public function location()
     {
         return $this->belongsTo(Location::class, 'location_id');
     }
-    
+
     public function locationRelation()
     {
         return $this->belongsTo(Location::class, 'location_id');
@@ -94,7 +94,7 @@ class Ticket extends Model
     {
         return $this->belongsTo(Building::class, 'building_id');
     }
-    
+
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id');

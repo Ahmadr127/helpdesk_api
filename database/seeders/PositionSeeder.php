@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Position;
+use Illuminate\Database\Seeder;
 
 class PositionSeeder extends Seeder
 {
@@ -235,4 +235,4 @@ class PositionSeeder extends Seeder
             Position::create($position);
         }
     }
-} 
+}

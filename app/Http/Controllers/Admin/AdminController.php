@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
@@ -18,23 +17,23 @@ class AdminController extends Controller
         // Base query with time filter
         $baseQuery = Ticket::query();
         $this->applyTimeFilter($baseQuery, $timeFilter);
-        
+
         // Get total tickets based on filters
         $totalActiveTickets = (clone $baseQuery)
             ->whereIn('status', ['open', 'in_progress', 'pending'])
             ->count();
-        
+
         $completedTickets = (clone $baseQuery)
             ->whereIn('status', ['closed', 'confirmed'])
             ->count();
-            
+
         $totalTickets = $totalActiveTickets + $completedTickets;
-        
+
         // Calculate remaining tickets (those not completed)
         $remainingTickets = $totalActiveTickets;
 
         // Calculate processing percentage
-        $processingPercentage = $totalTickets > 0 
+        $processingPercentage = $totalTickets > 0
             ? round(($completedTickets / $totalTickets) * 100, 1)
             : 0;
 
@@ -93,10 +92,11 @@ class AdminController extends Controller
                 break;
             case 'month':
                 $query->whereMonth('created_at', now()->month)
-                      ->whereYear('created_at', now()->year);
+                    ->whereYear('created_at', now()->year);
                 break;
-            // 'all' doesn't need any filter
+                // 'all' doesn't need any filter
         }
+
         return $query;
     }
 
@@ -107,16 +107,16 @@ class AdminController extends Controller
         $statusFilter = $request->input('status', 'all');
 
         // Create base query for time filtering
-        $baseTimeQuery = function($q) use ($timeFilter) {
+        $baseTimeQuery = function ($q) use ($timeFilter) {
             $this->applyTimeFilter($q, $timeFilter);
         };
 
         // Create base query for status filtering
-        $baseStatusQuery = function($q) use ($statusFilter) {
+        $baseStatusQuery = function ($q) use ($statusFilter) {
             if ($statusFilter !== 'all') {
                 if ($statusFilter === 'closed') {
                     $q->where('status', 'closed')
-                      ->where('user_confirmation', false);
+                        ->where('user_confirmation', false);
                 } elseif ($statusFilter === 'confirmed') {
                     $q->where('status', 'confirmed');
                 } else {
@@ -158,7 +158,7 @@ class AdminController extends Controller
                 ->tap($baseStatusQuery)
                 ->where('status', 'closed')
                 ->where('user_confirmation', false)
-                ->count()
+                ->count(),
         ];
 
         // Generate dates array based on time filter
@@ -167,11 +167,11 @@ class AdminController extends Controller
                 $dates = [today()->format('Y-m-d')];
                 break;
             case 'week':
-                $dates = collect(range(0, 6))->map(fn($day) => now()->startOfWeek()->addDays($day)->format('Y-m-d'));
+                $dates = collect(range(0, 6))->map(fn ($day) => now()->startOfWeek()->addDays($day)->format('Y-m-d'));
                 break;
             case 'month':
                 $dates = collect(range(1, now()->daysInMonth))
-                    ->map(fn($day) => now()->startOfMonth()->addDays($day - 1)->format('Y-m-d'));
+                    ->map(fn ($day) => now()->startOfMonth()->addDays($day - 1)->format('Y-m-d'));
                 break;
             default:
                 // For 'all' time, get all unique dates from the database
@@ -182,12 +182,12 @@ class AdminController extends Controller
         }
 
         // Fill in missing dates with 0
-        $counts = collect($dates)->map(fn($date) => $ticketCounts[$date] ?? 0)->toArray();
+        $counts = collect($dates)->map(fn ($date) => $ticketCounts[$date] ?? 0)->toArray();
 
         // Get updated summary data
         $baseQuery = Ticket::query();
         $this->applyTimeFilter($baseQuery, $timeFilter);
-        
+
         $totalActiveTickets = (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'pending'])->count();
         $completedTickets = (clone $baseQuery)->whereIn('status', ['closed', 'confirmed'])->count();
         $totalTickets = $totalActiveTickets + $completedTickets;
@@ -206,7 +206,7 @@ class AdminController extends Controller
                 'completedTickets' => $completedTickets,
                 'processingPercentage' => $processingPercentage,
                 'ticketProgress' => $ticketProgress,
-            ]
+            ],
         ]);
     }
 
@@ -224,4 +224,4 @@ class AdminController extends Controller
     {
         return view('admin.reports.index');
     }
-} 
+}

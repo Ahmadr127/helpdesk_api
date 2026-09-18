@@ -30,6 +30,7 @@ class FirebaseTopicSubscriptionRequest extends FormRequest
         if ($this->has('token')) {
             return [$this->input('token')];
         }
+
         return [];
     }
 }

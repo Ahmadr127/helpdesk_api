@@ -22,4 +22,4 @@ class OrderPhoto extends Model
     {
         return $this->belongsTo(Order::class);
     }
-} 
+}

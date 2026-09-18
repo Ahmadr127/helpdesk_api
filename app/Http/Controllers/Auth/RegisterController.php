@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Position;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,7 +16,7 @@ class RegisterController extends Controller
             ->orderBy('name')
             ->get()
             ->pluck('name', 'code');
-            
+
         return view('auth.register', compact('positions'));
     }
 
@@ -37,7 +37,7 @@ class RegisterController extends Controller
             $base = explode('@', $request->email)[0];
             $base = preg_replace('/[^A-Za-z0-9._-]/', '', strtolower($base));
             $username = $base;
-            $i=1;
+            $i = 1;
             while (User::where('username', $username)->exists()) {
                 $username = $base.$i++;
             }
@@ -52,11 +52,11 @@ class RegisterController extends Controller
             'position' => $request->position,
             'department_id' => 1,  // Set default department
             'role' => 'user',      // Set default role
-            'status' => 1          // Set active by default (1)
+            'status' => 1,          // Set active by default (1)
         ]);
 
         auth()->login($user);
 
         return redirect()->route('user.dashboard');
     }
-} 
+}

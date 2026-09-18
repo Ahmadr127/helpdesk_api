@@ -12,13 +12,13 @@ class CheckPermission
      * Handle an incoming request.
      * Usage: ->middleware('permission:ticket.create') or permission:ticket.create|order.create (OR logic) or permission:ticket.create,order.create for AND
      */
-    public function handle(Request $request, Closure $next, string $permission = null): Response
+    public function handle(Request $request, Closure $next, ?string $permission = null): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        if (!$permission) {
+        if (! $permission) {
             return $next($request);
         }
 
@@ -33,20 +33,22 @@ class CheckPermission
                     return $next($request);
                 }
             }
+
             return $this->deny($request, $permission);
         }
 
         if (str_contains($permission, ',')) {
             $slugs = explode(',', $permission);
             foreach ($slugs as $slug) {
-                if (!$user->hasPermission(trim($slug))) {
+                if (! $user->hasPermission(trim($slug))) {
                     return $this->deny($request, $permission);
                 }
             }
+
             return $next($request);
         }
 
-        if (!$user->hasPermission(trim($permission))) {
+        if (! $user->hasPermission(trim($permission))) {
             return $this->deny($request, $permission);
         }
 
@@ -58,9 +60,9 @@ class CheckPermission
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Forbidden: missing permission ' . $permission,
+                'message' => 'Forbidden: missing permission '.$permission,
             ], 403);
         }
-        abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini. Required: ' . $permission);
+        abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini. Required: '.$permission);
     }
 }

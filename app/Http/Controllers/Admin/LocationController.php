@@ -4,23 +4,23 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Location;
-use App\Models\Building;
 use Illuminate\Http\Request;
 
 class LocationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Location::with('building');
+        $query = Location::query();
+
+        // Search (case-insensitive) by name, LOWER() matches lowercase
+        if ($request->filled('search')) {
+            $search = strtolower(trim($request->search));
+            $query->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+        }
 
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
-        }
-
-        // Filter by building
-        if ($request->has('building_id')) {
-            $query->where('building_id', $request->building_id);
         }
 
         // Filter by date range
@@ -32,19 +32,19 @@ class LocationController extends Controller
         }
 
         $locations = $query->latest()->paginate(10)->withQueryString();
-        $buildings = Building::where('status', 1)->get();
-        return view('admin.master.locations', compact('locations', 'buildings'));
+
+        return view('admin.master.locations', compact('locations'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'building_id' => 'required|exists:buildings,id',
             'status' => 'required|boolean',
         ]);
 
         Location::create($validated);
+
         return redirect()->route('admin.master.locations.index')->with('success', 'Location created successfully');
     }
 
@@ -52,27 +52,18 @@ class LocationController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'building_id' => 'required|exists:buildings,id',
             'status' => 'required|boolean',
         ]);
 
         $location->update($validated);
+
         return redirect()->route('admin.master.locations.index')->with('success', 'Location updated successfully');
     }
 
     public function destroy(Location $location)
     {
         $location->delete();
+
         return redirect()->route('admin.master.locations.index')->with('success', 'Location deleted successfully');
     }
-
-    // API endpoint untuk mendapatkan locations berdasarkan building
-    public function getLocationsByBuilding(Building $building)
-    {
-        $locations = Location::where('building_id', $building->id)
-            ->where('status', 1)
-            ->get(['id', 'name']);
-        
-        return response()->json($locations);
-    }
-} 
+}

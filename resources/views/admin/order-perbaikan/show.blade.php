@@ -48,8 +48,15 @@
                     <div class="p-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
+                                <p class="text-sm font-medium text-gray-500">Unit Pengaju</p>
+                                <p class="font-medium">{{ $orderPerbaikan->department?->name ?? $orderPerbaikan->unit_proses_name }}</p>
+                            </div>
+                            <div class="space-y-1">
                                 <p class="text-sm font-medium text-gray-500">Unit Proses</p>
-                                <p class="font-medium">{{ $orderPerbaikan->unit_proses_name }}</p>
+                                @php
+                                $unitProsesModel = $orderPerbaikan->relationLoaded('unitProses') ? $orderPerbaikan->getRelation('unitProses') : $orderPerbaikan->unitProses()->getResults();
+                                @endphp
+                                <p class="font-medium">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</p>
                             </div>
                             <div class="space-y-1">
                                 <p class="text-sm font-medium text-gray-500">Prioritas</p>
@@ -84,16 +91,12 @@
                     <div class="p-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
-                                <p class="text-sm font-medium text-gray-500">Jenis Barang</p>
-                                <p class="font-medium">{{ $orderPerbaikan->jenis_barang }}</p>
-                            </div>
-                            <div class="space-y-1">
                                 <p class="text-sm font-medium text-gray-500">Kategori Order</p>
                                 <p class="font-medium">{{ $orderPerbaikan->kategori_order ?? '-' }}</p>
                             </div>
                             <div class="space-y-1 md:col-span-2">
                                 <p class="text-sm font-medium text-gray-500">Kode Inventaris</p>
-                                <p class="font-medium">{{ $orderPerbaikan->kode_inventaris }}</p>
+                                <p class="font-medium">{{ $orderPerbaikan->kode_inventaris ?: '-' }}</p>
                             </div>
                             <div class="space-y-1 md:col-span-2">
                                 <p class="text-sm font-medium text-gray-500">Nama Barang</p>

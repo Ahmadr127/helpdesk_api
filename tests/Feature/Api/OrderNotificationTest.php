@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Building;
 use App\Models\Department;
 use App\Models\Location;
-use App\Models\Building;
+use App\Models\OrderPerbaikan;
 use App\Models\Position;
 use App\Models\UnitProses;
 use App\Models\User;
-use App\Models\OrderPerbaikan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
@@ -20,8 +20,11 @@ class OrderNotificationTest extends TestCase
     use RefreshDatabase, SeedsAccessControl;
 
     protected User $user;
+
     protected User $adminUmum;
+
     protected Location $location;
+
     protected UnitProses $unitProses;
 
     protected function setUp(): void
@@ -35,17 +38,17 @@ class OrderNotificationTest extends TestCase
         $this->unitProses = UnitProses::create(['name' => 'IPSRS', 'code' => 'IPSRS', 'status' => 1]);
         UnitProses::create(['name' => 'SIRS', 'code' => 'SIRS', 'status' => 1]);
         $building = Building::create(['name' => 'Gedung A', 'code' => 'A', 'status' => 1]);
-        $this->location = Location::create(['name' => 'UGD', 'building_id' => $building->id, 'status' => 1]);
+        $this->location = Location::create(['name' => 'UGD', 'status' => 1]);
 
         $this->user = User::create([
             'name' => 'Regular', 'email' => 'user@example.com', 'password' => Hash::make('123'),
             'phone' => '0811', 'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1,
-            'fcm_token' => 'user_token_1234567890'
+            'fcm_token' => 'user_token_1234567890',
         ]);
         $this->adminUmum = User::create([
             'name' => 'Admin Umum', 'email' => 'adm@example.com', 'password' => Hash::make('123'),
             'phone' => '0812', 'position' => 'Administrasi', 'role' => 'ipsrs', 'department' => 'IT', 'status' => 1,
-            'fcm_token' => 'admin_umum_token_1234567890'
+            'fcm_token' => 'admin_umum_token_1234567890',
         ]);
     }
 
@@ -86,13 +89,13 @@ class OrderNotificationTest extends TestCase
             'jenis_barang' => 'Umum', 'kode_inventaris' => 'INV-1',
             'nama_barang' => 'AC', 'lokasi' => $this->location->id,
             'keluhan' => 'Rusak', 'prioritas' => 'RENDAH',
-            'status' => 'open', 'created_by' => $this->user->id
+            'status' => 'open', 'created_by' => $this->user->id,
         ]);
 
         $resp = $this->withHeaders($this->authHeader($this->adminUmum))->putJson("/api/administrasi-umum/order-perbaikan/{$order->id}/status", [
             'status' => 'in_progress',
             'follow_up' => 'Dikerjakan',
-            'nama_penanggung_jawab' => 'Teknisi'
+            'nama_penanggung_jawab' => 'Teknisi',
         ]);
 
         $resp->assertStatus(200);
@@ -112,7 +115,7 @@ class OrderNotificationTest extends TestCase
             'jenis_barang' => 'Umum', 'kode_inventaris' => 'INV-1',
             'nama_barang' => 'AC', 'lokasi' => $this->location->id,
             'keluhan' => 'Rusak', 'prioritas' => 'RENDAH',
-            'status' => 'in_progress', 'created_by' => $this->user->id
+            'status' => 'in_progress', 'created_by' => $this->user->id,
         ]);
 
         $resp = $this->withHeaders($this->authHeader($this->adminUmum))->postJson("/api/administrasi-umum/order-perbaikan/{$order->id}/confirm");
