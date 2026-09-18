@@ -280,11 +280,17 @@ class OrderPerbaikanService
                 $order->update($updateData);
             }
 
-            $order->history()->create([
+            $historyData = [
                 'status' => $data['status'],
                 'keterangan' => $data['follow_up'].(! empty($data['prioritas']) ? " (Prioritas diubah menjadi {$data['prioritas']})" : ''),
                 'created_by' => $admin->id,
-            ]);
+            ];
+
+            if (! empty($data['lampiran'])) {
+                $historyData['lampiran'] = $data['lampiran'];
+            }
+
+            $order->history()->create($historyData);
 
             return $order->fresh()->load(['creator', 'history', 'location']);
         });
@@ -378,7 +384,7 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function userConfirm(User $user, OrderPerbaikan $order, ?string $catatan = null, bool $selesai = true): OrderPerbaikan
+    public function userConfirm(User $user, OrderPerbaikan $order, ?string $catatan = null, bool $selesai = true, ?string $lampiran = null): OrderPerbaikan
     {
         if ($order->created_by !== $user->id) {
             throw new \Exception('Unauthorized', 403);
@@ -387,7 +393,7 @@ class OrderPerbaikanService
             throw new \Exception('Hanya order dengan status tutup yang dapat dikonfirmasi.', 422);
         }
 
-        $order = DB::transaction(function () use ($user, $order, $catatan, $selesai) {
+        $order = DB::transaction(function () use ($user, $order, $catatan, $selesai, $lampiran) {
             $status = $selesai ? OrderPerbaikan::STATUS_CONFIRMED : OrderPerbaikan::STATUS_IN_PROGRESS;
             $keterangan = $catatan ?: ($selesai
                 ? 'User mengonfirmasi order sudah selesai.'
@@ -398,12 +404,18 @@ class OrderPerbaikanService
                 'updated_by' => $user->id,
             ]);
 
-            $order->history()->create([
+            $historyData = [
                 'status' => $status,
                 'follow_up' => $catatan,
                 'keterangan' => $keterangan,
                 'created_by' => $user->id,
-            ]);
+            ];
+
+            if ($lampiran) {
+                $historyData['lampiran'] = $lampiran;
+            }
+
+            $order->history()->create($historyData);
 
             return $order->fresh()->load(['creator', 'location']);
         });

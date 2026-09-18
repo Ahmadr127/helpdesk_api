@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div class="min-h-screen bg-gradient-to-r from-green-50 to-blue-50 pb-24">
     <div class="container mx-auto px-4 py-6">
-        <!-- Back Button -->
+        {{-- <!-- Back Button -->
         <div class="mb-5">
             <a href="{{ route('user.administrasi-umum.order-barang') }}"
                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </svg>
                 Kembali ke Daftar
             </a>
-        </div>
+        </div> --}}
 
         <!-- Header Card -->
         <div class="mb-6 bg-green-600 rounded-lg p-6 shadow-sm">
@@ -274,36 +274,39 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="lg:col-span-1 space-y-6 sticky top-6 self-start">
             @if($order->status === 'tutup')
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-violet-50">
-                    <h2 class="text-base font-semibold text-violet-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="px-6 py-4 border-b border-gray-100 bg-purple-50">
+                    <h2 class="text-base font-semibold text-purple-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Konfirmasi Selesai
                     </h2>
                 </div>
                 <div class="p-6">
-                    <p class="text-sm text-gray-600 mb-4 leading-relaxed">
-                        Admin telah menutup order ini. Silakan konfirmasi apakah order sudah benar-benar selesai.
+                    <p class="text-sm text-gray-600  leading-relaxed">
+                       Silakan konfirmasi apakah order sudah benar-benar selesai.
                     </p>
-                    <form action="{{ route('user.administrasi-umum.order-perbaikan.konfirmasi-selesai', $order) }}" method="POST" class="space-y-4">
+                    <form action="{{ route('user.administrasi-umum.order-perbaikan.konfirmasi-selesai', $order) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                         @csrf
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Status Konfirmasi</label>
-                            <select name="konfirmasi" required
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 text-sm">
-                                <option value="selesai">✅ Ya, sudah selesai</option>
-                                <option value="belum">❌ Belum selesai</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Catatan <span class="text-gray-400 font-normal">(opsional)</span></label>
-                            <textarea name="catatan" rows="3"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 text-sm"
-                                placeholder="Tulis catatan jika diperlukan..."></textarea>
-                        </div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-2">Status Konfirmasi</label>
+                        <select name="konfirmasi" required
+                            class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-sm py-2.5 px-3 transition-all">
+                            <option value="selesai">✅ Ya, sudah selesai</option>
+                            <option value="belum">❌ Belum selesai</option>
+                        </select>
+                        
+                        <label class="block text-sm font-semibold text-gray-800 mb-2">Catatan <span class="text-gray-400 font-normal">(opsional)</span></label>
+                        <textarea name="catatan" rows="3"
+                            class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-sm py-2.5 px-3 transition-all resize-none"
+                            placeholder="Tulis catatan jika diperlukan..."></textarea>
+                        
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Lampiran <span class="text-gray-400 font-normal">(opsional)</span></label>
+                            <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
+                                class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-violet-700 hover:file:bg-violet-100 transition-all">
+                            <p class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG. Maks 5MB.</p>
+                        
                         <button type="submit"
-                            class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
+                            class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -370,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <span class="h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-white {{ match($history->status) {
                                                 'open' => 'bg-blue-500',
                                                 'in_progress' => 'bg-amber-500',
-                                                'tutup' => 'bg-violet-500',
+                                                'tutup' => 'bg-purple-500',
                                                 'confirmed' => 'bg-emerald-500',
                                                 'rejected' => 'bg-red-500',
                                                 default => 'bg-slate-500'
@@ -397,6 +400,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </div>
                                             @if($history->keterangan ?? $history->follow_up)
                                             <p class="mt-2 text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">{{ $history->keterangan ?? $history->follow_up }}</p>
+                                            @endif
+                                            @if($history->lampiran)
+                                            <div class="mt-2">
+                                                <button type="button" onclick="openImageModal('{{ Storage::url($history->lampiran) }}')" class="inline-flex items-center px-3 py-1.5 bg-purple-50 hover:bg-violet-100 text-violet-700 text-xs font-medium rounded-lg transition-colors">
+                                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    Lihat Lampiran
+                                                </button>
+                                            </div>
                                             @endif
                                         </div>
                                     </div>

@@ -14,6 +14,7 @@ class OrderPerbaikanHistory extends Model
         'status',
         'follow_up',
         'keterangan',
+        'lampiran',
         'created_by',
     ];
 

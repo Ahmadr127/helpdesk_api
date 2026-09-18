@@ -289,15 +289,25 @@ class OrderPerbaikanController extends Controller
             'follow_up' => 'required|string',
             'prioritas' => 'sometimes|required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'nama_penanggung_jawab' => 'nullable|string',
+            'lampiran' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
         try {
-            $service->updateStatus(auth()->user(), $orderPerbaikan, [
+            $data = [
                 'status' => $validated['status'],
                 'follow_up' => $validated['follow_up'],
                 'prioritas' => $validated['prioritas'] ?? null,
                 'nama_penanggung_jawab' => $validated['nama_penanggung_jawab'] ?? $request->input('nama_penanggung_jawab'),
-            ]);
+            ];
+
+            if ($request->hasFile('lampiran')) {
+                $file = $request->file('lampiran');
+                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $path = $file->storeAs('order-lampiran', $filename, 'public');
+                $data['lampiran'] = $path;
+            }
+
+            $service->updateStatus(auth()->user(), $orderPerbaikan, $data);
 
             return redirect()
                 ->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)

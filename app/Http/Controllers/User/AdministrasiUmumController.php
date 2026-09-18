@@ -587,14 +587,23 @@ class AdministrasiUmumController extends Controller
         $validated = $request->validate([
             'konfirmasi' => 'required|in:selesai,belum',
             'catatan' => 'nullable|string|max:1000',
+            'lampiran' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
         try {
+            $lampiranPath = null;
+            if ($request->hasFile('lampiran')) {
+                $file = $request->file('lampiran');
+                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
+            }
+
             $service->userConfirm(
                 auth()->user(),
                 $orderPerbaikan,
                 $validated['catatan'] ?? null,
-                $validated['konfirmasi'] === 'selesai'
+                $validated['konfirmasi'] === 'selesai',
+                $lampiranPath
             );
 
             return redirect()
