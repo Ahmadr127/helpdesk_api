@@ -52,12 +52,12 @@ class MasterDataSeeder extends DatabaseSeeder
             Building::create($building);
         }
 
-        // Locations
+        // Locations (building_id dihapus dari locations — pindah ke departments)
         $locations = [
-            ['name' => 'UGD', 'building_id' => 1, 'status' => 1], // Gedung A
-            ['name' => 'BPJS', 'building_id' => 2, 'status' => 1], // Gedung B
-            ['name' => 'Parkiran', 'building_id' => 3, 'status' => 1], // Gedung C
-            ['name' => 'Taman Bermain Anak', 'building_id' => 3, 'status' => 1], // Gedung C
+            ['name' => 'UGD', 'status' => 1], // Gedung A
+            ['name' => 'BPJS', 'status' => 1], // Gedung B
+            ['name' => 'Parkiran', 'status' => 1], // Gedung C
+            ['name' => 'Taman Bermain Anak', 'status' => 1], // Gedung C
         ];
 
         foreach ($locations as $location) {
