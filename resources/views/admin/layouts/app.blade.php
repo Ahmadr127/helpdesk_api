@@ -160,7 +160,7 @@
         <div class="flex-1 px-4 py-8 md:ml-60">
             <!-- Header bar -->
             <div
-                class="mb-8 bg-white rounded-xl shadow-sm p-4 flex justify-between items-center">
+                class="mb-2 bg-white rounded-xl shadow-sm p-4 flex justify-between items-center">
                 <h1 class="text-xl font-semibold text-gray-800">@yield('title', 'Dashboard')</h1>
                 <div class="flex items-center space-x-4">
                     <div class="relative" x-data="{ open: false }">
