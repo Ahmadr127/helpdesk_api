@@ -269,96 +269,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 @endif
             </div>
-
-            <!-- Admin Response Section -->
-            <div class="bg-gray-50 p-2.5 rounded-lg mt-3">
-                <h3 class="text-base font-semibold mb-2">Respon Admin</h3>
-                @if($order->status !== 'open')
-                @php
-                $statusHistory = $order->history->where('status', $order->status)->first();
-                @endphp
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <p class="text-xs text-gray-500">Status Respon</p>
-                        <span class="inline-flex px-2 py-0.5 text-xs rounded-full {{ $order->getStatusBadgeClass() }}">
-                            {{ $order->getStatusText() }}
-                        </span>
+            <!-- User Confirmation Section (status tutup) -->
+            @if($order->status === 'tutup')
+            <div class="bg-violet-50 p-2.5 rounded-lg mt-3 border border-violet-200">
+                <h3 class="text-base font-semibold mb-2 text-violet-900">Konfirmasi Selesai</h3>
+                <p class="text-sm text-violet-700 mb-3">
+                    Admin telah menutup order ini dan menunggu konfirmasi Anda. Apakah order sudah benar-benar selesai?
+                    Konfirmasi Anda akan menjadi status akhir dari order ini.
+                </p>
+                <form action="{{ route('user.administrasi-umum.order-perbaikan.konfirmasi-selesai', $order) }}"
+                    method="POST">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="konfirmasi" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            <option value="selesai">Ya, sudah selesai</option>
+                            <option value="belum">Belum selesai</option>
+                        </select>
                     </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Waktu Respon</p>
-                        <p class="text-sm font-medium">
-                            @if($statusHistory)
-                            {{ \Carbon\Carbon::parse($statusHistory->created_at)->format('d/m/Y H:i') }}
-                            @else
-                            -
-                            @endif
-                        </p>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                        <textarea name="catatan" rows="3"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                            placeholder="Tulis catatan (opsional)..."></textarea>
                     </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Nama Penanggung Jawab</p>
-                        <p class="text-sm font-medium">{{ $order->nama_penanggung_jawab ?? '-' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Lama Respon</p>
-                        <p class="text-sm font-medium">
-                            @if($statusHistory)
-                            @php
-                            $orderTime = \Carbon\Carbon::parse($order->tanggal);
-                            $responseTime = \Carbon\Carbon::parse($statusHistory->created_at);
-                            $diffInMinutes = $orderTime->diffInMinutes($responseTime);
-                            $hours = floor($diffInMinutes / 60);
-                            $minutes = $diffInMinutes % 60;
-                            @endphp
-                            {{ $hours }} jam {{ $minutes }} menit
-                            @else
-                            -
-                            @endif
-                        </p>
-                    </div>
-                    @if($order->follow_up)
-                    <div class="col-span-2">
-                        <p class="text-xs text-gray-500">Tindak Lanjut</p>
-                        <p class="text-sm font-medium mt-0.5">{{ $order->follow_up }}</p>
-                    </div>
-                    @endif
-                </div>
-                @else
-                <div class="text-center py-4">
-                    <div class="text-gray-400 mb-1">
-                        <svg class="mx-auto h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
-                            </path>
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                    </div>
-                    <h3 class="text-base font-medium text-gray-900">Menunggu Respon</h3>
-                    <p class="text-sm text-gray-500">Admin belum memberikan respon untuk order ini</p>
-                </div>
-                @endif
+                        Kirim Konfirmasi
+                    </button>
+                </form>
             </div>
+            @endif
 
             <!-- Order History -->
             <div class="bg-gray-50 p-3 rounded-lg">
                 <h3 class="text-base font-semibold mb-3">Riwayat Order</h3>
                 <div class="space-y-3">
                     @foreach($order->history()->latest()->get() as $history)
-                    <div class="border-l-4 
-                        {{ $history->status === 'open' ? 'border-blue-400' : 
-                           ($history->status === 'in_progress' ? 'border-yellow-400' : 
-                           ($history->status === 'confirmed' ? 'border-green-400' : 
-                           'border-red-400')) }} 
+                    <div class="border-l-4
+                        {{ match($history->status) {
+                            'open' => 'border-blue-400',
+                            'in_progress' => 'border-yellow-400',
+                            'tutup' => 'border-violet-400',
+                            'confirmed' => 'border-green-400',
+                            'rejected' => 'border-red-400',
+                            default => 'border-gray-400'
+                        } }}
                         pl-3 py-2">
                         <div class="flex justify-between items-start">
                             <div>
-                                <span class="inline-flex px-2 py-1 text-xs rounded-full 
-                                    {{ $history->status === 'open' ? 'bg-blue-100 text-blue-800' : 
-                                       ($history->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
-                                       ($history->status === 'confirmed' ? 'bg-green-100 text-green-800' : 
-                                       'bg-red-100 text-red-800')) }}">
-                                    {{ ucfirst(str_replace('_', ' ', $history->status)) }}
+                                <span class="inline-flex px-2 py-1 text-xs rounded-full
+                                    {{ $history->status_badge_class }}">
+                                    {{ $history->status_label }}
                                 </span>
                                 <p class="mt-2 text-sm text-gray-600">
-                                    <span class="font-medium">Keterangan:</span> {{ $history->keterangan }}
+                                    <span class="font-medium">Catatan:</span> {{ $history->keterangan ?? $history->follow_up ?? '-' }}
                                 </p>
                             </div>
                             <div class="text-right text-sm text-gray-500">

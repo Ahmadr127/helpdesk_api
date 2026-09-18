@@ -21,7 +21,7 @@
     </h2>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-8">
         <!-- Total Orders -->
         <a href="{{ route('user.administrasi-umum.order-perbaikan.index') }}"
             class="bg-gradient-to-br from-green-50 to-blue-100 rounded-xl p-4 hover:shadow-md transition-all {{ $status === 'all' ? 'ring-2 ring-blue-500' : '' }}">
@@ -37,6 +37,15 @@
             <div class="flex flex-col items-center">
                 <span class="text-yellow-600 font-bold text-2xl">{{ $stats['in_progress'] }}</span>
                 <span class="text-gray-700 text-sm mt-1">Diproses</span>
+            </div>
+        </a>
+
+        <!-- Confirmed Orders -->
+        <a href="{{ route('user.administrasi-umum.order-perbaikan.index', ['status' => 'tutup']) }}"
+            class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 hover:shadow-md transition-all {{ $status === 'tutup' ? 'ring-2 ring-violet-500' : '' }}">
+            <div class="flex flex-col items-center">
+                <span class="text-violet-600 font-bold text-2xl">{{ $stats['tutup'] }}</span>
+                <span class="text-gray-700 text-sm mt-1">Menunggu Konfirmasi</span>
             </div>
         </a>
 
@@ -90,10 +99,12 @@
                     <select name="status"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
                         <option value="">Semua Status</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
+                        <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Terbuka</option>
                         <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Diproses
                         </option>
-                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai
+                        <option value="tutup" {{ request('status') == 'tutup' ? 'selected' : '' }}>Menunggu Konfirmasi
+                        </option>
+                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Dikonfirmasi
                         </option>
                         <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak
                         </option>
@@ -173,16 +184,18 @@
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}
-                                {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                {{ $order->status === 'in_progress' ? 'bg-indigo-100 text-indigo-800' : '' }}
-                                {{ $order->status === 'completed' ? 'bg-teal-100 text-teal-800' : '' }}
+                                {{ $order->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                                {{ $order->status === 'tutup' ? 'bg-violet-100 text-violet-800' : '' }}
                                 {{ $order->status === 'confirmed' ? 'bg-green-100 text-green-800' : '' }}
                                 {{ $order->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}">
-                                {{ $order->status === 'open' ? 'Terbuka' : 
-                                   ($order->status === 'pending' ? 'Menunggu' :
-                                   ($order->status === 'in_progress' ? 'Diproses' : 
-                                   ($order->status === 'completed' ? 'Selesai' :
-                                   ($order->status === 'confirmed' ? 'Dikonfirmasi' : 'Ditolak')))) }}
+                                {{ match($order->status) {
+                                    'open' => 'Terbuka',
+                                    'in_progress' => 'Diproses',
+                                    'tutup' => 'Menunggu Konfirmasi',
+                                    'confirmed' => 'Dikonfirmasi',
+                                    'rejected' => 'Ditolak',
+                                    default => $order->status
+                                } }}
                             </span>
                         </td>
                         <td class="px-4 py-3">
@@ -200,7 +213,7 @@
                                 <a href="{{ route('user.administrasi-umum.order-perbaikan.show', $order) }}"
                                     class="text-blue-600 hover:text-blue-900">Lihat</a>
 
-                                @if($order->status === 'pending')
+                                @if($order->status === 'open')
                                 <a href="{{ route('user.administrasi-umum.order-perbaikan.edit', $order) }}"
                                     class="text-yellow-600 hover:text-yellow-900">Ubah</a>
 

@@ -20,10 +20,10 @@
                 <h2 class="font-medium text-xs md:text-sm text-center text-gray-800">
                     {{ Auth::user()->name }}
                 </h2>
-                <p class="text-xs text-gray-500 text-center">Administrator</p>
+                <p class="text-xs text-gray-500 text-center">{{ Auth::user()->role }}</p>
             </div>
         </div>
-
+        
         <div id="menu" class="flex flex-col space-y-1">
             @if(auth()->user()->hasPermission('admin.dashboard') || auth()->user()->hasPermission('ticket.manage'))
             <a href="{{ route('admin.dashboard') }}"

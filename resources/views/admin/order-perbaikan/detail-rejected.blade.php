@@ -129,6 +129,7 @@
                                                 {{ match($history->status) {
                                                     'open' => 'bg-blue-500',
                                                     'in_progress' => 'bg-yellow-500',
+                                                    'tutup' => 'bg-violet-500',
                                                     'confirmed' => 'bg-green-500',
                                                     'rejected' => 'bg-red-500',
                                                     default => 'bg-gray-500'
@@ -144,6 +145,7 @@
                                                     {{ match($history->status) {
                                                         'open' => 'Order Dibuat',
                                                         'in_progress' => 'Dalam Proses',
+                                                        'tutup' => 'Order Ditutup',
                                                         'confirmed' => 'Order Dikonfirmasi',
                                                         'rejected' => 'Order Ditolak',
                                                         default => ucfirst($history->status)

@@ -8,7 +8,6 @@ use App\Models\Location;
 use App\Models\OrderPerbaikan;
 use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class OrderPerbaikanController extends Controller
 {
@@ -30,6 +29,7 @@ class OrderPerbaikanController extends Controller
             'openOrders' => OrderPerbaikan::where('status', 'open')->count(),
             'inProgressOrders' => OrderPerbaikan::where('status', 'in_progress')->count(),
             'confirmedOrders' => OrderPerbaikan::where('status', 'confirmed')->count(),
+            'tutupOrders' => OrderPerbaikan::where('status', 'tutup')->count(),
             'rejectedOrders' => OrderPerbaikan::where('status', 'rejected')->count(),
             'rendahOrders' => OrderPerbaikan::where('prioritas', 'RENDAH')->count(),
             'sedangOrders' => OrderPerbaikan::where('prioritas', 'SEDANG')->count(),
@@ -285,7 +285,7 @@ class OrderPerbaikanController extends Controller
     public function updateStatus(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'status' => 'required|in:in_progress,confirmed,rejected',
+            'status' => 'required|in:in_progress,tutup,rejected',
             'follow_up' => 'required|string',
             'prioritas' => 'sometimes|required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'nama_penanggung_jawab' => 'nullable|string',
@@ -329,32 +329,22 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function complete(Request $request, OrderPerbaikan $orderPerbaikan)
+    public function complete(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         try {
-            DB::beginTransaction();
-
-            $orderPerbaikan->update([
-                'status' => 'completed',
-                'updated_by' => auth()->id(),
+            // Alur baru: "Selesai" dari admin berarti menutup order untuk menunggu konfirmasi user.
+            $service->updateStatus(auth()->user(), $orderPerbaikan, [
+                'status' => OrderPerbaikan::STATUS_TUTUP,
+                'follow_up' => $request->follow_up ?? 'Pengerjaan selesai, menunggu konfirmasi user.',
             ]);
 
-            $orderPerbaikan->history()->create([
-                'status' => 'completed',
-                'follow_up' => $request->follow_up ?? 'Order telah selesai',
-                'created_by' => auth()->id(),
-            ]);
-
-            DB::commit();
-
-            return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.index' : 'administrasi-umum.order-perbaikan.index')
-                ->with('success', 'Order berhasil diselesaikan');
+            return redirect()
+                ->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)
+                ->with('success', 'Order ditutup dan menunggu konfirmasi selesai dari user.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.index' : 'administrasi-umum.order-perbaikan.index')
-                ->with('error', 'Terjadi kesalahan saat menyelesaikan order: '.$e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menutup order: '.$e->getMessage());
         }
     }
 

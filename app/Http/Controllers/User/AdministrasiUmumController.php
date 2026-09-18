@@ -333,6 +333,7 @@ class AdministrasiUmumController extends Controller
         $stats = [
             'total' => OrderPerbaikan::where('created_by', auth()->id())->count(),
             'in_progress' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'in_progress')->count(),
+            'tutup' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'tutup')->count(),
             'confirmed' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'confirmed')->count(),
             'rejected' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'rejected')->count(),
         ];
@@ -578,6 +579,33 @@ class AdministrasiUmumController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], $code);
+        }
+    }
+
+    public function confirmOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    {
+        $validated = $request->validate([
+            'konfirmasi' => 'required|in:selesai,belum',
+            'catatan' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $service->userConfirm(
+                auth()->user(),
+                $orderPerbaikan,
+                $validated['catatan'] ?? null,
+                $validated['konfirmasi'] === 'selesai'
+            );
+
+            return redirect()
+                ->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
+                ->with('success', $validated['konfirmasi'] === 'selesai'
+                    ? 'Terima kasih, order telah dikonfirmasi selesai.'
+                    : 'Order dibuka kembali karena belum selesai.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', $e->getMessage());
         }
     }
 }

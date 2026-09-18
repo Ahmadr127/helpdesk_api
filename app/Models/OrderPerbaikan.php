@@ -109,6 +109,11 @@ class OrderPerbaikan extends Model
         return $this->status === self::STATUS_IN_PROGRESS;
     }
 
+    public function isTutup()
+    {
+        return $this->status === self::STATUS_TUTUP;
+    }
+
     public function isConfirmed()
     {
         return $this->status === self::STATUS_CONFIRMED;
@@ -125,6 +130,7 @@ class OrderPerbaikan extends Model
         return match ($this->status) {
             self::STATUS_OPEN => 'bg-blue-100 text-blue-800',
             self::STATUS_IN_PROGRESS => 'bg-yellow-100 text-yellow-800',
+            self::STATUS_TUTUP => 'bg-violet-100 text-violet-800',
             self::STATUS_CONFIRMED => 'bg-green-100 text-green-800',
             self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             default => 'bg-gray-100 text-gray-800'
@@ -137,6 +143,7 @@ class OrderPerbaikan extends Model
         return match ($this->status) {
             self::STATUS_OPEN => 'bg-blue-400',
             self::STATUS_IN_PROGRESS => 'bg-yellow-400',
+            self::STATUS_TUTUP => 'bg-violet-400',
             self::STATUS_CONFIRMED => 'bg-green-400',
             self::STATUS_REJECTED => 'bg-red-400',
             default => 'bg-gray-400',
@@ -149,9 +156,29 @@ class OrderPerbaikan extends Model
         return match ($this->status) {
             self::STATUS_OPEN => 'Open',
             self::STATUS_IN_PROGRESS => 'In Progress',
+            self::STATUS_TUTUP => 'Tutup',
             self::STATUS_CONFIRMED => 'Confirmed',
             self::STATUS_REJECTED => 'Rejected',
             default => 'Unknown'
         };
+    }
+
+    // Status color name untuk badge header (dipakai view admin.show)
+    public function getStatusColorAttribute()
+    {
+        return match ($this->status) {
+            self::STATUS_OPEN => 'blue',
+            self::STATUS_IN_PROGRESS => 'yellow',
+            self::STATUS_TUTUP => 'violet',
+            self::STATUS_CONFIRMED => 'green',
+            self::STATUS_REJECTED => 'red',
+            default => 'gray',
+        };
+    }
+
+    // Status label untuk tampilan
+    public function getStatusLabelAttribute()
+    {
+        return $this->getStatusText();
     }
 }

@@ -197,17 +197,15 @@
                                         Proses Order
                                     </button>
                                 </div>
-                                @else
+                                @elseif($orderPerbaikan->status === 'in_progress')
                                 <!-- Fields for status update -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                     <select name="status" required
                                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         <option value="">Pilih Status</option>
-                                        @if($orderPerbaikan->status === 'in_progress')
-                                        <option value="confirmed">Konfirmasi</option>
+                                        <option value="tutup">Tutup (Konfirmasi Selesai)</option>
                                         <option value="rejected">Tolak</option>
-                                        @endif
                                     </select>
                                 </div>
                                 <div>
@@ -224,7 +222,6 @@
                                         value="{{ $orderPerbaikan->nama_penanggung_jawab }}">
                                 </div>
                                 <div class="flex justify-end space-x-3">
-                                    @if($orderPerbaikan->status === 'in_progress')
                                     <button type="submit" name="action" value="update"
                                         class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
@@ -235,7 +232,25 @@
                                         </svg>
                                         Update
                                     </button>
-                                    @endif
+                                </div>
+                                @else
+                                <!-- Status tutup: menunggu konfirmasi user -->
+                                <div class="bg-violet-50 border border-violet-200 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-violet-500 mt-0.5 mr-2" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-violet-800">Order Ditutup - Menunggu Konfirmasi User</p>
+                                            <p class="text-sm text-violet-700 mt-1">
+                                                Pengerjaan sudah diselesaikan oleh admin, namun belum dikonfirmasi oleh user.
+                                                Status akan menjadi <strong>Confirmed</strong> setelah user mengonfirmasi selesai,
+                                                atau kembali ke <strong>In Progress</strong> jika user menyatakan belum selesai.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                                 @endif
                             </div>
@@ -249,62 +264,81 @@
                 <div class="px-4 py-3 bg-gray-100 border-b border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-800">Timeline</h2>
                 </div>
-                <div class="p-4">
-                    <div class="relative flex items-center justify-between w-full py-2">
-                        @foreach($orderPerbaikan->history as $index => $history)
-                        <div class="relative flex flex-col items-center">
-                            <div class="w-8 h-8 flex items-center justify-center rounded-full {{ match($history->status) {
-                                'open' => 'bg-blue-600',
-                                'in_progress' => 'bg-yellow-500',
-                                'rejected' => 'bg-red-500',
-                                'confirmed' => 'bg-green-600',
-                                default => 'bg-slate-500'
-                            } }} text-white">
-                                @if($history->status === 'confirmed')
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                                @elseif($history->status === 'rejected')
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                @elseif($history->status === 'in_progress')
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                @else
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                @endif
-                            </div>
-                            <div class="mt-2 text-center">
-                                <p class="text-xs text-gray-500">{{ $history->created_at->format('d M Y H:i') }}</p>
-                                <p class="text-sm font-medium text-gray-700">{{ $history->status_label }}</p>
-                            </div>
-
-                            <!-- Connecting Line -->
-                            @if(!$loop->last)
-                            <div class="absolute top-4 left-full w-full h-0.5 bg-gray-200"></div>
-                            @endif
-
-                            <!-- Hover Card -->
-                            <div
-                                class="absolute bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none transform -translate-x-1/2 left-1/2">
-                                <div class="text-xs">
-                                    <p class="font-medium text-gray-900">{{ $history->keterangan }}</p>
-                                    <p class="text-gray-600 mt-1">Oleh: {{ $history->creator->name }}</p>
-                                    @if($orderPerbaikan->nama_penanggung_jawab && $history->status !== 'open')
-                                    <p class="text-gray-600">PJ: {{ $orderPerbaikan->nama_penanggung_jawab }}</p>
+                <div class="p-6">
+                    <div class="flow-root">
+                        <ul role="list" class="-mb-8">
+                            @forelse($orderPerbaikan->history->sortBy('created_at') as $history)
+                            <li>
+                                <div class="relative pb-8">
+                                    @if(!$loop->last)
+                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-300"
+                                        aria-hidden="true"></span>
                                     @endif
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span
+                                                class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white {{ match($history->status) {
+                                                    'open' => 'bg-blue-500',
+                                                    'in_progress' => 'bg-yellow-500',
+                                                    'tutup' => 'bg-violet-500',
+                                                    'confirmed' => 'bg-green-600',
+                                                    'rejected' => 'bg-red-500',
+                                                    default => 'bg-slate-500'
+                                                } }}">
+                                                @if($history->status === 'confirmed')
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                @elseif($history->status === 'rejected')
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                @elseif($history->status === 'in_progress')
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                @else
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                                @endif
+                                            </span>
+                                        </div>
+                                        <div class="min-w-0 flex-1 pt-1">
+                                            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $history->status_badge_class }}">
+                                                    {{ $history->status_label }}
+                                                </span>
+                                                <p class="text-sm text-gray-500">
+                                                    {{ $history->creator?->name ?? 'System' }}
+                                                    <span class="text-gray-400">
+                                                        · {{ $history->created_at->format('d M Y H:i') }}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            @if($history->keterangan)
+                                            <p
+                                                class="mt-2 text-sm text-gray-700 bg-gray-50 rounded-md px-3 py-2">
+                                                {{ $history->keterangan }}
+                                            </p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        @endforeach
+                            </li>
+                            @empty
+                            <li class="text-center text-gray-500 text-sm py-6">Belum ada aktivitas</li>
+                            @endforelse
+                        </ul>
                     </div>
                 </div>
             </div>

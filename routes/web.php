@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/create', [App\Http\Controllers\User\AdministrasiUmumController::class, 'createOrderPerbaikan'])->name('create')->middleware('permission:order.create');
             Route::post('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'storeOrderPerbaikan'])->name('store')->middleware('permission:order.create');
             Route::get('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'showOrderPerbaikan'])->name('show');
+            Route::post('/{orderPerbaikan}/konfirmasi-selesai', [App\Http\Controllers\User\AdministrasiUmumController::class, 'confirmOrderPerbaikan'])->name('konfirmasi-selesai');
             Route::get('/{orderPerbaikan}/edit', [App\Http\Controllers\User\AdministrasiUmumController::class, 'editOrderPerbaikan'])->name('edit')->middleware('permission:order.edit.own|order.manage');
             Route::put('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'updateOrderPerbaikan'])->name('update')->middleware('permission:order.edit.own|order.manage');
             Route::delete('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'deleteOrderPerbaikan'])->name('delete')->middleware('permission:order.edit.own|order.manage');

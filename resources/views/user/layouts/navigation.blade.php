@@ -80,7 +80,17 @@
                             </div>
                         </div>
                         @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
-                        <a href="{{ route('user.ticket.show', ['ticket' => $notification->data['ticket_id']]) }}"
+                        @php
+                            $nData = $notification->data;
+                            $isTicket = isset($nData['ticket_id']);
+                            $isOrder = isset($nData['order_id']);
+                            $nUrl = $isTicket
+                                ? route('user.ticket.show', ['ticket' => $nData['ticket_id']])
+                                : ($isOrder
+                                    ? route('user.administrasi-umum.order-perbaikan.show', $nData['order_id'])
+                                    : '#');
+                        @endphp
+                        <a href="{{ $nUrl }}"
                             onclick="event.preventDefault(); markNotificationAsRead('{{ $notification->id }}', this)"
                             class="block px-4 py-3 hover:bg-gray-50 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}">
                             <div class="flex items-start">
@@ -101,9 +111,15 @@
                                     <p class="mt-1 text-sm text-gray-600">
                                         {{ $notification->data['message'] }}
                                     </p>
+                                    @if(isset($notification->data['ticket_number']))
                                     <div class="mt-1 text-xs text-gray-500">
                                         Ticket #{{ $notification->data['ticket_number'] }}
                                     </div>
+                                    @elseif(isset($notification->data['order_number']))
+                                    <div class="mt-1 text-xs text-gray-500">
+                                        Order #{{ $notification->data['order_number'] }}
+                                    </div>
+                                    @endif
                                     @if(isset($notification->data['responder_name']))
                                     <div class="mt-1 text-xs text-gray-500">
                                         Oleh: {{ $notification->data['responder_name'] }}
@@ -139,7 +155,7 @@
                             {{ Auth::user()->name }}
                         </p>
                         <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
-                            {{ Auth::user()->email }}
+                            {{ Auth::user()->role }}
                         </p>
                     </div>
                     <ul class="py-1" role="none">

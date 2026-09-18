@@ -72,11 +72,11 @@
                             <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Open</option>
                             <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>In
                                 Progress</option>
+                            <option value="tutup" {{ request('status') == 'tutup' ? 'selected' : '' }}>Tutup (Menunggu
+                                Konfirmasi)</option>
                             <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed
                             </option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected
-                            </option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed
                             </option>
                         </select>
                     </div>
@@ -166,10 +166,10 @@
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                 {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}
                                 {{ $order->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                                {{ $order->status === 'tutup' ? 'bg-violet-100 text-violet-800' : '' }}
                                 {{ $order->status === 'confirmed' ? 'bg-green-100 text-green-800' : '' }}
-                                {{ $order->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}
-                                {{ $order->status === 'completed' ? 'bg-gray-100 text-gray-800' : '' }}">
-                                {{ ucfirst($order->status) }}
+                                {{ $order->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}">
+                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

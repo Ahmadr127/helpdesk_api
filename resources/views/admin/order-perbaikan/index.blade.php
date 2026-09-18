@@ -159,6 +159,8 @@
                             <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Dibuka</option>
                             <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Dalam
                                 Proses</option>
+                            <option value="tutup" {{ request('status') == 'tutup' ? 'selected' : '' }}>Tutup (Menunggu Konfirmasi)
+                            </option>
                             <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed
                             </option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected
@@ -327,6 +329,7 @@
                                 {{ match($order->status) {
                                     'open' => 'bg-blue-50 text-blue-800 border border-blue-200',
                                     'in_progress' => 'bg-yellow-50 text-yellow-800 border border-yellow-200',
+                                    'tutup' => 'bg-violet-50 text-violet-800 border border-violet-200',
                                     'confirmed' => 'bg-green-50 text-green-800 border border-green-200',
                                     'rejected' => 'bg-red-50 text-red-800 border border-red-200',
                                     default => 'bg-gray-50 text-gray-800 border border-gray-200'
@@ -334,6 +337,7 @@
                                 {{ match($order->status) {
                                     'open' => 'Dibuka',
                                     'in_progress' => 'Dalam Diproses',
+                                    'tutup' => 'Tutup',
                                     'confirmed' => 'Dikonfirmasi',
                                     'rejected' => 'Ditolak',
                                     default => $order->status

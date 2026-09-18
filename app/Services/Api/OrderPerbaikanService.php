@@ -377,4 +377,43 @@ class OrderPerbaikanService
 
         return $order;
     }
+
+    public function userConfirm(User $user, OrderPerbaikan $order, ?string $catatan = null, bool $selesai = true): OrderPerbaikan
+    {
+        if ($order->created_by !== $user->id) {
+            throw new \Exception('Unauthorized', 403);
+        }
+        if ($order->status !== OrderPerbaikan::STATUS_TUTUP) {
+            throw new \Exception('Hanya order dengan status tutup yang dapat dikonfirmasi.', 422);
+        }
+
+        $order = DB::transaction(function () use ($user, $order, $catatan, $selesai) {
+            $status = $selesai ? OrderPerbaikan::STATUS_CONFIRMED : OrderPerbaikan::STATUS_IN_PROGRESS;
+            $keterangan = $catatan ?: ($selesai
+                ? 'User mengonfirmasi order sudah selesai.'
+                : 'User menyatakan order belum selesai. Order dibuka kembali.');
+
+            $order->update([
+                'status' => $status,
+                'updated_by' => $user->id,
+            ]);
+
+            $order->history()->create([
+                'status' => $status,
+                'follow_up' => $catatan,
+                'keterangan' => $keterangan,
+                'created_by' => $user->id,
+            ]);
+
+            return $order->fresh()->load(['creator', 'location']);
+        });
+
+        // Beri tahu admin/IPSRS bahwa user sudah mengkonfirmasi (DB inbox)
+        $admins = User::adminUmum()->get();
+        foreach ($admins as $adm) {
+            $adm->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        return $order;
+    }
 }
