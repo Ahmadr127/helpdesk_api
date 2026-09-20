@@ -427,7 +427,7 @@ class AdministrasiUmumController extends Controller
     public function storeOrderPerbaikan(Request $request, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'unit_proses_code' => ['required','string', Rule::exists('unit_proses','code'), function($a,$v,$f){ if($v==='SIRS') $f('Unit proses SIRS tidak valid.'); }],
+            'unit_proses_code' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',

@@ -45,18 +45,20 @@
                 <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
                 <input type="hidden" name="department_id" value="{{ $departmentId ?? '' }}">
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+                    <div class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Unit Pengaju <span class="text-gray-400">(otomatis)</span></label>
                         <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
                             <span class="text-sm font-medium text-gray-900">{{ $unitPengajuName ?? '-' }} ({{ $unitPengajuCode ?? '-' }})</span>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Department ID: {{ $departmentId ?? '-' }} • {{ $user->department ?? '-' }}</p>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Proses <span class="text-red-500">*</span></label>
-                        <x-searchable-select name="unit_proses_code" :options="$unitProses->mapWithKeys(fn($u)=>[$u->code=>$u->code.' - '.$u->name])->toArray()" :selected="old('unit_proses_code')" placeholder="Cari unit proses..." :required="true" id="unit_proses_code" />
-                        @error('unit_proses_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    <div class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Proses</label>
+                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
+                            <span class="text-sm text-gray-500">-</span>
+                        </div>
+                        <input type="hidden" name="unit_proses_code" value="">
                     </div>
                 </div>
 

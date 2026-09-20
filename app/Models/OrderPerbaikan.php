@@ -79,15 +79,13 @@ class OrderPerbaikan extends Model
         return $this->belongsTo(Location::class, 'lokasi');
     }
 
-    // Kompatibilitas atribut lama yang dihapus kolomnya
-    // FIX: unit_proses harus dari relasi unitProses, bukan department (department = Unit Pengaju)
+    // Unit Proses murni dari relasi unitProses, null jika tidak ada (konsisten web & mobile)
     public function getUnitProsesAttribute()
     {
         if (! $this->relationLoaded('unitProses')) {
             $this->load('unitProses');
         }
-
-        return $this->relations['unitProses']?->code ?? $this->department?->code;
+        return $this->relations['unitProses']?->code;
     }
 
     public function getUnitProsesNameAttribute()
@@ -95,8 +93,7 @@ class OrderPerbaikan extends Model
         if (! $this->relationLoaded('unitProses')) {
             $this->load('unitProses');
         }
-
-        return $this->relations['unitProses']?->name ?? $this->department?->name;
+        return $this->relations['unitProses']?->name;
     }
 
     // Status helper methods
