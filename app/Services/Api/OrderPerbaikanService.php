@@ -14,7 +14,7 @@ class OrderPerbaikanService
 {
     public function listForUser(User $user, array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location'])->where('created_by', $user->id);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'unitProses'])->where('created_by', $user->id);
 
         if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
@@ -44,7 +44,7 @@ class OrderPerbaikanService
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'unitProses']);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -190,7 +190,7 @@ class OrderPerbaikanService
                 'created_by' => $user->id,
             ]);
 
-            return $order->load(['creator', 'history', 'location']);
+            return $order->load(['creator', 'history', 'location', 'department', 'unitProses']);
         });
 
         // 1 baris FCM ke Admin Umum + DB inbox

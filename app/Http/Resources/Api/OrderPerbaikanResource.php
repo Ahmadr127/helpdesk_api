@@ -24,6 +24,8 @@ class OrderPerbaikanResource extends JsonResource
             'kategori_order' => $this->kategori_order,
             'lokasi' => $this->lokasi,
             'location' => $this->whenLoaded('location'),
+            'department' => $this->whenLoaded('department', fn() => ['id'=>$this->department->id,'code'=>$this->department->code,'name'=>$this->department->name]),
+            'department_id' => $this->department_id,
             'keluhan' => $this->keluhan,
             'prioritas' => $this->prioritas,
             'status' => $this->status,
