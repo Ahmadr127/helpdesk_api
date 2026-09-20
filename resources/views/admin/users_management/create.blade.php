@@ -76,25 +76,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                        <div class="relative">
-                            <select name="position" required
-                                class="appearance-none w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors pr-10">
-                                <option value="">Select Position</option>
-                                @foreach($positions as $key => $value)
-                                <option value="{{ $key }}" {{ old('position') == $key ? 'selected' : '' }}>
-                                    {{ $value }}
-                                </option>
-                                @endforeach
-                            </select>
-                            <div
-                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
+                        <x-searchable-select name="position" :options="$positions" :selected="old('position')" placeholder="Cari position..." :required="true" />
                         @error('position')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -186,26 +168,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                        <div class="relative">
-                            <select name="department" required
-                                class="appearance-none w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors pr-10">
-                                <option value="">Select Department</option>
-                                @foreach($departments as $department)
-                                <option value="{{ $department->code }}"
-                                    {{ old('department') == $department->code ? 'selected' : '' }}>
-                                    {{ $department->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                            <div
-                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
+                        <x-searchable-select name="department" :options="$departments" :selected="old('department')" placeholder="Cari department..." :required="true" />
                         @error('department')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror

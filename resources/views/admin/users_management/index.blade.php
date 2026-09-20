@@ -18,38 +18,50 @@
 
     <div class="card bg-white shadow-md rounded-xl overflow-hidden">
         <div class="p-6">
-            <!-- Search and Filter Bar (server-side, support pagination 334 users) -->
-            <form method="GET" action="{{ route('admin.users.index') }}" id="filter-form" class="mb-6 flex flex-col sm:flex-row gap-4">
-                <div class="relative flex-1">
-                    <input type="text" name="search" id="search-users" value="{{ request('search') }}" placeholder="Search users (nama, email, phone, dept, position)..."
-                        class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
+            <!-- Search and Filter Bar (server-side, support pagination) -->
+            <form method="GET" action="{{ route('admin.users.index') }}" id="filter-form" class="mb-6 space-y-4">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="relative flex-1">
+                        <input type="text" name="search" id="search-users" value="{{ request('search') }}" placeholder="Search users (nama, username, phone, dept, position)..."
+                            class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <select name="role" id="filter-role"
+                            class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
+                            <option value="">Semua Role</option>
+                            @foreach($roles as $role)
+                            <option value="{{ $role->slug }}" {{ request('role') === $role->slug ? 'selected' : '' }}>
+                                {{ $role->name ?: $role->slug }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <select name="status" id="filter-status"
+                            class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
+                            <option value="">All Status</option>
+                            <option value="1" {{ request('status')==='1'?'selected':'' }}>Active</option>
+                            <option value="0" {{ request('status')==='0'?'selected':'' }}>Inactive</option>
+                        </select>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Cari</button>
+                        @if(request('search') || (request('role') !== null && request('role') !== '') || (request('status') !== null && request('status') !== '') || request('department') || request('position'))
+                            <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
+                        @endif
                     </div>
                 </div>
-                <div class="flex gap-3">
-                    <select name="role" id="filter-role"
-                        class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
-                        <option value="">Semua Role</option>
-                        @foreach($roles as $role)
-                        <option value="{{ $role->slug }}" {{ request('role') === $role->slug ? 'selected' : '' }}>
-                            {{ $role->name ?: $role->slug }}
-                        </option>
-                        @endforeach
-                    </select>
-                    <select name="status" id="filter-status"
-                        class="rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-100 focus:border-green-400 transition-colors">
-                        <option value="">All Status</option>
-                        <option value="1" {{ request('status')==='1'?'selected':'' }}>Active</option>
-                        <option value="0" {{ request('status')==='0'?'selected':'' }}>Inactive</option>
-                    </select>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Cari</button>
-                    @if(request('search') || (request('role') !== null && request('role') !== '') || (request('status') !== null && request('status') !== ''))
-                        <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
-                    @endif
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Filter Department (kolom pencarian)</label>
+                        <x-searchable-select name="department" :options="$departments" :selected="request('department')" placeholder="Cari department..." id="filter_department" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Filter Position (kolom pencarian)</label>
+                        <x-searchable-select name="position" :options="$positions" :selected="request('position')" placeholder="Cari position..." id="filter_position" />
+                    </div>
                 </div>
             </form>
             @if(request('search'))
@@ -166,16 +178,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-users');
     const filterRole = document.getElementById('filter-role');
     const filterStatus = document.getElementById('filter-status');
+    const filterDept = document.getElementById('filter_department');
+    const filterPos = document.getElementById('filter_position');
     const form = document.getElementById('filter-form');
 
     // Auto-submit dengan debounce untuk search, instant untuk select
     let timeout;
-    searchInput.addEventListener('input', function() {
+    if (searchInput) searchInput.addEventListener('input', function() {
         clearTimeout(timeout);
         timeout = setTimeout(() => form.submit(), 600);
     });
-    filterRole.addEventListener('change', () => form.submit());
-    filterStatus.addEventListener('change', () => form.submit());
+    if (filterRole) filterRole.addEventListener('change', () => form.submit());
+    if (filterStatus) filterStatus.addEventListener('change', () => form.submit());
+    if (filterDept) filterDept.addEventListener('change', () => form.submit());
+    if (filterPos) filterPos.addEventListener('change', () => form.submit());
 });
 </script>
 @endpush

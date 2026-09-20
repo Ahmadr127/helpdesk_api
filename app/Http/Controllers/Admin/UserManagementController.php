@@ -22,13 +22,15 @@ class UserManagementController extends Controller
     public function index(Request $request)
     {
         $users = $this->userService->list(
-            $request->only(['search', 'role', 'status']),
+            $request->only(['search', 'role', 'status', 'department', 'position']),
             10
         )->withQueryString();
 
         $roles = $this->roles->all();
+        $departments = Department::where('status', 1)->orderBy('name')->get();
+        $positions = Position::where('status', 1)->orderBy('name')->get();
 
-        return view('admin.users_management.index', compact('users', 'roles'));
+        return view('admin.users_management.index', compact('users', 'roles', 'departments', 'positions'));
     }
 
     public function create()
