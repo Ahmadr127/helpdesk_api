@@ -48,19 +48,10 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments',
-            'location_id' => ['nullable', function($attr,$val,$fail){ if($val!==null && $val!=='' && !\App\Models\Location::where('id',$val)->orWhere('code',$val)->exists()) $fail('Lokasi tidak valid.'); }],
-            'building_id' => ['nullable', function($attr,$val,$fail){ if($val!==null && $val!=='' && !\App\Models\Building::where('id',$val)->orWhere('code',$val)->exists()) $fail('Gedung tidak valid.'); }],
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
             'status' => 'required|boolean',
         ]);
-        // normalisasi code -> id jika dikirim code
-        if (!empty($validated['location_id'])) {
-            $loc = \App\Models\Location::where('id',$validated['location_id'])->orWhere('code',$validated['location_id'])->first();
-            $validated['location_id'] = $loc?->id;
-        }
-        if (!empty($validated['building_id'])) {
-            $b = \App\Models\Building::where('id',$validated['building_id'])->orWhere('code',$validated['building_id'])->first();
-            $validated['building_id'] = $b?->id;
-        }
 
         Department::create($validated);
 
@@ -72,18 +63,10 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:departments,code,'.$department->id,
-            'location_id' => ['nullable', function($attr,$val,$fail){ if($val!==null && $val!=='' && !\App\Models\Location::where('id',$val)->orWhere('code',$val)->exists()) $fail('Lokasi tidak valid.'); }],
-            'building_id' => ['nullable', function($attr,$val,$fail){ if($val!==null && $val!=='' && !\App\Models\Building::where('id',$val)->orWhere('code',$val)->exists()) $fail('Gedung tidak valid.'); }],
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
             'status' => 'required|boolean',
         ]);
-        if (!empty($validated['location_id'])) {
-            $loc = \App\Models\Location::where('id',$validated['location_id'])->orWhere('code',$validated['location_id'])->first();
-            $validated['location_id'] = $loc?->id;
-        }
-        if (!empty($validated['building_id'])) {
-            $b = \App\Models\Building::where('id',$validated['building_id'])->orWhere('code',$validated['building_id'])->first();
-            $validated['building_id'] = $b?->id;
-        }
 
         $department->update($validated);
 

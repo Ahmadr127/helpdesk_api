@@ -13,24 +13,6 @@ class StoreUserRequest extends FormRequest
         return $this->user()?->hasPermission('user.manage') ?? false;
     }
 
-    protected function prepareForValidation(): void
-    {
-        if ($this->has('position')) {
-            $raw = trim((string) $this->input('position'));
-            if ($raw !== '') {
-                $lower = strtolower($raw);
-                $map = ['staff'=>'STAFF','manager'=>'MANAGER','direktur utama'=>'DIR_UT','user'=>'STAFF','admin'=>'STAFF'];
-                if (isset($map[$lower])) {
-                    $this->merge(['position' => $map[$lower]]);
-                } else {
-                    $found = \App\Models\Position::whereRaw('LOWER(code)=?', [$lower])->orWhereRaw('LOWER(name)=?', [$lower])->first();
-                    if ($found) $this->merge(['position' => $found->code]);
-                    else $this->merge(['position' => strtoupper($raw)]);
-                }
-            }
-        }
-    }
-
     public function rules(): array
     {
         return [
