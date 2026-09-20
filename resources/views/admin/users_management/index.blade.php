@@ -55,12 +55,12 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Filter Department (kolom pencarian)</label>
-                        <x-searchable-select name="department" :options="$departments" :selected="request('department')" placeholder="Cari department..." id="filter_department" />
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Filter Department (cari by nama)</label>
+                        <x-searchable-select name="department" :options="$departments->pluck('name','name')->toArray()" :selected="request('department')" placeholder="Ketik nama department..." id="filter_department" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Filter Position (kolom pencarian)</label>
-                        <x-searchable-select name="position" :options="$positions" :selected="request('position')" placeholder="Cari position..." id="filter_position" />
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Filter Position (cari by nama)</label>
+                        <x-searchable-select name="position" :options="$positions->pluck('name','name')->toArray()" :selected="request('position')" placeholder="Ketik Staff/Manager/Direktur Utama..." id="filter_position" />
                     </div>
                 </div>
             </form>
