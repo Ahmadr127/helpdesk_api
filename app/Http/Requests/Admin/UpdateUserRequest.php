@@ -15,6 +15,13 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
+        \Log::info('UPDATE USER POSITION DEBUG', [
+            'user_id' => $this->route('user')?->id,
+            'raw_position' => $this->input('position'),
+            'all_position_values' => $this->all()['position'] ?? null,
+            'all_input' => $this->all(),
+        ]);
+
         $userId = $this->route('user')?->id ?? $this->route('id');
 
         $rules = [
