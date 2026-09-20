@@ -614,29 +614,26 @@ class ImportSimutuUsers extends Command
     }
 
     /**
-     * Sederhanakan position menjadi hanya 3 nilai:
-     * - Direktur Utama (jika mengandung direktur utama / DIR_UT)
-     * - Manager (jika mengandung kepala / KA_)
-     * - Staff (lainnya)
+     * Sederhanakan position menjadi hanya 3 kode:
+     * - DIR_UT (Direktur Utama)
+     * - MANAGER (dari Kepala)
+     * - STAFF (lainnya)
      */
     private function normalizePosition(?string $raw): ?string
     {
         if ($raw === null || trim($raw) === '' || $raw === '\N') {
-            return 'Staff';
+            return 'STAFF';
         }
         $low = strtolower(trim($raw));
-        // Direktur Utama -> DIR_UT
         if (str_contains($low, 'direktur utama') || $low === 'dir_ut' || str_contains($low, 'dir ut')) {
-            return 'Direktur Utama';
+            return 'DIR_UT';
         }
-        // Kepala -> Manager (semua KA_*, kepala xxx)
         if (str_contains($low, 'kepala') || str_starts_with($low, 'ka_') || str_starts_with($low, 'ka ')) {
-            return 'Manager';
+            return 'MANAGER';
         }
-        // Direktur medis/spesialis etc bukan direktur utama -> anggap Manager? tetap Staff sesuai permintaan hanya 3, direktur selain utama = Manager
         if (str_contains($low, 'direktur')) {
-            return 'Manager';
+            return 'MANAGER';
         }
-        return 'Staff';
+        return 'STAFF';
     }
 }

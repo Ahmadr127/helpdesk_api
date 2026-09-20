@@ -27,12 +27,12 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-gray-400">(opsional)</span></label>
-                <x-searchable-select name="location_id" :options="$locations" selected="" placeholder="Cari lokasi..." id="location_id" />
+                <x-searchable-select name="location_id" :options="$locations->pluck('name','id')->toArray()" selected="" placeholder="Cari lokasi..." id="location_id" />
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Gedung <span class="text-gray-400">(opsional)</span></label>
-                <x-searchable-select name="building_id" :options="$buildings" selected="" placeholder="Cari gedung..." id="building_id" />
+                <x-searchable-select name="building_id" :options="$buildings->pluck('name','id')->toArray()" selected="" placeholder="Cari gedung..." id="building_id" />
             </div>
 
             <div class="mb-4">
