@@ -178,8 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-users');
     const filterRole = document.getElementById('filter-role');
     const filterStatus = document.getElementById('filter-status');
-    const filterDept = document.getElementById('filter_department');
-    const filterPos = document.getElementById('filter_position');
+    const filterDept = document.getElementById('filter_department-value') || document.getElementById('filter_department');
+    const filterPos = document.getElementById('filter_position-value') || document.getElementById('filter_position');
     const form = document.getElementById('filter-form');
 
     // Auto-submit dengan debounce untuk search, instant untuk select

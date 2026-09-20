@@ -169,27 +169,36 @@ function openModal(department = null) {
         document.getElementById('code').value = department.code;
         document.getElementById('status').value = department.status;
         const loc = department.location ? department.location.id : department.location_id;
-        document.getElementById('location_id').value = loc || '';
+        const locName = department.location ? department.location.name : '';
+        const locVal = loc || '';
+        if (typeof selectSearchableOption === 'function') {
+            selectSearchableOption('location_id', String(locVal), locName || String(locVal));
+        } else {
+            const el = document.getElementById('location_id-value');
+            if (el) el.value = locVal;
+        }
         const gedung = department.building ? department.building.id : department.building_id;
-        document.getElementById('building_id').value = gedung || '';
-        if (typeof syncSearchableSelectInput === 'function') {
-            syncSearchableSelectInput('location_id');
-            syncSearchableSelectInput('building_id');
+        const bdgName = department.building ? department.building.name : '';
+        const bdgVal = gedung || '';
+        if (typeof selectSearchableOption === 'function') {
+            selectSearchableOption('building_id', String(bdgVal), bdgName || String(bdgVal));
+        } else {
+            const el = document.getElementById('building_id-value');
+            if (el) el.value = bdgVal;
         }
         modalTitle.textContent = 'Edit Department';
     } else {
         form.action = "{{ route('admin.master.departments.store') }}";
         methodField.innerHTML = '';
         form.reset();
-        // reset searchable inputs
-        const locSearch = document.getElementById('location_id-search');
-        const bdgSearch = document.getElementById('building_id-search');
-        if (locSearch) locSearch.value = '';
-        if (bdgSearch) bdgSearch.value = '';
-        if (typeof filterSearchableSelect === 'function') {
-            filterSearchableSelect('location_id', '');
-            filterSearchableSelect('building_id', '');
-        }
+        // reset single-field searchable dropdowns
+        ['location_id','building_id'].forEach(function(id){
+            const hidden = document.getElementById(id+'-value');
+            const inp = document.getElementById(id+'-input');
+            if (hidden) hidden.value = '';
+            if (inp) inp.value = '';
+            if (typeof filterSearchableDropdown === 'function') filterSearchableDropdown(id, '');
+        });
         modalTitle.textContent = 'Add Department';
     }
 
