@@ -13,6 +13,7 @@
     // Build normalized options list: [['value'=>..., 'label'=>...]]
     $normalized = [];
     $selectedLabel = '';
+    $selectedValue = '';
     foreach ($options as $key => $label) {
         if ($label instanceof \Illuminate\Database\Eloquent\Model) {
             $optValue = $label->code ?? $label->id ?? $key;
@@ -33,14 +34,14 @@
         $optValue = (string)$optValue;
         $optLabel = (string)$optLabel;
         $isSelected = $selected !== null && $selected !== '' && (strtolower((string)$selected) === strtolower($optValue) || strtolower((string)$selected) === strtolower($optLabel));
-        if ($isSelected) $selectedLabel = $optLabel;
+        if ($isSelected) { $selectedLabel = $optLabel; $selectedValue = $optValue; }
         $normalized[] = ['value'=>$optValue, 'label'=>$optLabel, 'selected'=>$isSelected];
     }
 @endphp
 
 <div data-searchable-dropdown="{{ $selectId }}" class="relative">
-    {{-- hidden value untuk submit --}}
-    <input type="hidden" name="{{ $name }}" id="{{ $selectId }}-value" value="{{ $selected ?? '' }}" @if($required) required @endif>
+    {{-- hidden value untuk submit (pakai code yang cocok, bukan raw name) --}}
+    <input type="hidden" name="{{ $name }}" id="{{ $selectId }}-value" value="{{ $selectedValue }}" @if($required) required @endif>
     {{-- satu field: input pencarian + dropdown --}}
     <div class="relative">
         <input
