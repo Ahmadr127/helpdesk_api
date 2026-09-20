@@ -15,7 +15,7 @@ class StoreFeedbackRequest extends FormRequest
     {
         return [
             'rating' => 'required|integer|min:1|max:5',
-            'category' => 'nullable|string|max:255',
+            'category' => 'required|in:SIRS,IPSRS,Other',
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
         ];

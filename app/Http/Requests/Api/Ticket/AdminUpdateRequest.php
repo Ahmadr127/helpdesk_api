@@ -16,7 +16,7 @@ class AdminUpdateRequest extends FormRequest
         return [
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
-            'status' => 'nullable|in:in_progress,closed',
+            'status' => 'nullable|in:open,pending,in_progress,closed',
             'action' => 'nullable|in:reply',
         ];
     }

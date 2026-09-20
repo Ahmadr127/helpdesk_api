@@ -85,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{orderPerbaikan}', [UserOrderController::class, 'show'])->name('show');
         Route::put('/{orderPerbaikan}', [UserOrderController::class, 'update'])->name('update');
         Route::delete('/{orderPerbaikan}', [UserOrderController::class, 'destroy'])->name('destroy');
+        Route::post('/{orderPerbaikan}/konfirmasi-selesai', [UserOrderController::class, 'konfirmasiSelesai'])->name('konfirmasiSelesai');
     });
 
     // Feedback (dual: user create/list own, admin list all + reply)
@@ -155,6 +156,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/fcm-token', [FcmTokenController::class, 'store'])->name('fcmToken.store');
         Route::delete('/fcm-token', [FcmTokenController::class, 'destroy'])->name('fcmToken.destroy');
         Route::get('/fcm-tokens', [FcmTokenController::class, 'index'])->name('fcmTokens.index');
+        Route::put('/profile', [\App\Http\Controllers\Api\User\ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/password', [\App\Http\Controllers\Api\User\ProfileController::class, 'changePassword'])->name('password.update');
     });
 
     // Notification Inbox (database notifications) - Flutter UI
@@ -163,6 +166,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/unread-count', [NotificationInboxController::class, 'unreadCount'])->name('unreadCount');
         Route::post('/{id}/read', [NotificationInboxController::class, 'markRead'])->name('markRead');
         Route::post('/read-all', [NotificationInboxController::class, 'markAllRead'])->name('markAllRead');
+        Route::post('/delete-old', [NotificationInboxController::class, 'deleteOld'])->name('deleteOld');
+        Route::post('/settings', [NotificationInboxController::class, 'updateSettings'])->name('updateSettings');
         Route::delete('/{id}', [NotificationInboxController::class, 'destroy'])->name('destroy');
     });
 

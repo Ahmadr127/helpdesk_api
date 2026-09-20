@@ -18,6 +18,7 @@ class UpdateTicketRequest extends FormRequest
             'category_id' => 'required|exists:categories,id',
             'department_id' => 'required|exists:departments,id',
             'location_id' => 'required|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
             'priority' => 'required|in:low,medium,high',
             'photo' => 'nullable|image|max:5120',
         ];

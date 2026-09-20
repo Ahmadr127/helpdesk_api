@@ -91,6 +91,7 @@ class OrderPerbaikanService
             'totalOrders' => OrderPerbaikan::count(),
             'openOrders' => OrderPerbaikan::where('status', 'open')->count(),
             'inProgressOrders' => OrderPerbaikan::where('status', 'in_progress')->count(),
+            'tutupOrders' => OrderPerbaikan::where('status', 'tutup')->count(),
             'confirmedOrders' => OrderPerbaikan::where('status', 'confirmed')->count(),
             'rejectedOrders' => OrderPerbaikan::where('status', 'rejected')->count(),
             'rendahOrders' => OrderPerbaikan::where('prioritas', 'RENDAH')->count(),
@@ -105,6 +106,7 @@ class OrderPerbaikanService
             'total' => OrderPerbaikan::where('created_by', $user->id)->count(),
             'open' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'open')->count(),
             'in_progress' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'in_progress')->count(),
+            'tutup' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'tutup')->count(),
             'confirmed' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'confirmed')->count(),
             'rejected' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'rejected')->count(),
         ];
