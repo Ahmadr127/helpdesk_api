@@ -12,6 +12,7 @@ use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AdministrasiUmumController extends Controller
 {
@@ -426,8 +427,7 @@ class AdministrasiUmumController extends Controller
     public function storeOrderPerbaikan(Request $request, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'unit_proses_code' => 'nullable|string',
-            'unit_proses_name' => 'nullable|string',
+            'unit_proses_code' => ['required','string', Rule::exists('unit_proses','code'), function($a,$v,$f){ if($v==='SIRS') $f('Unit proses SIRS tidak valid.'); }],
             'department_id' => 'nullable|exists:departments,id',
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',
@@ -436,7 +436,7 @@ class AdministrasiUmumController extends Controller
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'tanggal' => 'required|date',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240', // max 10MB
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         try {

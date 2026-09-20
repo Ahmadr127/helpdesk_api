@@ -127,8 +127,19 @@ class OrderPerbaikanService
             $nomor = $prefix.$newNumber;
 
             $unitProsesCode = $validated['unit_proses_code'] ?? null;
-            $unitProsesName = $validated['unit_proses_name'] ?? null;
-            $unitProses = $unitProsesCode ? UnitProses::where('code', $unitProsesCode)->first() : null;
+            if (empty($unitProsesCode)) {
+                throw new \Illuminate\Validation\ValidationException(
+                    validator: \Illuminate\Support\Facades\Validator::make([], []),
+                    response: response()->json(['message'=>'Unit proses wajib dipilih.','errors'=>['unit_proses_code'=>['Unit proses wajib dipilih.']]], 422)
+                );
+            }
+            $unitProses = UnitProses::where('code', $unitProsesCode)->first();
+            if (!$unitProses) {
+                throw new \Exception('Unit proses tidak valid.', 422);
+            }
+            if ($unitProses->code === 'SIRS') {
+                throw new \Exception('Unit proses SIRS tidak valid.', 422);
+            }
 
             // Unit pengaju disimpan via department_id (web) dengan fallback lookup kode/nama departemen
             $departmentId = $validated['department_id'] ?? null;
