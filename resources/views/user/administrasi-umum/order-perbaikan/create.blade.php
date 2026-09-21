@@ -39,7 +39,7 @@
         @endif
 
         <!-- Form - separate page (not modal) -->
-        <form action="{{ route('user.administrasi-umum.order-perbaikan.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
+        <form id="createOrderForm" action="{{ route('user.administrasi-umum.order-perbaikan.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
             @csrf
             <div class="space-y-6">
                 <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
@@ -148,7 +148,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional, max 10MB)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional, maks 2MB)</label>
                         <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-400 transition-colors" id="dropZone">
                             <div class="space-y-1 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -161,7 +161,7 @@
                                     </label>
                                     <p class="pl-1">atau drag & drop</p>
                                 </div>
-                                <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF maks 2MB (otomatis dikompresi)</p>
                                 <p id="file-name" class="text-sm text-green-600 font-medium hidden"></p>
                                 <div id="preview-container" class="hidden mt-3">
                                     <img id="preview-image" src="#" alt="Preview" class="w-24 h-24 object-cover rounded-lg mx-auto border">
@@ -252,9 +252,10 @@ document.addEventListener('DOMContentLoaded', function(){
         fotoInput.closest('div.space-y-1')?.appendChild(fotoError);
     }
     function validateFoto(file){
+        // Format salah → tolak langsung. Ukuran >2MB tidak ditolak:
+        // dikompresi otomatis saat submit agar lolos limit server.
         const allowed=['image/jpeg','image/png','image/jpg','image/gif'];
         if(!allowed.includes(file.type)) return 'Format foto harus JPG, JPEG, PNG, atau GIF.';
-        if(file.size > 10*1024*1024) return 'Ukuran foto maksimal 10MB (file Anda '+(file.size/1024/1024).toFixed(2)+' MB).';
         return null;
     }
     function resetFoto(msg){
@@ -266,6 +267,30 @@ document.addEventListener('DOMContentLoaded', function(){
         previewContainer.classList.add('hidden');
         if(msg) alert(msg);
     }
+    // Kompresi via canvas ke JPEG agar lolos limit upload server (~2MB).
+    // 1600px q0.82 umumnya <1MB.
+    function compressImageFile(file, maxDim, quality){
+        maxDim=maxDim||1600; quality=quality||0.82;
+        return new Promise(function(resolve,reject){
+            const url=URL.createObjectURL(file);
+            const img=new Image();
+            img.onload=function(){
+                URL.revokeObjectURL(url);
+                try{
+                    let w=img.width,h=img.height;
+                    const scale=Math.min(1, maxDim/Math.max(w,h));
+                    w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+                    const c=document.createElement('canvas'); c.width=w; c.height=h;
+                    const ctx=c.getContext('2d');
+                    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
+                    ctx.drawImage(img,0,0,w,h);
+                    c.toBlob(function(b){ b?resolve(b):reject(new Error('compress')); },'image/jpeg',quality);
+                }catch(err){ reject(err); }
+            };
+            img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('load')); };
+            img.src=url;
+        });
+    }
     if(fotoInput){
         fotoInput.addEventListener('change', function(){
             if(this.files && this.files[0]){
@@ -273,7 +298,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 const err=validateFoto(file);
                 if(err){ resetFoto(err); return; }
                 if(fotoError) fotoError.textContent='';
-                fileName.textContent=file.name+' ('+(file.size/1024/1024).toFixed(2)+' MB)';
+                const sizeMB=file.size/1024/1024;
+                fileName.textContent=file.name+' ('+sizeMB.toFixed(2)+' MB)'+(sizeMB>2?' — akan dikompresi otomatis':'');
                 fileName.classList.remove('hidden');
                 const reader=new FileReader();
                 reader.onload=e=>{
@@ -296,6 +322,33 @@ document.addEventListener('DOMContentLoaded', function(){
                 fotoInput.dispatchEvent(new Event('change'));
             });
         }
+    }
+
+    // Kompresi otomatis saat submit: file >1.5MB dikecilkan dulu
+    // agar tidak diblokir limit upload server
+    const createForm=document.getElementById('createOrderForm');
+    if(createForm && fotoInput){
+        createForm.addEventListener('submit', function(e){
+            const f=fotoInput.files && fotoInput.files[0];
+            if(!f || f.size <= 1536*1024) return; // sudah kecil, lanjut normal
+            e.preventDefault();
+            const btn=createForm.querySelector('button[type="submit"]');
+            const origText=btn?btn.textContent:'';
+            if(btn){ btn.disabled=true; btn.textContent='Mengompresi foto...'; }
+            compressImageFile(f).then(function(blob){
+                const dt=new DataTransfer();
+                const base=((f.name||'foto').replace(/\.[^.]+$/,'')||'foto');
+                dt.items.add(new File([blob], base+'.jpg',{type:'image/jpeg'}));
+                fotoInput.files=dt.files;
+                if(fotoError) fotoError.textContent='';
+                fileName.textContent=base+'.jpg ('+(blob.size/1024/1024).toFixed(2)+' MB, terkompresi)';
+                if(btn){ btn.disabled=false; btn.textContent=origText; }
+                createForm.submit();
+            }).catch(function(){
+                if(btn){ btn.disabled=false; btn.textContent=origText; }
+                createForm.submit(); // fallback: kirim asli, server yang menolak
+            });
+        });
     }
 });
 </script>

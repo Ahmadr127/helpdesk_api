@@ -462,7 +462,7 @@ class AdministrasiUmumController extends Controller
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'tanggal' => 'required|date',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         try {
@@ -558,7 +558,7 @@ class AdministrasiUmumController extends Controller
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240', // max 10MB
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max 10MB
         ]);
 
         try {

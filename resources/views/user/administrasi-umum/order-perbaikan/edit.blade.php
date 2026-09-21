@@ -221,7 +221,7 @@ function previewImage(input) {
                                             <input id="foto" name="foto" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
                                         </label>
                                     </div>
-                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF maks 2MB (otomatis dikompresi)</p>
                                 </div>
                             </div>
                         </div>
@@ -292,6 +292,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     dropZone.addEventListener('drop', handleDrop);
+
+    // Kompresi otomatis saat submit agar lolos limit upload server (~2MB)
+    function compressImageFile(file, maxDim, quality){
+        maxDim=maxDim||1600; quality=quality||0.82;
+        return new Promise(function(resolve,reject){
+            const url=URL.createObjectURL(file);
+            const img=new Image();
+            img.onload=function(){
+                URL.revokeObjectURL(url);
+                try{
+                    let w=img.width,h=img.height;
+                    const scale=Math.min(1, maxDim/Math.max(w,h));
+                    w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+                    const c=document.createElement('canvas'); c.width=w; c.height=h;
+                    const ctx=c.getContext('2d');
+                    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
+                    ctx.drawImage(img,0,0,w,h);
+                    c.toBlob(function(b){ b?resolve(b):reject(new Error('compress')); },'image/jpeg',quality);
+                }catch(err){ reject(err); }
+            };
+            img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('load')); };
+            img.src=url;
+        });
+    }
+    const editForm=document.getElementById('editOrderForm');
+    const editFoto=document.getElementById('foto');
+    if(editForm && editFoto){
+        editForm.addEventListener('submit', function(e){
+            const f=editFoto.files && editFoto.files[0];
+            if(!f || f.size <= 1536*1024) return;
+            e.preventDefault();
+            const btn=editForm.querySelector('button[type="submit"]');
+            const origText=btn?btn.textContent:'';
+            if(btn){ btn.disabled=true; btn.textContent='Mengompresi foto...'; }
+            compressImageFile(f).then(function(blob){
+                const dt=new DataTransfer();
+                const base=((f.name||'foto').replace(/\.[^.]+$/,'')||'foto');
+                dt.items.add(new File([blob], base+'.jpg',{type:'image/jpeg'}));
+                editFoto.files=dt.files;
+                if(btn){ btn.disabled=false; btn.textContent=origText; }
+                editForm.submit();
+            }).catch(function(){
+                if(btn){ btn.disabled=false; btn.textContent=origText; }
+                editForm.submit();
+            });
+        });
+    }
 });
 </script>
 @endsection
