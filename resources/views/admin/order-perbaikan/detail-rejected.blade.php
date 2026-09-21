@@ -78,15 +78,19 @@
 
                 <!-- Right Column -->
                 <div>
+                    @if(!empty($order->nama_barang))
                     <div class="mb-8">
                         <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Nama Barang</p>
                         <p class="text-base text-gray-800">{{ $order->nama_barang }}</p>
                     </div>
+                    @endif
 
+                    @if(!empty($order->kode_inventaris) && $order->kode_inventaris !== '-')
                     <div class="mb-8">
                         <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Kode Inventaris</p>
-                        <p class="text-base text-gray-800">{{ $order->kode_inventaris ?: '-' }}</p>
+                        <p class="text-base text-gray-800">{{ $order->kode_inventaris }}</p>
                     </div>
+                    @endif
                 </div>
             </div>
 
