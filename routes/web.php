@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'index'])->name('index');
         Route::get('/order-barang', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarang'])->name('order-barang');
         Route::get('/order-barang/konfirmasi', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarangKonfirmasi'])->name('order-barang.konfirmasi');
+        Route::get('/order-barang/tutup', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarangTutup'])->name('order-barang.tutup');
         Route::get('/order-barang/reject', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarangReject'])->name('order-barang.reject');
         Route::get('/dokumen', [App\Http\Controllers\User\AdministrasiUmumController::class, 'dokumen'])->name('dokumen');
         Route::get('/formulir', [App\Http\Controllers\User\AdministrasiUmumController::class, 'formulir'])->name('formulir');

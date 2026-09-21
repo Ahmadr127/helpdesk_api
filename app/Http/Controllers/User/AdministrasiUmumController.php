@@ -123,6 +123,32 @@ class AdministrasiUmumController extends Controller
         return view('user.administrasi-umum.order-barang-konfirmasi', compact('orders'));
     }
 
+    public function orderBarangTutup(Request $request)
+    {
+        $query = OrderPerbaikan::with(['creator', 'history'])
+            ->where('created_by', auth()->id())
+            ->where('status', 'tutup');
+
+        // Filter tanggal
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('tanggal', [
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
+            ]);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
+            ]);
+        }
+
+        return view('user.administrasi-umum.order-barang-tutup', compact('orders'));
+    }
+
     public function orderBarangReject(Request $request)
     {
         $query = OrderPerbaikan::with(['creator', 'history'])
