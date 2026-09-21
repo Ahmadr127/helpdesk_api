@@ -4,18 +4,6 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
-    <div class="mb-6 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-800">Users Management</h2>
-            <div class="flex items-center gap-4">
-                <a href="{{ route('admin.users.create') }}"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                    Add User
-                </a>
-            </div>
-        </div>
-    </div>
-
     <div class="card bg-white shadow-md rounded-xl overflow-hidden">
         <div class="p-6">
             <!-- Search and Filter Bar (server-side, support pagination) -->
@@ -51,6 +39,10 @@
                         @if(request('search') || (request('role') !== null && request('role') !== '') || (request('status') !== null && request('status') !== '') || request('department') || request('position'))
                             <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
                         @endif
+                        <a href="{{ route('admin.users.create') }}"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                            Add User
+                        </a>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
