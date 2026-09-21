@@ -558,7 +558,7 @@ class AdministrasiUmumController extends Controller
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max 10MB
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // maks 2MB (limit upload server)
         ]);
 
         try {

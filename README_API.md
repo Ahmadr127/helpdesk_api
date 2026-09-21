@@ -39,7 +39,7 @@
 | `kategori_order` | tidak | select | master `kategori_order` aktif (`KategoriOrderController`) | nilai tersimpan = `kategori_order.name`; validasi web masih `nullable|string` (integer FK belum dipakai) |
 | `lokasi` | tidak | search-select / terkunci | master `locations` aktif; **terkunci otomatis dari departemen** bila departemen punya lokasi | tersimpan `locations.id`, autocomplete di JS |
 | `keluhan` | ya | textarea | deskripsi kerusakan | |
-| `foto` | tidak | file | PNG/JPG/GIF ≤ 10MB | `order-photos` disk `public` |
+| `foto` | tidak | file | PNG/JPG/GIF ≤ 2MB, otomatis dikompresi di browser | `order-photos` disk `public` |
 | `kode_inventaris` | tidak | - | tidak ada di form web | validasi web `nullable`; service default `'-'` |
 
 **API** (`POST /api/order-perbaikan` / `PUT /api/order-perbaikan/{id}` — `OrderPerbaikan/StoreOrderPerbaikanRequest.php:10`, `UpdateOrderPerbaikanRequest.php`):
@@ -54,7 +54,7 @@
 | `keluhan` | ya | `string` |
 | `prioritas` | ya | `in:RENDAH,SEDANG,TINGGI/URGENT` |
 | `tanggal` | ya | `date` |
-| `foto` | tidak | `image|mimes:jpeg,png,jpg,gif|max:10240` |
+| `foto` | tidak | `image|mimes:jpeg,png,jpg,gif|max:2048` |
 
 Sumber pilihan: `GET /api/lookup/unit-proses?exclude_sirs=1`, `GET /api/lookup/locations`, `GET /api/lookup/kategori-order`; CRUD kategori order: `GET|POST|PUT|DELETE /api/admin/master/kategori_order[/{id}]` (+ `bulk-action`). List/filter API mendukung `kategori_order` (`GET /api/order-perbaikan?kategori_order=Perbaikan`).
 
