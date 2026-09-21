@@ -55,7 +55,7 @@ class OrderPerbaikanController extends BaseApiController
         if ($orderPerbaikan->created_by !== $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'unitProses']);
+        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
 
         return $this->success(new OrderPerbaikanResource($orderPerbaikan), 'Detail order');
     }

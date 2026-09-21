@@ -4,10 +4,10 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="min-h-screen bg-gradient-to-r from-green-50 to-violet-50 pb-24">
+<div class="min-h-screen bg-gradient-to-r from-green-50 to-green-60 pb-24">
     <div class="container mx-auto px-4 py-6">
         <!-- Page Header -->
-        <div class="mb-6 bg-gradient-to-r from-violet-600 to-violet-400 rounded-lg p-6 shadow-sm">
+        <div class="mb-6 bg-green-600 rounded-lg p-6 shadow-sm">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-white">Permintaan Barang - Ditutup</h1>

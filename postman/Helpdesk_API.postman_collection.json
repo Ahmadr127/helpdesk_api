@@ -1442,11 +1442,6 @@
                   "description": "Cannot be SIRS"
                 },
                 {
-                  "key": "jenis_barang",
-                  "value": "Inventaris",
-                  "type": "text"
-                },
-                {
                   "key": "kode_inventaris",
                   "value": "INV-001",
                   "type": "text"
@@ -1550,7 +1545,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jenis_barang\": \"Inventaris\",\n  \"kode_inventaris\": \"INV-001\",\n  \"nama_barang\": \"AC Updated\",\n  \"kategori_order\": \"Perbaikan\",\n  \"lokasi\": 1,\n  \"keluhan\": \"Update keluhan\",\n  \"prioritas\": \"TINGGI/URGENT\"\n}"
+              "raw": "{\n  \"kode_inventaris\": \"INV-001\",\n  \"nama_barang\": \"AC Updated\",\n  \"kategori_order\": \"Perbaikan\",\n  \"lokasi\": 1,\n  \"keluhan\": \"Update keluhan\",\n  \"prioritas\": \"TINGGI/URGENT\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/order-perbaikan/1",

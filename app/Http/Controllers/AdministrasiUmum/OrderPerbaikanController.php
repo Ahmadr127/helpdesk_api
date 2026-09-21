@@ -320,7 +320,7 @@ class OrderPerbaikanController extends Controller
     public function confirm(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         try {
-            $service->confirm(auth()->user(), $orderPerbaikan);
+            $service->confirm(auth()->user(), $orderPerbaikan, 'Web');
 
             return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil dikonfirmasi.');
         } catch (\Exception $e) {
@@ -331,7 +331,7 @@ class OrderPerbaikanController extends Controller
     public function reject(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         try {
-            $service->reject(auth()->user(), $orderPerbaikan);
+            $service->reject(auth()->user(), $orderPerbaikan, 'Web');
 
             return redirect()->route(request()->routeIs('admin.*') ? 'admin.order-perbaikan.show' : 'administrasi-umum.order-perbaikan.show', $orderPerbaikan)->with('success', 'Order berhasil ditolak.');
         } catch (\Exception $e) {
@@ -361,7 +361,7 @@ class OrderPerbaikanController extends Controller
     public function start(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         try {
-            $service->start(auth()->user(), $orderPerbaikan);
+            $service->start(auth()->user(), $orderPerbaikan, 'Web');
 
             return redirect()->back()->with('success', 'Order berhasil dimulai.');
         } catch (\Exception $e) {

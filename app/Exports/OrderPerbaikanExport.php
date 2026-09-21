@@ -43,7 +43,6 @@ class OrderPerbaikanExport
             'Peminta',
             'Unit Proses',
             'Unit Penerima',
-            'Jenis Barang',
             'Kode Inventaris',
             'Nama Barang',
             'Lokasi',
@@ -56,7 +55,7 @@ class OrderPerbaikanExport
         ];
 
         // Style the headers
-        $sheet->getStyle('A1:O1')->applyFromArray([
+        $sheet->getStyle('A1:N1')->applyFromArray([
             'font' => [
                 'bold' => true,
             ],
@@ -147,7 +146,6 @@ class OrderPerbaikanExport
                 $order->nama_peminta ?? $order->creator->name ?? '-',
                 $order->unit_proses ?? '-',
                 $order->unit_penerima ?? '-',
-                $order->jenis_barang ?? '-',
                 $order->kode_inventaris ?? '-',
                 $order->nama_barang ?? '-',
                 $order->location ? $order->location->name : '-',
@@ -167,7 +165,7 @@ class OrderPerbaikanExport
         }
 
         // Auto-size columns
-        foreach (range('A', 'O') as $column) {
+        foreach (range('A', 'N') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 

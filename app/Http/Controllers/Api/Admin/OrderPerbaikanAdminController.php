@@ -41,7 +41,7 @@ class OrderPerbaikanAdminController extends BaseApiController
 
     public function show(OrderPerbaikan $orderPerbaikan)
     {
-        $orderPerbaikan->load(['creator', 'history.creator', 'location']);
+        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building']);
 
         return $this->success(new OrderPerbaikanResource($orderPerbaikan), 'Detail order');
     }

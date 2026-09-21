@@ -14,7 +14,7 @@ class OrderPerbaikanService
 {
     public function listForUser(User $user, array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'unitProses'])->where('created_by', $user->id);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'unitProses'])->where('created_by', $user->id);
 
         if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
@@ -44,7 +44,7 @@ class OrderPerbaikanService
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'unitProses']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -112,9 +112,9 @@ class OrderPerbaikanService
         ];
     }
 
-    public function create(User $user, array $validated, $fotoFile = null): OrderPerbaikan
+    public function create(User $user, array $validated, $fotoFile = null, string $source = 'API'): OrderPerbaikan
     {
-        $order = DB::transaction(function () use ($user, $validated, $fotoFile) {
+        $order = DB::transaction(function () use ($user, $validated, $fotoFile, $source) {
             $today = now();
             $prefix = 'OP/RTG/MTC-'.$today->format('Ymd');
             $lastOrder = OrderPerbaikan::withTrashed()->where('nomor', 'like', $prefix.'%')->orderBy('nomor', 'desc')->first();
@@ -139,7 +139,6 @@ class OrderPerbaikanService
                 }
             }
 
-            // Unit pengaju disimpan via department_id (web) dengan fallback lookup kode/nama departemen
             $departmentId = $validated['department_id'] ?? null;
             if ($departmentId && ! Department::whereKey($departmentId)->exists()) {
                 $departmentId = null;
@@ -186,11 +185,11 @@ class OrderPerbaikanService
 
             $order->history()->create([
                 'status' => 'open',
-                'keterangan' => 'Order dibuat via API',
+                'keterangan' => 'Order dibuat via '.$source,
                 'created_by' => $user->id,
             ]);
 
-            return $order->load(['creator', 'history', 'location', 'department', 'unitProses']);
+            return $order->load(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
         });
 
         // 1 baris FCM ke Admin Umum + DB inbox
@@ -203,7 +202,7 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function update(User $user, OrderPerbaikan $order, array $validated, $fotoFile = null): OrderPerbaikan
+    public function update(User $user, OrderPerbaikan $order, array $validated, $fotoFile = null, string $source = 'API'): OrderPerbaikan
     {
         if ($order->created_by !== $user->id) {
             throw new \Exception('Unauthorized', 403);
@@ -212,7 +211,7 @@ class OrderPerbaikanService
             throw new \Exception('Hanya order dengan status open yang dapat diedit.', 422);
         }
 
-        return DB::transaction(function () use ($user, $order, $validated, $fotoFile) {
+        return DB::transaction(function () use ($user, $order, $validated, $fotoFile, $source) {
             if ($fotoFile) {
                 if ($order->foto) {
                     Storage::disk('public')->delete($order->foto);
@@ -235,7 +234,7 @@ class OrderPerbaikanService
 
             $order->history()->create([
                 'status' => $order->status,
-                'keterangan' => 'Order diperbarui via API',
+                'keterangan' => 'Order diperbarui via '.$source,
                 'created_by' => $user->id,
             ]);
 
@@ -317,9 +316,9 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function confirm(User $admin, OrderPerbaikan $order): OrderPerbaikan
+    public function confirm(User $admin, OrderPerbaikan $order, string $source = 'API'): OrderPerbaikan
     {
-        $order = DB::transaction(function () use ($admin, $order) {
+        $order = DB::transaction(function () use ($admin, $order, $source) {
             $order->update([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
                 'nama_penanggung_jawab' => $admin->name,
@@ -327,7 +326,7 @@ class OrderPerbaikanService
             ]);
             $order->history()->create([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
-                'keterangan' => 'Order dikonfirmasi via API',
+                'keterangan' => 'Order dikonfirmasi via '.$source,
                 'created_by' => $admin->id,
             ]);
 
@@ -343,9 +342,9 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function reject(User $admin, OrderPerbaikan $order): OrderPerbaikan
+    public function reject(User $admin, OrderPerbaikan $order, string $source = 'API'): OrderPerbaikan
     {
-        $order = DB::transaction(function () use ($admin, $order) {
+        $order = DB::transaction(function () use ($admin, $order, $source) {
             $order->update([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
                 'nama_penanggung_jawab' => $admin->name,
@@ -353,7 +352,7 @@ class OrderPerbaikanService
             ]);
             $order->history()->create([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
-                'keterangan' => 'Order ditolak via API',
+                'keterangan' => 'Order ditolak via '.$source,
                 'created_by' => $admin->id,
             ]);
 
@@ -369,9 +368,9 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function start(User $admin, OrderPerbaikan $order): OrderPerbaikan
+    public function start(User $admin, OrderPerbaikan $order, string $source = 'API'): OrderPerbaikan
     {
-        $order = DB::transaction(function () use ($admin, $order) {
+        $order = DB::transaction(function () use ($admin, $order, $source) {
             $order->update([
                 'status' => 'in_progress',
                 'nama_penanggung_jawab' => $admin->name,
@@ -379,7 +378,7 @@ class OrderPerbaikanService
             ]);
             $order->history()->create([
                 'status' => 'in_progress',
-                'keterangan' => 'Pengerjaan order dimulai via API',
+                'keterangan' => 'Pengerjaan order dimulai via '.$source,
                 'created_by' => $admin->id,
             ]);
 

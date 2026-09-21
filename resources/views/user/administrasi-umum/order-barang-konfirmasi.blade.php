@@ -7,7 +7,7 @@
 <div class="min-h-screen bg-gradient-to-r from-green-50 to-emerald-50 pb-24">
     <div class="container mx-auto px-4 py-6">
         <!-- Page Header -->
-        <div class="mb-6 bg-gradient-to-r from-green-600 to-emerald-400 rounded-lg p-6 shadow-sm">
+        <div class="mb-6 bg-green-600 rounded-lg p-6 shadow-sm">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-white">Permintaan Barang - Konfirmasi</h1>
@@ -15,7 +15,7 @@
                 </div>
                 <div class="flex space-x-3">
                     <a href="{{ route('user.administrasi-umum.order-barang') }}"
-                        class="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-gray-500 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-white text-sm font-medium rounded-lg cursor-pointer">
+                        class="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-blue-500 transform hover:-translate-y-0.5 transition-all duration-200 text-white text-sm font-medium rounded-lg cursor-pointer">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>

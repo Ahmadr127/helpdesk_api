@@ -466,7 +466,7 @@ class AdministrasiUmumController extends Controller
         ]);
 
         try {
-            $orderPerbaikan = $service->create(auth()->user(), $validated, $request->file('foto'));
+            $orderPerbaikan = $service->create(auth()->user(), $validated, $request->file('foto'), 'Web');
 
             if ($request->ajax()) {
                 return response()->json([
@@ -562,7 +562,7 @@ class AdministrasiUmumController extends Controller
         ]);
 
         try {
-            $order = $service->update(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'));
+            $order = $service->update(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), 'Web');
 
             if ($request->ajax()) {
                 return response()->json([

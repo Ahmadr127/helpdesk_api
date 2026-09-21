@@ -7,7 +7,7 @@
 <div class="min-h-screen bg-gradient-to-r from-green-50 to-emerald-50 pb-24">
     <div class="container mx-auto px-4 py-6">
         <!-- Page Header -->
-        <div class="mb-6 bg-gradient-to-r from-green-600 to-emerald-400 rounded-lg p-6 shadow-sm">
+        <div class="mb-6 bg-green-600 rounded-lg p-6 shadow-sm">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-white">Permintaan Barang - Ditolak</h1>

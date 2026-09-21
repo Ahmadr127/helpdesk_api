@@ -22,7 +22,7 @@
 
 **B. Order Perbaikan Sarana – IPSRS** (bukan SIRS)
 - Route `user/administrasi-umum/order-perbaikan/create` (`AdministrasiUmumController.php:328`) & API `POST /api/order-perbaikan` (`User/OrderPerbaikanController.php:40`).
-- Validasi `OrderPerbaikan/StoreOrderPerbaikanRequest.php:10`: `unit_proses_code` exists `unit_proses,code` + `!=SIRS` (valid `SRNS` Sarana, `RTG` IPSRS, `LOGF`), `jenis_barang Inventaris/Umum`, `lokasi` exists, `prioritas RENDAH/SEDANG/TINGGI/URGENT`, `foto` 10MB.
+- Validasi `OrderPerbaikan/StoreOrderPerbaikanRequest.php:10`: `unit_proses_code` exists `unit_proses,code` + `!=SIRS` (valid `SRNS` Sarana, `RTG` IPSRS, `LOGF`), `lokasi` exists, `prioritas RENDAH/SEDANG/TINGGI/URGENT`, `foto` 10MB. (`jenis_barang` dihapus dari alur order perbaikan — kolom DB di-drop, tidak ada di form web/API/mobile.)
 - `OrderPerbaikanService.php:20` generate `nomor OP/RTG/MTC-YYYYMMDDxxx` (`OP/RTG/MTC-20250830001`) cari `withTrashed` per hari, simpan `order_perbaikan` (`SoftDeletes`) + `history` `status=open`, `foto` `order-photos`, `status=open`.
 
 #### 1.2 C. Form Input Order Perbaikan (Saat Ini)
@@ -34,11 +34,10 @@
 | `tanggal` | ya (hidden) | hidden | `now()` | otomatis, tidak diisi user |
 | `unit_proses_code` | ya (hidden) | hidden | `users.department` user login | otomatis, `!= SIRS` |
 | `unit_proses_name` | ya (hidden) | hidden | nama department user | otomatis |
-| `jenis_barang` | ya | select | `Inventaris` / `Umum` | |
 | `prioritas` | ya | select | `RENDAH` / `SEDANG` / `TINGGI/URGENT` | |
 | `nama_barang` | ya | text | nama barang/peralatan | |
 | `kategori_order` | tidak | select | master `kategori_order` aktif (`KategoriOrderController`) | nilai tersimpan = `kategori_order.name`; validasi web masih `nullable|string` (integer FK belum dipakai) |
-| `lokasi` | ya | search-select | master `locations` aktif | tersimpan `locations.id`, autocomplete di JS |
+| `lokasi` | ya | search-select / terkunci | master `locations` aktif; **terkunci otomatis dari departemen** bila departemen punya lokasi | tersimpan `locations.id`, autocomplete di JS |
 | `keluhan` | ya | textarea | deskripsi kerusakan | |
 | `foto` | tidak | file | PNG/JPG/GIF ≤ 10MB | `order-photos` disk `public` |
 | `kode_inventaris` | tidak | - | tidak ada di form web | validasi web `nullable`; service default `'-'` |
@@ -48,7 +47,6 @@
 | Field | Wajib | Rule |
 |------|------|------|
 | `unit_proses_code` | ya | `exists:unit_proses,code` + closure tolak `SIRS` |
-| `jenis_barang` | ya | `in:Umum,Inventaris` |
 | `kode_inventaris` | ya (API) | `string` (berbeda dengan web yang nullable) |
 | `nama_barang` | ya | `string` |
 | `kategori_order` | tidak | `nullable|string|exists:kategori_order,name` |

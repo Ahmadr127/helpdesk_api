@@ -29,7 +29,6 @@ class OrderPerbaikan extends Model
         'unit_proses_id',
         'unit_penerima',
         'nama_peminta',
-        'jenis_barang',
         'kode_inventaris',
         'nama_barang',
         'kategori_order',
