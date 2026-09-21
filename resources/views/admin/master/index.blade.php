@@ -169,10 +169,10 @@
         </div>
 
         <!-- Buildings Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-amber-200">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-lime-200">
             <div
-                class="flex justify-between items-center mb-4 bg-amber-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-amber-800 flex items-center gap-2">
+                class="flex justify-between items-center mb-4 bg-lime-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-lime-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 21v18M8 21v12M16 17v8M3 11h13M8 8v8M16 8v5M3 8v5m9 0v8M8 3h15" />
@@ -316,15 +316,15 @@
             </div>
         </div>
     <!-- Kategori Order Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-teal-200">
-            <div class="flex justify-between items-center mb-4 bg-teal-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-teal-800 flex items-center gap-2">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
+            <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.5 11.5l-1.5 1.5 1.5 1.5 1.5-1.5 1.5-1.5M6.5 11.5h6.5m7.5 11.5a3 3 0 013.5-1.5l.707.707m.414-.414M11.5 6.5v2" />
                     </svg>
                     Kategori Order
                 </h2>
-                <a href="{{ route('admin.master.kategori-order.index') }}" title="Kelola Kategori Order" class="p-3 rounded-lg bg-teal-500 hover:bg-teal-600 transition-all duration-200 shadow-sm">
+                <a href="{{ route('admin.master.kategori-order.index') }}" title="Kelola Kategori Order" class="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200 shadow-sm">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h15" />
                     </svg>
