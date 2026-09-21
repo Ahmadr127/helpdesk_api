@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Api\MasterDataService;
 use App\Services\Api\OrderPerbaikanService;
 use App\Services\Api\TicketService;
+use App\Services\Api\UserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -71,5 +72,25 @@ class ServicesTest extends TestCase
         $affected = $service->bulkAction('buildings', 'deactivate', [$b1->id, $b2->id]);
         $this->assertEquals(2, $affected);
         $this->assertDatabaseHas('buildings', ['id' => $b1->id, 'status' => 0]);
+    }
+
+    public function test_user_service_list_department_filter()
+    {
+        // Regresi: filter department di /admin/users pernah 500 (Undefined variable $dept)
+        $dept = Department::create(['name' => 'Administrator', 'code' => 'ADM', 'status' => 1]);
+        User::create(['name' => 'Staf Adm', 'email' => 'adm@example.com', 'password' => Hash::make('123'), 'phone' => '0811', 'position' => 'user', 'role' => 'user', 'department' => 'Administrator', 'department_id' => $dept->id, 'status' => 1]);
+        User::create(['name' => 'Staf IT', 'email' => 'it@example.com', 'password' => Hash::make('123'), 'phone' => '0812', 'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1]);
+
+        $service = new UserService;
+
+        $byName = $service->list(['department' => 'Administrator']);
+        $this->assertEquals(1, $byName->total());
+        $this->assertEquals('Staf Adm', $byName->items()[0]->name);
+
+        $byCode = $service->list(['department' => 'ADM']);
+        $this->assertEquals(1, $byCode->total());
+
+        $unknown = $service->list(['department' => 'Tidak Ada']);
+        $this->assertEquals(0, $unknown->total());
     }
 }
