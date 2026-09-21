@@ -37,10 +37,14 @@ class UserService
             $query->where(function ($q) use ($deptFilter, $deptName, $deptCode, $dept) {
                 $like = (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') ? 'ilike' : 'like';
                 $q->where('department', $like, "%{$deptFilter}%")
-                  ->orWhere('department', $like, "%{$deptName}%");
-                if ($deptCode) $q->orWhere('department', $deptCode);
+                    ->orWhere('department', $like, "%{$deptName}%");
+                if ($deptCode) {
+                    $q->orWhere('department', $deptCode);
+                }
                 // juga via department_id jika ada
-                if ($dept?->id) $q->orWhere('department_id', $dept->id);
+                if ($dept?->id) {
+                    $q->orWhere('department_id', $dept->id);
+                }
             });
         }
         if (! empty($filters['position'])) {
