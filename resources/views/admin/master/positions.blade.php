@@ -24,13 +24,11 @@
 
     <!-- Search Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
-        <form action="{{ route('admin.master.positions.index') }}" method="GET"
-            class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="filterForm" action="{{ route('admin.master.positions.index') }}" method="GET"
+            class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
             <div class="md:col-span-3">
-                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}"
-                    placeholder="Cari berdasarkan nama atau kode posisi…"
-                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                <label for="filter_search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <x-searchable-select name="search" :options="$searchOptions ?? []" :selected="request('search')" placeholder="Cari berdasarkan nama atau kode posisi…" id="filter_search" />
             </div>
             <div class="flex items-end space-x-2">
                 <button type="submit"
@@ -145,6 +143,20 @@
 
 @push('scripts')
 <script>
+function validateFilterForm() {
+    // searchable-select: jika user mengetik tanpa memilih opsi,
+    // kirim teks ketikan sebagai kata kunci search (fallback free-text)
+    const searchWrap = document.querySelector('#filterForm [data-searchable-dropdown]');
+    if (searchWrap) {
+        const hiddenSearch = searchWrap.querySelector('input[type="hidden"]');
+        const textSearch = searchWrap.querySelector('input[type="text"]');
+        if (hiddenSearch && textSearch && !hiddenSearch.value && textSearch.value.trim() !== '') {
+            hiddenSearch.value = textSearch.value.trim();
+        }
+    }
+    return true;
+}
+
 function openAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
 }

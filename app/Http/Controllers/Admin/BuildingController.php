@@ -36,8 +36,9 @@ class BuildingController extends Controller
         }
 
         $buildings = $query->latest()->paginate(10)->withQueryString();
+        $searchOptions = Building::orderBy('name')->pluck('name', 'name')->toArray();
 
-        return view('admin.master.buildings', compact('buildings'));
+        return view('admin.master.buildings', compact('buildings', 'searchOptions'));
     }
 
     public function store(Request $request)

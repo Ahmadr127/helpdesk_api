@@ -40,8 +40,12 @@ class CategoryController extends Controller
 
         $categories = $query->orderBy('created_at', 'desc')->paginate(10);
         $unitProses = UnitProses::where('status', true)->get();
+        // Search mencakup nama kategori + nama unit proses
+        $searchOptions = Category::orderBy('name')->pluck('name', 'name')
+            ->merge($unitProses->sortBy('name')->pluck('name', 'name'))
+            ->toArray();
 
-        return view('admin.master.categories', compact('categories', 'unitProses'));
+        return view('admin.master.categories', compact('categories', 'unitProses', 'searchOptions'));
     }
 
     public function store(Request $request)

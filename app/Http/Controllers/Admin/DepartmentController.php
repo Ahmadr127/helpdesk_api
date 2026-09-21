@@ -39,8 +39,9 @@ class DepartmentController extends Controller
         $departments = $query->latest()->paginate(10)->withQueryString();
         $locations = Location::where('status', 1)->orderBy('name')->get();
         $buildings = Building::where('status', 1)->orderBy('name')->get();
+        $searchOptions = Department::orderBy('name')->pluck('name', 'name')->toArray();
 
-        return view('admin.master.departments', compact('departments', 'locations', 'buildings'));
+        return view('admin.master.departments', compact('departments', 'locations', 'buildings', 'searchOptions'));
     }
 
     public function store(Request $request)

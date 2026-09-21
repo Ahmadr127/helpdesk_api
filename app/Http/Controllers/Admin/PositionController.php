@@ -22,8 +22,9 @@ class PositionController extends Controller
         }
 
         $positions = $positions->orderBy('name')->get();
+        $searchOptions = Position::orderBy('name')->pluck('name', 'name')->toArray();
 
-        return view('admin.master.positions', compact('positions'));
+        return view('admin.master.positions', compact('positions', 'searchOptions'));
     }
 
     public function store(Request $request)

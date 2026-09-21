@@ -34,8 +34,9 @@ class KategoriOrderController extends Controller
         }
 
         $kategoriOrders = $query->orderBy('created_at', 'desc')->paginate(10);
+        $searchOptions = KategoriOrder::orderBy('name')->pluck('name', 'name')->toArray();
 
-        return view('admin.master.kategori-order', compact('kategoriOrders'));
+        return view('admin.master.kategori-order', compact('kategoriOrders', 'searchOptions'));
     }
 
     public function store(Request $request)

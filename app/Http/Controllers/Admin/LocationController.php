@@ -32,8 +32,9 @@ class LocationController extends Controller
         }
 
         $locations = $query->latest()->paginate(10)->withQueryString();
+        $searchOptions = Location::orderBy('name')->pluck('name', 'name')->toArray();
 
-        return view('admin.master.locations', compact('locations'));
+        return view('admin.master.locations', compact('locations', 'searchOptions'));
     }
 
     public function store(Request $request)

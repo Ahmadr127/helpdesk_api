@@ -34,8 +34,9 @@ class UnitProsesController extends Controller
         }
 
         $unitProses = $query->orderBy('created_at', 'desc')->paginate(10);
+        $searchOptions = UnitProses::orderBy('name')->pluck('name', 'name')->toArray();
 
-        return view('admin.master.unit-proses', compact('unitProses'));
+        return view('admin.master.unit-proses', compact('unitProses', 'searchOptions'));
     }
 
     public function store(Request $request)
