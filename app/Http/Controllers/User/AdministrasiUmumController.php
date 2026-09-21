@@ -456,7 +456,7 @@ class AdministrasiUmumController extends Controller
             'unit_proses_code' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
             'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'required|string',
+            'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string',
             'lokasi' => 'required|exists:locations,id',
             'keluhan' => 'required|string',
@@ -553,7 +553,7 @@ class AdministrasiUmumController extends Controller
     {
         $validated = $request->validate([
             'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'required|string',
+            'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string',
             'lokasi' => 'required|exists:locations,id',
             'keluhan' => 'required|string',
