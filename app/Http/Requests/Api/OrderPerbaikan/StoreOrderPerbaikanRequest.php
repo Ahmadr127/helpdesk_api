@@ -15,13 +15,14 @@ class StoreOrderPerbaikanRequest extends FormRequest
     {
         return [
             'unit_proses_code' => [
-                'required', 'exists:unit_proses,code',
+                'nullable', 'exists:unit_proses,code',
                 function ($attribute, $value, $fail) {
                     if ($value === 'SIRS') {
                         $fail('Unit proses SIRS tidak dapat dipilih untuk order barang.');
                     }
                 },
             ],
+            'department_id' => 'nullable|exists:departments,id',
             'jenis_barang' => 'nullable|in:Umum,Inventaris',
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'required|string',

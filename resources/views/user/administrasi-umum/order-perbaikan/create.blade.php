@@ -42,11 +42,25 @@
         <form action="{{ route('user.administrasi-umum.order-perbaikan.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
             @csrf
             <div class="space-y-6">
-                <!-- Auto-generated fields (hidden) -->
                 <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
                 <input type="hidden" name="department_id" value="{{ $departmentId ?? '' }}">
-                <input type="hidden" name="unit_proses_code" value="{{ $unitPengajuCode ?? ($user->department ?? 'GENERAL') }}">
-                <input type="hidden" name="unit_proses_name" value="{{ $unitPengajuName ?? ($user->department ?? 'GENERAL') }}">
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+                    <div class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Pengaju <span class="text-gray-400">(otomatis)</span></label>
+                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
+                            <span class="text-sm font-medium text-gray-900">{{ $unitPengajuName ?? '-' }} ({{ $unitPengajuCode ?? '-' }})</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Department ID: {{ $departmentId ?? '-' }} • {{ $user->department ?? '-' }}</p>
+                    </div>
+                    <div class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Proses</label>
+                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
+                            <span class="text-sm text-gray-500">-</span>
+                        </div>
+                        <input type="hidden" name="unit_proses_code" value="">
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>

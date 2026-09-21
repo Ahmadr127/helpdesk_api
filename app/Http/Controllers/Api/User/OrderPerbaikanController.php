@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\User;
 use App\Http\Controllers\Api\BaseApiController;
 use App\Http\Requests\Api\OrderPerbaikan\StoreOrderPerbaikanRequest;
 use App\Http\Requests\Api\OrderPerbaikan\UpdateOrderPerbaikanRequest;
+use App\Http\Requests\Api\OrderPerbaikan\UserConfirmOrderRequest;
 use App\Http\Resources\Api\OrderPerbaikanResource;
 use App\Models\OrderPerbaikan;
 use App\Services\Api\OrderPerbaikanService;
@@ -54,7 +55,7 @@ class OrderPerbaikanController extends BaseApiController
         if ($orderPerbaikan->created_by !== $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $orderPerbaikan->load(['creator', 'history.creator', 'location']);
+        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'unitProses']);
 
         return $this->success(new OrderPerbaikanResource($orderPerbaikan), 'Detail order');
     }
@@ -127,5 +128,31 @@ class OrderPerbaikanController extends BaseApiController
                 'total' => $paginator->total(),
             ],
         ]);
+    }
+
+    public function konfirmasiSelesai(UserConfirmOrderRequest $request, OrderPerbaikan $orderPerbaikan)
+    {
+        try {
+            $lampiranPath = null;
+            if ($request->hasFile('lampiran')) {
+                $file = $request->file('lampiran');
+                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
+            }
+
+            $order = $this->orderService->userConfirm(
+                $request->user(),
+                $orderPerbaikan,
+                $request->input('catatan'),
+                $request->input('konfirmasi') === 'selesai',
+                $lampiranPath
+            );
+
+            return $this->success(new OrderPerbaikanResource($order), $request->input('konfirmasi') === 'selesai' ? 'Terima kasih, order telah dikonfirmasi selesai.' : 'Order dibuka kembali karena belum selesai.');
+        } catch (\Exception $e) {
+            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
+
+            return $this->error($e->getMessage(), $code);
+        }
     }
 }

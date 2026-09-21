@@ -16,7 +16,7 @@ class AdminRespondRequest extends FormRequest
         return [
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
-            'status' => 'required|in:in_progress,closed',
+            'status' => 'required|in:open,pending,in_progress,closed',
         ];
     }
 }

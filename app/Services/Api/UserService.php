@@ -28,6 +28,26 @@ class UserService
         if (isset($filters['status']) && $filters['status'] !== '') {
             $query->where('status', $filters['status']);
         }
+        if (! empty($filters['department'])) {
+            $deptFilter = $filters['department'];
+            // department filter bisa code (UNIT007) atau name (Rawat jalan) — handle keduanya
+            $dept = \App\Models\Department::where('code', $deptFilter)->orWhere('name', $deptFilter)->first();
+            $deptName = $dept ? $dept->name : $deptFilter;
+            $deptCode = $dept ? $dept->code : null;
+            $query->where(function ($q) use ($deptFilter, $deptName, $deptCode) {
+                $like = (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') ? 'ilike' : 'like';
+                $q->where('department', $like, "%{$deptFilter}%")
+                  ->orWhere('department', $like, "%{$deptName}%");
+                if ($deptCode) $q->orWhere('department', $deptCode);
+                // juga via department_id jika ada
+                if ($dept && isset($dept->id)) $q->orWhere('department_id', $dept->id);
+            });
+        }
+        if (! empty($filters['position'])) {
+            $posFilter = $filters['position'];
+            $like = (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') ? 'ilike' : 'like';
+            $query->where('position', $like, "%{$posFilter}%");
+        }
 
         return $query->latest()->paginate($perPage);
     }

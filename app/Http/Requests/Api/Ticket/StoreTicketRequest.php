@@ -26,6 +26,7 @@ class StoreTicketRequest extends FormRequest
                 },
             ],
             'location_id' => 'required|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high',
             'photo' => 'nullable|image|max:5120',

@@ -14,7 +14,7 @@ class OrderPerbaikanService
 {
     public function listForUser(User $user, array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location'])->where('created_by', $user->id);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'unitProses'])->where('created_by', $user->id);
 
         if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
@@ -44,7 +44,7 @@ class OrderPerbaikanService
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'unitProses']);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -91,6 +91,7 @@ class OrderPerbaikanService
             'totalOrders' => OrderPerbaikan::count(),
             'openOrders' => OrderPerbaikan::where('status', 'open')->count(),
             'inProgressOrders' => OrderPerbaikan::where('status', 'in_progress')->count(),
+            'tutupOrders' => OrderPerbaikan::where('status', 'tutup')->count(),
             'confirmedOrders' => OrderPerbaikan::where('status', 'confirmed')->count(),
             'rejectedOrders' => OrderPerbaikan::where('status', 'rejected')->count(),
             'rendahOrders' => OrderPerbaikan::where('prioritas', 'RENDAH')->count(),
@@ -105,6 +106,7 @@ class OrderPerbaikanService
             'total' => OrderPerbaikan::where('created_by', $user->id)->count(),
             'open' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'open')->count(),
             'in_progress' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'in_progress')->count(),
+            'tutup' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'tutup')->count(),
             'confirmed' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'confirmed')->count(),
             'rejected' => OrderPerbaikan::where('created_by', $user->id)->where('status', 'rejected')->count(),
         ];
@@ -125,8 +127,17 @@ class OrderPerbaikanService
             $nomor = $prefix.$newNumber;
 
             $unitProsesCode = $validated['unit_proses_code'] ?? null;
-            $unitProsesName = $validated['unit_proses_name'] ?? null;
-            $unitProses = $unitProsesCode ? UnitProses::where('code', $unitProsesCode)->first() : null;
+            // konsisten dengan web: unit_proses boleh null (tampil "-")
+            $unitProses = null;
+            if (!empty($unitProsesCode)) {
+                $unitProses = UnitProses::where('code', $unitProsesCode)->first();
+                if (!$unitProses) {
+                    throw new \Exception('Unit proses tidak valid.', 422);
+                }
+                if ($unitProses->code === 'SIRS') {
+                    throw new \Exception('Unit proses SIRS tidak valid.', 422);
+                }
+            }
 
             // Unit pengaju disimpan via department_id (web) dengan fallback lookup kode/nama departemen
             $departmentId = $validated['department_id'] ?? null;
@@ -179,7 +190,7 @@ class OrderPerbaikanService
                 'created_by' => $user->id,
             ]);
 
-            return $order->load(['creator', 'history', 'location']);
+            return $order->load(['creator', 'history', 'location', 'department', 'unitProses']);
         });
 
         // 1 baris FCM ke Admin Umum + DB inbox

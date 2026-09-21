@@ -221,7 +221,11 @@ class ImportSimutuUsers extends Command
             $unit = $unitMap[(int) ($r['unit_id'] ?? 0)] ?? null;
             $dept = $unit['nama_unit'] ?? '-';
             $roleName = $roleMap[(int) ($r['role_id'] ?? 0)] ?? null;
-            $posPreview = $roleName ?? $r['profesi'] ?? '-';
+            $rawPos = $roleName ?? $r['profesi'] ?? '-';
+            $posPreview = $this->normalizePosition($rawPos);
+            if ($posPreview === 'Staff' && $rawPos !== 'Staff' && $rawPos !== '-') {
+                $posPreview .= " ({$rawPos})";
+            }
             $rowsPreview[] = [
                 Str::limit($r['nama_lengkap'] ?? '-', 24),
                 $r['username'] ?? '-',
@@ -230,7 +234,7 @@ class ImportSimutuUsers extends Command
                 ($r['role_id'] ?? '-')."->{$helpRole}",
                 ($r['status_user'] ?? '-')."->{$status}",
                 $dept,
-                Str::limit($posPreview, 18),
+                Str::limit($posPreview, 22),
             ];
         }
         $this->table($headers, $rowsPreview);
@@ -306,6 +310,32 @@ class ImportSimutuUsers extends Command
         }
         // untuk backward compat, buat $deptCache alias ke byName (karena users.department = nama_unit)
         $deptCache = $deptCacheByName;
+
+        // --- Ensure simplified positions exist (Staff, Manager, Direktur Utama) ---
+        if ($hasPositionCol) {
+            $requiredPositions = [
+                ['code' => 'STAFF', 'name' => 'Staff'],
+                ['code' => 'MANAGER', 'name' => 'Manager'],
+                ['code' => 'DIR_UT', 'name' => 'Direktur Utama'],
+            ];
+            foreach ($requiredPositions as $pos) {
+                $exists = DB::table('positions')->where('code', $pos['code'])->exists();
+                if (! $exists) {
+                    try {
+                        DB::table('positions')->insert([
+                            'code' => $pos['code'],
+                            'name' => $pos['name'],
+                            'status' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        $this->line("  + positions '{$pos['code']}' / '{$pos['name']}' dibuat");
+                    } catch (\Throwable $e) {
+                        $this->warn("  Gagal create position {$pos['code']}: ".$e->getMessage());
+                    }
+                }
+            }
+        }
 
         // --- Check existing emails for skip/update decision ---
         $existingEmails = DB::table('users')->pluck('id', 'email')->toArray(); // email => id
@@ -488,7 +518,7 @@ class ImportSimutuUsers extends Command
         $this->line('  SIMUTU.username      -> helpdesk.username (jika kolom ada, else skip)');
         $this->line('  SIMUTU.password      -> helpdesk.password (bcrypt $2y$ dipertahankan, tidak re-hash)');
         $this->line('  SIMUTU.role_id       -> helpdesk.role ('.implode(',', $adminRoleIds)." => 'admin', lainnya => 'user')");
-        $this->line('  tbl_role.nama_role   -> helpdesk.position (fallback profesi)');
+        $this->line('  tbl_role.nama_role   -> helpdesk.position (simplified: Direktur Utama / Manager dari Kepala* / Staff lainnya, fallback profesi)');
         $this->line('  SIMUTU.status_user   -> helpdesk.status (aktif=1, else 0)');
         $this->line('  tbl_unit.nama_unit   -> helpdesk.department (string) ; tbl_unit.kode_unit+nama_unit -> departments(code=kode_unit, name=nama_unit) + department_id');
         $this->line('  SIMUTU.created_at    -> helpdesk.created_at');
@@ -515,12 +545,9 @@ class ImportSimutuUsers extends Command
         $helpRole = in_array((int) ($raw['role_id'] ?? 0), $adminRoleIds, true) ? 'admin' : 'user';
         $status = ($raw['status_user'] === 'aktif') ? 1 : 0;
 
-        // position: prioritas nama_role, fallback profesi
-        $position = $roleName ?? $raw['profesi'] ?? null;
-        // potong jika terlalu panjang (varchar 255)
-        if ($position !== null) {
-            $position = Str::limit($position, 240, '');
-        }
+        // position: simplify hanya 3 nilai: Staff, Manager (dari Kepala), Direktur Utama
+        $rawPosition = $roleName ?? $raw['profesi'] ?? null;
+        $position = $this->normalizePosition($rawPosition);
 
         // department string = nama_unit (sesuai request: department ambil nama unit)
         $department = $unit['nama_unit'] ?? null;
@@ -584,5 +611,29 @@ class ImportSimutuUsers extends Command
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    /**
+     * Sederhanakan position menjadi hanya 3 kode:
+     * - DIR_UT (Direktur Utama)
+     * - MANAGER (dari Kepala)
+     * - STAFF (lainnya)
+     */
+    private function normalizePosition(?string $raw): ?string
+    {
+        if ($raw === null || trim($raw) === '' || $raw === '\N') {
+            return 'STAFF';
+        }
+        $low = strtolower(trim($raw));
+        if (str_contains($low, 'direktur utama') || $low === 'dir_ut' || str_contains($low, 'dir ut')) {
+            return 'DIR_UT';
+        }
+        if (str_contains($low, 'kepala') || str_starts_with($low, 'ka_') || str_starts_with($low, 'ka ')) {
+            return 'MANAGER';
+        }
+        if (str_contains($low, 'direktur')) {
+            return 'MANAGER';
+        }
+        return 'STAFF';
     }
 }

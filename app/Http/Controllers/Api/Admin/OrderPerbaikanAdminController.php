@@ -49,7 +49,13 @@ class OrderPerbaikanAdminController extends BaseApiController
     public function updateStatus(UpdateStatusRequest $request, OrderPerbaikan $orderPerbaikan)
     {
         try {
-            $updated = $this->service->updateStatus($request->user(), $orderPerbaikan, $request->validated());
+            $data = $request->validated();
+            if ($request->hasFile('lampiran')) {
+                $file = $request->file('lampiran');
+                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                $data['lampiran'] = $file->storeAs('order-lampiran', $filename, 'public');
+            }
+            $updated = $this->service->updateStatus($request->user(), $orderPerbaikan, $data);
 
             return $this->success(new OrderPerbaikanResource($updated), 'Status berhasil diperbarui');
         } catch (\Exception $e) {
