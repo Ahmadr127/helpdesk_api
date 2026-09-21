@@ -90,7 +90,7 @@ function previewImage(input) {
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
+                    <div class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
                         <input type="text" name="kode_inventaris"
                             value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}"

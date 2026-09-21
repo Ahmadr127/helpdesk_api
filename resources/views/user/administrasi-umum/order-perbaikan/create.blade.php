@@ -63,7 +63,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
+                    <div class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
                         <input type="text" name="kode_inventaris" value="{{ old('kode_inventaris') }}" placeholder="Kode inventaris (opsional)"
                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">

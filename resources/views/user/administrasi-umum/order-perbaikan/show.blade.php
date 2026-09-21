@@ -214,10 +214,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="p-6">
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        @if(!empty($order->kode_inventaris) && $order->kode_inventaris !== '-')
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kode Inventaris</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->kode_inventaris ?: '-' }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->kode_inventaris }}</dd>
                         </div>
+                        @endif
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->kategori_order ?? '-' }}</dd>

@@ -114,10 +114,12 @@
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kategori_order ?? '-' }}</dd>
                         </div>
+                        @if(!empty($orderPerbaikan->kode_inventaris) && $orderPerbaikan->kode_inventaris !== '-')
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kode Inventaris</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kode_inventaris ?: '-' }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kode_inventaris }}</dd>
                         </div>
+                        @endif
                         <div class="sm:col-span-2">
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nama Barang</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->nama_barang }}</dd>
