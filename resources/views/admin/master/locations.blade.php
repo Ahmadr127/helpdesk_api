@@ -2,24 +2,6 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
-    <div class="mb-6 bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-            <a href="{{ route('admin.master.index') }}"
-                class="bg-slate-500 text-white px-4 py-2 rounded-lg hover:bg-slate-600 transition-all flex items-center shadow-md">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back
-            </a>
-            <h2 class="text-xl font-semibold text-gray-800">Locations Management</h2>
-        </div>
-        <button onclick="openModal()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-md">
-            Add Location
-        </button>
-    </div>
-
     <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.locations.index') }}" method="GET"
@@ -47,6 +29,8 @@
                     class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Filter</button>
                 <a href="{{ route('admin.master.locations.index') }}"
                     class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm">Reset</a>
+                <button type="button" onclick="openModal()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Add Location</button>
             </div>
         </form>
     </div>
