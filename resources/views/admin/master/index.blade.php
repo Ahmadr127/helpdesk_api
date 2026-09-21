@@ -169,10 +169,10 @@
         </div>
 
         <!-- Buildings Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-grey-200">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-brown-200">
             <div
-                class="flex justify-between items-center mb-4 bg-grey-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-grey-800 flex items-center gap-2">
+                class="flex justify-between items-center mb-4 bg-brown-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-brown-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 21v18M8 21v12M16 17v8M3 11h13M8 8v8M16 8v5M3 8v5m9 0v8M8 3h15" />
