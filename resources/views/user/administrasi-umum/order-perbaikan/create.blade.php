@@ -81,7 +81,7 @@
                     </div>
 
                     <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
                         <input type="text" name="nama_barang" value="{{ old('nama_barang') }}" placeholder="Nama barang / peralatan"
                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         @error('nama_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -97,7 +97,7 @@
                         @error('kategori_order') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
                         @if(isset($departmentLocation) && $departmentLocation)
                         <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
                             <div class="flex-1">
@@ -115,7 +115,7 @@
                                    placeholder="Ketik untuk cari lokasi..." autocomplete="off"
                                    value="{{ old('lokasi') ? ($locations->firstWhere('id', old('lokasi'))->name ?? '') : '' }}">
                             <div id="lokasi_results" class="absolute z-20 w-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto"></div>
-                            <select name="lokasi" id="lokasi_select" required class="hidden">
+                            <select name="lokasi" id="lokasi_select" class="hidden">
                                 <option value="">Pilih Lokasi</option>
                                 @foreach($locations as $loc)
                                     <option value="{{ $loc->id }}" {{ old('lokasi')==$loc->id ? 'selected':'' }}>{{ $loc->name }}</option>
@@ -239,15 +239,40 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    // Foto preview
+    // Foto preview + alert validasi (samakan backend: image jpeg/png/jpg/gif, maks 10MB)
     const fotoInput=document.getElementById('foto');
     const previewContainer=document.getElementById('preview-container');
     const previewImage=document.getElementById('preview-image');
     const fileName=document.getElementById('file-name');
+    let fotoError=document.getElementById('foto-error');
+    if(!fotoError && fotoInput){
+        fotoError=document.createElement('p');
+        fotoError.id='foto-error';
+        fotoError.className='text-red-500 text-xs mt-1';
+        fotoInput.closest('div.space-y-1')?.appendChild(fotoError);
+    }
+    function validateFoto(file){
+        const allowed=['image/jpeg','image/png','image/jpg','image/gif'];
+        if(!allowed.includes(file.type)) return 'Format foto harus JPG, JPEG, PNG, atau GIF.';
+        if(file.size > 10*1024*1024) return 'Ukuran foto maksimal 10MB (file Anda '+(file.size/1024/1024).toFixed(2)+' MB).';
+        return null;
+    }
+    function resetFoto(msg){
+        fotoInput.value='';
+        if(fotoError) fotoError.textContent=msg||'';
+        fileName.textContent='';
+        fileName.classList.add('hidden');
+        previewImage.src='#';
+        previewContainer.classList.add('hidden');
+        if(msg) alert(msg);
+    }
     if(fotoInput){
         fotoInput.addEventListener('change', function(){
             if(this.files && this.files[0]){
                 const file=this.files[0];
+                const err=validateFoto(file);
+                if(err){ resetFoto(err); return; }
+                if(fotoError) fotoError.textContent='';
                 fileName.textContent=file.name+' ('+(file.size/1024/1024).toFixed(2)+' MB)';
                 fileName.classList.remove('hidden');
                 const reader=new FileReader();
@@ -264,10 +289,11 @@ document.addEventListener('DOMContentLoaded', function(){
             ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev, e=>{e.preventDefault(); dropZone.classList.remove('border-green-500','bg-green-50');}));
             dropZone.addEventListener('drop', e=>{
                 const file=e.dataTransfer.files[0];
-                if(file && file.type.startsWith('image/')){
-                    fotoInput.files=e.dataTransfer.files;
-                    fotoInput.dispatchEvent(new Event('change'));
-                }
+                if(!file) return;
+                const err=validateFoto(file);
+                if(err){ resetFoto(err); return; }
+                fotoInput.files=e.dataTransfer.files;
+                fotoInput.dispatchEvent(new Event('change'));
             });
         }
     }

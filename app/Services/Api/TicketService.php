@@ -121,12 +121,15 @@ class TicketService
         }
 
         // Gedung mengikuti departemen (single source of truth); form boleh override via building_id
-        $userDepartment->loadMissing('building');
+        $userDepartment->loadMissing(['building', 'location']);
         $building = ! empty($data['building_id'])
             ? Building::find($data['building_id'])
             : $userDepartment->building;
 
-        $location = Location::findOrFail($data['location_id']);
+        // Lokasi opsional: dari form, fallback lokasi departemen, boleh null
+        $location = ! empty($data['location_id'])
+            ? Location::find($data['location_id'])
+            : $userDepartment->location;
         $category = Category::findOrFail($data['category_id']);
 
         // Validate category belongs to SIRS
@@ -156,8 +159,8 @@ class TicketService
                 'department' => $userDepartment->name,
                 'building_id' => $building?->id,
                 'building' => $building?->name,
-                'location_id' => $location->id,
-                'location' => $location->name,
+                'location_id' => $location?->id,
+                'location' => $location?->name,
                 'priority' => $data['priority'],
                 'status' => 'open',
             ]);
@@ -199,7 +202,7 @@ class TicketService
         return DB::transaction(function () use ($ticket, $data, $photoFile) {
             $category = Category::findOrFail($data['category_id']);
             $department = Department::with('building')->findOrFail($data['department_id']);
-            $location = Location::findOrFail($data['location_id']);
+            $location = ! empty($data['location_id']) ? Location::find($data['location_id']) : null;
             $building = ! empty($data['building_id'])
                 ? Building::find($data['building_id'])
                 : $department->building;
@@ -212,8 +215,8 @@ class TicketService
                 'department' => $department->name,
                 'building_id' => $building?->id,
                 'building' => $building?->name,
-                'location_id' => $location->id,
-                'location' => $location->name,
+                'location_id' => $location?->id,
+                'location' => $location?->name,
                 'priority' => $data['priority'],
             ]);
 

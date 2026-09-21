@@ -116,7 +116,7 @@ class TicketController extends Controller
                     }
                 },
             ],
-            'location_id' => 'required|exists:locations,id',
+            'location_id' => 'nullable|exists:locations,id',
             'building_id' => 'nullable|exists:buildings,id',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high',
@@ -201,7 +201,7 @@ class TicketController extends Controller
             'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'department_id' => 'required|exists:departments,id',
-            'location_id' => 'required|exists:locations,id',
+            'location_id' => 'nullable|exists:locations,id',
             'building_id' => 'nullable|exists:buildings,id',
             'priority' => 'required|in:low,medium,high',
             'photo' => 'nullable|image|max:5120', // 5MB max

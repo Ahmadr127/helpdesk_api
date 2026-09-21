@@ -15,9 +15,9 @@ class UpdateOrderPerbaikanRequest extends FormRequest
     {
         return [
             'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'required|string',
+            'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string|exists:kategori_order,name',
-            'lokasi' => 'required|exists:locations,id',
+            'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',

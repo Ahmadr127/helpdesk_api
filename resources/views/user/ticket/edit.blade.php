@@ -127,9 +127,8 @@
                             <input type="hidden" name="location_id" value="{{ $userDepartment->location->id }}">
                             @else
                             <select name="location_id" id="location_id"
-                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                required>
-                                <option value="">Pilih Lokasi</option>
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                <option value="">Pilih Lokasi (opsional)</option>
                                 @foreach($locations as $location)
                                 <option value="{{ $location->id }}" {{ old('location_id', $ticket->location_id) == $location->id ? 'selected' : '' }}>
                                     {{ $location->name }}

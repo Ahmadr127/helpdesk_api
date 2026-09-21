@@ -173,9 +173,9 @@ class OrderPerbaikanService
                 'nip_peminta' => $user->nip ?? null,
                 'nama_peminta' => $user->name,
                 'kode_inventaris' => $validated['kode_inventaris'] ?? null,
-                'nama_barang' => $validated['nama_barang'],
+                'nama_barang' => $validated['nama_barang'] ?? null,
                 'kategori_order' => $validated['kategori_order'] ?? null,
-                'lokasi' => $validated['lokasi'],
+                'lokasi' => $validated['lokasi'] ?? null,
                 'keluhan' => $validated['keluhan'],
                 'prioritas' => $validated['prioritas'],
                 'foto' => $fotoPath,
@@ -223,9 +223,9 @@ class OrderPerbaikanService
 
             $order->update([
                 'kode_inventaris' => $validated['kode_inventaris'] ?? $order->kode_inventaris,
-                'nama_barang' => $validated['nama_barang'],
+                'nama_barang' => $validated['nama_barang'] ?? $order->nama_barang,
                 'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
-                'lokasi' => $validated['lokasi'],
+                'lokasi' => $validated['lokasi'] ?? $order->lokasi,
                 'keluhan' => $validated['keluhan'],
                 'prioritas' => $validated['prioritas'],
                 'foto' => $validated['foto'] ?? $order->foto,

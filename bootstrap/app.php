@@ -19,5 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Upload melebihi post_max_size server: PHP mengosongkan $_POST/$_FILES
+        // sebelum validasi — tampilkan pesan ramah, bukan 500.
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, $request) {
+            $message = 'Ukuran data yang dikirim terlalu besar untuk server (maksimal '.ini_get('post_max_size').'). Kecilkan file foto/lampiran lalu coba lagi.';
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => $message], 413);
+            }
+
+            return redirect()->back()->with('error', $message)->withInput($request->except(['foto', 'lampiran', 'photo']));
+        });
     })->create();

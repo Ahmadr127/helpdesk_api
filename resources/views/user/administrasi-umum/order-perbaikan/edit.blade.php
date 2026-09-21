@@ -151,6 +151,7 @@ function previewImage(input) {
                         @else
                         <select name="lokasi"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="">Pilih Lokasi (opsional)</option>
                             @foreach($locations as $location)
                             <option value="{{ $location->id }}"
                                 {{ old('lokasi', $orderPerbaikan->lokasi) == $location->id ? 'selected' : '' }}>

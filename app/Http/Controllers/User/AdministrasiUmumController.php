@@ -458,7 +458,7 @@ class AdministrasiUmumController extends Controller
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string',
-            'lokasi' => 'required|exists:locations,id',
+            'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'tanggal' => 'required|date',
@@ -555,7 +555,7 @@ class AdministrasiUmumController extends Controller
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string',
-            'lokasi' => 'required|exists:locations,id',
+            'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240', // max 10MB

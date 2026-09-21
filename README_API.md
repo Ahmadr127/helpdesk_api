@@ -17,7 +17,7 @@
 
 **A. Ticket IT – SIRS** (`SIRS` = Sistem Informasi Rumah Sakit)
 - Route Web `user/ticket/create` (`routes/web.php:90`) & API `POST /api/tickets` (`routes/api.php:18`, `User/TicketController.php:40`).
-- Input wajib `app/Http/Requests/Api/Ticket/StoreTicketRequest.php:10`: `category_id` harus `exists:categories,id` + closure cek `category.unitProses.code === 'SIRS'` (kategori SIRS di seeder: id `2 Printer`, `3 CCTV`, `4 Software`, `5 Hardware` `categories` join `unit_proses` `SIRS` id 3), `location_id` exists `locations.id` (UGD id1/BPJS id2…), `description` string, `priority low/medium/high`, `photo` image 5MB opsional.
+- Input `app/Http/Requests/Api/Ticket/StoreTicketRequest.php:10`: `category_id` harus `exists:categories,id` + closure cek `category.unitProses.code === 'SIRS'` (kategori SIRS di seeder: id `2 Printer`, `3 CCTV`, `4 Software`, `5 Hardware` `categories` join `unit_proses` `SIRS` id 3), `location_id` nullable (`UGD id1/BPJS id2…`, fallback lokasi departemen), `description` string, `priority low/medium/high`, `photo` image 5MB opsional.
 - Logic `TicketService.php:20` transaksi: ambil `Department` user (`IT` id2 / `GENERAL` id1), `Location`+`Building`, generate `ticket_number T-ddmm-xxx` per hari (`T-2808-001` cari `T-date-%` order desc), create `tickets` (`category`, `department`, `building`, `location` string + FK), simpan foto `ticket-photos` disk `public` → `TicketPhoto type=initial`. Status awal `open`.
 
 **B. Order Perbaikan Sarana – IPSRS** (bukan SIRS)
@@ -35,9 +35,9 @@
 | `unit_proses_code` | ya (hidden) | hidden | `users.department` user login | otomatis, `!= SIRS` |
 | `unit_proses_name` | ya (hidden) | hidden | nama department user | otomatis |
 | `prioritas` | ya | select | `RENDAH` / `SEDANG` / `TINGGI/URGENT` | |
-| `nama_barang` | ya | text | nama barang/peralatan | |
+| `nama_barang` | tidak | text | nama barang/peralatan | |
 | `kategori_order` | tidak | select | master `kategori_order` aktif (`KategoriOrderController`) | nilai tersimpan = `kategori_order.name`; validasi web masih `nullable|string` (integer FK belum dipakai) |
-| `lokasi` | ya | search-select / terkunci | master `locations` aktif; **terkunci otomatis dari departemen** bila departemen punya lokasi | tersimpan `locations.id`, autocomplete di JS |
+| `lokasi` | tidak | search-select / terkunci | master `locations` aktif; **terkunci otomatis dari departemen** bila departemen punya lokasi | tersimpan `locations.id`, autocomplete di JS |
 | `keluhan` | ya | textarea | deskripsi kerusakan | |
 | `foto` | tidak | file | PNG/JPG/GIF ≤ 10MB | `order-photos` disk `public` |
 | `kode_inventaris` | tidak | - | tidak ada di form web | validasi web `nullable`; service default `'-'` |
@@ -48,9 +48,9 @@
 |------|------|------|
 | `unit_proses_code` | ya | `exists:unit_proses,code` + closure tolak `SIRS` |
 | `kode_inventaris` | ya (API) | `string` (berbeda dengan web yang nullable) |
-| `nama_barang` | ya | `string` |
+| `nama_barang` | tidak | `nullable|string` |
 | `kategori_order` | tidak | `nullable|string|exists:kategori_order,name` |
-| `lokasi` | ya | `exists:locations,id` |
+| `lokasi` | tidak | `nullable|exists:locations,id` |
 | `keluhan` | ya | `string` |
 | `prioritas` | ya | `in:RENDAH,SEDANG,TINGGI/URGENT` |
 | `tanggal` | ya | `date` |
