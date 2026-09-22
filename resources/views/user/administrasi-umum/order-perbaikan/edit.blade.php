@@ -114,12 +114,12 @@ function previewImage(input) {
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
+                    {{-- <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
                         <input type="text" name="nama_barang"
                             value="{{ old('nama_barang', $orderPerbaikan->nama_barang) }}"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
-                    </div>
+                    </div> --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
                         <select name="kategori_order"
