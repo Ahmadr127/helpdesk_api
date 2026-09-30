@@ -276,26 +276,38 @@ let statusPieChart;
 let progressChart;
 
 function updateSummaryData(summary) {
+    if (!summary) return;
+
     // Update total tickets
-    document.querySelector('.text-2xl.font-bold').textContent = `${summary.totalTickets}/${summary.totalActiveTickets}`;
-    document.querySelector('.text-sm.text-gray-500.mb-4').textContent = `Sisa: ${summary.remainingTickets} Tiket`;
+    const totalEl = document.querySelector('.text-2xl.font-bold');
+    if (totalEl) totalEl.textContent = `${summary.totalTickets}/${summary.totalActiveTickets}`;
+    const sisaEl = document.querySelector('.text-sm.text-gray-500.mb-4');
+    if (sisaEl) sisaEl.textContent = `Sisa: ${summary.remainingTickets} Tiket`;
 
     // Update processing percentage
     const processingPercentageEl = document.querySelector('[data-processing-percentage]');
-    processingPercentageEl.textContent = `${summary.processingPercentage}%`;
-    processingPercentageEl.nextElementSibling.querySelector('.bg-blue-600').style.width =
-        `${summary.processingPercentage}%`;
+    if (processingPercentageEl) {
+        processingPercentageEl.textContent = `${summary.processingPercentage}%`;
+        // The bar lives in the NEXT wrapping div, not as a sibling of the <span> itself.
+        const rowDiv = processingPercentageEl.closest('div');
+        const barWrap = rowDiv ? rowDiv.nextElementSibling : null;
+        const bar = barWrap ? barWrap.querySelector('.bg-blue-600') : null;
+        if (bar) bar.style.width = `${summary.processingPercentage}%`;
+    }
 
     // Update ticket progress
     const ticketProgressEl = document.querySelector('[data-ticket-progress]');
-    ticketProgressEl.textContent = `${summary.ticketProgress}%`;
+    if (ticketProgressEl) ticketProgressEl.textContent = `${summary.ticketProgress}%`;
 
     // Update completed and remaining counts
-    document.querySelector('[data-completed-count]').textContent = `Selesai: ${summary.completedTickets}`;
-    document.querySelector('[data-remaining-count]').textContent = `Tersisa: ${summary.remainingTickets}`;
+    const completedEl = document.querySelector('[data-completed-count]');
+    if (completedEl) completedEl.textContent = `Selesai: ${summary.completedTickets}`;
+    const remainingEl = document.querySelector('[data-remaining-count]');
+    if (remainingEl) remainingEl.textContent = `Tersisa: ${summary.remainingTickets}`;
 
     // Update top stats cards
-    document.getElementById('totalTickets').textContent = summary.totalTickets;
+    const totalTicketsEl = document.getElementById('totalTickets');
+    if (totalTicketsEl) totalTicketsEl.textContent = summary.totalTickets;
 }
 
 function initCharts() {
@@ -406,13 +418,18 @@ function initCharts() {
 }
 
 function updateCharts() {
-    const timeFilter = document.getElementById('timeFilter').value;
-    const statusFilter = document.getElementById('statusFilter').value;
+    const timeFilterEl = document.getElementById('timeFilter');
+    const statusFilterEl = document.getElementById('statusFilter');
+    if (!timeFilterEl || !statusFilterEl) return;
+    const timeFilter = timeFilterEl.value;
+    const statusFilter = statusFilterEl.value;
 
     fetch(`/admin/dashboard/stats?time=${timeFilter}&status=${statusFilter}`)
         .then(response => response.json())
         .then(data => {
+            if (!data) return;
             // Update line chart
+            if (ticketChart && data.dates && data.counts) {
             ticketChart.data.labels = data.dates.map(date => {
                 const d = new Date(date);
                 return d.toLocaleDateString('id-ID', {
@@ -422,8 +439,10 @@ function updateCharts() {
             });
             ticketChart.data.datasets[0].data = data.counts;
             ticketChart.update();
+            }
 
             // Update pie chart
+            if (statusPieChart && data.statusDistribution) {
             statusPieChart.data.datasets[0].data = [
                 data.statusDistribution.open,
                 data.statusDistribution.in_progress,
@@ -431,19 +450,24 @@ function updateCharts() {
                 data.statusDistribution.closed
             ];
             statusPieChart.update();
+            }
 
             // Update progress chart and text
-            if (data.summary) {
-                const inProgress = data.statusDistribution.in_progress;
-                const totalActive = data.summary.totalActiveTickets;
+            if (data.summary && data.statusDistribution) {
+                const inProgress = data.statusDistribution.in_progress ?? 0;
+                const totalActive = data.summary.totalActiveTickets ?? 0;
                 const progressPercentage = totalActive > 0 ? Math.round((inProgress / totalActive) * 100) : 0;
 
-                progressChart.data.datasets[0].data = [progressPercentage, 100 - progressPercentage];
-                progressChart.update();
+                if (progressChart) {
+                    progressChart.data.datasets[0].data = [progressPercentage, 100 - progressPercentage];
+                    progressChart.update();
+                }
 
                 // Update center text and description
-                document.getElementById('progressPercentage').textContent = `${progressPercentage}%`;
-                document.getElementById('progressText').textContent =
+                const progressPctEl = document.getElementById('progressPercentage');
+                if (progressPctEl) progressPctEl.textContent = `${progressPercentage}%`;
+                const progressTextEl = document.getElementById('progressText');
+                if (progressTextEl) progressTextEl.textContent =
                     `${inProgress} Dalam proses dari ${totalActive} total tiket aktif`;
             }
 
@@ -453,19 +477,27 @@ function updateCharts() {
             }
 
             // Update top stats cards
-            document.getElementById('openTickets').textContent = data.statusDistribution.open;
-            document.getElementById('inProgressTickets').textContent = data.statusDistribution.in_progress;
-            document.getElementById('closedTickets').textContent =
-                data.statusDistribution.closed + data.statusDistribution.confirmed;
-        });
+            if (data.statusDistribution) {
+            const openEl = document.getElementById('openTickets');
+            if (openEl) openEl.textContent = data.statusDistribution.open;
+            const inProgEl = document.getElementById('inProgressTickets');
+            if (inProgEl) inProgEl.textContent = data.statusDistribution.in_progress;
+            const closedEl = document.getElementById('closedTickets');
+            if (closedEl) closedEl.textContent =
+                (data.statusDistribution.closed ?? 0) + (data.statusDistribution.confirmed ?? 0);
+            }
+        })
+        .catch(err => console.error('Gagal memuat statistik dashboard:', err));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     initCharts();
     updateCharts();
 
-    document.getElementById('timeFilter').addEventListener('change', updateCharts);
-    document.getElementById('statusFilter').addEventListener('change', updateCharts);
+    const timeFilterEl = document.getElementById('timeFilter');
+    if (timeFilterEl) timeFilterEl.addEventListener('change', updateCharts);
+    const statusFilterEl = document.getElementById('statusFilter');
+    if (statusFilterEl) statusFilterEl.addEventListener('change', updateCharts);
 });
 </script>
 @endpush

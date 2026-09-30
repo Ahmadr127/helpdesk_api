@@ -272,7 +272,7 @@
                             @if($response['type'] === 'admin')
                             <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                 <div class="flex justify-between items-start mb-2">
-                                    <div class="text-sm font-medium text-blue-800">Admin</div>
+                                    <div class="text-sm font-medium text-blue-800">{{ $ticket->user->name }}</div>
                                     <div class="text-sm text-gray-500">
                                         {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
                                     </div>

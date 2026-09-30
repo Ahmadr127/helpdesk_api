@@ -110,7 +110,7 @@
     }
     </style>
     @livewireStyles
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {{-- Alpine.js is already bundled with Livewire 3 — do not load it manually or you get "multiple instances" warnings. --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
