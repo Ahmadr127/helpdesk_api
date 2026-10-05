@@ -18,11 +18,6 @@ $chartData = [
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
-    <div class="mb-6 bg-white p-4 rounded-lg shadow-sm">
-        <h1 class="text-xl font-semibold text-gray-800">Dashboard Administrasi Umum</h1>
-        <p class="text-sm text-gray-500">Ringkasan perbaikan dan pemeliharaan</p>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <!-- Total Orders Card -->
