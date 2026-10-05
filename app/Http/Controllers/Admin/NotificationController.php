@@ -73,7 +73,15 @@ class NotificationController extends Controller
                 return response()->json(['success' => true]);
             }
 
-            return redirect()->route('admin.tickets.show', ['ticket' => $notification->data['ticket_id']]);
+            $data = $notification->data;
+            if (isset($data['order_id'])) {
+                return redirect()->route('admin.order-perbaikan.show', ['orderPerbaikan' => $data['order_id']]);
+            }
+            if (isset($data['ticket_id'])) {
+                return redirect()->route('admin.tickets.show', ['ticket' => $data['ticket_id']]);
+            }
+
+            return redirect()->route('admin.notifications.index');
         } catch (\Exception $e) {
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Notification not found'], 404);

@@ -173,11 +173,20 @@
                 <div class="overflow-y-auto" style="max-height: 65vh; min-height: 400px;">
                     <div class="divide-y divide-gray-200">
                         @forelse($notifications as $notification)
+                        @php
+                            $data = $notification->data;
+                            $isOrder = isset($data['order_id']);
+                            $targetUrl = $isOrder
+                                ? route('user.administrasi-umum.order-perbaikan.show', ['orderPerbaikan' => $data['order_id']])
+                                : (isset($data['ticket_id'])
+                                    ? route('user.ticket.show', ['ticket' => $data['ticket_id']])
+                                    : route('user.notifications.index'));
+                        @endphp
                         <div
                             class="p-5 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }} hover:bg-gray-50 transition-all">
-                            <a href="{{ route('user.ticket.show', ['ticket' => $notification->data['ticket_id']]) }}"
+                            <a href="{{ $targetUrl }}"
                                 class="block"
-                                onclick="event.preventDefault(); markAsRead('{{ $notification->id }}', '{{ route('user.ticket.show', ['ticket' => $notification->data['ticket_id']]) }}')">
+                                onclick="event.preventDefault(); markAsRead('{{ $notification->id }}', '{{ $targetUrl }}')">
                                 <div class="flex items-start">
                                     <div class="flex-shrink-0 mt-1">
                                         @if(!$notification->read_at)
@@ -191,7 +200,7 @@
                                     <div class="ml-3 flex-1">
                                         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                                             <h4 class="text-base font-medium text-gray-900">
-                                                {{ $notification->data['title'] }}
+                                                {{ $data['title'] ?? 'Notifikasi' }}
                                             </h4>
                                             <p class="text-xs text-gray-500 mt-1 sm:mt-0">
                                                 {{ $notification->created_at->format('d M Y H:i') }}
@@ -199,37 +208,55 @@
                                             </p>
                                         </div>
                                         <p class="mt-2 text-sm text-gray-600">
-                                            {{ $notification->data['message'] }}
+                                            {{ $data['message'] ?? '' }}
                                         </p>
                                         <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                                            @if($isOrder)
+                                            <div class="bg-gray-100 px-3 py-1 rounded-full">
+                                                <span class="text-gray-500">Order #:</span>
+                                                <span
+                                                    class="font-medium">{{ $data['nomor'] ?? '-' }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full
+                                                    {{ ($data['status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
+                                                       ((($data['status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
+                                                       'bg-green-100 text-green-800') }}">
+                                                    {{ ucfirst(str_replace('_', ' ', $data['status'] ?? '-')) }}
+                                                </span>
+                                            </div>
+                                            @else
                                             <div class="bg-gray-100 px-3 py-1 rounded-full">
                                                 <span class="text-gray-500">Tiket #:</span>
                                                 <span
-                                                    class="font-medium">{{ $notification->data['ticket_number'] }}</span>
+                                                    class="font-medium">{{ $data['ticket_number'] ?? '-' }}</span>
                                             </div>
                                             <div>
-                                                <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full 
-                                                    {{ $notification->data['ticket_status'] === 'open' ? 'bg-blue-100 text-blue-800' : 
-                                                       ($notification->data['ticket_status'] === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
-                                                       ($notification->data['ticket_status'] === 'closed' ? 'bg-gray-100 text-gray-800' : 
+                                                <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full
+                                                    {{ ($data['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
+                                                       ((($data['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
+                                                       ((($data['ticket_status'] ?? '') === 'closed') ? 'bg-gray-100 text-gray-800' :
                                                        'bg-green-100 text-green-800')) }}">
-                                                    {{ ucfirst(str_replace('_', ' ', $notification->data['ticket_status'])) }}
+                                                    {{ ucfirst(str_replace('_', ' ', $data['ticket_status'] ?? '-')) }}
                                                 </span>
                                             </div>
+                                            @if(isset($data['ticket_priority']))
                                             <div>
-                                                <span class="px-2.5 py-1 text-xs rounded-full 
-                                                    {{ $notification->data['ticket_priority'] === 'low' ? 'bg-gray-100 text-gray-800' : 
-                                                       ($notification->data['ticket_priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
+                                                <span class="px-2.5 py-1 text-xs rounded-full
+                                                    {{ $data['ticket_priority'] === 'low' ? 'bg-gray-100 text-gray-800' :
+                                                       ($data['ticket_priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                                                        'bg-red-100 text-red-800') }}">
-                                                    Prioritas: {{ ucfirst($notification->data['ticket_priority']) }}
+                                                    Prioritas: {{ ucfirst($data['ticket_priority']) }}
                                                 </span>
                                             </div>
+                                            @endif
+                                            @endif
                                         </div>
-                                        @if(isset($notification->data['responder_name']))
+                                        @if(isset($data['responder_name']))
                                         <div class="mt-2 text-xs text-gray-500">
                                             <span class="bg-gray-100 px-3 py-1 rounded-full">
-                                                Responder: {{ $notification->data['responder_name'] }}
-                                                ({{ ucfirst($notification->data['responder_role']) }})
+                                                Responder: {{ $data['responder_name'] }}
+                                                ({{ ucfirst($data['responder_role'] ?? '-') }})
                                             </span>
                                         </div>
                                         @endif

@@ -76,8 +76,12 @@ class NotificationController extends Controller
                 ]);
             }
 
-            // Redirect to ticket detail page
-            $ticketId = $notification->data['ticket_id'] ?? null;
+            // Redirect to ticket / order detail page
+            $data = $notification->data;
+            if (isset($data['order_id'])) {
+                return redirect()->route('user.administrasi-umum.order-perbaikan.show', ['orderPerbaikan' => $data['order_id']]);
+            }
+            $ticketId = $data['ticket_id'] ?? null;
             if ($ticketId) {
                 return redirect()->route('user.ticket.show', ['ticket' => $ticketId]);
             }
