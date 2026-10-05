@@ -70,13 +70,12 @@
                         @error('kode_inventaris') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas <span class="text-red-500">*</span></label>
-                        <select name="prioritas" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                            <option value="">Pilih Prioritas</option>
-                            <option value="RENDAH" {{ old('prioritas')=='RENDAH' ? 'selected':'' }}>RENDAH</option>
-                            <option value="SEDANG" {{ old('prioritas')=='SEDANG' ? 'selected':'' }}>SEDANG</option>
-                            <option value="TINGGI/URGENT" {{ old('prioritas')=='TINGGI/URGENT' ? 'selected':'' }}>TINGGI/URGENT</option>
-                        </select>
+                        <label for="prioritas-input" class="block text-sm font-medium text-gray-700 mb-1">Prioritas <span class="text-red-500">*</span></label>
+                        <x-searchable-select name="prioritas" id="prioritas"
+                            :options="['RENDAH' => 'RENDAH', 'SEDANG' => 'SEDANG', 'TINGGI/URGENT' => 'TINGGI/URGENT']"
+                            :selected="old('prioritas')"
+                            placeholder="Ketik untuk cari prioritas..." empty-label="— Pilih Prioritas —"
+                            accent="green" :required="true" />
                         @error('prioritas') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
@@ -87,17 +86,15 @@
                         @error('nama_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
-                        <select name="kategori_order" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white">
-                            <option value="">Pilih Kategori</option>
-                            @foreach($kategoriOrders as $kat)
-                                <option value="{{ $kat->name }}" {{ old('kategori_order')==$kat->name ? 'selected':'' }}>{{ $kat->name }}</option>
-                            @endforeach
-                        </select>
+                        <label for="kategori_order-input" class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
+                        <x-searchable-select name="kategori_order" id="kategori_order"
+                            :options="$kategoriOrders->pluck('name', 'name')->toArray()" :selected="old('kategori_order')"
+                            placeholder="Ketik untuk cari kategori..." empty-label="— Pilih Kategori —"
+                            accent="green" />
                         @error('kategori_order') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                        <label for="lokasi-input" class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
                         @if(isset($departmentLocation) && $departmentLocation)
                         <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
                             <div class="flex-1">
@@ -109,19 +106,10 @@
                         </div>
                         <input type="hidden" name="lokasi" value="{{ $departmentLocation->id }}">
                         @else
-                        <div class="relative">
-                            <input type="text" id="lokasi_search"
-                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                   placeholder="Ketik untuk cari lokasi..." autocomplete="off"
-                                   value="{{ old('lokasi') ? ($locations->firstWhere('id', old('lokasi'))->name ?? '') : '' }}">
-                            <div id="lokasi_results" class="absolute z-20 w-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto"></div>
-                            <select name="lokasi" id="lokasi_select" class="hidden">
-                                <option value="">Pilih Lokasi</option>
-                                @foreach($locations as $loc)
-                                    <option value="{{ $loc->id }}" {{ old('lokasi')==$loc->id ? 'selected':'' }}>{{ $loc->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <x-searchable-select name="lokasi" id="lokasi"
+                            :options="$locations->pluck('name', 'id')->toArray()" :selected="old('lokasi')"
+                            placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi —"
+                            accent="green" />
                         @endif
                         @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -191,53 +179,8 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    // Lokasi autocomplete
-    const lokasiSearch = document.getElementById('lokasi_search');
-    const lokasiResults = document.getElementById('lokasi_results');
-    const lokasiSelect = document.getElementById('lokasi_select');
-    if(lokasiSearch && lokasiResults && lokasiSelect){
-        const locations = [];
-        for(const opt of lokasiSelect.options){
-            if(opt.value) locations.push({id: opt.value, name: opt.text});
-        }
-        // set initial if old value
-        if(lokasiSelect.value){
-            const sel = locations.find(l=>l.id==lokasiSelect.value);
-            if(sel){
-                lokasiSearch.value = sel.name;
-            }
-        }
-        function display(results){
-            lokasiResults.innerHTML='';
-            if(results.length>0){
-                results.forEach(loc=>{
-                    const div=document.createElement('div');
-                    div.className='px-4 py-2 cursor-pointer hover:bg-green-50 text-sm';
-                    div.textContent=loc.name;
-                    div.addEventListener('click',()=>{
-                        lokasiSearch.value=loc.name;
-                        lokasiSelect.value=loc.id;
-                        lokasiResults.classList.add('hidden');
-                    });
-                    lokasiResults.appendChild(div);
-                });
-                lokasiResults.classList.remove('hidden');
-            } else {
-                lokasiResults.classList.add('hidden');
-            }
-        }
-        lokasiSearch.addEventListener('input', function(){
-            const term=this.value.toLowerCase();
-            const filtered=locations.filter(l=>l.name.toLowerCase().includes(term));
-            display(filtered);
-        });
-        lokasiSearch.addEventListener('focus', ()=>display(locations));
-        document.addEventListener('click', e=>{
-            if(e.target!==lokasiSearch && e.target!==lokasiResults){
-                lokasiResults.classList.add('hidden');
-            }
-        });
-    }
+    // Lokasi / prioritas / kategori_order memakai komponen searchable-select
+    // (lihat resources/views/components/searchable-select.blade.php)
 
     // Foto preview + alert validasi (samakan backend: image jpeg/png/jpg/gif, maks 10MB)
     const fotoInput=document.getElementById('foto');

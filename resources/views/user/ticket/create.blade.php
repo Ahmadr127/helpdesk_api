@@ -71,19 +71,13 @@
                         <!-- First Row: Category & Department -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="category_id"
+                                <label for="category_id-input"
                                     class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                                <select name="category_id" id="category_id"
-                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                    required>
-                                    <option value="">Pilih Kategori</option>
-                                    @foreach($categories as $category)
-                                    <option value="{{ $category->id }}"
-                                        {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
+                                <x-searchable-select name="category_id" id="category_id"
+                                    :options="$categories" :selected="old('category_id')"
+                                    value-field="id" label-field="name"
+                                    placeholder="Ketik untuk cari kategori..." empty-label="— Pilih Kategori —"
+                                    accent="blue" :required="true" />
                                 @error('category_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
@@ -118,7 +112,7 @@
                         <!-- Second Row: Location & Building -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="location_id"
+                                <label for="location_id-input"
                                     class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
                                 @if(isset($userDepartment) && $userDepartment && $userDepartment->location)
                                 <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
@@ -134,15 +128,11 @@
                                 </div>
                                 <input type="hidden" name="location_id" value="{{ $userDepartment->location->id }}">
                                 @else
-                                <select name="location_id" id="location_id"
-                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                    <option value="">Pilih Lokasi (opsional)</option>
-                                    @foreach($locations as $location)
-                                    <option value="{{ $location->id }}" {{ old('location_id') == $location->id ? 'selected' : '' }}>
-                                        {{ $location->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
+                                <x-searchable-select name="location_id" id="location_id"
+                                    :options="$locations" :selected="old('location_id')"
+                                    value-field="id" label-field="name"
+                                    placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi (opsional) —"
+                                    accent="blue" />
                                 @endif
                                 @error('location_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -150,7 +140,7 @@
                             </div>
 
                             <div>
-                                <label for="building_id" class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
+                                <label for="building_id-input" class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
                                 @if(isset($userDepartment) && $userDepartment && $userDepartment->building)
                                 <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
                                     <div class="flex-1">
@@ -165,12 +155,11 @@
                                 </div>
                                 <input type="hidden" name="building_id" id="building_id_hidden" value="{{ $userDepartment->building->id }}">
                                 @else
-                                <select name="building_id" id="building_id" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                    <option value="">-- Tidak Ada --</option>
-                                    @foreach($buildings as $b)
-                                    <option value="{{ $b->id }}" {{ old('building_id') == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-searchable-select name="building_id" id="building_id"
+                                    :options="$buildings" :selected="old('building_id')"
+                                    value-field="id" label-field="name"
+                                    placeholder="Ketik untuk cari gedung..." empty-label="— Tidak Ada —"
+                                    accent="blue" />
                                 @endif
                             </div>
                         </div>

@@ -53,7 +53,7 @@
                 </div>
                 <div class="text-xs">
                     <p class="text-gray-500 mb-1">Lokasi:</p>
-                    <p class="font-medium text-gray-900">{{ $order->location->name }}</p>
+                    <p class="font-medium text-gray-900">{{ $order->location?->name ?? '-' }}</p>
                 </div>
                 <div class="text-xs col-span-2">
                     <p class="text-gray-500 mb-1">Barang:</p>

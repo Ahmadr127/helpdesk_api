@@ -44,7 +44,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-blue-600 uppercase tracking-wider mb-2">Lokasi</p>
-                    <p class="text-base text-gray-800">{{ $order->location->name ?? '-' }}</p>
+                    <p class="text-base text-gray-800">{{ $order->location?->name ?? '-' }}</p>
                 </div>
             </div>
 
