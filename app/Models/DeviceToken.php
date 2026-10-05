@@ -44,16 +44,29 @@ class DeviceToken extends Model
                 'is_valid' => true,
                 'last_used_at' => now(),
             ]);
-
-            return $record;
+        } else {
+            $record = self::create([
+                'user_id' => $userId,
+                'token' => $token,
+                'platform' => $platform,
+                'is_valid' => true,
+                'last_used_at' => now(),
+            ]);
         }
 
-        return self::create([
-            'user_id' => $userId,
-            'token' => $token,
-            'platform' => $platform,
-            'is_valid' => true,
-            'last_used_at' => now(),
-        ]);
+        // Token baru = perangkat yang sama registrasi ulang (rotasi FCM /
+        // reinstall / login ulang). Tandai token lama user+platform yang sama
+        // sebagai tidak valid agar 1 event tidak terkirim berkali-kali ke
+        // perangkat yang sama. Hanya bila platform diketahui agar tidak
+        // mematikan perangkat lain milik user yang sama.
+        if ($platform) {
+            self::where('user_id', $userId)
+                ->where('platform', $platform)
+                ->where('id', '!=', $record->id)
+                ->where('is_valid', true)
+                ->update(['is_valid' => false]);
+        }
+
+        return $record;
     }
 }
