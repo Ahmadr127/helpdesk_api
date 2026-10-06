@@ -123,6 +123,7 @@ class PermissionSeeder extends Seeder
         return [
             'user' => [
                 'ticket', 'order',
+                'myticket', 'myorder',
                 'knowledge', 'notification', 'feedback', 'report',
             ],
             'admin' => [

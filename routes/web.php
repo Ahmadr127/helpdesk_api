@@ -69,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/information', [InformationController::class, 'index'])->name('user.information');
 
     // User Administrasi Umum routes - GREEN theme (Maintenance) permission protected
-    Route::prefix('user/administrasi-umum')->name('user.administrasi-umum.')->middleware('permission:order')->group(function () {
+    Route::prefix('user/administrasi-umum')->name('user.administrasi-umum.')->middleware('permission:order|myorder')->group(function () {
         Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'index'])->name('index');
         Route::get('/order-barang', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarang'])->name('order-barang');
         Route::get('/order-barang/konfirmasi', [App\Http\Controllers\User\AdministrasiUmumController::class, 'orderBarangKonfirmasi'])->name('order-barang.konfirmasi');
@@ -82,23 +82,23 @@ Route::middleware(['auth'])->group(function () {
         // Order Perbaikan Routes - page terpisah for create (GREEN)
         Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
             Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'indexOrderPerbaikan'])->name('index');
-            Route::get('/create', [App\Http\Controllers\User\AdministrasiUmumController::class, 'createOrderPerbaikan'])->name('create')->middleware('permission:order');
-            Route::post('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'storeOrderPerbaikan'])->name('store')->middleware('permission:order');
+            Route::get('/create', [App\Http\Controllers\User\AdministrasiUmumController::class, 'createOrderPerbaikan'])->name('create')->middleware('permission:order|myorder');
+            Route::post('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'storeOrderPerbaikan'])->name('store')->middleware('permission:order|myorder');
             Route::get('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'showOrderPerbaikan'])->name('show');
             Route::post('/{orderPerbaikan}/konfirmasi-selesai', [App\Http\Controllers\User\AdministrasiUmumController::class, 'confirmOrderPerbaikan'])->name('konfirmasi-selesai');
-            Route::get('/{orderPerbaikan}/edit', [App\Http\Controllers\User\AdministrasiUmumController::class, 'editOrderPerbaikan'])->name('edit')->middleware('permission:order');
-            Route::put('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'updateOrderPerbaikan'])->name('update')->middleware('permission:order');
-            Route::delete('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'deleteOrderPerbaikan'])->name('delete')->middleware('permission:order');
+            Route::get('/{orderPerbaikan}/edit', [App\Http\Controllers\User\AdministrasiUmumController::class, 'editOrderPerbaikan'])->name('edit')->middleware('permission:order|myorder');
+            Route::put('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'updateOrderPerbaikan'])->name('update')->middleware('permission:order|myorder');
+            Route::delete('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'deleteOrderPerbaikan'])->name('delete')->middleware('permission:order|myorder');
         });
     });
 
-    Route::prefix('ticket')->name('user.ticket.')->middleware('permission:ticket')->group(function () {
+    Route::prefix('ticket')->name('user.ticket.')->middleware('permission:ticket|myticket')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');
-        Route::get('/create', [TicketController::class, 'create'])->name('create')->middleware('permission:ticket');
-        Route::post('/store', [TicketController::class, 'store'])->name('store')->middleware('permission:ticket');
+        Route::get('/create', [TicketController::class, 'create'])->name('create')->middleware('permission:ticket|myticket');
+        Route::post('/store', [TicketController::class, 'store'])->name('store')->middleware('permission:ticket|myticket');
         Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
-        Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit')->middleware('permission:ticket');
-        Route::put('/{ticket}', [TicketController::class, 'update'])->name('update')->middleware('permission:ticket');
+        Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit')->middleware('permission:ticket|myticket');
+        Route::put('/{ticket}', [TicketController::class, 'update'])->name('update')->middleware('permission:ticket|myticket');
         Route::get('/status/{status}', [TicketController::class, 'filterByStatus'])
             ->name('filter.status')
             ->where('status', 'all|open|pending|in_progress|closed|confirmed');
@@ -106,8 +106,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
     });
     // FIX duplicate name user.ticket.reply (sebelumnya bentrok dengan ticket/{ticket}/reply di atas) — ganti jadi user.ticket.reply.legacy agar artisan optimize bisa cache
-    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy')->middleware('permission:ticket');
-    Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy')->middleware('permission:ticket');
+    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy')->middleware('permission:ticket|myticket');
+    Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy')->middleware('permission:ticket|myticket');
 
     Route::get('/faq', [FAQController::class, 'index'])->name('user.faq')->middleware('permission:knowledge');
     Route::get('/knowledge-base', [KnowledgeBaseController::class, 'index'])->name('user.knowledge-base')->middleware('permission:knowledge');

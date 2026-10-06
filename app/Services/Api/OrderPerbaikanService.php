@@ -185,7 +185,7 @@ class OrderPerbaikanService
 
             $order->history()->create([
                 'status' => 'open',
-                'keterangan' => 'Order dibuat via '.$source,
+                'keterangan' => '',
                 'created_by' => $user->id,
             ]);
 

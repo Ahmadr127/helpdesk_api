@@ -13,13 +13,13 @@
                     class="flex items-center {{ request()->routeIs('user.dashboard') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600' }}">
                     <span class="ml-2">Beranda</span>
                 </a>
-                @if(auth()->user()->hasPermission('ticket'))
+                @if(auth()->user()->hasPermission('ticket') || auth()->user()->hasPermission('myticket'))
                 <a href="{{ route('user.ticket.index') }}"
                     class="flex items-center {{ request()->routeIs('user.ticket.*') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600' }}">
                     <span class="ml-2">SIRS <span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-1">IT</span></span>
                 </a>
                 @endif
-                @if(auth()->user()->hasPermission('order'))
+                @if(auth()->user()->hasPermission('order') || auth()->user()->hasPermission('myorder'))
                 <a href="{{ route('user.administrasi-umum.order-barang') }}"
                     class="flex items-center {{ request()->routeIs('user.administrasi-umum.order-barang*') || request()->routeIs('user.administrasi-umum.order-perbaikan.*') ? 'text-green-600' : 'text-gray-900 hover:text-green-600' }}">
                     <span class="ml-2">IPSRS <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-1">UMUM</span></span>
@@ -190,13 +190,13 @@
                 class="block px-3 py-2 {{ request()->routeIs('user.dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 Beranda
             </a>
-            @if(auth()->user()->hasPermission('ticket'))
+            @if(auth()->user()->hasPermission('ticket') || auth()->user()->hasPermission('myticket'))
             <a href="{{ route('user.ticket.index') }}"
                 class="block px-3 py-2 {{ request()->routeIs('user.ticket.*') ? 'text-blue-600 bg-blue-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 SIRS - Tiket IT <span class="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">Biru</span>
             </a>
             @endif
-            @if(auth()->user()->hasPermission('order'))
+            @if(auth()->user()->hasPermission('order') || auth()->user()->hasPermission('myorder'))
             <a href="{{ route('user.administrasi-umum.order-barang') }}"
                 class="block px-3 py-2 {{ request()->routeIs('user.administrasi-umum.order-barang*') || request()->routeIs('user.administrasi-umum.order-perbaikan.*') ? 'text-green-600 bg-green-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 IPSRS - Maintenance <span class="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded">Hijau</span>
