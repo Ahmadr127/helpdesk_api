@@ -3,8 +3,8 @@
 @section('title', 'Edit Tiket')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-5xl mx-auto">
+<div class="w-full">
+    <div class="w-full">
         <div class="bg-white rounded-lg shadow-lg overflow-hidden">
             <!-- Header with gradient and back button - BLUE theme -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 flex justify-between items-center">

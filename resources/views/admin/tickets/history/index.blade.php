@@ -3,7 +3,7 @@
 @section('title', 'Riwayat Tiket')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="w-full">
     <div class="flex justify-between items-center mb-6">
         <a href="{{ route('admin.tickets.index') }}"
             class="inline-flex items-center px-4 py-2 bg-slate-500 text-white rounded-lg shadow hover:bg-slate-600 transition-all">

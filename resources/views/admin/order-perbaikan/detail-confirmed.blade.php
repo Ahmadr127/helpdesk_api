@@ -3,7 +3,7 @@
 @section('title', 'Detail Order Perbaikan Terkonfirmasi')
 
 @section('content')
-<div class="container mx-auto px-4 py-8 max-w-8xl">
+<div class="w-full">
     <!-- Back button and status badge -->
     <div class="flex justify-between items-center mb-6">
         <a href="{{ route('admin.order-perbaikan.confirmed') }}"

@@ -3,7 +3,7 @@
 @section('title', 'Tiket Ditutup')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <!-- Header with Back Button -->
     <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
         <div class="bg-white p-5">

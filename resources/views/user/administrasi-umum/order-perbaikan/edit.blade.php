@@ -89,6 +89,12 @@ function previewImage(input) {
                         readonly>
                 </div>
 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
+                    <textarea name="keluhan" rows="2"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
@@ -175,12 +181,6 @@ function previewImage(input) {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
-                    <textarea name="keluhan" rows="2"
-                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
                 </div>
 
                 <!-- Foto Section -->

@@ -3,8 +3,8 @@
 @section('title', 'Buat Tiket Baru')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-7xl mx-auto">
+<div class="w-full">
+    <div class="w-full">
 
         @if(!auth()->user()->department)
         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">

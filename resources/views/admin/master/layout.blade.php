@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <div class="bg-white rounded-lg shadow-lg">
         <div class="p-6 border-b flex justify-between items-center">
             <h2 class="text-xl font-semibold text-gray-800">@yield('title')</h2>

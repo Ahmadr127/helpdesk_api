@@ -63,6 +63,12 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan <span class="text-red-500">*</span></label>
+                        <textarea name="keluhan" rows="4" required placeholder="Jelaskan keluhan / kerusakan..."
+                                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ old('keluhan') }}</textarea>
+                        @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
                     <div class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
                         <input type="text" name="kode_inventaris" value="{{ old('kode_inventaris') }}" placeholder="Kode inventaris (opsional)"
@@ -126,13 +132,6 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan <span class="text-red-500">*</span></label>
-                        <textarea name="keluhan" rows="4" required placeholder="Jelaskan keluhan / kerusakan..."
-                                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ old('keluhan') }}</textarea>
-                        @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>

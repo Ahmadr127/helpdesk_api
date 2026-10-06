@@ -3,7 +3,7 @@
 @section('title', 'Total Order Perbaikan')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <!-- Header with back button -->
         <div class="bg-white -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-gray-200 rounded-t-lg">

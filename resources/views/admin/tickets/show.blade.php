@@ -3,7 +3,7 @@
 @section('title', 'Proses Tiket')
 
 @section('content')
-<div class="container mx-auto px-3 py-3 max-w-8xl">
+<div class="w-full">
     <!-- Back Button -->
     <div class="mb-3">
         <a href="{{ route('admin.tickets.index') }}"

@@ -24,7 +24,7 @@ function previewImage(input) {
 }
 </script>
 
-<div class="container mx-auto max-w-6xl p-2 mt-6">
+<div class="w-full">
     <div class="bg-white rounded-lg shadow-lg mb-4">
         <!-- Header Section -->
         <div class="bg-gradient-to-r from-green-600 to-emerald-400 p-3 rounded-t-lg">
@@ -87,6 +87,12 @@ function previewImage(input) {
                     <input type="text" value="{{ auth()->user()->name }}"
                         class="w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm text-gray-700"
                         readonly>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
+                    <textarea name="keluhan" rows="2"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -169,12 +175,6 @@ function previewImage(input) {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
-                    <textarea name="keluhan" rows="2"
-                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
                 </div>
 
                 <!-- Foto Section -->

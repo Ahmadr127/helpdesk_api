@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 @section('title', 'Master Data')
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="w-full">
     <!-- Dashboard Header with Card/Border -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-l-4 border-blue-500">
         <h1 class="text-2xl font-semibold text-gray-800">Master Data</h1>
