@@ -12,49 +12,86 @@ class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $permissions = [
-            // Group Dashboard
-            ['name' => 'View Dashboard', 'slug' => 'dashboard.view', 'group' => 'Dashboard', 'description' => 'Akses dashboard'],
-            // Tickets (SIRS) - IT
-            ['name' => 'View Tickets', 'slug' => 'ticket.view', 'group' => 'Tiket IT (SIRS)', 'description' => 'Lihat tiket sendiri'],
-            ['name' => 'Create Ticket', 'slug' => 'ticket.create', 'group' => 'Tiket IT (SIRS)', 'description' => 'Buat tiket baru'],
-            ['name' => 'Edit Own Ticket', 'slug' => 'ticket.edit.own', 'group' => 'Tiket IT (SIRS)', 'description' => 'Edit tiket sendiri (open)'],
-            ['name' => 'Manage All Tickets', 'slug' => 'ticket.manage', 'group' => 'Tiket IT (SIRS)', 'description' => 'Kelola semua tiket (admin IT)'],
-            ['name' => 'View Ticket History', 'slug' => 'ticket.history', 'group' => 'Tiket IT (SIRS)', 'description' => 'Lihat histori tiket'],
-            // Orders Maintenance (IPSRS)
-            ['name' => 'View Orders', 'slug' => 'order.view', 'group' => 'Maintenance (IPSRS)', 'description' => 'Lihat order sendiri'],
-            ['name' => 'Create Order', 'slug' => 'order.create', 'group' => 'Maintenance (IPSRS)', 'description' => 'Buat order perbaikan'],
-            ['name' => 'Edit Own Order', 'slug' => 'order.edit.own', 'group' => 'Maintenance (IPSRS)', 'description' => 'Edit order sendiri'],
-            ['name' => 'Manage Maintenance Orders', 'slug' => 'order.manage', 'group' => 'Maintenance (IPSRS)', 'description' => 'Kelola order perbaikan (admin IPSRS)'],
-            // Master Data
-            ['name' => 'View Master Data', 'slug' => 'master.view', 'group' => 'Master Data', 'description' => 'Lihat master data'],
-            ['name' => 'Manage Master Data', 'slug' => 'master.manage', 'group' => 'Master Data', 'description' => 'Kelola master data (categories, departments, buildings, locations, positions, unit proses, kategori order)'],
-            // User Management
-            ['name' => 'View Users', 'slug' => 'user.view', 'group' => 'User Management', 'description' => 'Lihat daftar user'],
-            ['name' => 'Manage Users', 'slug' => 'user.manage', 'group' => 'User Management', 'description' => 'Kelola users (create/edit/delete)'],
-            // Reports
-            ['name' => 'View Reports', 'slug' => 'report.view', 'group' => 'Reports', 'description' => 'Lihat laporan'],
-            ['name' => 'Manage Reports', 'slug' => 'report.manage', 'group' => 'Reports', 'description' => 'Generate & kelola laporan'],
-            ['name' => 'View SIRS Report', 'slug' => 'report.sirs', 'group' => 'Reports', 'description' => 'Akses Report SIRS'],
-            // Feedback
-            ['name' => 'View Feedback', 'slug' => 'feedback.view', 'group' => 'Feedback', 'description' => 'Lihat feedback'],
-            ['name' => 'Manage Feedback', 'slug' => 'feedback.manage', 'group' => 'Feedback', 'description' => 'Kelola feedback (reply/delete)'],
-            // Knowledge & FAQ
-            ['name' => 'View FAQ', 'slug' => 'faq.view', 'group' => 'Knowledge', 'description' => 'Akses FAQ'],
-            ['name' => 'View Knowledge Base', 'slug' => 'knowledge.view', 'group' => 'Knowledge', 'description' => 'Akses Knowledge Base'],
-            // Notifications & FCM
-            ['name' => 'View Notifications', 'slug' => 'notification.view', 'group' => 'Notifications', 'description' => 'Lihat notifikasi'],
-            ['name' => 'Manage FCM', 'slug' => 'fcm.manage', 'group' => 'Notifications', 'description' => 'Kelola FCM monitoring'],
-            // Admin / IPSRS access
-            ['name' => 'Admin Dashboard Access', 'slug' => 'admin.dashboard', 'group' => 'Admin', 'description' => 'Akses dashboard admin IT'],
-            ['name' => 'IPSRS Dashboard Access', 'slug' => 'ipsrs.dashboard', 'group' => 'Admin', 'description' => 'Akses dashboard Administrasi Umum (IPSRS)'],
-            ['name' => 'Admin Settings', 'slug' => 'admin.settings', 'group' => 'Admin', 'description' => 'Akses pengaturan admin'],
+        // Production-safe: idempoten, transaksional. Permission kanonis di-upsert
+        // (nama/grup/deskripsi ikut diperbarui), slug usang di-prune bersama
+        // pivot-nya, lalu peta role di-sinkron ulang.
+        DB::transaction(function () {
+            foreach ($this->permissions() as $p) {
+                Permission::updateOrCreate(['slug' => $p['slug']], $p);
+            }
+
+            $obsoleteIds = Permission::whereIn('slug', self::obsoleteSlugs())->pluck('id');
+            if ($obsoleteIds->isNotEmpty()) {
+                DB::table('role_permissions')->whereIn('permission_id', $obsoleteIds)->delete();
+                DB::table('permission_user')->whereIn('permission_id', $obsoleteIds)->delete();
+                Permission::whereIn('id', $obsoleteIds)->delete();
+            }
+
+            $this->syncRoleMap();
+        });
+
+        $this->command->info('Permissions seeded: '.Permission::count().' permissions, '.DB::table('role_permissions')->count().' role_permissions');
+    }
+
+    /**
+     * Slug usang yang dibersihkan saat seed. Daftar eksplisit (bukan
+     * "semua di luar kanonis") agar permission custom dari halaman
+     * Permissions tidak ikut terhapus di production.
+     */
+    public static function obsoleteSlugs(): array
+    {
+        return [
+            'dashboard.view', 'ticket.history', 'admin.settings',
+            'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.manage',
+            'order.view', 'order.create', 'order.edit.own', 'order.manage',
+            'master.view', 'master.manage',
+            'user.view', 'user.manage',
+            'report.view', 'report.manage',
+            'feedback.view', 'feedback.manage',
+            'faq.view', 'knowledge.view',
+            'notification.view', 'fcm.manage',
+            'admin.dashboard', 'ipsrs.dashboard',
         ];
+    }
 
-        foreach ($permissions as $p) {
-            Permission::firstOrCreate(['slug' => $p['slug']], $p);
-        }
+    /** Daftar permission kanonis yang di-sync ke production. */
+    protected function permissions(): array
+    {
+        return [
+            // Tiket IT (SIRS)
+            ['name' => 'Tiket IT', 'slug' => 'ticket', 'group' => 'Tiket IT (SIRS)', 'description' => 'Akses fitur tiket (list, buat, ubah, kelola)'],
+            // Order Perbaikan (IPSRS)
+            ['name' => 'Order Perbaikan', 'slug' => 'order', 'group' => 'Maintenance (IPSRS)', 'description' => 'Akses fitur order perbaikan (list, buat, ubah, kelola)'],
+            // Master Data
+            ['name' => 'Master Data', 'slug' => 'master', 'group' => 'Master Data', 'description' => 'Akses master data (categories, departments, buildings, locations, positions, unit proses, kategori order)'],
+            // User Management
+            ['name' => 'Kelola User', 'slug' => 'user', 'group' => 'User Management', 'description' => 'Lihat & kelola users'],
+            // Kelola matriks permission per role
+            ['name' => 'Kelola Permission', 'slug' => 'permission', 'group' => 'User Management', 'description' => 'Kelola permission per role & user'],
+            // Reports
+            ['name' => 'Laporan', 'slug' => 'report', 'group' => 'Reports', 'description' => 'Lihat & generate laporan'],
+            ['name' => 'Report SIRS', 'slug' => 'report.sirs', 'group' => 'Reports', 'description' => 'Akses Report SIRS'],
+            // Feedback
+            ['name' => 'Feedback', 'slug' => 'feedback', 'group' => 'Feedback', 'description' => 'Akses feedback (buat, lihat, balas, hapus)'],
+            // Knowledge & FAQ
+            ['name' => 'Knowledge Base', 'slug' => 'knowledge', 'group' => 'Knowledge', 'description' => 'Akses FAQ & Knowledge Base'],
+            // Notifications & FCM
+            ['name' => 'Notifikasi', 'slug' => 'notification', 'group' => 'Notifications', 'description' => 'Lihat notifikasi'],
+            ['name' => 'FCM Monitoring', 'slug' => 'fcm', 'group' => 'Notifications', 'description' => 'Kelola FCM monitoring'],
+            // Dashboard & layout
+            ['name' => 'Dashboard IT', 'slug' => 'dashboard.it', 'group' => 'Admin', 'description' => 'Akses dashboard admin IT'],
+            ['name' => 'Dashboard IPSRS', 'slug' => 'dashboard.ipsrs', 'group' => 'Admin', 'description' => 'Akses dashboard Administrasi Umum (IPSRS)'],
+            // Tiket & Order milik sendiri di shell admin
+            ['name' => 'Tiket Saya', 'slug' => 'myticket', 'group' => 'Tiket & Order Saya', 'description' => 'Akses Tiket Saya (list, buat, ubah, hapus tiket milik sendiri)'],
+            ['name' => 'Order Saya', 'slug' => 'myorder', 'group' => 'Tiket & Order Saya', 'description' => 'Akses Order Saya (list, buat, ubah, hapus order milik sendiri)'],
+            // Layout: pemegangnya memakai shell admin (sidebar), selainnya shell user (topbar)
+            ['name' => 'Akses Shell Admin', 'slug' => 'layout.admin', 'group' => 'Admin', 'description' => 'Pilih layout shell admin'],
+        ];
+    }
 
+    /** Sinkron ulang peta role → permission (idempoten). */
+    protected function syncRoleMap(): void
+    {
         // Clear previous role_permissions to re-seed
         DB::table('role_permissions')->delete();
 
@@ -79,41 +116,30 @@ class PermissionSeeder extends Seeder
                 }
             }
         }
-
-        $this->command->info('Permissions seeded: '.Permission::count().' permissions, '.DB::table('role_permissions')->count().' role_permissions');
     }
 
     public static function rolePermissionsMap(): array
     {
         return [
             'user' => [
-                'dashboard.view',
-                'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.history',
-                'order.view', 'order.create', 'order.edit.own',
-                'faq.view', 'knowledge.view',
-                'notification.view',
-                'feedback.view',
-                'report.view',
+                'ticket', 'order',
+                'knowledge', 'notification', 'feedback', 'report',
             ],
             'admin' => [
-                'dashboard.view', 'admin.dashboard',
-                'ticket.view', 'ticket.create', 'ticket.edit.own', 'ticket.manage', 'ticket.history',
-                'order.view',
-                'master.view', 'master.manage',
-                'user.view', 'user.manage',
-                'report.view', 'report.manage', 'report.sirs',
-                'feedback.view', 'feedback.manage',
-                'faq.view', 'knowledge.view',
-                'notification.view', 'fcm.manage',
+                'dashboard.it', 'layout.admin',
+                'ticket', 'order',
+                'myticket', 'myorder',
+                'master', 'user', 'permission',
+                'report', 'report.sirs',
+                'feedback', 'knowledge',
+                'notification', 'fcm',
             ],
             'ipsrs' => [
-                'dashboard.view', 'ipsrs.dashboard',
-                'order.view', 'order.create', 'order.edit.own', 'order.manage',
-                'ticket.view',
-                'feedback.view',
-                'faq.view', 'knowledge.view',
-                'notification.view',
-                'report.view',
+                'dashboard.ipsrs', 'layout.admin',
+                'order', 'ticket',
+                'myticket', 'myorder',
+                'feedback', 'knowledge',
+                'notification', 'report',
             ],
         ];
     }

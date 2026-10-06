@@ -1,0 +1,338 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Edit Order Perbaikan')
+
+@section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script>
+// Define previewImage function globally
+function previewImage(input) {
+    const previewImage = document.getElementById('preview-image');
+    const noPhotoText = document.getElementById('no-photo-text');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.classList.remove('hidden');
+            noPhotoText.classList.add('hidden');
+        }
+
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+
+<div class="container mx-auto max-w-6xl p-2 mt-6">
+    <div class="bg-white rounded-lg shadow-lg mb-4">
+        <!-- Header Section -->
+        <div class="bg-gradient-to-r from-green-600 to-emerald-400 p-3 rounded-t-lg">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-white">Edit Order Perbaikan</h1>
+                <a href="{{ route('admin.order-perbaikan.myorder') }}"
+                    class="inline-flex items-center px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-md transition duration-150 ease-in-out">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Kembali
+                </a>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <form action="{{ route('admin.order-perbaikan.myorder.update', $orderPerbaikan) }}" method="POST"
+            enctype="multipart/form-data" class="p-4 space-y-4" id="editOrderForm">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="department_id" value="{{ $departmentId ?? $orderPerbaikan->department_id ?? '' }}">
+
+            @if(session('error'))
+            <div class="mb-3 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative text-sm">
+                {{ session('error') }}
+            </div>
+            @endif
+
+            @if($errors->any())
+            <div class="mb-3 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative text-sm">
+                <ul class="list-disc list-inside">
+                    @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
+
+            <!-- Order Information (Read Only) -->
+            <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Order</label>
+                    <input type="text" value="{{ $orderPerbaikan->nomor }}"
+                        class="w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm text-gray-700"
+                        readonly>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                    <input type="text" value="{{ $orderPerbaikan->tanggal->format('d/m/Y H:i') }}"
+                        class="w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm text-gray-700"
+                        readonly>
+                </div>
+            </div>
+
+            <!-- Editable Fields -->
+            <div class="bg-gray-50 p-3 rounded-lg space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Peminta</label>
+                    <input type="text" value="{{ auth()->user()->name }}"
+                        class="w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm text-gray-700"
+                        readonly>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
+                        <input type="text" name="kode_inventaris"
+                            value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
+                        <select name="prioritas"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="RENDAH"
+                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'RENDAH' ? 'selected' : '' }}>RENDAH
+                            </option>
+                            <option value="SEDANG"
+                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'SEDANG' ? 'selected' : '' }}>SEDANG
+                            </option>
+                            <option value="TINGGI/URGENT"
+                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'TINGGI/URGENT' ? 'selected' : '' }}>
+                                TINGGI/URGENT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
+                        <select name="kategori_order"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="">Pilih Kategori</option>
+                            @foreach($kategoriOrders as $kat)
+                            <option value="{{ $kat->name }}"
+                                {{ old('kategori_order', $orderPerbaikan->kategori_order) == $kat->name ? 'selected' : '' }}>
+                                {{ $kat->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                        @if(isset($departmentLocation) && $departmentLocation)
+                        <div class="flex items-center px-3 py-1.5 border border-gray-200 bg-gray-100 rounded-md">
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-900">
+                                    {{ $departmentLocation->name }}
+                                </p>
+                                <p class="text-xs text-gray-500">Otomatis dari departemen Anda</p>
+                            </div>
+                        </div>
+                        <input type="hidden" name="lokasi" value="{{ $departmentLocation->id }}">
+                        @else
+                        <select name="lokasi"
+                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="">Pilih Lokasi (opsional)</option>
+                            @foreach($locations as $location)
+                            <option value="{{ $location->id }}"
+                                {{ old('lokasi', $orderPerbaikan->lokasi) == $location->id ? 'selected' : '' }}>
+                                {{ $location->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                        @endif
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
+                        <div class="flex items-center px-3 py-1.5 border border-gray-200 bg-gray-100 rounded-md">
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-900">
+                                    {{ $departmentBuilding?->name ?? '-' }}
+                                </p>
+                                @if(isset($departmentBuilding) && $departmentBuilding)
+                                <p class="text-xs text-gray-500">Otomatis dari departemen</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
+                    <textarea name="keluhan" rows="2"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
+                </div>
+
+                <!-- Foto Section -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Foto</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Photo Preview -->
+                        <div class="bg-gray-100 p-2 rounded-lg">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Preview Foto</h4>
+                            <div class="bg-white rounded-lg overflow-hidden">
+                                <div id="preview-container" class="flex items-center justify-center h-48">
+                                    <img id="preview-image"
+                                        src="{{ $orderPerbaikan->foto ? Storage::url($orderPerbaikan->foto) : '' }}"
+                                        alt="Preview Photo"
+                                        class="w-full h-48 object-contain {{ $orderPerbaikan->foto ? '' : 'hidden' }}">
+                                    <p id="no-photo-text" class="text-sm text-gray-500 {{ $orderPerbaikan->foto ? 'hidden' : '' }}">
+                                        Tidak ada foto
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload New Photo -->
+                        <div class="bg-gray-100 p-2 rounded-lg">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Upload Foto Baru</h4>
+                            <div class="mt-1 flex justify-center px-4 py-2 border-2 border-gray-300 border-dashed rounded-lg">
+                                <div class="space-y-2 text-center">
+                                    <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none"
+                                        viewBox="0 0 48 48">
+                                        <path
+                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600 justify-center">
+                                        <label for="foto"
+                                            class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                            <span>Upload foto</span>
+                                            <input id="foto" name="foto" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF maks 2MB (otomatis dikompresi)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end space-x-2 pt-2">
+                <a href="{{ route('admin.order-perbaikan.myorder') }}"
+                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Batal
+                </a>
+                <button type="submit"
+                    class="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@endsection
+
+@section('scripts')
+<script>
+// Drag and drop functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.querySelector('.border-dashed');
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function handleDrop(e) {
+        preventDefaults(e);
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+
+        if (file && file.type.startsWith('image/')) {
+            const input = document.getElementById('foto');
+            input.files = dt.files;
+            previewImage(input);
+        }
+    }
+
+    function highlight(e) {
+        preventDefaults(e);
+        dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    }
+
+    function unhighlight(e) {
+        preventDefaults(e);
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight);
+    });
+
+    dropZone.addEventListener('drop', handleDrop);
+
+    // Kompresi otomatis saat submit agar lolos limit upload server (~2MB)
+    function compressImageFile(file, maxDim, quality){
+        maxDim=maxDim||1600; quality=quality||0.82;
+        return new Promise(function(resolve,reject){
+            const url=URL.createObjectURL(file);
+            const img=new Image();
+            img.onload=function(){
+                URL.revokeObjectURL(url);
+                try{
+                    let w=img.width,h=img.height;
+                    const scale=Math.min(1, maxDim/Math.max(w,h));
+                    w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+                    const c=document.createElement('canvas'); c.width=w; c.height=h;
+                    const ctx=c.getContext('2d');
+                    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
+                    ctx.drawImage(img,0,0,w,h);
+                    c.toBlob(function(b){ b?resolve(b):reject(new Error('compress')); },'image/jpeg',quality);
+                }catch(err){ reject(err); }
+            };
+            img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('load')); };
+            img.src=url;
+        });
+    }
+    const editForm=document.getElementById('editOrderForm');
+    const editFoto=document.getElementById('foto');
+    if(editForm && editFoto){
+        editForm.addEventListener('submit', function(e){
+            const f=editFoto.files && editFoto.files[0];
+            if(!f || f.size <= 1536*1024) return;
+            e.preventDefault();
+            const btn=editForm.querySelector('button[type="submit"]');
+            const origText=btn?btn.textContent:'';
+            if(btn){ btn.disabled=true; btn.textContent='Mengompresi foto...'; }
+            compressImageFile(f).then(function(blob){
+                const dt=new DataTransfer();
+                const base=((f.name||'foto').replace(/\.[^.]+$/,'')||'foto');
+                dt.items.add(new File([blob], base+'.jpg',{type:'image/jpeg'}));
+                editFoto.files=dt.files;
+                if(btn){ btn.disabled=false; btn.textContent=origText; }
+                editForm.submit();
+            }).catch(function(){
+                if(btn){ btn.disabled=false; btn.textContent=origText; }
+                editForm.submit();
+            });
+        });
+    }
+});
+</script>
+@endsection

@@ -153,7 +153,7 @@ function openEditModal(id, name, code) {
     document.getElementById('editModal').classList.remove('hidden');
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_code').value = code;
-    document.getElementById('editForm').action = `/admin/master/positions/${id}`;
+    document.getElementById('editForm').action = `/master/positions/${id}`;
 }
 
 function closeEditModal() {

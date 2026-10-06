@@ -63,20 +63,39 @@ class AdminIpsrsNavigationTest extends TestCase
             $this->actingAs($ipsrs)->get($url)->assertStatus(200);
         }
 
-        // User biasa tidak boleh masuk area admin.
+        // User biasa tidak boleh masuk area admin (murni permission: → 403).
         $this->actingAs($user)->get(route('admin.order-perbaikan.index'))
-            ->assertRedirect(route('user.dashboard'));
+            ->assertForbidden();
     }
 
-    public function test_legacy_administrasi_umum_urls_redirect_to_admin(): void
+    public function test_admin_shell_renders_with_order_notification(): void
+    {
+        $this->seedRolePermissions();
+        $admin = $this->makeUser('admin', 'admin@example.com');
+
+        // Notifikasi bertipe order (tanpa key ticket_*) tidak boleh membuat 500.
+        $admin->notify(new \App\Notifications\OrderPerbaikanStatusUpdated(
+            OrderPerbaikan::create([
+                'nomor' => 'OP-NOTIF-001', 'tanggal' => now(),
+                'unit_proses' => 'SRNS', 'unit_penerima' => 'MTC', 'nama_peminta' => $admin->name,
+                'keluhan' => 'Rusak', 'prioritas' => 'RENDAH', 'status' => 'open',
+                'created_by' => $admin->id,
+            ])
+        ));
+
+        $this->actingAs($admin)->get(route('admin.tickets.index'))->assertStatus(200);
+    }
+
+    public function test_legacy_administrasi_umum_urls_fall_through_to_login(): void
     {
         $this->seedRolePermissions();
         $ipsrs = $this->makeUser('ipsrs', 'ipsrs@example.com');
 
-        $this->actingAs($ipsrs)->get(route('administrasi-umum.dashboard'))
-            ->assertRedirect(route('admin.ipsrs.dashboard'));
-        $this->actingAs($ipsrs)->get(route('administrasi-umum.order-perbaikan.index'))
-            ->assertRedirect(route('admin.order-perbaikan.index'));
+        // Prefix legacy dihapus — URL lama jatuh ke fallback login.
+        $this->actingAs($ipsrs)->get('/administrasi-umum')
+            ->assertRedirect(route('login'));
+        $this->actingAs($ipsrs)->get('/administrasi-umum/order-perbaikan')
+            ->assertRedirect(route('login'));
     }
 
     public function test_ipsrs_dashboard_redirects_by_permission(): void

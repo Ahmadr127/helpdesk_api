@@ -63,8 +63,13 @@
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                @if(!empty($myticketActions))
+                <button type="button" data-url="{{ route('admin.order-perbaikan.myorder.show', $order) }}" onclick="openMyticketDetail(this)"
+                    class="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                @else
                 <a href="{{ route('admin.order-perbaikan.show', $order) }}"
                     class="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                @endif
                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -73,7 +78,15 @@
                         </path>
                     </svg>
                     Detail
+                @if(!empty($myticketActions))
+                </button>
+                @else
                 </a>
+                @endif
+                @if(!empty($myticketActions) && $order->created_by === auth()->id() && $order->status === 'open')
+                <a href="{{ route('admin.order-perbaikan.myorder.edit', $order) }}" class="ml-2 text-yellow-600 hover:text-yellow-900">Ubah</a>
+                <button type="button" data-delete-url="{{ route('admin.order-perbaikan.myorder.destroy', $order) }}" onclick="openMyticketDelete(this)" class="ml-2 text-red-600 hover:text-red-900">Hapus</button>
+                @endif
             </td>
         </tr>
         @empty

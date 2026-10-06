@@ -95,11 +95,11 @@ class LoginController extends Controller
 
     protected function redirectBasedOnRole($user)
     {
-        if ($user->hasPermission('admin.dashboard')) {
+        if ($user->hasPermission('dashboard.it')) {
             return redirect()->route('admin.dashboard');
         }
 
-        if ($user->hasPermission('ipsrs.dashboard')) {
+        if ($user->hasPermission('dashboard.ipsrs')) {
             return redirect()->route('admin.ipsrs.dashboard');
         }
 

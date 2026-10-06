@@ -68,12 +68,19 @@
                 @endif
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                @if($ticket->status === 'confirmed')
+                @if(!empty($myticketActions))
+                <button type="button" data-url="{{ route('admin.tickets.myticket.show', $ticket->id) }}" onclick="openMyticketDetail(this)" class="text-blue-600 hover:text-blue-900">Lihat
+                    Detail</button>
+                @elseif($ticket->status === 'confirmed')
                 <a href="{{ route('admin.tickets.history.show', $ticket->id) }}"
                     class="text-blue-600 hover:text-blue-900">Lihat Detail</a>
                 @else
                 <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="text-blue-600 hover:text-blue-900">Lihat
                     Detail</a>
+                @endif
+                @if(!empty($myticketActions) && $ticket->user_id === auth()->id() && $ticket->status === 'open')
+                <a href="{{ route('admin.tickets.myticket.edit', $ticket->id) }}" class="ml-2 text-yellow-600 hover:text-yellow-900">Ubah</a>
+                <button type="button" data-delete-url="{{ route('admin.tickets.myticket.destroy', $ticket->id) }}" onclick="openMyticketDelete(this)" class="ml-2 text-red-600 hover:text-red-900">Hapus</button>
                 @endif
             </td>
         </tr>

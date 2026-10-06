@@ -10,7 +10,7 @@ class CheckPermission
 {
     /**
      * Handle an incoming request.
-     * Usage: ->middleware('permission:ticket.create') or permission:ticket.create|order.create (OR logic) or permission:ticket.create,order.create for AND
+     * Usage: ->middleware('permission:ticket') or permission:ticket|order (OR logic) or permission:ticket,order for AND
      */
     public function handle(Request $request, Closure $next, ?string $permission = null): Response
     {
@@ -23,9 +23,9 @@ class CheckPermission
         }
 
         $user = auth()->user();
+        // Support pipe for OR: permission:ticket|order
 
-        // Support pipe for OR: permission:ticket.create|order.create
-        // Support comma for AND: permission:ticket.create,order.create
+        // Support comma for AND: permission:ticket,order
         if (str_contains($permission, '|')) {
             $slugs = explode('|', $permission);
             foreach ($slugs as $slug) {

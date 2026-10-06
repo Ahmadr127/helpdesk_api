@@ -25,9 +25,15 @@
         class="absolute right-0 mt-2 w-96 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
         <div class="py-1" role="menu">
             @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
-            <a href="{{ $notification->data['url'] }}"
+            @php
+                // Defensif: tidak semua notifikasi bertipe tiket.
+                $uData = $notification->data;
+                $uUrl = $uData['url'] ?? '#';
+                $uIsTicket = isset($uData['ticket_number']) || isset($uData['ticket_id']);
+            @endphp
+            <a href="{{ $uUrl }}"
                 class="block px-4 py-3 hover:bg-gray-100 {{ $notification->read_at ? 'opacity-75' : '' }}"
-                onclick="event.preventDefault(); markAsRead('{{ $notification->id }}', '{{ $notification->data['url'] }}')">
+                onclick="event.preventDefault(); markAsRead('{{ $notification->id }}', '{{ $uUrl }}')">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
                         <div class="w-2 h-2 rounded-full {{ $notification->read_at ? 'bg-gray-400' : 'bg-blue-500' }}"></div>
@@ -35,34 +41,43 @@
                     <div class="ml-3 flex-1">
                         <div class="flex justify-between">
                             <p class="text-sm font-medium text-gray-900">
-                                {{ $notification->data['title'] }}
+                                {{ $uData['title'] ?? 'Notifikasi' }}
                             </p>
                             <p class="text-xs text-gray-500">
                                 {{ $notification->created_at->diffForHumans() }}
                             </p>
                         </div>
                         <p class="mt-1 text-sm text-gray-600">
-                            {{ $notification->data['message'] }}
+                            {{ $uData['message'] ?? '' }}
                         </p>
+                        @if($uIsTicket)
                         <div class="mt-2 flex items-center space-x-4 text-xs">
                             <div>
                                 <span class="text-gray-500">Ticket #:</span>
-                                <span class="font-medium">{{ $notification->data['ticket_number'] }}</span>
+                                <span class="font-medium">{{ $uData['ticket_number'] ?? '-' }}</span>
                             </div>
                             <div>
                                 <span class="text-gray-500">Status:</span>
-                                <span class="px-2 py-1 rounded-full text-xs 
-                                    {{ $notification->data['ticket_status'] === 'open' ? 'bg-blue-100 text-blue-800' : 
-                                       ($notification->data['ticket_status'] === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
-                                       ($notification->data['ticket_status'] === 'closed' ? 'bg-gray-100 text-gray-800' : 
-                                       'bg-green-100 text-green-800')) }}">
-                                    {{ ucfirst($notification->data['ticket_status']) }}
+                                <span class="px-2 py-1 rounded-full text-xs
+                                    {{ ($uData['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
+                                       ((($uData['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
+                                       ((($uData['ticket_status'] ?? '') === 'closed') ? 'bg-gray-100 text-gray-800' :
+                                       'bg-green-100 text-gray-800')) }}">
+                                    {{ ucfirst($uData['ticket_status'] ?? '-') }}
                                 </span>
                             </div>
                         </div>
-                        @if(isset($notification->data['responder_name']))
+                        @elseif(isset($uData['order_number']))
+                        <div class="mt-2 flex items-center space-x-4 text-xs">
+                            <div>
+                                <span class="text-gray-500">Order #:</span>
+                                <span class="font-medium">{{ $uData['order_number'] }}</span>
+                            </div>
+                        </div>
+                        @endif
+                        @if(isset($uData['responder_name']))
                         <div class="mt-2 text-xs text-gray-500">
-                            By: {{ $notification->data['responder_name'] }} ({{ $notification->data['responder_role'] }})
+                            By: {{ $uData['responder_name'] }} ({{ $uData['responder_role'] ?? '-' }})
                         </div>
                         @endif
                     </div>

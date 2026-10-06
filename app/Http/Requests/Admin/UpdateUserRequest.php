@@ -10,7 +10,7 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermission('user.manage') ?? false;
+        return $this->user()?->hasPermission('user') ?? false;
     }
 
     public function rules(): array

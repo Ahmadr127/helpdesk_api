@@ -178,22 +178,19 @@
                     @csrf
                     <input type="hidden" name="role" value="{{ $roleInfo['slug'] }}">
 
-                    @foreach($permissions as $group => $perms)
-                        <div class="mb-4">
-                            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">{{ $group }}</p>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                @foreach($perms as $perm)
-                                    <label class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors {{ in_array($perm->slug, $roleInfo['assigned']) ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white' }}">
-                                        <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" {{ in_array($perm->slug, $roleInfo['assigned']) ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
-                                        <span class="text-sm">
-                                            <span class="font-medium text-gray-800">{{ $perm->name }}</span>
-                                            <span class="text-xs text-gray-500 block">{{ $perm->slug }}</span>
-                                        </span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endforeach
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        @foreach($permissions as $perms)
+                            @foreach($perms as $perm)
+                                <label class="flex items-start gap-2.5 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors min-h-[4.25rem] {{ in_array($perm->slug, $roleInfo['assigned']) ? 'border-blue-400 bg-blue-50/60 shadow-sm' : 'border-gray-200 bg-white' }}">
+                                    <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" {{ in_array($perm->slug, $roleInfo['assigned']) ? 'checked' : '' }} class="mt-0.5 shrink-0 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                                    <span class="text-sm min-w-0">
+                                        <span class="font-medium text-gray-800 block leading-tight">{{ $perm->name }}</span>
+                                        <span class="text-xs text-gray-400 block font-mono truncate">{{ $perm->slug }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
+                        @endforeach
+                    </div>
 
                     <div class="flex justify-end pt-4 border-t border-gray-100 mt-4">
                         <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium shadow-sm">Simpan {{ $roleInfo['label'] }}</button>

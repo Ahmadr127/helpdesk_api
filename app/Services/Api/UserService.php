@@ -102,7 +102,7 @@ class UserService
 
     public function dashboardStats(User $user): array
     {
-        if ($user->hasAnyPermission(['admin.dashboard', 'ticket.manage'])) {
+        if ($user->hasPermission('dashboard.it')) {
             return [
                 'users' => User::count(),
                 'tickets_total' => \App\Models\Ticket::count(),

@@ -46,9 +46,9 @@
 - [x] Test: `LoginNavigationTest` 4 passed (2026-09-16).
 
 ## Fase 2 — Middleware berbasis permission (hapus cek role literal)
-- [x] `AdminMiddleware` → permission-based (fail-closed `hasPermission`).
+- [x] `AdminMiddleware` → permission-based (fail-closed `hasPermission`), lalu **dihapus** — web murni `permission:`.
 - [x] `Api/AdminApiMiddleware` + `Api/AdministrasiUmumApiMiddleware` → permission-based, JSON 403.
-- [x] `AdministrasiUmumMiddleware` → permission-based (belum dihapus — dipakai Fase 6 redirect).
+- [x] `AdministrasiUmumMiddleware` → permission-based, lalu **dihapus** bersama alias `admin`/`ipsrs`.
 - [x] Hapus `CheckAdmin` + `babat.php` (dead, tidak dipakai route).
 - [x] Test: batch fail-closed hijau — `user cannot access admin master/users/tickets/administrasi`,
   `dashboard endpoints` 403 benar (checkpoint full suite 116 passed, 2026-09-16).
@@ -103,7 +103,7 @@
   + `UserService::list` (filter eksplisit) — diizinkan.
 - [x] Grep gradient: nol di `resources/views/admin/**`.
 - [x] Grep dead: `CheckAdmin`/`AdminSeed`/`backup`/`roleAccess`/`roleList` nol;
-  `AdministrasiUmumMiddleware` + alias `ipsrs` hanya definisi tanpa pemakai route.
+  `AdminMiddleware`/`AdministrasiUmumMiddleware` + alias `admin`/`ipsrs` dihapus (sistem murni `permission:`).
 - [x] Pint: pre-existing failures di seluruh repo (bukan dari refactor) → tidak di-fix massal.
 - [x] `php artisan test` full hijau — checkpoint Fase 5–6: **119 passed** (2026-09-16).
   Baseline Fase 0: 110 passed + 6 failed.

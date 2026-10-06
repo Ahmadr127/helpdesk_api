@@ -13,25 +13,25 @@
                     class="flex items-center {{ request()->routeIs('user.dashboard') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600' }}">
                     <span class="ml-2">Beranda</span>
                 </a>
-                @if(auth()->user()->hasPermission('ticket.view'))
+                @if(auth()->user()->hasPermission('ticket'))
                 <a href="{{ route('user.ticket.index') }}"
                     class="flex items-center {{ request()->routeIs('user.ticket.*') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600' }}">
                     <span class="ml-2">SIRS <span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-1">IT</span></span>
                 </a>
                 @endif
-                @if(auth()->user()->hasPermission('order.view'))
+                @if(auth()->user()->hasPermission('order'))
                 <a href="{{ route('user.administrasi-umum.order-barang') }}"
                     class="flex items-center {{ request()->routeIs('user.administrasi-umum.order-barang*') || request()->routeIs('user.administrasi-umum.order-perbaikan.*') ? 'text-green-600' : 'text-gray-900 hover:text-green-600' }}">
                     <span class="ml-2">IPSRS <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-1">UMUM</span></span>
                 </a>
                 @endif
-                @if(auth()->user()->hasPermission('faq.view'))
+                @if(auth()->user()->hasPermission('knowledge'))
                 <a href="{{ route('user.faq') }}"
                     class="flex items-center {{ request()->routeIs('user.faq') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600' }}">
                     <span class="ml-2">FAQ</span>
                 </a>
                 @endif
-                @if(auth()->user()->hasPermission('knowledge.view'))
+                @if(auth()->user()->hasPermission('knowledge'))
                 <a href="{{ route('user.knowledge-base') }}"
                     class="flex items-center {{ request()->routeIs('user.knowledge-base') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600' }}">
                     <span class="ml-2">Knowledge Base</span>
@@ -190,25 +190,25 @@
                 class="block px-3 py-2 {{ request()->routeIs('user.dashboard') ? 'text-blue-600 bg-blue-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 Beranda
             </a>
-            @if(auth()->user()->hasPermission('ticket.view'))
+            @if(auth()->user()->hasPermission('ticket'))
             <a href="{{ route('user.ticket.index') }}"
                 class="block px-3 py-2 {{ request()->routeIs('user.ticket.*') ? 'text-blue-600 bg-blue-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 SIRS - Tiket IT <span class="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">Biru</span>
             </a>
             @endif
-            @if(auth()->user()->hasPermission('order.view'))
+            @if(auth()->user()->hasPermission('order'))
             <a href="{{ route('user.administrasi-umum.order-barang') }}"
                 class="block px-3 py-2 {{ request()->routeIs('user.administrasi-umum.order-barang*') || request()->routeIs('user.administrasi-umum.order-perbaikan.*') ? 'text-green-600 bg-green-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 IPSRS - Maintenance <span class="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded">Hijau</span>
             </a>
             @endif
-            @if(auth()->user()->hasPermission('faq.view'))
+            @if(auth()->user()->hasPermission('knowledge'))
             <a href="{{ route('user.faq') }}"
                 class="block px-3 py-2 {{ request()->routeIs('user.faq') ? 'text-blue-600 bg-blue-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 FAQ
             </a>
             @endif
-            @if(auth()->user()->hasPermission('knowledge.view'))
+            @if(auth()->user()->hasPermission('knowledge'))
             <a href="{{ route('user.knowledge-base') }}"
                 class="block px-3 py-2 {{ request()->routeIs('user.knowledge-base') ? 'text-blue-600 bg-blue-50' : 'text-gray-900 hover:bg-gray-100' }} rounded-md">
                 Knowledge Base

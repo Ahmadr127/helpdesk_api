@@ -8,7 +8,7 @@ class StoreRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermission('user.manage') ?? false;
+        return $this->user()?->hasPermission('permission') ?? false;
     }
 
     public function rules(): array

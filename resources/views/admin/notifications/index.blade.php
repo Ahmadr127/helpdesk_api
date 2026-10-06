@@ -431,7 +431,7 @@
 @push('scripts')
 <script>
 function markAsRead(notificationId, url) {
-    fetch(`/admin/notifications/${notificationId}/mark-as-read`, {
+    fetch(`/notifications/${notificationId}/mark-as-read`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

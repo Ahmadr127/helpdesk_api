@@ -115,13 +115,13 @@ class User extends Authenticatable
                     $sub->select('permission_user.user_id')
                         ->from('permission_user')
                         ->join('permissions', 'permissions.id', '=', 'permission_user.permission_id')
-                        ->whereIn('permissions.slug', ['admin.dashboard', 'ticket.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.it']);
                 })
                 ->orWhereIn('role', function ($sub) {
                     $sub->select('role_permissions.role')
                         ->from('role_permissions')
                         ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
-                        ->whereIn('permissions.slug', ['admin.dashboard', 'ticket.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.it']);
                 });
         });
     }
@@ -134,13 +134,13 @@ class User extends Authenticatable
                     $sub->select('permission_user.user_id')
                         ->from('permission_user')
                         ->join('permissions', 'permissions.id', '=', 'permission_user.permission_id')
-                        ->whereIn('permissions.slug', ['ipsrs.dashboard', 'order.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.ipsrs']);
                 })
                 ->orWhereIn('role', function ($sub) {
                     $sub->select('role_permissions.role')
                         ->from('role_permissions')
                         ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
-                        ->whereIn('permissions.slug', ['ipsrs.dashboard', 'order.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.ipsrs']);
                 });
         });
     }
@@ -205,13 +205,13 @@ class User extends Authenticatable
     public function isAdminIT(): bool
     {
         return $this->hasRole('admin')
-            || $this->hasAnyPermission(['admin.dashboard', 'ticket.manage']);
+            || $this->hasPermission('dashboard.it');
     }
 
     public function isAdminUmum(): bool
     {
         return $this->hasRole('ipsrs')
-            || $this->hasAnyPermission(['ipsrs.dashboard', 'order.manage']);
+            || $this->hasPermission('dashboard.ipsrs');
     }
 
     /**

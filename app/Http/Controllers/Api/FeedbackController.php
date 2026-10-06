@@ -16,7 +16,7 @@ class FeedbackController extends BaseApiController
     public function index(Request $request)
     {
         $user = $request->user();
-        if ($user->hasPermission('feedback.manage')) {
+        if ($user->hasPermission('dashboard.it')) {
             $filters = $request->only(['search']);
             $paginator = $this->service->list($filters, (int) $request->get('per_page', 15));
         } else {
@@ -47,7 +47,7 @@ class FeedbackController extends BaseApiController
     {
         // user can only see own unless they can manage feedback
         $user = auth()->user();
-        if (! $user->hasPermission('feedback.manage') && $feedback->user_id !== $user->id) {
+        if (! $user->hasPermission('dashboard.it') && $feedback->user_id !== $user->id) {
             return $this->error('Unauthorized', 403);
         }
 
@@ -57,7 +57,7 @@ class FeedbackController extends BaseApiController
     public function reply(ReplyFeedbackRequest $request, Feedback $feedback)
     {
         $user = $request->user();
-        if (! $user->hasPermission('feedback.manage')) {
+        if (! $user->hasPermission('dashboard.it')) {
             return $this->error('Unauthorized - admin only', 403);
         }
         $updated = $this->service->reply($feedback, $request->validated()['admin_reply']);
@@ -68,7 +68,7 @@ class FeedbackController extends BaseApiController
     public function destroy(Request $request, Feedback $feedback)
     {
         $user = $request->user();
-        if (! $user->hasPermission('feedback.manage')) {
+        if (! $user->hasPermission('dashboard.it')) {
             return $this->error('Unauthorized', 403);
         }
         $this->service->delete($feedback);

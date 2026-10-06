@@ -27,8 +27,8 @@ use Illuminate\Support\Facades\Route;
 | Roles:
 |  - guest (no token): login, register
 |  - auth (any): me, logout, dashboard/user, lookup, tickets user, orders user, feedback
-|  - admin IT (role=admin, permission ticket.manage/admin.dashboard): master data, user mgmt, ticket admin, feedback admin, dashboard admin
-|  - admin IPSRS (role=ipsrs, permission order.manage/ipsrs.dashboard): order perbaikan admin, dashboard IPSRS
+|  - admin IT (role=admin, permission ticket/dashboard.it): master data, user mgmt, ticket admin, feedback admin, dashboard admin
+|  - admin IPSRS (role=ipsrs, permission order/dashboard.ipsrs): order perbaikan admin, dashboard IPSRS
 */
 
 // Public Auth
