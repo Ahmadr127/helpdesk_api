@@ -49,6 +49,23 @@ class AuthController extends BaseApiController
         return $this->success(new UserResource($request->user()), 'User profile');
     }
 
+    /**
+     * GET /api/auth/permissions — lightweight refresh for Flutter.
+     * Returns effective permissions (role + direct) without re-login.
+     * Used by AuthService.reloadPermissions() + Dashboard refresh button.
+     */
+    public function permissions(Request $request)
+    {
+        $user = $request->user();
+        $perms = $user->effectivePermissionSlugs();
+
+        return $this->success([
+            'permissions' => $perms,
+            'role' => $user->role,
+            'user' => new UserResource($user),
+        ], 'Permissions');
+    }
+
     public function logout(Request $request)
     {
         $this->authService->logout($request->user());

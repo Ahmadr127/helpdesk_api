@@ -41,6 +41,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])->name('api.auth.me');
+        Route::get('/permissions', [AuthController::class, 'permissions'])->name('api.auth.permissions');
         Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
         Route::post('/logout-all', [AuthController::class, 'logoutAll'])->name('api.auth.logoutAll');
     });

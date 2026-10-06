@@ -202,6 +202,23 @@ class User extends Authenticatable
         return true;
     }
 
+    /**
+     * Effective permission slugs (role + direct).
+     * Single source for API: GET /api/auth/me & GET /api/auth/permissions.
+     */
+    public function effectivePermissionSlugs(): array
+    {
+        $rolePerms = \Illuminate\Support\Facades\DB::table('role_permissions')
+            ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
+            ->where('role_permissions.role', $this->role)
+            ->pluck('permissions.slug')
+            ->all();
+
+        $directPerms = $this->permissions()->pluck('slug')->all();
+
+        return collect(array_merge($rolePerms, $directPerms))->unique()->values()->all();
+    }
+
     public function isAdminIT(): bool
     {
         return $this->hasRole('admin')
