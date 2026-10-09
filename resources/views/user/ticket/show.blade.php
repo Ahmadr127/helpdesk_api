@@ -327,17 +327,17 @@
             </div>
         </div>
 
-        <!-- Conversation History Column -->
+        <!-- Conversation History Column (konsisten dengan admin/tickets/show: chat bubble) -->
         <div class="lg:col-span-1">
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 h-full conversation-container">
                 <!-- Conversation Header -->
-                <div class="bg-gradient-to-r from-blue-400 to-green-600 px-4 py-3 rounded-t-lg">
-                    <h3 class="text-base font-medium text-white">Riwayat Percakapan</h3>
+                <div class="bg-white px-4 py-3 border-b border-gray-100">
+                    <h3 class="text-base font-medium text-gray-800">Riwayat Percakapan</h3>
                 </div>
 
                 <!-- Conversation Content -->
-                <div class="conversation-content h-full flex flex-col">
-                    <div class="conversation-messages flex-grow overflow-y-auto">
+                <div class="conversation-content h-full flex flex-col bg-gray-50">
+                    <div class="conversation-messages flex-grow overflow-y-auto p-4 space-y-3">
                         @php
                         // Check if responses are already arrays
                         $adminResponses = is_array($ticket->admin_responses) ?
@@ -357,52 +357,61 @@
                         }
 
                         foreach($userReplies as $reply) {
+                        // Pertahankan aksi asli (confirm/reject) untuk badge — jangan tertimpa 'user'.
+                        $reply['action'] = $reply['type'] ?? $reply['action'] ?? null;
                         $reply['type'] = 'user';
                         $allResponses[] = $reply;
                         }
 
-                        // Sort by timestamp (newest first)
+                        // Chat: urut kronologis (lama di atas, baru di bawah) — sama seperti admin
                         usort($allResponses, function($a, $b) {
-                        return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+                        return strtotime($a['timestamp']) - strtotime($b['timestamp']);
                         });
+
+                        $pengajuName = $ticket->user->name ?? 'Anda';
                         @endphp
 
                         @if(count($allResponses) > 0)
                         @foreach($allResponses as $response)
-                        <div class="p-4 border-b border-gray-100">
-                            @if($response['type'] === 'admin')
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="font-medium text-blue-800">Admin</div>
-                                    <div class="text-xs text-gray-500">
-                                        {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
-                                    </div>
+                        @if($response['type'] === 'admin')
+                        @php $adminName = $response['admin_name'] ?? 'Admin'; @endphp
+                        <!-- Admin: kanan -->
+                        <div class="flex justify-end">
+                            <div class="max-w-[85%] bg-blue-600 text-white p-3 rounded-2xl rounded-br-md shadow-sm">
+                                <div class="flex items-center justify-end gap-2 mb-1">
+                                    <span
+                                        class="text-[10px] font-semibold uppercase tracking-wide bg-blue-500 px-2 py-0.5 rounded-full">Admin</span>
+                                    <span class="text-xs font-semibold">{{ $adminName }}</span>
                                 </div>
-                                <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['notes'] ?? '' }}</p>
+                                <p class="text-sm whitespace-pre-line">{{ $response['notes'] ?? '' }}</p>
                                 @if(isset($response['photo']))
-                                <div class="mt-3">
+                                <div class="mt-2">
                                     <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
                                         class="block">
                                         <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon admin"
-                                            class="max-h-32 w-auto rounded border border-gray-200 mx-auto hover:opacity-90 transition">
+                                            class="max-h-28 w-auto rounded-lg border border-blue-400 ml-auto hover:opacity-90 transition">
                                     </a>
                                 </div>
                                 @endif
-                            </div>
-                            @else
-                            <div class="bg-green-50 p-4 rounded-lg border border-green-100">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="font-medium text-green-800">Anda</div>
-                                    <div class="text-xs text-gray-500">
-                                        {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
-                                    </div>
+                                <div class="text-[10px] text-blue-200 text-right mt-1">
+                                    {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
                                 </div>
-
+                            </div>
+                        </div>
+                        @else
+                        <!-- Pengaju: kiri -->
+                        <div class="flex justify-start">
+                            <div class="max-w-[85%] bg-white p-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-semibold text-gray-800">{{ $pengajuName }}</span>
+                                    <span
+                                        class="text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Pengaju</span>
+                                </div>
                                 @if(isset($response['message']))
                                 <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['message'] }}</p>
                                 @elseif(isset($response['notes']))
                                 <p class="text-sm whitespace-pre-line text-gray-800">
-                                    @if(isset($response['type']) && $response['type'] === 'confirm')
+                                    @if(isset($response['action']) && $response['action'] === 'confirm')
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -412,7 +421,7 @@
                                         </svg>
                                         Dikonfirmasi selesai
                                     </span>
-                                    @elseif(isset($response['type']) && $response['type'] === 'reject')
+                                    @elseif(isset($response['action']) && $response['action'] === 'reject')
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mb-2">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -428,29 +437,32 @@
                                 @endif
 
                                 @if(isset($response['photo']) && !empty($response['photo']))
-                                <div class="mt-3">
+                                <div class="mt-2">
                                     <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
                                         class="block">
-                                        <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon Anda"
-                                            class="max-h-32 w-auto rounded border border-gray-200 mx-auto hover:opacity-90 transition"
-                                            onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
+                                        <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon pengaju"
+                                            class="max-h-28 w-auto rounded-lg border border-gray-200 hover:opacity-90 transition"
+                                            onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
                                     </a>
                                 </div>
                                 @endif
+                                <div class="text-[10px] text-gray-400 mt-1">
+                                    {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
+                                </div>
                             </div>
-                            @endif
                         </div>
+                        @endif
                         @endforeach
                         @else
-                        <div class="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500">
-                            <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <div class="flex flex-col items-center justify-center h-full p-6 text-center text-gray-500">
+                            <svg class="w-14 h-14 mb-3 text-gray-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
                                 </path>
                             </svg>
-                            <p class="text-lg font-medium">Belum Ada Respon</p>
-                            <p class="mt-1 text-sm">Tiket ini belum memiliki balasan dari admin atau pengguna</p>
+                            <p class="text-base font-medium">Belum Ada Respon</p>
+                            <p class="mt-1 text-sm">Tiket ini belum memiliki balasan</p>
                         </div>
                         @endif
                     </div>
