@@ -47,6 +47,13 @@ class OrderPerbaikanResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
+            // Edit gate untuk Flutter: owner + status open (mirror OrderPerbaikanService::update).
+            'can_edit' => $request->user()
+                ? ($this->created_by === $request->user()->id && $this->status === 'open')
+                : false,
+            'can_delete' => $request->user()
+                ? ($this->created_by === $request->user()->id && $this->status === 'open')
+                : false,
         ];
     }
 }

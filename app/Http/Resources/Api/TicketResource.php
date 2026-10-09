@@ -47,6 +47,14 @@ class TicketResource extends JsonResource
             'timeline' => $this->buildTimeline(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            // Edit gate untuk Flutter: owner + status open (mirror TicketService::updateUserTicket).
+            // $request->user() tersedia karena resource selalu dipakai dalam konteks auth:sanctum.
+            'can_edit' => $request->user()
+                ? ($this->user_id === $request->user()->id && $this->status === 'open')
+                : false,
+            'can_delete' => $request->user()
+                ? ($this->user_id === $request->user()->id && $this->status === 'open')
+                : false,
         ];
     }
 

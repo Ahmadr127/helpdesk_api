@@ -65,8 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/order-statuses', [LookupController::class, 'orderStatuses'])->name('order-statuses');
     });
 
-    // User Ticket (owner only)
-    Route::prefix('tickets')->name('api.tickets.')->group(function () {
+    // User Ticket (owner only + permission myticket|ticket).
+    // Tanpa gate ini, cabut permission tidak memblokir edit (hanya owner+status yang dicek).
+    Route::prefix('tickets')->name('api.tickets.')->middleware('permission:myticket|ticket')->group(function () {
         Route::get('/', [UserTicketController::class, 'index'])->name('index');
         Route::post('/', [UserTicketController::class, 'store'])->name('store');
         Route::get('/filter/{status}', [UserTicketController::class, 'filterByStatus'])->where('status', 'all|open|pending|in_progress|closed|confirmed')->name('filter');
@@ -77,8 +78,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{ticket}/confirm', [UserTicketController::class, 'confirm'])->name('confirm');
     });
 
-    // User Order Perbaikan (owner only)
-    Route::prefix('order-perbaikan')->name('api.order-perbaikan.')->group(function () {
+    // User Order Perbaikan (owner only + permission myorder|order).
+    // Tanpa gate ini, cabut permission tidak memblokir edit (hanya owner+status yang dicek).
+    Route::prefix('order-perbaikan')->name('api.order-perbaikan.')->middleware('permission:myorder|order')->group(function () {
         Route::get('/', [UserOrderController::class, 'index'])->name('index');
         Route::post('/', [UserOrderController::class, 'store'])->name('store');
         Route::get('/konfirmasi', [UserOrderController::class, 'konfirmasi'])->name('konfirmasi');
