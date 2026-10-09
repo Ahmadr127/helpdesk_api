@@ -92,9 +92,15 @@
                                 @endphp
 
                                 @if(file_exists($fullPath) || file_exists($publicPath))
-                                <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket"
-                                    class="max-w-full max-h-full object-contain rounded-lg shadow-sm"
-                                    onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
+                                <a href="{{ asset('storage/' . $photoPath) }}" target="_blank" title="Klik untuk perbesar"
+                                    onclick="openTicketPhoto(event, '{{ asset('storage/' . $photoPath) }}')"
+                                    class="block max-w-full max-h-full cursor-zoom-in group relative">
+                                    <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket - klik untuk perbesar"
+                                        class="max-w-full max-h-full object-contain rounded-lg shadow-sm group-hover:opacity-90 transition"
+                                        onerror="this.onerror=null; this.closest('a').outerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
+                                    <span
+                                        class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">Perbesar</span>
+                                </a>
                                 @else
                                 <div class="text-center p-4">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
@@ -547,6 +553,54 @@ document.addEventListener('DOMContentLoaded', function() {
     // Run when images load
     window.addEventListener('load', adjustHeight);
 });
+
+function openTicketPhoto(e, src) {
+    e.preventDefault();
+    const modal = document.getElementById('ticketPhotoModal');
+    const img = document.getElementById('ticketPhotoModalImg');
+    const link = document.getElementById('ticketPhotoModalLink');
+    if (!modal || !img) {
+        window.open(src, '_blank');
+        return;
+    }
+    img.src = src;
+    if (link) link.href = src;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTicketPhoto() {
+    const modal = document.getElementById('ticketPhotoModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeTicketPhoto();
+});
 </script>
+
+<!-- Lightbox Foto Tiket -->
+<div id="ticketPhotoModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50" onclick="if(event.target===this)closeTicketPhoto()">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative max-w-4xl w-full">
+            <button type="button" onclick="closeTicketPhoto()"
+                class="absolute -top-10 right-0 text-white hover:text-gray-300 text-sm flex items-center gap-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Tutup
+            </button>
+            <img id="ticketPhotoModalImg" src="" alt="Foto Tiket"
+                class="max-h-[85vh] w-auto mx-auto rounded-lg shadow-2xl">
+            <div class="text-center mt-3">
+                <a id="ticketPhotoModalLink" href="#" target="_blank" class="text-sm text-blue-300 hover:text-blue-100 underline">
+                    Buka ukuran penuh di tab baru
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
