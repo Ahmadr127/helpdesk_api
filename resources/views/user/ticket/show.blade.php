@@ -377,13 +377,13 @@
                         @php $adminName = $response['admin_name'] ?? 'Admin'; @endphp
                         <!-- Admin: kanan -->
                         <div class="flex justify-end">
-                            <div class="max-w-[85%] bg-blue-600 text-white p-3 rounded-2xl rounded-br-md shadow-sm">
+                            <div class="max-w-[85%] min-w-0 bg-blue-600 text-white p-3 rounded-2xl rounded-br-md shadow-sm">
                                 <div class="flex items-center justify-end gap-2 mb-1">
                                     <span
                                         class="text-[10px] font-semibold uppercase tracking-wide bg-blue-500 px-2 py-0.5 rounded-full">Admin</span>
                                     <span class="text-xs font-semibold">{{ $adminName }}</span>
                                 </div>
-                                <p class="text-sm whitespace-pre-line">{{ $response['notes'] ?? '' }}</p>
+                                <p class="text-sm whitespace-pre-line break-words">{{ $response['notes'] ?? '' }}</p>
                                 @if(isset($response['photo']))
                                 <div class="mt-2">
                                     <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
@@ -401,16 +401,16 @@
                         @else
                         <!-- Pengaju: kiri -->
                         <div class="flex justify-start">
-                            <div class="max-w-[85%] bg-white p-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
+                            <div class="max-w-[85%] min-w-0 bg-white p-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-xs font-semibold text-gray-800">{{ $pengajuName }}</span>
                                     <span
                                         class="text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Pengaju</span>
                                 </div>
                                 @if(isset($response['message']))
-                                <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['message'] }}</p>
+                                <p class="text-sm whitespace-pre-line break-words text-gray-800">{{ $response['message'] }}</p>
                                 @elseif(isset($response['notes']))
-                                <p class="text-sm whitespace-pre-line text-gray-800">
+                                <p class="text-sm whitespace-pre-line break-words text-gray-800">
                                     @if(isset($response['action']) && $response['action'] === 'confirm')
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
