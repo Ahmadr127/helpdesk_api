@@ -238,8 +238,8 @@
                 </div>
 
                 <!-- Conversation Content -->
-                <div class="conversation-content h-full flex flex-col">
-                    <div class="conversation-messages flex-grow overflow-y-auto">
+                <div class="conversation-content h-full flex flex-col bg-gray-50">
+                    <div class="conversation-messages flex-grow overflow-y-auto p-4 space-y-3">
                         @php
                         $adminResponses = is_array($ticket->admin_responses) ?
                         $ticket->admin_responses :
@@ -261,40 +261,49 @@
                         $allResponses[] = $reply;
                         }
 
+                        // Chat: urut kronologis (lama di atas, baru di bawah)
                         usort($allResponses, function($a, $b) {
-                        return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+                        return strtotime($a['timestamp']) - strtotime($b['timestamp']);
                         });
+
+                        $pengajuName = $ticket->user->name ?? 'Pengaju';
                         @endphp
 
                         @if(count($allResponses) > 0)
                         @foreach($allResponses as $response)
-                        <div class="p-3 border-b border-gray-100">
-                            @if($response['type'] === 'admin')
-                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="text-sm font-medium text-blue-800">{{ $ticket->user->name }}</div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
-                                    </div>
+                        @if($response['type'] === 'admin')
+                        @php $adminName = $response['admin_name'] ?? 'Admin'; @endphp
+                        <!-- Admin: kanan -->
+                        <div class="flex justify-end">
+                            <div class="max-w-[85%] bg-blue-600 text-white p-3 rounded-2xl rounded-br-md shadow-sm">
+                                <div class="flex items-center justify-end gap-2 mb-1">
+                                    <span
+                                        class="text-[10px] font-semibold uppercase tracking-wide bg-blue-500 px-2 py-0.5 rounded-full">Admin</span>
+                                    <span class="text-xs font-semibold">{{ $adminName }}</span>
                                 </div>
-                                <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['notes'] ?? '' }}</p>
+                                <p class="text-sm whitespace-pre-line">{{ $response['notes'] ?? '' }}</p>
                                 @if(isset($response['photo']))
                                 <div class="mt-2">
                                     <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
                                         class="block">
                                         <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon admin"
-                                            class="max-h-28 w-auto rounded border border-gray-200 mx-auto hover:opacity-90 transition">
+                                            class="max-h-28 w-auto rounded-lg border border-blue-400 ml-auto hover:opacity-90 transition">
                                     </a>
                                 </div>
                                 @endif
+                                <div class="text-[10px] text-blue-200 text-right mt-1">
+                                    {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
+                                </div>
                             </div>
-                            @else
-                            <div class="bg-green-50 p-3 rounded-lg border border-green-100">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="text-sm font-medium text-green-800">{{ $ticket->user->name }}</div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
-                                    </div>
+                        </div>
+                        @else
+                        <!-- Pengaju tiket: kiri -->
+                        <div class="flex justify-start">
+                            <div class="max-w-[85%] bg-white p-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-semibold text-gray-800">{{ $pengajuName }}</span>
+                                    <span
+                                        class="text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Pengaju</span>
                                 </div>
                                 <p class="text-sm whitespace-pre-line text-gray-800">
                                     {{ $response['message'] ?? $response['notes'] ?? '' }}</p>
@@ -303,14 +312,17 @@
                                     <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
                                         class="block">
                                         <img src="{{ asset('storage/' . $response['photo']) }}"
-                                            alt="Foto respon pengguna"
-                                            class="max-h-28 w-auto rounded border border-gray-200 mx-auto hover:opacity-90 transition">
+                                            alt="Foto respon pengaju"
+                                            class="max-h-28 w-auto rounded-lg border border-gray-200 hover:opacity-90 transition">
                                     </a>
                                 </div>
                                 @endif
+                                <div class="text-[10px] text-gray-400 mt-1">
+                                    {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
+                                </div>
                             </div>
-                            @endif
                         </div>
+                        @endif
                         @endforeach
                         @else
                         <div class="flex flex-col items-center justify-center h-full p-6 text-center text-gray-500">

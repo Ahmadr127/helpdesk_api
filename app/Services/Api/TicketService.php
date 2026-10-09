@@ -349,6 +349,8 @@ class TicketService
             'notes' => $notes,
             'timestamp' => now(),
             'status' => $status,
+            'admin_id' => $admin->id,
+            'admin_name' => $admin->name,
         ];
 
         $responses = json_decode($ticket->admin_responses, true) ?? [];
@@ -388,6 +390,8 @@ class TicketService
             $response = [
                 'notes' => $notes,
                 'timestamp' => $timestamp->toDateTimeString(),
+                'admin_id' => $admin->id,
+                'admin_name' => $admin->name,
             ];
             if ($photoFile) {
                 $path = $photoFile->store('ticket-responses', 'public');

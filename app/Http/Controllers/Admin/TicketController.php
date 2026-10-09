@@ -24,6 +24,8 @@ class TicketController extends Controller
         $response = [
             'notes' => $validated['notes'],
             'timestamp' => now()->toDateTimeString(),
+            'admin_id' => auth()->id(),
+            'admin_name' => auth()->user()?->name ?? 'Admin',
         ];
 
         // Save admin response photo if exists
@@ -97,6 +99,8 @@ class TicketController extends Controller
             'notes' => $validated['notes'],
             'timestamp' => now(),
             'status' => $validated['status'],
+            'admin_id' => auth()->id(),
+            'admin_name' => auth()->user()?->name ?? 'Admin',
         ];
 
         // Get existing responses or initialize empty array
