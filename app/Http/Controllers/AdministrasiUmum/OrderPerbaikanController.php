@@ -179,14 +179,8 @@ class OrderPerbaikanController extends Controller
 
         $orderPerbaikan->load(['creator', 'history.creator', 'location']);
 
-        switch ($orderPerbaikan->status) {
-            case 'confirmed':
-                return view($this->viewNamespace().'.detail-confirmed', ['order' => $orderPerbaikan]);
-            case 'rejected':
-                return view($this->viewNamespace().'.detail-rejected', ['order' => $orderPerbaikan]);
-            default:
-                return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
-        }
+        // Satu template untuk semua status (open/in_progress/tutup/confirmed/rejected)
+        return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
     }
 
     /**
@@ -484,15 +478,8 @@ class OrderPerbaikanController extends Controller
     {
         $orderPerbaikan->load(['creator', 'history.creator', 'location']);
 
-        // Direct to specific view based on status
-        switch ($orderPerbaikan->status) {
-            case 'confirmed':
-                return view($this->viewNamespace().'.detail-confirmed', ['order' => $orderPerbaikan]);
-            case 'rejected':
-                return view($this->viewNamespace().'.detail-rejected', ['order' => $orderPerbaikan]);
-            default:
-                return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
-        }
+        // Satu template untuk semua status (open/in_progress/tutup/confirmed/rejected)
+        return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
     }
 
     public function updateStatus(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)

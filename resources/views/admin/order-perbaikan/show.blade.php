@@ -167,6 +167,31 @@
             </div>
             @endif
 
+            @if(in_array($orderPerbaikan->status, ['tutup', 'confirmed', 'rejected']))
+            <!-- Respon Admin (pengganti section di view confirmed/rejected lama) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h2 class="text-base font-semibold text-gray-900">Respon Admin</h2>
+                </div>
+                <div class="p-6">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        <div class="sm:col-span-2">
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Follow Up</dt>
+                            <dd class="mt-1 text-sm text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-100 leading-relaxed">{{ $orderPerbaikan->follow_up ?? '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Update</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->updated_at->format('d M Y, H:i') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Penanggung Jawab</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+            @endif
+
         </div>
 
         <!-- Right Column: Status Update Form + Timeline -->
