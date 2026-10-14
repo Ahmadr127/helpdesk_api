@@ -281,6 +281,10 @@ class OrderPerbaikanService
             } else {
                 $updateData = [
                     'status' => $data['status'],
+                    // $data['nama_penanggung_jawab'] sudah auto-fill nama admin
+                    // di atas bila kosong, agar tak pernah null (mis. tutup
+                    // langsung dari open atau dibuka-ulang oleh user).
+                    'nama_penanggung_jawab' => $data['nama_penanggung_jawab'],
                     'follow_up' => $data['follow_up'],
                     'updated_by' => $admin->id,
                 ];

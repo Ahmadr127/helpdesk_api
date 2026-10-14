@@ -116,61 +116,72 @@
                     @endif
                 </div>
 
-                <!-- Timeline Section -->
-                <div class="bg-gray-50 rounded-lg p-6 h-fit">
-                    <h3 class="text-lg font-medium text-gray-900 mb-6">Timeline Order</h3>
-                    <div class="flow-root">
-                        <ul role="list" class="-mb-8">
-                            @foreach($order->history as $history)
-                            <li>
-                                <div class="relative pb-8">
-                                    @if(!$loop->last)
-                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
-                                    @endif
-                                    <div class="relative flex space-x-3">
-                                        <div>
-                                            <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
-                                                {{ match($history->status) {
-                                                    'open' => 'bg-blue-500',
-                                                    'in_progress' => 'bg-yellow-500',
-                                                    'tutup' => 'bg-violet-500',
-                                                    'confirmed' => 'bg-green-500',
-                                                    'rejected' => 'bg-red-500',
-                                                    default => 'bg-gray-500'
-                                                } }}">
-                                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                                </svg>
-                                            </span>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ match($history->status) {
-                                                        'open' => 'Order Dibuat',
-                                                        'in_progress' => 'Dalam Proses',
-                                                        'tutup' => 'Order Ditutup',
-                                                        'confirmed' => 'Order Dikonfirmasi',
-                                                        'rejected' => 'Order Ditolak',
-                                                        default => ucfirst($history->status)
-                                                    } }}
-                                                </div>
-                                                <p class="mt-0.5 text-sm text-gray-500">
-                                                    {{ $history->created_at->format('d M Y H:i') }}
-                                                </p>
-                                            </div>
-                                            @if($history->keterangan)
-                                            <div class="mt-2 text-sm text-gray-700">
-                                                {{ $history->keterangan }}
-                                            </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            @endforeach
-                        </ul>
+                <!-- Riwayat Status + Update Status -->
+                <div class="space-y-6">
+                <!-- Riwayat Status (bubble chat: pengaju kanan, admin kiri) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="text-base font-semibold text-gray-900">Riwayat Status</h3>
                     </div>
+                    <div class="px-4 py-5 h-[420px] overflow-y-auto bg-[#ECE5DD]">
+                        <div class="space-y-3">
+                            @forelse($order->history->sortBy('created_at') as $history)
+                            @php
+                                $isPengaju = $history->created_by
+                                    ? ($order->created_by && $history->created_by == $order->created_by)
+                                    : in_array($history->status, ['open', 'confirmed']);
+                            @endphp
+                            @include('components.order-history-bubble', ['history' => $history, 'isPengaju' => $isPengaju])
+                            @empty
+                            <p class="text-center text-gray-500 text-sm py-8">Belum ada aktivitas</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="text-base font-semibold text-gray-900">Update Status</h3>
+                    </div>
+                    <div class="p-6">
+                        <form action="{{ route('admin.order-perbaikan.update-status', $order) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-2">Status</label>
+                                    <select name="status" required
+                                        class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all">
+                                        <option value="">Pilih Status</option>
+                                        <option value="in_progress">In Progress (Proses Ulang)</option>
+                                        <option value="tutup">Tutup (Konfirmasi Selesai)</option>
+                                        <option value="rejected">Tolak</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-2">Tindak Lanjut</label>
+                                    <textarea name="follow_up" required rows="3"
+                                        class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all resize-none"
+                                        placeholder="Masukkan tindak lanjut...">{{ $order->follow_up }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-2">Penanggung Jawab</label>
+                                    <p class="text-sm text-gray-900 bg-white px-3 py-2.5 rounded-lg border border-gray-200 font-medium">{{ $order->nama_penanggung_jawab ?? '-' }}</p>
+                                    <input type="hidden" name="nama_penanggung_jawab" value="{{ $order->nama_penanggung_jawab }}">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-2">Lampiran <span class="text-gray-400 font-normal">(opsional)</span></label>
+                                    <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
+                                        class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all">
+                                    <p class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG. Maks 5MB.</p>
+                                </div>
+                                <button type="submit"
+                                    class="w-full inline-flex justify-center items-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Update Status
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 </div>
             </div>
 
@@ -189,7 +200,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-red-700 mb-2">Ditolak Oleh</label>
-                            <p class="text-base text-gray-900">{{ $order->nama_penanggung_jawab }}</p>
+                            <p class="text-base text-gray-900">{{ $order->nama_penanggung_jawab ?? '-' }}</p>
                         </div>
                     </div>
                 </div>
@@ -197,4 +208,44 @@
         </div>
     </div>
 </div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="relative max-w-4xl w-full">
+        <div class="bg-white p-2 rounded-xl shadow-2xl">
+            <img id="modalImage" src="" alt="Lampiran" class="max-h-[70vh] max-w-full object-contain mx-auto rounded-lg">
+        </div>
+        <button onclick="closeImageModal()" class="absolute -top-4 -right-4 bg-white p-2.5 rounded-full shadow-lg hover:bg-gray-100 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+function openImageModal(src) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = src;
+    modal.classList.remove('hidden');
+    modal.style.opacity = '0';
+    setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeImageModal();
+    });
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.opacity = '0';
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+    }
+});
+</script>
 @endsection
