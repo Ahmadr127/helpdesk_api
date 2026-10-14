@@ -18,9 +18,9 @@
 
 
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100dvh-9rem)]">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column: Info Cards -->
-        <div class="lg:col-span-2 space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
+        <div class="lg:col-span-2 space-y-6">
             <!-- Order Info -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -161,7 +161,7 @@
         </div>
 
         <!-- Right Column: Status Update Form + Timeline -->
-        <div class="lg:col-span-1 space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        <div class="lg:col-span-1 space-y-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto lg:pr-1">
             <!-- Riwayat Status (bubble chat: pengaju kanan, admin kiri) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
