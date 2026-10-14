@@ -244,7 +244,7 @@
                             </button>
                         </div>
 
-                        @elseif($orderPerbaikan->status === 'in_progress')
+                        @else
                         <div class="space-y-5">
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Status</label>
                             <select name="status" required
@@ -277,8 +277,8 @@
                             </button>
                         </div>
 
-                        @else
-                        <div class="bg-violet-50 border border-violet-200 rounded-lg p-4">
+                        @if(!in_array($orderPerbaikan->status, ['open', 'in_progress']))
+                        <div class="bg-violet-50 border border-violet-200 rounded-lg p-4 mb-5">
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -292,6 +292,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         @endif
                     </form>
                 </div>
