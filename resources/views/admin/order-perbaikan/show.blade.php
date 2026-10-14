@@ -18,9 +18,9 @@
 
 
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100dvh-9rem)]">
         <!-- Left Column: Info Cards -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
             <!-- Order Info -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -109,7 +109,8 @@
                     </h2>
                 </div>
                 <div class="p-6">
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 content-start {{ $orderPerbaikan->foto ? '' : 'md:col-span-2' }}">
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kategori_order ?? '-' }}</dd>
@@ -135,67 +136,32 @@
                             <dd class="mt-1 text-sm text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-100">{{ $orderPerbaikan->keluhan }}</dd>
                         </div>
                     </dl>
-                </div>
-            </div>
-
-            <!-- Photo -->
-            @if($orderPerbaikan->foto)
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-base font-semibold text-gray-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        Foto Barang
-                    </h2>
-                </div>
-                <div class="p-6">
-                    <div class="relative rounded-lg overflow-hidden bg-gray-100 max-w-md">
-                        <img src="{{ Storage::url($orderPerbaikan->foto) }}" alt="Foto Order"
-                            class="w-full h-64 object-cover">
-                        <div class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                            <a href="{{ Storage::url($orderPerbaikan->foto) }}" target="_blank"
-                                class="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
-                                </svg>
-                                Lihat Full Size
-                            </a>
+                    @if($orderPerbaikan->foto)
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Foto Barang</p>
+                        <div class="relative rounded-lg overflow-hidden bg-gray-100">
+                            <img src="{{ Storage::url($orderPerbaikan->foto) }}" alt="Foto Order"
+                                class="w-full h-64 object-cover">
+                            <div class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                                <a href="{{ Storage::url($orderPerbaikan->foto) }}" target="_blank"
+                                    class="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                                    </svg>
+                                    Lihat Full Size
+                                </a>
+                            </div>
                         </div>
+                    </div>
+                    @endif
                     </div>
                 </div>
             </div>
-            @endif
-
-            @if(in_array($orderPerbaikan->status, ['tutup', 'confirmed', 'rejected']))
-            <!-- Respon Admin (pengganti section di view confirmed/rejected lama) -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-base font-semibold text-gray-900">Respon Admin</h2>
-                </div>
-                <div class="p-6">
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                        <div class="sm:col-span-2">
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Follow Up</dt>
-                            <dd class="mt-1 text-sm text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-100 leading-relaxed">{{ $orderPerbaikan->follow_up ?? '-' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Update</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->updated_at->format('d M Y, H:i') }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Penanggung Jawab</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-            @endif
 
         </div>
 
         <!-- Right Column: Status Update Form + Timeline -->
-        <div class="lg:col-span-1 space-y-6 sticky top-6 self-start">
+        <div class="lg:col-span-1 space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <!-- Riwayat Status (bubble chat: pengaju kanan, admin kiri) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
