@@ -201,84 +201,30 @@
                         @csrf
                         @method('PUT')
 
-                        @if($orderPerbaikan->status === 'open')
-                        <div class="space-y-2">
-                            
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Status</label>
-                            <select name="status" required
-                                class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all">
-                                <option value="in_progress">In Progress</option>
-                            </select>
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Nama Penanggung Jawab</label>
-                            <input type="text" name="nama_penanggung_jawab" required
-                                class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all"
-                                placeholder="Masukkan nama penanggung jawab"
-                                value="{{ old('nama_penanggung_jawab', auth()->user()->name) }}">
-                            
-                            
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Tindak Lanjut</label>
-                            <textarea name="follow_up" required rows="3"
-                                class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all resize-none"
-                                placeholder="Masukkan tindak lanjut yang akan dilakukan..."></textarea>
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Lampiran <span class="text-gray-400 font-normal">(opsional)</span></label>
-                            <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
-                                class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all">
-                            <p class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG. Maks 5MB.</p>
-                            
-                            <button type="submit" name="action" value="in_progress"
-                                class="w-full inline-flex justify-center items-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Proses Order
-                            </button>
-                        </div>
-
-                        @else
-                        @if(!in_array($orderPerbaikan->status, ['open', 'in_progress']))
-                        @php
-                            $termInfo = match($orderPerbaikan->status) {
-                                'tutup' => ['box' => 'bg-violet-50 border-violet-200', 'icon' => 'text-violet-500', 'title' => 'text-violet-900', 'desc' => 'text-violet-700', 'heading' => 'Order Ditutup', 'body' => 'Pengerjaan sudah diselesaikan oleh admin, namun belum dikonfirmasi oleh user. Status akan menjadi <strong>Confirmed</strong> setelah user mengonfirmasi selesai.'],
-                                'confirmed' => ['box' => 'bg-emerald-50 border-emerald-200', 'icon' => 'text-emerald-500', 'title' => 'text-emerald-900', 'desc' => 'text-emerald-700', 'heading' => 'Order Selesai', 'body' => 'Order telah selesai dan dikonfirmasi oleh user. Form di bawah tetap tersedia bila admin perlu menindaklanjuti.'],
-                                default => ['box' => 'bg-red-50 border-red-200', 'icon' => 'text-red-500', 'title' => 'text-red-900', 'desc' => 'text-red-700', 'heading' => 'Order Ditolak', 'body' => 'Order ditolak/dikembalikan. Lihat alasan pada Follow Up, atau proses ulang via form di bawah.'],
-                            };
-                        @endphp
-                        <div class="{{ $termInfo['box'] }} border rounded-lg p-4 mb-5">
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 {{ $termInfo['icon'] }} mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-semibold {{ $termInfo['title'] }}">{{ $termInfo['heading'] }}</p>
-                                    <p class="text-sm {{ $termInfo['desc'] }} mt-1 leading-relaxed">{!! $termInfo['body'] !!}</p>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
                         <div class="space-y-3">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-800 mb-1">Status</label>
                                     <select name="status" required
                                         class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all">
-                                        <option value="">Pilih Status</option>
-                                        <option value="in_progress" {{ $orderPerbaikan->status === 'in_progress' ? 'selected' : '' }}>In Progress (Buka Kembali)</option>
+                                        <option value="in_progress" {{ in_array($orderPerbaikan->status, ['open', 'in_progress']) ? 'selected' : '' }}>In Progress{{ $orderPerbaikan->status === 'open' ? '' : ' (Buka Kembali)' }}</option>
                                         <option value="tutup" {{ $orderPerbaikan->status === 'tutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
                                         <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-800 mb-1">Penanggung Jawab</label>
-                                    <p class="text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-200 font-medium truncate" title="{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}">{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}</p>
-                                    <input type="hidden" name="nama_penanggung_jawab" value="{{ $orderPerbaikan->nama_penanggung_jawab ?? '' }}">
+                                    <input type="text" name="nama_penanggung_jawab" required
+                                        value="{{ old('nama_penanggung_jawab', $orderPerbaikan->nama_penanggung_jawab ?? auth()->user()->name) }}"
+                                        class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all"
+                                        placeholder="Masukkan nama penanggung jawab">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-800 mb-1">Tindak Lanjut</label>
                                 <textarea name="follow_up" required rows="2"
                                     class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all resize-none"
-                                    placeholder="Masukkan tindak lanjut yang dilakukan...">{{ $orderPerbaikan->follow_up }}</textarea>
+                                    placeholder="Masukkan tindak lanjut yang dilakukan...">{{ old('follow_up', $orderPerbaikan->follow_up) }}</textarea>
                             </div>
                             <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
                                 <div class="flex-1 min-w-0">
@@ -296,7 +242,6 @@
                             </div>
                         </div>
 
-                        @endif
                     </form>
                 </div>
             </div>
