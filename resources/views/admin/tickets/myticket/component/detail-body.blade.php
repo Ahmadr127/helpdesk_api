@@ -96,48 +96,13 @@ $adminResponses = is_array($ticket->admin_responses) ? $ticket->admin_responses 
 $userReplies = is_array($ticket->user_replies) ? $ticket->user_replies : (json_decode($ticket->user_replies, true) ?? []);
 $allResponses = [];
 foreach ($adminResponses as $response) { $response['type'] = 'admin'; $allResponses[] = $response; }
-foreach ($userReplies as $reply) { $reply['type'] = 'user'; $allResponses[] = $reply; }
-usort($allResponses, fn($a, $b) => strtotime($b['timestamp']) - strtotime($a['timestamp']));
+foreach ($userReplies as $reply) { $reply['action'] = $reply['type'] ?? $reply['action'] ?? null; $reply['type'] = 'user'; $allResponses[] = $reply; }
+// Chat: urut kronologis (lama di atas, baru di bawah)
+usort($allResponses, fn($a, $b) => strtotime($a['timestamp']) - strtotime($b['timestamp']));
 @endphp
 <div class="mt-4">
     <h3 class="text-sm font-medium text-gray-800 mb-2">Riwayat Percakapan</h3>
-    @if(count($allResponses) > 0)
-    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
-        @foreach($allResponses as $response)
-        @if($response['type'] === 'admin')
-        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-            <div class="flex justify-between items-start mb-1">
-                <div class="font-medium text-blue-800 text-xs">Admin</div>
-                <div class="text-[11px] text-gray-500">{{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}</div>
-            </div>
-            <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['notes'] ?? '' }}</p>
-            @if(isset($response['photo']))
-            <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank" class="block mt-2">
-                <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon admin" class="max-h-28 w-auto rounded border border-gray-200">
-            </a>
-            @endif
-        </div>
-        @else
-        <div class="bg-green-50 p-3 rounded-lg border border-green-100">
-            <div class="flex justify-between items-start mb-1">
-                <div class="font-medium text-green-800 text-xs">Anda</div>
-                <div class="text-[11px] text-gray-500">{{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}</div>
-            </div>
-            @if(isset($response['message']))
-            <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['message'] }}</p>
-            @elseif(isset($response['notes']))
-            <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['notes'] }}</p>
-            @endif
-            @if(isset($response['photo']) && !empty($response['photo']))
-            <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank" class="block mt-2">
-                <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon Anda" class="max-h-28 w-auto rounded border border-gray-200">
-            </a>
-            @endif
-        </div>
-        @endif
-        @endforeach
+    <div class="bg-white rounded-lg border border-gray-100 overflow-hidden">
+        @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => 'Anda'])
     </div>
-    @else
-    <p class="text-xs text-gray-500">Belum ada percakapan.</p>
-    @endif
 </div>
