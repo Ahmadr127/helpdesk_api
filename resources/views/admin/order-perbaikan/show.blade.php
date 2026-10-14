@@ -270,13 +270,34 @@
                         </div>
 
                         @else
+                        @if(!in_array($orderPerbaikan->status, ['open', 'in_progress']))
+                        @php
+                            $termInfo = match($orderPerbaikan->status) {
+                                'tutup' => ['box' => 'bg-violet-50 border-violet-200', 'icon' => 'text-violet-500', 'title' => 'text-violet-900', 'desc' => 'text-violet-700', 'heading' => 'Order Ditutup', 'body' => 'Pengerjaan sudah diselesaikan oleh admin, namun belum dikonfirmasi oleh user. Status akan menjadi <strong>Confirmed</strong> setelah user mengonfirmasi selesai.'],
+                                'confirmed' => ['box' => 'bg-emerald-50 border-emerald-200', 'icon' => 'text-emerald-500', 'title' => 'text-emerald-900', 'desc' => 'text-emerald-700', 'heading' => 'Order Selesai', 'body' => 'Order telah selesai dan dikonfirmasi oleh user. Form di bawah tetap tersedia bila admin perlu menindaklanjuti.'],
+                                default => ['box' => 'bg-red-50 border-red-200', 'icon' => 'text-red-500', 'title' => 'text-red-900', 'desc' => 'text-red-700', 'heading' => 'Order Ditolak', 'body' => 'Order ditolak/dikembalikan. Lihat alasan pada Follow Up, atau proses ulang via form di bawah.'],
+                            };
+                        @endphp
+                        <div class="{{ $termInfo['box'] }} border rounded-lg p-4 mb-5">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 {{ $termInfo['icon'] }} mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-semibold {{ $termInfo['title'] }}">{{ $termInfo['heading'] }}</p>
+                                    <p class="text-sm {{ $termInfo['desc'] }} mt-1 leading-relaxed">{!! $termInfo['body'] !!}</p>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                         <div class="space-y-5">
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Status</label>
                             <select name="status" required
                                 class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all">
                                 <option value="">Pilih Status</option>
-                                <option value="tutup">Tutup (Konfirmasi Selesai)</option>
-                                <option value="rejected">Tolak</option>
+                                <option value="in_progress" {{ $orderPerbaikan->status === 'in_progress' ? 'selected' : '' }}>In Progress (Buka Kembali)</option>
+                                <option value="tutup" {{ $orderPerbaikan->status === 'tutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
+                                <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
                             </select>
                             
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Tindak Lanjut</label>
@@ -285,8 +306,8 @@
                                 placeholder="Masukkan tindak lanjut yang dilakukan...">{{ $orderPerbaikan->follow_up }}</textarea>
                             
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Penanggung Jawab</label>
-                            <p class="text-sm text-gray-900 bg-white px-3 py-2.5 rounded-lg border border-gray-200 font-medium">{{ $orderPerbaikan->nama_penanggung_jawab }}</p>
-                            <input type="hidden" name="nama_penanggung_jawab" value="{{ $orderPerbaikan->nama_penanggung_jawab }}">
+                            <p class="text-sm text-gray-900 bg-white px-3 py-2.5 rounded-lg border border-gray-200 font-medium">{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}</p>
+                            <input type="hidden" name="nama_penanggung_jawab" value="{{ $orderPerbaikan->nama_penanggung_jawab ?? '' }}">
                             
                             <label class="block text-sm font-semibold text-gray-800 mb-2">Lampiran <span class="text-gray-400 font-normal">(opsional)</span></label>
                             <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
@@ -302,22 +323,6 @@
                             </button>
                         </div>
 
-                        @if(!in_array($orderPerbaikan->status, ['open', 'in_progress']))
-                        <div class="bg-violet-50 border border-violet-200 rounded-lg p-4 mb-5">
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-semibold text-violet-900">Order Ditutup</p>
-                                    <p class="text-sm text-violet-700 mt-1 leading-relaxed">
-                                        Pengerjaan sudah diselesaikan oleh admin, namun belum dikonfirmasi oleh user.
-                                        Status akan menjadi <strong>Confirmed</strong> setelah user mengonfirmasi selesai.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
                         @endif
                     </form>
                 </div>
