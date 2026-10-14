@@ -256,37 +256,44 @@
                             </div>
                         </div>
                         @endif
-                        <div class="space-y-5">
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Status</label>
-                            <select name="status" required
-                                class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all">
-                                <option value="">Pilih Status</option>
-                                <option value="in_progress" {{ $orderPerbaikan->status === 'in_progress' ? 'selected' : '' }}>In Progress (Buka Kembali)</option>
-                                <option value="tutup" {{ $orderPerbaikan->status === 'tutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
-                                <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
-                            </select>
-                            
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Tindak Lanjut</label>
-                            <textarea name="follow_up" required rows="3"
-                                class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2.5 px-3 transition-all resize-none"
-                                placeholder="Masukkan tindak lanjut yang dilakukan...">{{ $orderPerbaikan->follow_up }}</textarea>
-                            
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Penanggung Jawab</label>
-                            <p class="text-sm text-gray-900 bg-white px-3 py-2.5 rounded-lg border border-gray-200 font-medium">{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}</p>
-                            <input type="hidden" name="nama_penanggung_jawab" value="{{ $orderPerbaikan->nama_penanggung_jawab ?? '' }}">
-                            
-                            <label class="block text-sm font-semibold text-gray-800 mb-2">Lampiran <span class="text-gray-400 font-normal">(opsional)</span></label>
-                            <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
-                                class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all">
-                            <p class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG. Maks 5MB.</p>
-                            
-                            <button type="submit" name="action" value="update"
-                                class="w-full inline-flex justify-center items-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                Update Status
-                            </button>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Status</label>
+                                    <select name="status" required
+                                        class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all">
+                                        <option value="">Pilih Status</option>
+                                        <option value="in_progress" {{ $orderPerbaikan->status === 'in_progress' ? 'selected' : '' }}>In Progress (Buka Kembali)</option>
+                                        <option value="tutup" {{ $orderPerbaikan->status === 'tutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
+                                        <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Penanggung Jawab</label>
+                                    <p class="text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-200 font-medium truncate" title="{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}">{{ $orderPerbaikan->nama_penanggung_jawab ?? '-' }}</p>
+                                    <input type="hidden" name="nama_penanggung_jawab" value="{{ $orderPerbaikan->nama_penanggung_jawab ?? '' }}">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-800 mb-1">Tindak Lanjut</label>
+                                <textarea name="follow_up" required rows="2"
+                                    class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all resize-none"
+                                    placeholder="Masukkan tindak lanjut yang dilakukan...">{{ $orderPerbaikan->follow_up }}</textarea>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                                <div class="flex-1 min-w-0">
+                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Lampiran <span class="text-gray-400 font-normal">(opsional, JPG/PNG 5MB)</span></label>
+                                    <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
+                                        class="w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all">
+                                </div>
+                                <button type="submit" name="action" value="update"
+                                    class="sm:w-auto w-full inline-flex justify-center items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Update Status
+                                </button>
+                            </div>
                         </div>
 
                         @endif
