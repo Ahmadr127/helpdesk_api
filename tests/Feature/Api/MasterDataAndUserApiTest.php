@@ -101,6 +101,12 @@ class MasterDataAndUserApiTest extends TestCase
         $bulk = $this->withHeaders($h)->postJson('/api/admin/master/locations/bulk-action', ['action' => 'deactivate', 'selected' => [$lid]]);
         $bulk->assertStatus(200);
         $this->assertDatabaseHas('locations', ['id' => $lid, 'status' => 0]);
+
+        // lokasi nonaktif tetap bisa di-list admin via filter status
+        $inactive = $this->withHeaders($h)->getJson('/api/admin/master/locations?status=0');
+        $inactive->assertStatus(200)->assertJsonFragment(['id' => $lid]);
+        $active = $this->withHeaders($h)->getJson('/api/admin/master/locations?status=1');
+        $active->assertStatus(200)->assertJsonMissing(['id' => $lid]);
     }
 
     public function test_admin_can_crud_positions_and_unit_proses()

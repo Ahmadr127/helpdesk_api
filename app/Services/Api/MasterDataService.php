@@ -43,9 +43,6 @@ class MasterDataService
         if ($type === 'categories') {
             $query->with('unitProses');
         }
-        if ($type === 'locations') {
-            $query->where('status', 1);
-        }
         if ($type === 'departments') {
             $query->with(['location', 'building']);
         }

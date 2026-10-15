@@ -210,7 +210,7 @@ function openModal(unit = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (unit) {
-        form.action = `{{ url('admin/master/unit-proses') }}/${unit.id}`;
+        form.action = `{{ url('master/unit-proses') }}/${unit.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = unit.name;
         document.getElementById('code').value = unit.code;
@@ -259,7 +259,7 @@ function deleteUnitProses(id) {
         if (result.isConfirmed) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `{{ url('admin/master/unit-proses') }}/${id}`;
+            form.action = `{{ url('master/unit-proses') }}/${id}`;
             form.innerHTML = `
                 @csrf
                 @method('DELETE')

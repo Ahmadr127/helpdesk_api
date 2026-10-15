@@ -41,13 +41,13 @@ class UnitProsesController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:unit_proses',
             'code' => 'required|string|max:50|unique:unit_proses',
             'status' => 'required|boolean',
         ]);
 
-        UnitProses::create($request->all());
+        UnitProses::create($validated);
 
         return redirect()->route('admin.master.unit-proses.index')
             ->with('success', 'Unit Proses berhasil ditambahkan.');
@@ -55,13 +55,13 @@ class UnitProsesController extends Controller
 
     public function update(Request $request, UnitProses $unitProse)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('unit_proses')->ignore($unitProse)],
             'code' => ['required', 'string', 'max:50', Rule::unique('unit_proses')->ignore($unitProse)],
             'status' => 'required|boolean',
         ]);
 
-        $unitProse->update($request->all());
+        $unitProse->update($validated);
 
         return redirect()->route('admin.master.unit-proses.index')
             ->with('success', 'Unit Proses berhasil diperbarui.');

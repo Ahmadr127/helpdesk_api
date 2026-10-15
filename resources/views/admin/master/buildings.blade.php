@@ -207,7 +207,7 @@ function openModal(building = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (building) {
-        form.action = `{{ url('admin/master/buildings') }}/${building.id}`;
+        form.action = `{{ url('master/buildings') }}/${building.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = building.name;
         document.getElementById('code').value = building.code;
@@ -256,7 +256,7 @@ function deleteBuilding(id) {
         if (result.isConfirmed) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `{{ url('admin/master/buildings') }}/${id}`;
+            form.action = `{{ url('master/buildings') }}/${id}`;
             form.innerHTML = `
                 @csrf
                 @method('DELETE')

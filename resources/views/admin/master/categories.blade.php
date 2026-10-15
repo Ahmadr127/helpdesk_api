@@ -177,7 +177,7 @@ function openModal(category = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (category) {
-        form.action = `{{ url('admin/master/categories') }}/${category.id}`;
+        form.action = `{{ url('master/categories') }}/${category.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = category.name;
         document.getElementById('status').value = category.status;
@@ -210,7 +210,7 @@ function deleteCategory(id) {
     if (confirm('Are you sure you want to delete this category?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url('admin/master/categories') }}/${id}`;
+        form.action = `{{ url('master/categories') }}/${id}`;
         form.innerHTML = `
             @csrf
             @method('DELETE')

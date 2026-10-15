@@ -41,13 +41,13 @@ class KategoriOrderController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:kategori_order',
             'code' => 'nullable|string|max:50|unique:kategori_order',
             'status' => 'required|boolean',
         ]);
 
-        KategoriOrder::create($request->all());
+        KategoriOrder::create($validated);
 
         return redirect()->route('admin.master.kategori-order.index')
             ->with('success', 'Kategori Order berhasil ditambahkan.');
@@ -55,13 +55,13 @@ class KategoriOrderController extends Controller
 
     public function update(Request $request, KategoriOrder $kategoriOrder)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('kategori_order')->ignore($kategoriOrder)],
             'code' => ['nullable', 'string', 'max:50', Rule::unique('kategori_order')->ignore($kategoriOrder)],
             'status' => 'required|boolean',
         ]);
 
-        $kategoriOrder->update($request->all());
+        $kategoriOrder->update($validated);
 
         return redirect()->route('admin.master.kategori-order.index')
             ->with('success', 'Kategori Order berhasil diperbarui.');

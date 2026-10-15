@@ -137,15 +137,18 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Master Data Routes - GREEN not for admin IT? Keep BLUE for IT but permission protected
+        // only() : controller hanya punya index/store/update/destroy (+toggle-status positions).
+        // Tanpa only(), route show/create/edit (GET) 500 karena method tidak ada,
+        // dan show {x} men-shadow GET /master/{type}/data di bawah.
         Route::prefix('master')->name('master.')->middleware('permission:master')->group(function () {
             Route::get('/', [MasterDataController::class, 'index'])->name('index');
-            Route::resource('categories', CategoryController::class)->middleware('permission:master');
-            Route::resource('departments', DepartmentController::class)->middleware('permission:master');
-            Route::resource('buildings', BuildingController::class)->middleware('permission:master');
-            Route::resource('locations', LocationController::class)->middleware('permission:master');
-            Route::resource('unit-proses', UnitProsesController::class)->middleware('permission:master');
-            Route::resource('kategori-order', KategoriOrderController::class)->middleware('permission:master');
-            Route::resource('positions', PositionController::class)->middleware('permission:master');
+            Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('buildings', BuildingController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('locations', LocationController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('unit-proses', UnitProsesController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('kategori-order', KategoriOrderController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('positions', PositionController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status')->middleware('permission:master');
 
             // Bulk action dan update limit routes

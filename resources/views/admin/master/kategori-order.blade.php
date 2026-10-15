@@ -197,7 +197,7 @@ function openModal(kategori = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (kategori) {
-        form.action = `{{ url('admin/master/kategori-order') }}/${kategori.id}`;
+        form.action = `{{ url('master/kategori-order') }}/${kategori.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = kategori.name;
         document.getElementById('code').value = kategori.code || '';
@@ -230,7 +230,7 @@ function deleteKategori(id) {
     if (confirm('Apakah Anda yakin ingin menghapus kategori order ini?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url('admin/master/kategori-order') }}/${id}`;
+        form.action = `{{ url('master/kategori-order') }}/${id}`;
         form.innerHTML = `
             @csrf
             @method('DELETE')

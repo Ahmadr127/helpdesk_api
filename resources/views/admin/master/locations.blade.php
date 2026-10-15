@@ -175,7 +175,7 @@ function openModal(location = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (location) {
-        form.action = `{{ url('admin/master/locations') }}/${location.id}`;
+        form.action = `{{ url('master/locations') }}/${location.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = location.name;
         document.getElementById('status').value = location.status;
@@ -207,7 +207,7 @@ function deleteLocation(id) {
     if (confirm('Are you sure you want to delete this location?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url('admin/master/locations') }}/${id}`;
+        form.action = `{{ url('master/locations') }}/${id}`;
         form.innerHTML = `
             @csrf
             @method('DELETE')

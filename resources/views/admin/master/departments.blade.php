@@ -144,7 +144,7 @@ function openModal(department = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (department) {
-        form.action = `{{ url('admin/master/departments') }}/${department.id}`;
+        form.action = `{{ url('master/departments') }}/${department.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = department.name;
         document.getElementById('code').value = department.code;
@@ -203,7 +203,7 @@ function deleteDepartment(id) {
     if (confirm('Are you sure you want to delete this department?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url('admin/master/departments') }}/${id}`;
+        form.action = `{{ url('master/departments') }}/${id}`;
         form.innerHTML = `
             @csrf
             @method('DELETE')
