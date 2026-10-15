@@ -101,22 +101,10 @@
                     </div>
                     <div>
                         <label for="lokasi-input" class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                        @if(isset($departmentLocation) && $departmentLocation)
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">
-                                    {{ $departmentLocation->name }}
-                                </p>
-                                <p class="text-xs text-gray-500">Otomatis dari departemen Anda</p>
-                            </div>
-                        </div>
-                        <input type="hidden" name="lokasi" value="{{ $departmentLocation->id }}">
-                        @else
                         <x-searchable-select name="lokasi" id="lokasi"
-                            :options="$locations->pluck('name', 'id')->toArray()" :selected="old('lokasi')"
+                            :options="$locations->pluck('name', 'id')->toArray()" :selected="old('lokasi', isset($departmentLocation) && $departmentLocation ? $departmentLocation->id : null)"
                             placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi —"
                             accent="green" />
-                        @endif
                         @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
