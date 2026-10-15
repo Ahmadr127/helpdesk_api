@@ -322,6 +322,8 @@
     @stack('scripts')
     @livewireScripts
 
+    @include('components.confirmation-popup')
+
     @if(session('success'))
     <script>
     Swal.fire({
