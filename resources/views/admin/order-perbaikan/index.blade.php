@@ -74,173 +74,10 @@
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Filter + Table dalam satu card ringkas -->
     <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-gray-200">
-        <div class="p-5 bg-gray-50 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-700 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                    </path>
-                </svg>
-                Filter Pencarian
-            </h3>
-        </div>
-        <div class="p-5">
-            <form id="filterForm" action="{{ route('admin.order-perbaikan.index') }}" method="GET"
-                class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" for="search">
-                        Pencarian
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                        <input type="text" name="search" id="search"
-                            class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 filter-input"
-                            placeholder="Cari nomor, barang..." value="{{ request('search') }}">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" for="date_from">
-                        Dari Tanggal
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                        </div>
-                        <input type="date" name="date_from" id="date_from"
-                            class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 filter-input"
-                            value="{{ request('date_from') }}">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" for="date_to">
-                        Sampai Tanggal
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                        </div>
-                        <input type="date" name="date_to" id="date_to"
-                            class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 filter-input"
-                            value="{{ request('date_to') }}">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" for="status">
-                        Status
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <select name="status" id="status"
-                            class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 filter-input">
-                            <option value="">Semua Status</option>
-                            <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Dibuka</option>
-                            <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Dalam
-                                Proses</option>
-                            <option value="tutup" {{ request('status') == 'tutup' ? 'selected' : '' }}>Tutup (Menunggu Konfirmasi)
-                            </option>
-                            <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed
-                            </option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected
-                            </option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" for="prioritas">
-                        Prioritas
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                        </div>
-                        <select name="prioritas" id="prioritas"
-                            class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 filter-input">
-                            <option value="">Semua Prioritas</option>
-                            <option value="TINGGI/URGENT"
-                                {{ request('prioritas') == 'TINGGI/URGENT' ? 'selected' : '' }}>
-                                Tinggi/Urgent</option>
-                            <option value="SEDANG" {{ request('prioritas') == 'SEDANG' ? 'selected' : '' }}>Sedang
-                            </option>
-                            <option value="RENDAH" {{ request('prioritas') == 'RENDAH' ? 'selected' : '' }}>Rendah
-                            </option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2" for="location_id">
-                        Lokasi
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </div>
-                        <select name="location_id" id="location_id"
-                            class="pl-10 w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 filter-input">
-                            <option value="">Semua Lokasi</option>
-                            @foreach($locations as $location)
-                            <option value="{{ $location->id }}"
-                                {{ request('location_id') == $location->id ? 'selected' : '' }}>
-                                {{ $location->name }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div class="md:col-span-3 lg:col-span-6 flex justify-end">
-                    <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg transition duration-150 ease-in-out inline-flex items-center shadow-md">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                            </path>
-                        </svg>
-                        Filter
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Combined Orders Table -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-gray-200">
-        <div
-            class="p-5 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-700 flex items-center">
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-base font-semibold text-gray-700 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
@@ -252,40 +89,97 @@
                 Total: <span class="font-semibold">{{ $orders->total() }}</span> order
             </div>
         </div>
+        <form id="filterForm" action="{{ route('admin.order-perbaikan.index') }}" method="GET"
+            class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-gray-200 bg-white">
+            <input type="text" name="search" id="search" title="Pencarian"
+                class="flex-1 min-w-[160px] rounded-lg border-gray-300 shadow-sm text-sm py-1.5 focus:border-blue-500 focus:ring-blue-500 filter-input"
+                placeholder="Cari nomor, barang..." value="{{ request('search') }}">
+            <input type="date" name="date_from" id="date_from" title="Dari Tanggal"
+                class="rounded-lg border-gray-300 shadow-sm text-sm py-1.5 focus:border-blue-500 focus:ring-blue-500 filter-input"
+                value="{{ request('date_from') }}">
+            <input type="date" name="date_to" id="date_to" title="Sampai Tanggal"
+                class="rounded-lg border-gray-300 shadow-sm text-sm py-1.5 focus:border-blue-500 focus:ring-blue-500 filter-input"
+                value="{{ request('date_to') }}">
+            <select name="status" id="status" title="Status"
+                class="rounded-lg border-gray-300 shadow-sm text-sm py-1.5 focus:border-blue-500 focus:ring-blue-500 filter-input">
+                <option value="">Semua Status</option>
+                <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Dibuka</option>
+                <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Dalam
+                    Proses</option>
+                <option value="tutup" {{ request('status') == 'tutup' ? 'selected' : '' }}>Tutup (Menunggu Konfirmasi)
+                </option>
+                <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed
+                </option>
+                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected
+                </option>
+            </select>
+            <select name="prioritas" id="prioritas" title="Prioritas"
+                class="rounded-lg border-gray-300 shadow-sm text-sm py-1.5 focus:border-blue-500 focus:ring-blue-500 filter-input">
+                <option value="">Semua Prioritas</option>
+                <option value="TINGGI/URGENT"
+                    {{ request('prioritas') == 'TINGGI/URGENT' ? 'selected' : '' }}>
+                    Tinggi/Urgent</option>
+                <option value="SEDANG" {{ request('prioritas') == 'SEDANG' ? 'selected' : '' }}>Sedang
+                </option>
+                <option value="RENDAH" {{ request('prioritas') == 'RENDAH' ? 'selected' : '' }}>Rendah
+                </option>
+            </select>
+            <select name="location_id" id="location_id" title="Lokasi"
+                class="max-w-[160px] rounded-lg border-gray-300 shadow-sm text-sm py-1.5 focus:border-blue-500 focus:ring-blue-500 filter-input">
+                <option value="">Semua Lokasi</option>
+                @foreach($locations as $location)
+                <option value="{{ $location->id }}"
+                    {{ request('location_id') == $location->id ? 'selected' : '' }}>
+                    {{ $location->name }}
+                </option>
+                @endforeach
+            </select>
+            <button type="submit"
+                class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-1.5 px-4 rounded-lg transition duration-150 ease-in-out inline-flex items-center shadow-md">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                    </path>
+                </svg>
+                Filter
+            </button>
+            <a href="{{ route('admin.order-perbaikan.index') }}"
+                class="text-sm text-gray-500 hover:text-gray-700 px-2 py-1.5">Reset</a>
+        </form>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Nomor Order
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Tanggal
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Peminta
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Barang
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Lokasi
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Prioritas
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                         </th>
                         <th scope="col"
-                            class="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                             Aksi
                         </th>
                     </tr>
@@ -293,22 +187,22 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($orders as $order)
                     <tr class="hover:bg-gray-50 transition-colors duration-150">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td class="px-4 py-2.5 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ $order->nomor }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->tanggal->format('d/m/Y H:i') }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_peminta }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_barang }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->location ? $order->location->name : '-' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-2.5 whitespace-nowrap">
                             <span class="px-3 py-1.5 text-xs font-medium rounded-full shadow-sm 
                                 {{ match($order->prioritas) {
                                     'TINGGI/URGENT' => 'bg-red-50 text-red-800 border border-red-200',
@@ -324,7 +218,7 @@
                                 } }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-2.5 whitespace-nowrap">
                             <span class="px-3 py-1.5 text-xs font-medium rounded-full shadow-sm
                                 {{ match($order->status) {
                                     'open' => 'bg-blue-50 text-blue-800 border border-blue-200',
@@ -344,7 +238,7 @@
                                 } }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td class="px-4 py-2.5 whitespace-nowrap text-sm font-medium">
                             <a href="{{ route('admin.order-perbaikan.show', $order) }}"
                                 class="text-blue-600 hover:text-blue-900 inline-flex items-center hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors duration-150">
                                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
