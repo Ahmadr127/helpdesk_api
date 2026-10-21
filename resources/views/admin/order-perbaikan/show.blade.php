@@ -172,7 +172,7 @@
                         Riwayat Status
                     </h2>
                 </div>
-                <div class="px-4 py-5 h-[32vh] min-h-[220px] overflow-y-auto bg-[#ECE5DD]">
+                <div class="px-4 py-5 h-96 overflow-y-auto bg-[#ECE5DD]">
                     <div class="space-y-3">
                         @forelse($orderPerbaikan->history->sortBy('created_at') as $history)
                         @php
