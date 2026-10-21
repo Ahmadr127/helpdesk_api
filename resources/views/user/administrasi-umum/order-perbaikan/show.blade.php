@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         Riwayat Status
                     </h2>
                 </div>
-                <div class="px-4 py-5 h-96 overflow-y-auto bg-[#ECE5DD]">
+                <div class="px-4 py-5 h-72 overflow-y-auto bg-[#ECE5DD]">
                     <div class="space-y-3">
                         @forelse($order->history()->latest()->get() as $history)
                         @php
