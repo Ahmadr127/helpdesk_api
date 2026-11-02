@@ -42,7 +42,7 @@ class OrderPerbaikanService
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'penanggungJawab', 'department', 'department.location', 'department.building']);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -58,17 +58,14 @@ class OrderPerbaikanService
         if (! empty($filters['date_to'])) {
             $query->whereDate('tanggal', '<=', $filters['date_to']);
         }
-        if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        } else {
-            // default open+in_progress if no status
-            // for API we return all unless filtered? Keep as original: open/in_progress default when no filter
-            // But allow 'all' to bypass
-            if (($filters['status'] ?? null) !== 'all') {
-                // keep default? comment out to return all for API flexibility
-                // $query->whereIn('status', ['open','in_progress']);
-            }
+
+        $status = $filters['status'] ?? null;
+        if (is_array($status)) {
+            $query->whereIn('status', $status);
+        } elseif (! empty($status) && $status !== 'all') {
+            $query->where('status', $status);
         }
+
         if (! empty($filters['prioritas'])) {
             $query->where('prioritas', $filters['prioritas']);
         }
@@ -109,19 +106,39 @@ class OrderPerbaikanService
         ];
     }
 
+    /**
+     * Nomor order berurutan per hari: OP/RTG/MTC-YYYYMMDD###.
+     */
+    public function nextNumber(): string
+    {
+        $prefix = 'OP/RTG/MTC-'.now()->format('Ymd');
+
+        $lastOrder = OrderPerbaikan::withTrashed()
+            ->where('nomor', 'like', $prefix.'%')
+            ->orderBy('nomor', 'desc')
+            ->first();
+
+        $sequence = $lastOrder
+            ? (int) substr($lastOrder->nomor, -3) + 1
+            : 1;
+
+        return $prefix.str_pad($sequence, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Simpan lampiran order ke disk public, kembalikan path relatif.
+     */
+    public function storeLampiran($file): string
+    {
+        $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+
+        return $file->storeAs('order-lampiran', $filename, 'public');
+    }
+
     public function create(User $user, array $validated, $fotoFile = null, string $source = 'API'): OrderPerbaikan
     {
         $order = DB::transaction(function () use ($user, $validated, $fotoFile) {
-            $today = now();
-            $prefix = 'OP/RTG/MTC-'.$today->format('Ymd');
-            $lastOrder = OrderPerbaikan::withTrashed()->where('nomor', 'like', $prefix.'%')->orderBy('nomor', 'desc')->first();
-            if ($lastOrder) {
-                $lastNumber = (int) substr($lastOrder->nomor, -3);
-                $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-            } else {
-                $newNumber = '001';
-            }
-            $nomor = $prefix.$newNumber;
+            $nomor = $this->nextNumber();
 
             $departmentId = $validated['department_id'] ?? null;
             if ($departmentId && ! Department::whereKey($departmentId)->exists()) {

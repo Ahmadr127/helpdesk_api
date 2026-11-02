@@ -4,98 +4,55 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exports\TicketsExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Ticket\AdminConfirmTicketRequest;
+use App\Http\Requests\Api\Ticket\AdminRespondRequest;
+use App\Http\Requests\Api\Ticket\AdminUpdateRequest;
+use App\Http\Requests\Api\Ticket\StoreTicketRequest;
+use App\Http\Requests\Api\Ticket\UpdateTicketRequest;
+use App\Http\Requests\Api\Ticket\UpdateTicketStatusRequest;
+use App\Http\Requests\Api\Ticket\UpdateTicketSubmissionRequest;
 use App\Models\Building;
 use App\Models\Category;
-use App\Models\Department;
 use App\Models\Location;
 use App\Models\Ticket;
 use App\Notifications\TicketRespondedNotification;
 use App\Services\Api\TicketService;
+use App\Services\DepartmentService;
 use Illuminate\Http\Request;
 
 class TicketAdminController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, TicketService $service)
     {
-        $totalTickets = Ticket::count();
-        $openTickets = Ticket::where('status', 'open')->count();
-        $inProgressTickets = Ticket::where('status', 'in_progress')->count();
-        $closedTickets = Ticket::whereIn('status', ['closed', 'confirmed'])->count();
-        $pendingConfirmationTickets = Ticket::where('status', 'closed')
-            ->where('user_confirmation', false)
-            ->count();
+        $stats = $service->statistics();
 
-        $query = Ticket::with(['user', 'category', 'department'])
-            ->whereNotIn('status', ['confirmed']);
+        $filters = $request->only(['search', 'start_date', 'end_date', 'status']);
+        $filters['exclude_confirmed'] = true;
+        $filters['sort'] = 'priority';
 
         try {
-            // Apply search filter
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('ticket_number', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($q) use ($search) {
-                            $q->where('name', 'like', "%{$search}%");
-                        });
-                });
-            }
-
-            // Apply date range filters
-            if ($request->filled('start_date')) {
-                $query->whereDate('created_at', '>=', $request->start_date);
-            }
-            if ($request->filled('end_date')) {
-                $query->whereDate('created_at', '<=', $request->end_date);
-            }
-
-            // Apply status filter
-            if ($request->filled('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
-
-            $tickets = $query->orderByRaw("CASE 
-                    WHEN status = 'open' THEN 1 
-                    WHEN status = 'in_progress' THEN 2
-                    WHEN status = 'closed' THEN 3
-                    ELSE 4 
-                END")
-                ->orderByRaw("CASE 
-                    WHEN priority = 'high' THEN 1 
-                    WHEN priority = 'medium' THEN 2 
-                    WHEN priority = 'low' THEN 3 
-                    ELSE 4 
-                END")
-                ->latest()
-                ->paginate(10)
-                ->withQueryString();
-
+            $tickets = $service->listForAdmin($filters, 10)->withQueryString();
         } catch (\Exception $e) {
-            // If there's an error, return empty collection but don't break the page
+            // If there's an error, return empty paginator but don't break the page
             $tickets = new \Illuminate\Pagination\LengthAwarePaginator(
-                collect([]), // empty collection
-                0, // total items
-                10, // per page
-                1 // current page
+                collect([]),
+                0,
+                10,
+                1
             );
         }
 
-        // Get all tickets grouped by priority for the view
+        // Group tickets by priority for the view
         $highPriorityTickets = $tickets->where('priority', 'high');
         $mediumPriorityTickets = $tickets->where('priority', 'medium');
         $lowPriorityTickets = $tickets->where('priority', 'low');
 
-        return view('admin.tickets.index', compact(
+        return view('admin.tickets.index', array_merge($stats, compact(
             'tickets',
-            'totalTickets',
-            'openTickets',
-            'inProgressTickets',
-            'closedTickets',
-            'pendingConfirmationTickets',
             'highPriorityTickets',
             'mediumPriorityTickets',
             'lowPriorityTickets'
-        ));
+        )));
     }
 
     public function show(Ticket $ticket)
@@ -119,19 +76,9 @@ class TicketAdminController extends Controller
         return view('admin.tickets.show', compact('ticket', 'categories', 'locations', 'buildings', 'users', 'selectedPjIds'));
     }
 
-    public function updateSubmission(Request $request, Ticket $ticket, TicketService $service)
+    public function updateSubmission(UpdateTicketSubmissionRequest $request, Ticket $ticket, TicketService $service)
     {
-        $validated = $request->validate([
-            'description' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
-            'category_id' => 'required|exists:categories,id',
-            'department_id' => 'required|exists:departments,id',
-            'location_id' => 'nullable|exists:locations,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'photo' => 'nullable|image|max:5120',
-            'penanggung_jawab_ids' => 'nullable|array',
-            'penanggung_jawab_ids.*' => 'exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         try {
             $service->updateAdminTicket(auth()->user(), $ticket, $validated, $request->file('photo'), $request->input('penanggung_jawab_ids', []));
@@ -143,9 +90,9 @@ class TicketAdminController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, Ticket $ticket)
+    public function updateStatus(UpdateTicketStatusRequest $request, Ticket $ticket)
     {
-        $status = $request->status;
+        $status = $request->validated()['status'];
         $updates = ['status' => $status];
         $message = '';
 
@@ -178,22 +125,11 @@ class TicketAdminController extends Controller
         return redirect()->back()->with('success', 'Status ticket berhasil diperbarui.');
     }
 
-    public function history()
+    public function history(Request $request, TicketService $service)
     {
-        $query = Ticket::where('status', 'confirmed')
-            ->where('user_confirmation', true);
+        $filters = $request->only(['date_from', 'date_to']);
 
-        // Apply date range filters if provided
-        if (request('date_from')) {
-            $query->whereDate('created_at', '>=', request('date_from'));
-        }
-        if (request('date_to')) {
-            $query->whereDate('created_at', '<=', request('date_to'));
-        }
-
-        $tickets = $query->orderBy('user_confirmed_at', 'desc')
-            ->paginate(10)
-            ->withQueryString(); // This preserves the query parameters in pagination links
+        $tickets = $service->history($filters, 10)->withQueryString();
 
         return view('admin.tickets.history.index', compact('tickets'));
     }
@@ -209,11 +145,9 @@ class TicketAdminController extends Controller
         return view('admin.tickets.history.show', compact('ticket'));
     }
 
-    public function confirm(Request $request, Ticket $ticket)
+    public function confirm(AdminConfirmTicketRequest $request, Ticket $ticket)
     {
-        $validated = $request->validate([
-            'confirmation_notes' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $ticket->update([
             'admin_confirmation' => true,
@@ -225,13 +159,9 @@ class TicketAdminController extends Controller
         return back()->with('success', 'Ticket has been marked as resolved.');
     }
 
-    public function respond(Request $request, Ticket $ticket, TicketService $service)
+    public function respond(AdminRespondRequest $request, Ticket $ticket, TicketService $service)
     {
-        $validated = $request->validate([
-            'notes' => 'required|string',
-            'photo' => 'nullable|image|max:5120', // 5MB max, optional
-            'status' => 'required|in:in_progress,closed',
-        ]);
+        $validated = $request->validated();
 
         $service->adminRespond(auth()->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photo'));
 
@@ -239,14 +169,9 @@ class TicketAdminController extends Controller
             ->with('success', 'Response berhasil ditambahkan.');
     }
 
-    public function update(Request $request, Ticket $ticket, TicketService $service)
+    public function update(AdminUpdateRequest $request, Ticket $ticket, TicketService $service)
     {
-        $validated = $request->validate([
-            'notes' => 'required|string',
-            'photo' => 'nullable|image|max:5120',
-            'status' => 'nullable|in:in_progress,closed',
-            'action' => 'nullable|in:reply',
-        ]);
+        $validated = $request->validated();
 
         $service->adminUpdate(auth()->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photo'));
 
@@ -254,120 +179,47 @@ class TicketAdminController extends Controller
             ->with('success', $request->input('action') === 'reply' ? 'Reply sent successfully.' : 'Ticket berhasil diperbarui.');
     }
 
-    public function all(Request $request)
+    public function all(Request $request, TicketService $service)
     {
-        $query = Ticket::with(['user', 'category', 'department'])
-            ->latest();
+        $filters = $request->only(['status', 'start_date', 'end_date', 'confirmation']);
 
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
-                $query->where('status', 'closed')
-                    ->where('user_confirmation', false);
-            } else {
-                $query->where('status', $request->status);
-            }
-        }
-
-        // Filter by date range
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
-
-        // Filter by confirmation status
-        if ($request->filled('confirmation')) {
-            if ($request->confirmation === 'confirmed') {
-                $query->where('status', 'confirmed');
-            } elseif ($request->confirmation === 'pending') {
-                $query->where('status', 'closed')
-                    ->where('user_confirmation', false);
-            }
-        }
-
-        $tickets = $query->paginate(10)->withQueryString();
+        $tickets = $service->listForAdmin($filters, 10)->withQueryString();
 
         return view('admin.tickets.all', compact('tickets'));
     }
 
-    public function open(Request $request)
+    public function open(Request $request, TicketService $service)
     {
-        $query = Ticket::with('user')
-            ->where('status', 'open');
+        $filters = array_merge(
+            $request->only(['search', 'month', 'year', 'date_from', 'date_to']),
+            ['status' => 'open']
+        );
 
-        // Filter by date range if provided
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month)
-                ->whereYear('created_at', $request->year ?? now()->year);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $tickets = $query->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $tickets = $service->listForAdmin($filters, 10)->withQueryString();
 
         return view('admin.tickets.open', compact('tickets'));
     }
 
-    public function inProgress(Request $request)
+    public function inProgress(Request $request, TicketService $service)
     {
-        $query = Ticket::with('user')
-            ->where('status', 'in_progress');
+        $filters = array_merge(
+            $request->only(['search', 'month', 'year', 'date_from', 'date_to']),
+            ['status' => 'in_progress']
+        );
 
-        // Filter by date range if provided
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month)
-                ->whereYear('created_at', $request->year ?? now()->year);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $tickets = $query->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $tickets = $service->listForAdmin($filters, 10)->withQueryString();
 
         return view('admin.tickets.in-progress', compact('tickets'));
     }
 
-    public function closed(Request $request)
+    public function closed(Request $request, TicketService $service)
     {
-        $query = Ticket::with('user')
-            ->where('status', 'closed')
-            ->where('user_confirmation', false);
+        $filters = array_merge(
+            $request->only(['search', 'month', 'year', 'date_from', 'date_to']),
+            ['status' => 'closed', 'user_confirmation' => false]
+        );
 
-        // Filter by date range if provided
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month)
-                ->whereYear('created_at', $request->year ?? now()->year);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $tickets = $query->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $tickets = $service->listForAdmin($filters, 10)->withQueryString();
 
         return view('admin.tickets.closed', compact('tickets'));
     }
@@ -455,7 +307,7 @@ class TicketAdminController extends Controller
     /**
      * Form buat tiket milik sendiri di shell admin.
      */
-    public function createMyticket()
+    public function createMyticket(DepartmentService $departments)
     {
         if (! auth()->user()->department) {
             return redirect()->route('user.settings')
@@ -469,7 +321,7 @@ class TicketAdminController extends Controller
             ->get();
         $buildings = Building::where('status', 1)->get();
         $locations = Location::where('status', 1)->get();
-        $userDepartment = $this->resolveMyticketDepartment(auth()->user());
+        $userDepartment = $departments->resolveForUser(auth()->user());
 
         if (! $userDepartment) {
             return redirect()->route('user.settings')
@@ -482,30 +334,14 @@ class TicketAdminController extends Controller
     /**
      * Simpan tiket milik sendiri dari shell admin.
      */
-    public function storeMyticket(Request $request, TicketService $service)
+    public function storeMyticket(StoreTicketRequest $request, TicketService $service)
     {
         if (! auth()->user()->department) {
             return redirect()->route('user.settings')
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        $validated = $request->validate([
-            'category_id' => [
-                'required',
-                'exists:categories,id',
-                function ($attribute, $value, $fail) {
-                    $category = Category::with('unitProses')->find($value);
-                    if (! $category || $category->unitProses->code !== 'SIRS') {
-                        $fail('Kategori yang dipilih harus kategori dari unit SIRS.');
-                    }
-                },
-            ],
-            'location_id' => 'nullable|exists:locations,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'description' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
-            'photo' => 'nullable|image|max:5120',
-        ]);
+        $validated = $request->validated();
 
         try {
             $service->create(auth()->user(), $validated, $request->file('photo'));
@@ -522,7 +358,7 @@ class TicketAdminController extends Controller
     /**
      * Form ubah tiket milik sendiri (hanya saat open).
      */
-    public function editMyticket(Ticket $ticket)
+    public function editMyticket(Ticket $ticket, DepartmentService $departments)
     {
         if ($ticket->user_id !== auth()->id()) {
             abort(403);
@@ -539,7 +375,7 @@ class TicketAdminController extends Controller
             ->get();
         $locations = Location::where('status', 1)->get();
         $buildings = Building::where('status', 1)->get();
-        $userDepartment = $this->resolveMyticketDepartment(auth()->user());
+        $userDepartment = $departments->resolveForUser(auth()->user());
 
         return view('admin.tickets.myticket.edit', compact('ticket', 'categories', 'locations', 'userDepartment', 'buildings'));
     }
@@ -547,17 +383,9 @@ class TicketAdminController extends Controller
     /**
      * Update tiket milik sendiri.
      */
-    public function updateMyticket(Request $request, Ticket $ticket, TicketService $service)
+    public function updateMyticket(UpdateTicketRequest $request, Ticket $ticket, TicketService $service)
     {
-        $validated = $request->validate([
-            'description' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'department_id' => 'required|exists:departments,id',
-            'location_id' => 'nullable|exists:locations,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'priority' => 'required|in:low,medium,high',
-            'photo' => 'nullable|image|max:5120',
-        ]);
+        $validated = $request->validated();
 
         try {
             $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photo'));
@@ -591,25 +419,5 @@ class TicketAdminController extends Controller
 
             return back()->withErrors(['error' => 'Gagal menghapus tiket: '.$e->getMessage()]);
         }
-    }
-
-    protected function resolveMyticketDepartment($user): ?Department
-    {
-        if (! empty($user->department_id)) {
-            $dept = Department::with(['location', 'building'])->find($user->department_id);
-            if ($dept) {
-                return $dept;
-            }
-        }
-        if ($user->department) {
-            $deptValue = $user->department;
-
-            return Department::with(['location', 'building'])->where('code', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
-        }
-
-        return null;
     }
 }

@@ -33,6 +33,15 @@ class TicketService
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
+        if (! empty($filters['ticket_number'])) {
+            $query->where('ticket_number', 'like', '%'.$filters['ticket_number'].'%');
+        }
+        if (! empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+        if (! empty($filters['department'])) {
+            $query->where('department', $filters['department']);
+        }
         if (! empty($filters['start_date'])) {
             $query->whereDate('created_at', '>=', $filters['start_date']);
         }
@@ -43,9 +52,24 @@ class TicketService
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
+    /**
+     * Seluruh tiket milik user sebagai collection (dipakai halaman web yang
+     * melakukan grouping/filter di sisi view).
+     */
+    public function allForUser(User $user)
+    {
+        return Ticket::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = Ticket::with(['user', 'category', 'department'])->latest();
+        $query = Ticket::with(['user', 'category', 'department']);
+
+        if (! empty($filters['exclude_confirmed'])) {
+            $query->whereNotIn('status', ['confirmed']);
+        }
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -55,26 +79,99 @@ class TicketService
                     ->orWhereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
-        if (! empty($filters['status']) && $filters['status'] !== 'all') {
-            if ($filters['status'] === 'pending') {
+
+        $status = $filters['status'] ?? null;
+        if (is_array($status)) {
+            $query->whereIn('status', $status);
+        } elseif (! empty($status) && $status !== 'all') {
+            if ($status === 'pending') {
                 $query->where('status', 'closed')->where('user_confirmation', false);
             } else {
-                $query->where('status', $filters['status']);
+                $query->where('status', $status);
             }
-        } else {
-            // default exclude confirmed? keep all for api flexibility
         }
-        if (! empty($filters['start_date'])) {
-            $query->whereDate('created_at', '>=', $filters['start_date']);
+
+        if (! empty($filters['confirmation'])) {
+            if ($filters['confirmation'] === 'confirmed') {
+                $query->where('status', 'confirmed');
+            } elseif ($filters['confirmation'] === 'pending') {
+                $query->where('status', 'closed')->where('user_confirmation', false);
+            }
         }
-        if (! empty($filters['end_date'])) {
-            $query->whereDate('created_at', '<=', $filters['end_date']);
+
+        if (array_key_exists('user_confirmation', $filters)) {
+            $query->where('user_confirmation', (bool) $filters['user_confirmation']);
         }
+
+        $start = $filters['start_date'] ?? $filters['date_from'] ?? null;
+        $end = $filters['end_date'] ?? $filters['date_to'] ?? null;
+        if (! empty($start)) {
+            $query->whereDate('created_at', '>=', $start);
+        }
+        if (! empty($end)) {
+            $query->whereDate('created_at', '<=', $end);
+        }
+
+        if (! empty($filters['month'])) {
+            $query->whereMonth('created_at', $filters['month'])
+                ->whereYear('created_at', $filters['year'] ?? now()->year);
+        }
+
         if (! empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
         }
 
-        return $query->paginate($perPage);
+        if (($filters['sort'] ?? null) === 'priority') {
+            return $query->orderByRaw("CASE WHEN status = 'open' THEN 1 WHEN status = 'in_progress' THEN 2 WHEN status = 'closed' THEN 3 ELSE 4 END")
+                ->orderByRaw("CASE WHEN priority = 'high' THEN 1 WHEN priority = 'medium' THEN 2 WHEN priority = 'low' THEN 3 ELSE 4 END")
+                ->orderByDesc('created_at')
+                ->paginate($perPage);
+        }
+
+        return $query->latest()->paginate($perPage);
+    }
+
+    /**
+     * Riwayat tiket yang sudah dikonfirmasi user.
+     */
+    public function history(array $filters = [], int $perPage = 15)
+    {
+        $query = Ticket::with(['user', 'category', 'department'])
+            ->where('status', 'confirmed')
+            ->where('user_confirmation', true);
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query->orderBy('user_confirmed_at', 'desc')->paginate($perPage);
+    }
+
+    public function statistics(): array
+    {
+        return [
+            'totalTickets' => Ticket::count(),
+            'openTickets' => Ticket::where('status', 'open')->count(),
+            'inProgressTickets' => Ticket::where('status', 'in_progress')->count(),
+            'closedTickets' => Ticket::whereIn('status', ['closed', 'confirmed'])->count(),
+            'pendingConfirmationTickets' => Ticket::where('status', 'closed')
+                ->where('user_confirmation', false)
+                ->count(),
+        ];
+    }
+
+    public function userStatistics(User $user): array
+    {
+        return [
+            'totalTickets' => Ticket::where('user_id', $user->id)->count(),
+            'openTickets' => Ticket::where('user_id', $user->id)->where('status', 'open')->count(),
+            'inProgressTickets' => Ticket::where('user_id', $user->id)->where('status', 'in_progress')->count(),
+            'closedTickets' => Ticket::where('user_id', $user->id)->where('status', 'closed')->count(),
+            'confirmedTickets' => Ticket::where('user_id', $user->id)->where('status', 'confirmed')->count(),
+        ];
     }
 
     public function create(User $user, array $data, $photoFile = null): Ticket
