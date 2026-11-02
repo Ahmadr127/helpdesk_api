@@ -73,7 +73,7 @@ class OrderPerbaikanApiTest extends TestCase
             'tanggal' => now()->format('Y-m-d H:i:s'),
         ]);
         $resp->assertStatus(201)->assertJsonPath('success', true);
-        $this->assertDatabaseHas('order_perbaikan', ['nama_barang' => 'AC Rusak']);
+        $this->assertDatabaseHas('order_perbaikan', ['keluhan' => 'Tidak dingin']);
         $this->assertMatchesRegularExpression('/^OP\/RTG\/MTC-\d{8}\d{3}$/', $resp->json('data.nomor'));
     }
 
@@ -92,7 +92,7 @@ class OrderPerbaikanApiTest extends TestCase
             'tanggal' => now()->format('Y-m-d H:i:s'),
         ]);
         $resp->assertStatus(201)->assertJsonPath('data.kategori_order', 'Perbaikan');
-        $this->assertDatabaseHas('order_perbaikan', ['nama_barang' => 'AC Rusak', 'kategori_order' => 'Perbaikan']);
+        $this->assertDatabaseHas('order_perbaikan', ['keluhan' => 'Tidak dingin', 'kategori_order' => 'Perbaikan']);
     }
 
     public function test_user_cannot_create_with_invalid_kategori_order()
@@ -177,7 +177,7 @@ class OrderPerbaikanApiTest extends TestCase
             'jenis_barang' => 'Inventaris', 'kode_inventaris' => 'INV-3', 'nama_barang' => 'Updated', 'lokasi' => $this->location->id,
             'keluhan' => 'Updated keluhan', 'prioritas' => 'TINGGI/URGENT',
         ]);
-        $resp->assertStatus(200)->assertJsonPath('data.nama_barang', 'Updated');
+        $resp->assertStatus(200)->assertJsonPath('data.keluhan', 'Updated keluhan');
     }
 
     public function test_user_cannot_update_in_progress_order()

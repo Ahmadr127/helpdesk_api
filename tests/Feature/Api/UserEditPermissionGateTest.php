@@ -84,8 +84,7 @@ class UserEditPermissionGateTest extends TestCase
         return OrderPerbaikan::create([
             'nomor' => 'OP/RTG/MTC-20250101'.random_int(100, 999), 'tanggal' => now(),
             'unit_proses' => 'SRNS', 'unit_proses_name' => 'Sarana', 'unit_penerima' => 'MTC',
-            'nama_peminta' => $this->user->name, 'kode_inventaris' => 'INV-1',
-            'nama_barang' => 'Old', 'lokasi' => $this->location->id, 'keluhan' => 'Old',
+            'nama_peminta' => $this->user->name, 'lokasi' => $this->location->id, 'keluhan' => 'Old',
             'prioritas' => 'RENDAH', 'status' => $status, 'created_by' => $this->user->id,
         ]);
     }
@@ -102,7 +101,6 @@ class UserEditPermissionGateTest extends TestCase
     protected function orderPayload(): array
     {
         return [
-            'kode_inventaris' => 'INV-1', 'nama_barang' => 'Updated',
             'lokasi' => $this->location->id, 'keluhan' => 'Updated', 'prioritas' => 'RENDAH',
         ];
     }
@@ -147,7 +145,7 @@ class UserEditPermissionGateTest extends TestCase
         $resp = $this->withHeaders($this->authHeader())->putJson("/api/order-perbaikan/{$order->id}", $this->orderPayload());
 
         $resp->assertStatus(403)->assertJsonPath('success', false);
-        $this->assertDatabaseMissing('order_perbaikan', ['id' => $order->id, 'nama_barang' => 'Updated']);
+        $this->assertDatabaseMissing('order_perbaikan', ['id' => $order->id, 'keluhan' => 'Updated']);
     }
 
     public function test_order_update_lolos_dengan_myorder_saja()
@@ -158,7 +156,7 @@ class UserEditPermissionGateTest extends TestCase
 
         $resp = $this->withHeaders($this->authHeader())->putJson("/api/order-perbaikan/{$order->id}", $this->orderPayload());
 
-        $resp->assertStatus(200)->assertJsonPath('data.nama_barang', 'Updated');
+        $resp->assertStatus(200)->assertJsonPath('data.keluhan', 'Updated');
     }
 
     public function test_order_show_dan_delete_ditolak_tanpa_permission()

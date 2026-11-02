@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Building;
 use App\Models\Department;
 use App\Models\KategoriOrder;
 use App\Models\Location;
@@ -28,9 +29,7 @@ class AdministrasiUmumController extends Controller
             $search = $request->search;
             $inProgressQuery->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
                     ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
@@ -60,9 +59,7 @@ class AdministrasiUmumController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
                     ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
@@ -182,13 +179,10 @@ class AdministrasiUmumController extends Controller
             'nomor' => 'required|unique:order_perbaikan,nomor',
             'tanggal' => 'required|date',
             'unit_proses' => 'required',
-            'unit_penerima' => 'required',
+
             'no_penerima' => 'required',
             'items' => 'required|array|min:1',
-            'items.*.kode_inventaris' => 'required',
-            'items.*.nama_barang' => 'required',
             'items.*.lokasi' => 'required',
-            'items.*.jenis_barang' => 'required|in:Inventaris,Umum',
         ]);
 
         try {
@@ -198,7 +192,7 @@ class AdministrasiUmumController extends Controller
                 'nomor' => $request->nomor,
                 'tanggal' => $request->tanggal,
                 'unit_proses' => $request->unit_proses,
-                'unit_penerima' => $request->unit_penerima,
+
                 'no_penerima' => $request->no_penerima,
                 'status' => 'open',
                 'created_by' => Auth::id(),
@@ -238,13 +232,10 @@ class AdministrasiUmumController extends Controller
             'nomor' => 'required|unique:order_perbaikan,nomor,'.$order->id,
             'tanggal' => 'required|date',
             'unit_proses' => 'required',
-            'unit_penerima' => 'required',
+
             'no_penerima' => 'required',
             'items' => 'required|array|min:1',
-            'items.*.kode_inventaris' => 'required',
-            'items.*.nama_barang' => 'required',
             'items.*.lokasi' => 'required',
-            'items.*.jenis_barang' => 'required|in:Inventaris,Umum',
         ]);
 
         try {
@@ -254,7 +245,7 @@ class AdministrasiUmumController extends Controller
                 'nomor' => $request->nomor,
                 'tanggal' => $request->tanggal,
                 'unit_proses' => $request->unit_proses,
-                'unit_penerima' => $request->unit_penerima,
+
                 'no_penerima' => $request->no_penerima,
                 'updated_by' => Auth::id(),
             ]);
@@ -302,7 +293,6 @@ class AdministrasiUmumController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('nomor', 'like', "%{$request->search}%")
                     ->orWhere('unit_proses', 'like', "%{$request->search}%")
-                    ->orWhere('unit_penerima', 'like', "%{$request->search}%");
             });
         }
 
@@ -329,9 +319,7 @@ class AdministrasiUmumController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
                     ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
@@ -397,6 +385,7 @@ class AdministrasiUmumController extends Controller
 
             $nomor = $prefix.$newNumber;
             $locations = Location::orderBy('name', 'asc')->get();
+            $buildings = Building::where('status', 1)->orderBy('name', 'asc')->get();
             $unitProses = UnitProses::where('status', 1)
                 ->where('code', '!=', 'SIRS')
                 ->get();
@@ -437,7 +426,7 @@ class AdministrasiUmumController extends Controller
             }
 
             return view('user.administrasi-umum.order-perbaikan.create',
-                compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+                compact('nomor', 'locations', 'buildings', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
 
         } catch (\Exception $e) {
             if (request()->ajax()) {
@@ -453,10 +442,7 @@ class AdministrasiUmumController extends Controller
     public function storeOrderPerbaikan(Request $request, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'unit_proses_code' => 'nullable|string',
             'department_id' => 'nullable|exists:departments,id',
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string',
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
@@ -552,8 +538,6 @@ class AdministrasiUmumController extends Controller
     public function updateOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
     {
         $validated = $request->validate([
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
             'kategori_order' => 'nullable|string',
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',

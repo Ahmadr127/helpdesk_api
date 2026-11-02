@@ -119,7 +119,7 @@ class Notify
             }
 
             $title = "Order Baru {$order->nomor}";
-            $body = "{$actor->name}: {$order->nama_barang} - {$order->keluhan}";
+            $body = "{$actor->name}: {$order->keluhan}";
             $body = mb_strimwidth($body, 0, 100, '...');
 
             $data = [

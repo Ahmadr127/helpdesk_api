@@ -153,8 +153,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ optional($order->location)->name ?? $order->lokasi }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_barang }}
-                            <div class="text-xs text-gray-400">{{ $order->kode_inventaris }}</div>
+                            {{ Str::limit($order->keluhan, 50) }}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <div class="max-w-xs overflow-hidden">

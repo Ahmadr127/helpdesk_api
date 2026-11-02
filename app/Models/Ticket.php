@@ -110,6 +110,11 @@ class Ticket extends Model
         return $this->hasOne(TicketPhoto::class)->where('type', 'initial');
     }
 
+    public function penanggungJawab()
+    {
+        return $this->belongsToMany(User::class, 'ticket_penanggung_jawab', 'ticket_id', 'user_id')->withTimestamps();
+    }
+
     public function adminResponsePhotos()
     {
         return $this->hasMany(TicketPhoto::class)->where('type', 'admin_response');

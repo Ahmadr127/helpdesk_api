@@ -4,6 +4,7 @@ namespace App\Http\Controllers\AdministrasiUmum;
 
 use App\Exports\OrderPerbaikanExport;
 use App\Http\Controllers\Controller;
+use App\Models\Building;
 use App\Models\Department;
 use App\Models\KategoriOrder;
 use App\Models\Location;
@@ -39,7 +40,7 @@ class OrderPerbaikanController extends Controller
 
     public function index(Request $request)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'penanggungJawab']);
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -127,7 +128,7 @@ class OrderPerbaikanController extends Controller
      */
     public function myorder(Request $request)
     {
-        $query = OrderPerbaikan::with(['creator', 'location'])
+        $query = OrderPerbaikan::with(['creator', 'location', 'penanggungJawab'])
             ->where('created_by', auth()->id());
 
         if ($request->filled('search')) {
@@ -172,7 +173,7 @@ class OrderPerbaikanController extends Controller
         }
 
         if ($request->boolean('modal')) {
-            $orderPerbaikan->load(['creator', 'history.creator', 'location', 'unitProses', 'department']);
+            $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department']);
 
             return response(view('admin.order-perbaikan.myorder.component.detail-body', ['order' => $orderPerbaikan])->render());
         }
@@ -197,6 +198,7 @@ class OrderPerbaikanController extends Controller
         $nomor = $prefix.($lastOrder ? str_pad(((int) substr($lastOrder->nomor, -3)) + 1, 3, '0', STR_PAD_LEFT) : '001');
 
         $locations = Location::orderBy('name', 'asc')->get();
+        $buildings = Building::where('status', 1)->orderBy('name', 'asc')->get();
         $unitProses = UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
         $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
 
@@ -209,7 +211,7 @@ class OrderPerbaikanController extends Controller
         $unitPengajuName = $department?->name ?? Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
 
         return view('admin.order-perbaikan.myorder.create',
-            compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+            compact('nomor', 'locations', 'buildings', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
     }
 
     /**
@@ -307,7 +309,7 @@ class OrderPerbaikanController extends Controller
 
     public function filterOrders($type, $value)
     {
-        $query = OrderPerbaikan::with(['creator', 'history']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'penanggungJawab']);
 
         switch ($type) {
             case 'status':
@@ -329,7 +331,7 @@ class OrderPerbaikanController extends Controller
 
     public function inProgress(Request $request)
     {
-        $query = OrderPerbaikan::with(['creator', 'location'])
+        $query = OrderPerbaikan::with(['creator', 'location', 'penanggungJawab'])
             ->where('status', 'in_progress');
 
         // Apply search filter
@@ -385,7 +387,7 @@ class OrderPerbaikanController extends Controller
 
     public function confirmed(Request $request)
     {
-        $query = OrderPerbaikan::with(['creator', 'history'])
+        $query = OrderPerbaikan::with(['creator', 'history', 'penanggungJawab'])
             ->where('status', 'confirmed');
 
         // Apply search filter
@@ -476,10 +478,43 @@ class OrderPerbaikanController extends Controller
 
     public function show(OrderPerbaikan $orderPerbaikan)
     {
-        $orderPerbaikan->load(['creator', 'history.creator', 'location']);
+        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'penanggungJawab']);
+
+        $locations = Location::orderBy('name', 'asc')->get();
+        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        $users = \App\Models\User::where('status', 1)->orderBy('name')->get();
+
+        $selectedPjIds = $orderPerbaikan->penanggungJawab->pluck('id')->toArray();
+        if (empty($selectedPjIds)) {
+            $selectedPjIds = [auth()->id()];
+        }
 
         // Satu template untuk semua status (open/in_progress/tutup/confirmed/rejected)
-        return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
+        return view($this->viewNamespace().'.show', compact('orderPerbaikan', 'locations', 'kategoriOrders', 'users', 'selectedPjIds'));
+    }
+
+    public function updateSubmission(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    {
+        $validated = $request->validate([
+            'keluhan' => 'required|string',
+            'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
+            'kode_inventaris' => 'nullable|string',
+            'nama_barang' => 'nullable|string',
+            'kategori_order' => 'nullable|string',
+            'lokasi' => 'nullable|exists:locations,id',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'penanggung_jawab_ids' => 'nullable|array',
+            'penanggung_jawab_ids.*' => 'exists:users,id',
+        ]);
+
+        try {
+            $service->updateAdminOrder(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), $request->input('penanggung_jawab_ids', []));
+
+            return redirect()->route('admin.order-perbaikan.show', $orderPerbaikan)
+                ->with('success', 'Pengajuan order berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memperbarui pengajuan: '.$e->getMessage())->withInput();
+        }
     }
 
     public function updateStatus(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
@@ -571,7 +606,7 @@ class OrderPerbaikanController extends Controller
 
     public function total(Request $request)
     {
-        $query = OrderPerbaikan::with(['creator', 'history']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'penanggungJawab']);
 
         // Apply search filter
         if ($request->filled('search')) {

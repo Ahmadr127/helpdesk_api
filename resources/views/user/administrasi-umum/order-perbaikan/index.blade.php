@@ -178,9 +178,8 @@
                     @forelse($orders as $order)
                     <tr class="text-gray-700">
                         <td class="px-4 py-3">{{ $order->nomor }}</td>
-                        <td class="px-4 py-3">{{ $order->nama_barang }}</td>
+                        <td class="px-4 py-3">{{ Str::limit($order->keluhan, 40) }}</td>
                         <td class="px-4 py-3">{{ $order->kategori_order ?? '-' }}</td>
-                        <td class="px-4 py-3">{{ $order->unit_proses_name }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}

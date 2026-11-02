@@ -3,6 +3,12 @@
 @section('title', 'Detail Order')
 
 @section('content')
+@php
+    $locations = $locations ?? \App\Models\Location::orderBy('name')->get();
+    $kategoriOrders = $kategoriOrders ?? \App\Models\KategoriOrder::where('status', 1)->orderBy('name')->get();
+    $users = $users ?? \App\Models\User::where('status', 1)->orderBy('name')->get();
+    $selectedPjIds = $selectedPjIds ?? [auth()->id()];
+@endphp
 <div class="w-full  py-6">
     {{-- <!-- Back Button -->
     <div class="mb-5">
@@ -31,6 +37,11 @@
                             </svg>
                             Informasi Order
                         </h2>
+                        @if(auth()->user()->hasPermission('order'))
+                        <button type="button" onclick="openOrderSubmissionModal()" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                            Edit Pengajuan
+                        </button>
+                        @endif
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                             {{ match($orderPerbaikan->status) {
                                 'open' => 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20',
@@ -58,17 +69,9 @@
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Pengaju</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->department?->name ?? $orderPerbaikan->unit_proses_name }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->department?->name ?? '-' }}</dd>
                         </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Proses</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">
-                                @php
-                                $unitProsesModel = $orderPerbaikan->relationLoaded('unitProses') ? $orderPerbaikan->getRelation('unitProses') : $orderPerbaikan->unitProses()->getResults();
-                                @endphp
-                                {{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}
-                            </dd>
-                        </div>
+
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Prioritas</dt>
                             <dd class="mt-1">
@@ -86,10 +89,7 @@
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->tanggal->format('d M Y, H:i') }}</dd>
                         </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Penerima</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->unit_penerima ?? '-' }}</dd>
-                        </div>
+
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->nama_peminta ?? '-' }}</dd>
@@ -115,18 +115,7 @@
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kategori_order ?? '-' }}</dd>
                         </div>
-                        @if(!empty($orderPerbaikan->kode_inventaris) && $orderPerbaikan->kode_inventaris !== '-')
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kode Inventaris</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kode_inventaris }}</dd>
-                        </div>
-                        @endif
-                        @if(!empty($orderPerbaikan->nama_barang))
-                        <div class="sm:col-span-2">
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nama Barang</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->nama_barang }}</dd>
-                        </div>
-                        @endif
+
                         <div class="sm:col-span-2">
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Lokasi</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->location?->name ?? '-' }}</dd>
@@ -214,10 +203,10 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-800 mb-1">Penanggung Jawab</label>
-                                    <input type="text" name="nama_penanggung_jawab" required
-                                        value="{{ old('nama_penanggung_jawab', $orderPerbaikan->nama_penanggung_jawab ?? auth()->user()->name) }}"
-                                        class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all"
-                                        placeholder="Masukkan nama penanggung jawab">
+                                    <div class="w-full rounded-lg border border-gray-200 bg-gray-50 text-sm py-2 px-3 text-gray-700">
+                                        {{ $orderPerbaikan->penanggungJawab->pluck('name')->implode(', ') ?: '-' }}
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Ubah via "Edit Pengajuan".</p>
                                 </div>
                             </div>
                             <div>
@@ -289,4 +278,5 @@ document.addEventListener('keydown', function(e) {
     }
 });
 </script>
+@include('admin.order-perbaikan._submission-modal')
 @endsection

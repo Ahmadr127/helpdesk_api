@@ -3,9 +3,16 @@
 @section('title', 'Proses Tiket')
 
 @section('content')
+@php
+    $categories = $categories ?? collect();
+    $locations = $locations ?? collect();
+    $buildings = $buildings ?? collect();
+    $users = $users ?? collect();
+    $selectedPjIds = $selectedPjIds ?? [auth()->id()];
+@endphp
 <div class="w-full">
     <!-- Back Button -->
-    <div class="mb-3">
+    <div class="mb-3 flex items-center gap-2">
         <a href="{{ route('admin.tickets.index') }}"
             class="inline-flex items-center text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,6 +21,12 @@
             </svg>
             Kembali ke Daftar Tiket
         </a>
+        @if(auth()->user()->hasPermission('ticket'))
+        <button type="button" onclick="openTicketSubmissionModal()"
+            class="inline-flex items-center text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+            Edit Pengajuan
+        </button>
+        @endif
     </div>
 
     <!-- Main Content Grid -->
@@ -496,4 +509,5 @@ document.addEventListener('keydown', function(e) {
     </div>
 </div>
 
+@include('admin.tickets._submission-modal')
 @endsection

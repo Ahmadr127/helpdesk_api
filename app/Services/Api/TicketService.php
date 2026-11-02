@@ -240,6 +240,52 @@ class TicketService
         });
     }
 
+    public function updateAdminTicket(User $admin, Ticket $ticket, array $data, $photoFile = null, array $pjIds = []): Ticket
+    {
+        return DB::transaction(function () use ($admin, $ticket, $data, $photoFile, $pjIds) {
+            $category = Category::findOrFail($data['category_id']);
+            $department = Department::with('building')->findOrFail($data['department_id']);
+            $location = ! empty($data['location_id']) ? Location::find($data['location_id']) : null;
+            $building = ! empty($data['building_id'])
+                ? Building::find($data['building_id'])
+                : $department->building;
+
+            $ticket->update([
+                'description' => $data['description'],
+                'category_id' => $category->id,
+                'category' => $category->name,
+                'department_id' => $department->id,
+                'department' => $department->name,
+                'building_id' => $building?->id,
+                'building' => $building?->name,
+                'location_id' => $location?->id,
+                'location' => $location?->name,
+                'priority' => $data['priority'],
+            ]);
+
+            if ($photoFile) {
+                $oldPhoto = $ticket->photos()->where('type', 'initial')->first();
+                if ($oldPhoto) {
+                    Storage::disk('public')->delete($oldPhoto->photo_path);
+                    $oldPhoto->delete();
+                }
+                $extension = $photoFile->getClientOriginalExtension();
+                $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
+                $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
+                TicketPhoto::create([
+                    'ticket_id' => $ticket->id,
+                    'photo_path' => $path,
+                    'type' => 'initial',
+                ]);
+            }
+
+            $ids = empty($pjIds) ? [$admin->id] : array_values(array_unique($pjIds));
+            $ticket->penanggungJawab()->sync($ids);
+
+            return $ticket->fresh()->load(['user', 'photos', 'penanggungJawab']);
+        });
+    }
+
     public function deleteUserTicket(User $user, Ticket $ticket): void
     {
         if ($ticket->user_id !== $user->id) {

@@ -23,8 +23,7 @@ class StoreOrderPerbaikanRequest extends FormRequest
                 },
             ],
             'department_id' => 'nullable|exists:departments,id',
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
+
             'kategori_order' => 'nullable|string|exists:kategori_order,name',
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',

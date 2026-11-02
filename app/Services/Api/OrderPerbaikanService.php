@@ -4,7 +4,7 @@ namespace App\Services\Api;
 
 use App\Models\Department;
 use App\Models\OrderPerbaikan;
-use App\Models\UnitProses;
+
 use App\Models\User;
 use App\Support\Notifications\Notify;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ class OrderPerbaikanService
 {
     public function listForUser(User $user, array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'unitProses'])->where('created_by', $user->id);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building'])->where('created_by', $user->id);
 
         if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
@@ -23,9 +23,7 @@ class OrderPerbaikanService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
                     ->orWhere('kategori_order', 'like', "%{$search}%");
             });
         }
@@ -44,13 +42,12 @@ class OrderPerbaikanService
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
+        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building']);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('nama_peminta', 'like', "%{$search}%")
                     ->orWhere('kategori_order', 'like', "%{$search}%");
             });
@@ -114,7 +111,7 @@ class OrderPerbaikanService
 
     public function create(User $user, array $validated, $fotoFile = null, string $source = 'API'): OrderPerbaikan
     {
-        $order = DB::transaction(function () use ($user, $validated, $fotoFile, $source) {
+        $order = DB::transaction(function () use ($user, $validated, $fotoFile) {
             $today = now();
             $prefix = 'OP/RTG/MTC-'.$today->format('Ymd');
             $lastOrder = OrderPerbaikan::withTrashed()->where('nomor', 'like', $prefix.'%')->orderBy('nomor', 'desc')->first();
@@ -125,19 +122,6 @@ class OrderPerbaikanService
                 $newNumber = '001';
             }
             $nomor = $prefix.$newNumber;
-
-            $unitProsesCode = $validated['unit_proses_code'] ?? null;
-            // konsisten dengan web: unit_proses boleh null (tampil "-")
-            $unitProses = null;
-            if (!empty($unitProsesCode)) {
-                $unitProses = UnitProses::where('code', $unitProsesCode)->first();
-                if (!$unitProses) {
-                    throw new \Exception('Unit proses tidak valid.', 422);
-                }
-                if ($unitProses->code === 'SIRS') {
-                    throw new \Exception('Unit proses SIRS tidak valid.', 422);
-                }
-            }
 
             $departmentId = $validated['department_id'] ?? null;
             if ($departmentId && ! Department::whereKey($departmentId)->exists()) {
@@ -168,12 +152,8 @@ class OrderPerbaikanService
                 'nomor' => $nomor,
                 'tanggal' => $validated['tanggal'],
                 'department_id' => $departmentId,
-                'unit_proses_id' => $unitProses?->id,
-                'unit_penerima' => 'MTC',
                 'nip_peminta' => $user->nip ?? null,
                 'nama_peminta' => $user->name,
-                'kode_inventaris' => $validated['kode_inventaris'] ?? null,
-                'nama_barang' => $validated['nama_barang'] ?? null,
                 'kategori_order' => $validated['kategori_order'] ?? null,
                 'lokasi' => $validated['lokasi'] ?? null,
                 'keluhan' => $validated['keluhan'],
@@ -189,7 +169,7 @@ class OrderPerbaikanService
                 'created_by' => $user->id,
             ]);
 
-            return $order->load(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
+            return $order->load(['creator', 'history', 'location', 'department', 'department.location', 'department.building']);
         });
 
         // 1 baris FCM ke Admin Umum + DB inbox
@@ -222,8 +202,6 @@ class OrderPerbaikanService
             }
 
             $order->update([
-                'kode_inventaris' => $validated['kode_inventaris'] ?? $order->kode_inventaris,
-                'nama_barang' => $validated['nama_barang'] ?? $order->nama_barang,
                 'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
                 'lokasi' => $validated['lokasi'] ?? $order->lokasi,
                 'keluhan' => $validated['keluhan'],
@@ -239,6 +217,40 @@ class OrderPerbaikanService
             ]);
 
             return $order->fresh()->load(['creator', 'history', 'location']);
+        });
+    }
+
+    public function updateAdminOrder(User $admin, OrderPerbaikan $order, array $validated, $fotoFile = null, array $pjIds = []): OrderPerbaikan
+    {
+        return DB::transaction(function () use ($admin, $order, $validated, $fotoFile, $pjIds) {
+            if ($fotoFile) {
+                if ($order->foto) {
+                    Storage::disk('public')->delete($order->foto);
+                }
+                $filename = 'order_'.time().'_'.$fotoFile->getClientOriginalName();
+                $fotoPath = $fotoFile->storeAs('order-photos', $filename, 'public');
+                $validated['foto'] = $fotoPath;
+            }
+
+            $order->update([
+                'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
+                'lokasi' => $validated['lokasi'] ?? $order->lokasi,
+                'keluhan' => $validated['keluhan'],
+                'prioritas' => $validated['prioritas'],
+                'foto' => $validated['foto'] ?? $order->foto,
+                'updated_by' => $admin->id,
+            ]);
+
+            $order->history()->create([
+                'status' => $order->status,
+                'keterangan' => 'Order diperbarui via Web (admin)',
+                'created_by' => $admin->id,
+            ]);
+
+            $ids = empty($pjIds) ? [$admin->id] : array_values(array_unique($pjIds));
+            $order->penanggungJawab()->sync($ids);
+
+            return $order->fresh()->load(['creator', 'history', 'location', 'penanggungJawab']);
         });
     }
 
@@ -262,15 +274,10 @@ class OrderPerbaikanService
 
     public function updateStatus(User $admin, OrderPerbaikan $order, array $data): OrderPerbaikan
     {
-        // Auto-fill penanggung jawab dengan data login jika kosong (frontend sudah auto-fill, ini fallback)
-        if (empty($data['nama_penanggung_jawab'])) {
-            $data['nama_penanggung_jawab'] = $admin->name;
-        }
         $order = DB::transaction(function () use ($admin, $order, $data) {
             if ($order->status === 'open' && $data['status'] === 'in_progress') {
                 $updateData = [
                     'status' => $data['status'],
-                    'nama_penanggung_jawab' => $data['nama_penanggung_jawab'],
                     'follow_up' => $data['follow_up'],
                     'updated_by' => $admin->id,
                 ];
@@ -281,10 +288,6 @@ class OrderPerbaikanService
             } else {
                 $updateData = [
                     'status' => $data['status'],
-                    // $data['nama_penanggung_jawab'] sudah auto-fill nama admin
-                    // di atas bila kosong, agar tak pernah null (mis. tutup
-                    // langsung dari open atau dibuka-ulang oleh user).
-                    'nama_penanggung_jawab' => $data['nama_penanggung_jawab'],
                     'follow_up' => $data['follow_up'],
                     'updated_by' => $admin->id,
                 ];
@@ -293,6 +296,8 @@ class OrderPerbaikanService
                 }
                 $order->update($updateData);
             }
+
+            $order->penanggungJawab()->syncWithoutDetaching([$admin->id]);
 
             $historyData = [
                 'status' => $data['status'],
@@ -306,7 +311,7 @@ class OrderPerbaikanService
 
             $order->history()->create($historyData);
 
-            return $order->fresh()->load(['creator', 'history', 'location']);
+            return $order->fresh()->load(['creator', 'history', 'location', 'penanggungJawab']);
         });
 
         Notify::orderToUser($order, 'order_status_updated', $admin);
@@ -325,9 +330,9 @@ class OrderPerbaikanService
         $order = DB::transaction(function () use ($admin, $order, $source) {
             $order->update([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
-                'nama_penanggung_jawab' => $admin->name,
                 'updated_by' => $admin->id,
             ]);
+            $order->penanggungJawab()->syncWithoutDetaching([$admin->id]);
             $order->history()->create([
                 'status' => OrderPerbaikan::STATUS_CONFIRMED,
                 'keterangan' => 'Order dikonfirmasi via '.$source,
@@ -351,9 +356,9 @@ class OrderPerbaikanService
         $order = DB::transaction(function () use ($admin, $order, $source) {
             $order->update([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
-                'nama_penanggung_jawab' => $admin->name,
                 'updated_by' => $admin->id,
             ]);
+            $order->penanggungJawab()->syncWithoutDetaching([$admin->id]);
             $order->history()->create([
                 'status' => OrderPerbaikan::STATUS_REJECTED,
                 'keterangan' => 'Order ditolak via '.$source,
@@ -377,9 +382,9 @@ class OrderPerbaikanService
         $order = DB::transaction(function () use ($admin, $order, $source) {
             $order->update([
                 'status' => 'in_progress',
-                'nama_penanggung_jawab' => $admin->name,
                 'updated_by' => $admin->id,
             ]);
+            $order->penanggungJawab()->syncWithoutDetaching([$admin->id]);
             $order->history()->create([
                 'status' => 'in_progress',
                 'keterangan' => 'Pengerjaan order dimulai via '.$source,

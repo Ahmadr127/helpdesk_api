@@ -100,7 +100,47 @@ class TicketAdminController extends Controller
 
     public function show(Ticket $ticket)
     {
-        return view('admin.tickets.show', compact('ticket'));
+        $ticket->load(['user', 'categoryRelation', 'departmentRelation', 'buildingRelation', 'locationRelation', 'photos', 'penanggungJawab']);
+
+        $categories = Category::where('status', 1)
+            ->whereHas('unitProses', function ($query) {
+                $query->where('code', 'SIRS');
+            })
+            ->get();
+        $locations = Location::where('status', 1)->get();
+        $buildings = Building::where('status', 1)->get();
+        $users = \App\Models\User::where('status', 1)->orderBy('name')->get();
+
+        $selectedPjIds = $ticket->penanggungJawab->pluck('id')->toArray();
+        if (empty($selectedPjIds)) {
+            $selectedPjIds = [auth()->id()];
+        }
+
+        return view('admin.tickets.show', compact('ticket', 'categories', 'locations', 'buildings', 'users', 'selectedPjIds'));
+    }
+
+    public function updateSubmission(Request $request, Ticket $ticket, TicketService $service)
+    {
+        $validated = $request->validate([
+            'description' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+            'category_id' => 'required|exists:categories,id',
+            'department_id' => 'required|exists:departments,id',
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
+            'photo' => 'nullable|image|max:5120',
+            'penanggung_jawab_ids' => 'nullable|array',
+            'penanggung_jawab_ids.*' => 'exists:users,id',
+        ]);
+
+        try {
+            $service->updateAdminTicket(auth()->user(), $ticket, $validated, $request->file('photo'), $request->input('penanggung_jawab_ids', []));
+
+            return redirect()->route('admin.tickets.show', $ticket)
+                ->with('success', 'Pengajuan tiket berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal memperbarui pengajuan: '.$e->getMessage()])->withInput();
+        }
     }
 
     public function updateStatus(Request $request, Ticket $ticket)

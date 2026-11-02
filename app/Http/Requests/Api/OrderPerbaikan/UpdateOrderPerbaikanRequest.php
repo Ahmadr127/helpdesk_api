@@ -14,8 +14,7 @@ class UpdateOrderPerbaikanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
+
             'kategori_order' => 'nullable|string|exists:kategori_order,name',
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',

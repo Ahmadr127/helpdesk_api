@@ -197,6 +197,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [TicketAdminController::class, 'index'])->name('index');
             Route::get('/{ticket}', [TicketAdminController::class, 'show'])->name('show');
             Route::put('/{ticket}', [TicketAdminController::class, 'update'])->name('update');
+            Route::put('/{ticket}/submission', [TicketAdminController::class, 'updateSubmission'])->name('update-submission');
             Route::post('/{ticket}/respond', [TicketAdminController::class, 'respond'])->name('respond');
         });
 
@@ -240,7 +241,6 @@ Route::middleware(['auth'])->group(function () {
 
         // (FCM Monitoring cukup lewat grup /fcm di bawah — nama route fcm.*)
 
-      
         Route::get('/ipsrs-dashboard', [AdministrasiUmumDashboardController::class, 'index'])
             ->name('ipsrs.dashboard')->middleware('permission:dashboard.ipsrs');
         Route::get('/ipsrs-dashboard/stats', [AdministrasiUmumDashboardController::class, 'stats'])
@@ -277,6 +277,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/export', [OrderPerbaikanController::class, 'export'])->name('export-data');
 
             Route::get('/{orderPerbaikan}', [OrderPerbaikanController::class, 'show'])->name('show');
+            Route::put('/{orderPerbaikan}/submission', [OrderPerbaikanController::class, 'updateSubmission'])->name('update-submission');
             Route::put('/{orderPerbaikan}/update-status', [OrderPerbaikanController::class, 'updateStatus'])->name('update-status');
             Route::post('/{orderPerbaikan}/confirm', [OrderPerbaikanController::class, 'confirm'])->name('confirm');
             Route::post('/{orderPerbaikan}/reject', [OrderPerbaikanController::class, 'reject'])->name('reject');

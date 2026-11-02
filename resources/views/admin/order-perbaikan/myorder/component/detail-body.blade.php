@@ -1,7 +1,5 @@
 {{-- Isi modal detail order milik sendiri (dimuat via AJAX ?modal=1). Mirip halaman detail user, ringkas untuk modal. --}}
-@php
-    $unitProsesModel = $order->relationLoaded('unitProses') ? $order->getRelation('unitProses') : $order->unitProses()->getResults();
-@endphp
+
 <div class="flex items-center gap-3 flex-wrap">
     <h3 class="text-base font-bold text-gray-900">Order #{{ $order->nomor }}</h3>
     <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold {{ $order->getStatusBadgeClass() }}">
@@ -26,16 +24,9 @@
             </div>
             <div>
                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Pengaju</dt>
-                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->department?->name ?? $order->unit_proses_name }}</dd>
+                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->department?->name ?? '-' }}</dd>
             </div>
-            <div>
-                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Proses</dt>
-                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Penerima</dt>
-                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->unit_penerima ?? '-' }}</dd>
-            </div>
+
             <div>
                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
                 <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->nama_peminta }}</dd>

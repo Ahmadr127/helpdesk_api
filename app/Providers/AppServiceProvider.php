@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
                         ->where('status', 'tutup')
                         ->latest()
                         ->limit(5)
-                        ->get(['id', 'nomor', 'nama_barang', 'status']);
+                        ->get(['id', 'nomor', 'keluhan', 'status']);
                     $pending = [
                         'tickets' => $tickets->map(fn ($t) => [
                             'label' => $t->ticket_number ?: 'Tiket #'.$t->id,
@@ -55,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
                         ])->toArray(),
                         'orders' => $orders->map(fn ($o) => [
                             'label' => $o->nomor ?: 'Order #'.$o->id,
-                            'title' => $o->nama_barang ?? '-',
+                            'title' => \Illuminate\Support\Str::limit($o->keluhan ?? '-', 60),
                             'url' => route('user.administrasi-umum.order-perbaikan.show', $o->id),
                         ])->toArray(),
                         'total' => $tickets->count() + $orders->count(),

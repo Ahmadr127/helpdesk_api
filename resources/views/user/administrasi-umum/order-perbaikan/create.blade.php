@@ -110,16 +110,15 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900" id="gedung_display">
-                                    {{ $departmentBuilding?->name ?? '-' }}
-                                </p>
-                                @if(isset($departmentBuilding) && $departmentBuilding)
-                                <p class="text-xs text-gray-500">Otomatis dari departemen</p>
-                                @endif
-                            </div>
-                        </div>
+                        <select name="gedung" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <option value="">— Pilih Gedung —</option>
+                            @foreach(($buildings ?? \App\Models\Building::where('status', 1)->orderBy('name')->get()) as $bld)
+                                <option value="{{ $bld->name }}" {{ old('gedung', $departmentBuilding?->name ?? '') == $bld->name ? 'selected' : '' }}>{{ $bld->name }}</option>
+                            @endforeach
+                        </select>
+                        @if(isset($departmentBuilding) && $departmentBuilding)
+                        <p class="text-xs text-gray-500 mt-1">Otomatis dari departemen, dapat diubah.</p>
+                        @endif
                     </div>
 
                     <div>

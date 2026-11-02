@@ -15,11 +15,9 @@ class OrderPerbaikanResource extends JsonResource
             'tanggal' => $this->tanggal,
             'unit_proses' => $this->unit_proses,
             'unit_proses_name' => $this->unit_proses_name,
-            'unit_penerima' => $this->unit_penerima,
+
             'nama_peminta' => $this->nama_peminta,
             'nip_peminta' => $this->nip_peminta,
-            'kode_inventaris' => $this->kode_inventaris,
-            'nama_barang' => $this->nama_barang,
             'kategori_order' => $this->kategori_order,
             'lokasi' => $this->lokasi,
             'location' => $this->whenLoaded('location'),

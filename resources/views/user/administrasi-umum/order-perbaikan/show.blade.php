@@ -181,19 +181,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Pengaju</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->department?->name ?? $order->unit_proses_name }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->department?->name ?? '-' }}</dd>
                         </div>
-                        @php
-                            $unitProsesModel = $order->relationLoaded('unitProses') ? $order->getRelation('unitProses') : $order->unitProses()->getResults();
-                        @endphp
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Proses</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Penerima</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->unit_penerima ?? '-' }}</dd>
-                        </div>
+
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->nama_peminta }}</dd>
