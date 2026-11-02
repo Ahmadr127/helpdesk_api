@@ -51,6 +51,10 @@ class StoreMasterDataRequest extends FormRequest
                 'name' => 'required|string|max:255|unique:kategori_order,name',
                 'code' => 'nullable|string|max:50|unique:kategori_order,code',
                 'status' => 'required|boolean',
+                'user_ids' => 'nullable|array',
+                'user_ids.*' => 'exists:users,id',
+                'department_ids' => 'nullable|array',
+                'department_ids.*' => 'exists:departments,id',
             ],
             default => [
                 'name' => 'required|string|max:255',

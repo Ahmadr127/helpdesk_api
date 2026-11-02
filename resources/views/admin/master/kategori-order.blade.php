@@ -153,6 +153,28 @@
                 </select>
             </div>
 
+            <div class="mb-4">
+                <label for="user_ids" class="block text-sm font-medium text-gray-700 mb-1">User (penugasan)</label>
+                <select name="user_ids[]" id="user_ids" multiple
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Kosongkan = semua user.</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="department_ids" class="block text-sm font-medium text-gray-700 mb-1">Unit/Departemen</label>
+                <select name="department_ids[]" id="department_ids" multiple
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    @foreach($departments as $d)
+                        <option value="{{ $d->id }}">{{ $d->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Kosongkan = semua unit.</p>
+            </div>
+
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeModal()"
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all">Batal</button>
@@ -202,6 +224,19 @@ function openModal(kategori = null) {
         document.getElementById('name').value = kategori.name;
         document.getElementById('code').value = kategori.code || '';
         document.getElementById('status').value = kategori.status;
+        // populate multi-selects
+        const userSel = document.getElementById('user_ids');
+        const deptSel = document.getElementById('department_ids');
+        Array.from(userSel.options).forEach(o => o.selected = false);
+        Array.from(deptSel.options).forEach(o => o.selected = false);
+        (kategori.users || []).forEach(u => {
+            const opt = userSel.querySelector(`option[value="${u.id}"]`);
+            if (opt) opt.selected = true;
+        });
+        (kategori.departments || []).forEach(d => {
+            const opt = deptSel.querySelector(`option[value="${d.id}"]`);
+            if (opt) opt.selected = true;
+        });
         modalTitle.textContent = 'Edit Kategori Order';
     } else {
         form.action = "{{ route('admin.master.kategori-order.store') }}";

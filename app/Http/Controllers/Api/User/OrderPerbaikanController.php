@@ -52,7 +52,8 @@ class OrderPerbaikanController extends BaseApiController
 
     public function show(Request $request, OrderPerbaikan $orderPerbaikan)
     {
-        if ($orderPerbaikan->created_by !== $request->user()->id) {
+        $canViewAll = $request->user()->hasPermission('order.view_all') || $request->user()->isAdminUmum() || $request->user()->isAdminIT();
+        if (! $canViewAll && $orderPerbaikan->created_by !== $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
         $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building']);

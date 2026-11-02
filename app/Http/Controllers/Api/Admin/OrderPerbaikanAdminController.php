@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseApiController;
+use App\Http\Requests\Api\OrderPerbaikan\UpdateOrderSubmissionRequest;
 use App\Http\Requests\Api\OrderPerbaikan\UpdateStatusRequest;
 use App\Http\Resources\Api\OrderPerbaikanResource;
 use App\Models\OrderPerbaikan;
@@ -44,6 +45,24 @@ class OrderPerbaikanAdminController extends BaseApiController
         $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building']);
 
         return $this->success(new OrderPerbaikanResource($orderPerbaikan), 'Detail order');
+    }
+
+    public function updateSubmission(UpdateOrderSubmissionRequest $request, OrderPerbaikan $orderPerbaikan)
+    {
+        try {
+            $validated = $request->validated();
+            $updated = $this->service->updateAdminOrder(
+                $request->user(),
+                $orderPerbaikan,
+                $validated,
+                $request->file('foto'),
+                $request->input('penanggung_jawab_ids', [])
+            );
+
+            return $this->success(new OrderPerbaikanResource($updated), 'Pengajuan order berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->error($e->getMessage(), 422);
+        }
     }
 
     public function updateStatus(UpdateStatusRequest $request, OrderPerbaikan $orderPerbaikan)

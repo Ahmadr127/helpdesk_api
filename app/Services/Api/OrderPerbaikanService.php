@@ -14,7 +14,13 @@ class OrderPerbaikanService
 {
     public function listForUser(User $user, array $filters = [], int $perPage = 15)
     {
-        $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building'])->where('created_by', $user->id);
+        $canViewAll = $user->hasPermission('order.view_all') || $user->isAdminUmum() || $user->isAdminIT();
+
+        if ($canViewAll) {
+            $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'penanggungJawab']);
+        } else {
+            $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building'])->where('created_by', $user->id);
+        }
 
         if (! empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);

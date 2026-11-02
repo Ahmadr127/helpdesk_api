@@ -62,6 +62,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Tiket IT', 'slug' => 'ticket', 'group' => 'Tiket IT (SIRS)', 'description' => 'Akses fitur tiket (list, buat, ubah, kelola)'],
             // Order Perbaikan (IPSRS)
             ['name' => 'Order Perbaikan', 'slug' => 'order', 'group' => 'Maintenance (IPSRS)', 'description' => 'Akses fitur order perbaikan (list, buat, ubah, kelola)'],
+            ['name' => 'Lihat Semua Order', 'slug' => 'order.view_all', 'group' => 'Maintenance (IPSRS)', 'description' => 'Lihat semua request order perbaikan (bukan hanya milik sendiri)'],
             // Master Data
             ['name' => 'Master Data', 'slug' => 'master', 'group' => 'Master Data', 'description' => 'Akses master data (categories, departments, buildings, locations, positions, unit proses, kategori order)'],
             // User Management
@@ -128,7 +129,7 @@ class PermissionSeeder extends Seeder
             ],
             'admin' => [
                 'dashboard.it', 'layout.admin',
-                'ticket', 'order',
+                'ticket', 'order', 'order.view_all',
                 'myticket', 'myorder',
                 'master', 'user', 'permission',
                 'report', 'report.sirs',

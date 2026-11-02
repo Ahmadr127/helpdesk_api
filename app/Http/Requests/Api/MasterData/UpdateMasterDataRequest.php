@@ -53,6 +53,10 @@ class UpdateMasterDataRequest extends FormRequest
                 'name' => ['required', 'string', 'max:255', Rule::unique('kategori_order', 'name')->ignore($id)],
                 'code' => ['nullable', 'string', 'max:50', Rule::unique('kategori_order', 'code')->ignore($id)],
                 'status' => 'required|boolean',
+                'user_ids' => 'nullable|array',
+                'user_ids.*' => 'exists:users,id',
+                'department_ids' => 'nullable|array',
+                'department_ids.*' => 'exists:departments,id',
             ],
             default => [
                 'name' => 'required|string|max:255',

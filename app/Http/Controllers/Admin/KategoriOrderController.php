@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\KategoriOrder;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -33,10 +35,12 @@ class KategoriOrderController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        $kategoriOrders = $query->orderBy('created_at', 'desc')->paginate(10);
+        $kategoriOrders = $query->with(['users', 'departments'])->orderBy('created_at', 'desc')->paginate(10);
         $searchOptions = KategoriOrder::orderBy('name')->pluck('name', 'name')->toArray();
+        $users = User::where('status', 1)->orderBy('name')->get();
+        $departments = Department::where('status', 1)->orderBy('name')->get();
 
-        return view('admin.master.kategori-order', compact('kategoriOrders', 'searchOptions'));
+        return view('admin.master.kategori-order', compact('kategoriOrders', 'searchOptions', 'users', 'departments'));
     }
 
     public function store(Request $request)
@@ -45,9 +49,20 @@ class KategoriOrderController extends Controller
             'name' => 'required|string|max:255|unique:kategori_order',
             'code' => 'nullable|string|max:50|unique:kategori_order',
             'status' => 'required|boolean',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'exists:users,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
         ]);
 
-        KategoriOrder::create($validated);
+        $kategori = KategoriOrder::create([
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        $kategori->users()->sync($validated['user_ids'] ?? []);
+        $kategori->departments()->sync($validated['department_ids'] ?? []);
 
         return redirect()->route('admin.master.kategori-order.index')
             ->with('success', 'Kategori Order berhasil ditambahkan.');
@@ -59,9 +74,20 @@ class KategoriOrderController extends Controller
             'name' => ['required', 'string', 'max:255', Rule::unique('kategori_order')->ignore($kategoriOrder)],
             'code' => ['nullable', 'string', 'max:50', Rule::unique('kategori_order')->ignore($kategoriOrder)],
             'status' => 'required|boolean',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'exists:users,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
         ]);
 
-        $kategoriOrder->update($validated);
+        $kategoriOrder->update([
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        $kategoriOrder->users()->sync($validated['user_ids'] ?? []);
+        $kategoriOrder->departments()->sync($validated['department_ids'] ?? []);
 
         return redirect()->route('admin.master.kategori-order.index')
             ->with('success', 'Kategori Order berhasil diperbarui.');

@@ -146,6 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/confirmed', [AdminOrderController::class, 'confirmed'])->name('confirmed');
             Route::get('/rejected', [AdminOrderController::class, 'rejected'])->name('rejected');
             Route::get('/{orderPerbaikan}', [AdminOrderController::class, 'show'])->name('show');
+            Route::put('/{orderPerbaikan}/submission', [AdminOrderController::class, 'updateSubmission'])->name('updateSubmission');
             Route::put('/{orderPerbaikan}/status', [AdminOrderController::class, 'updateStatus'])->name('updateStatus');
             Route::post('/{orderPerbaikan}/confirm', [AdminOrderController::class, 'confirm'])->name('confirm');
             Route::post('/{orderPerbaikan}/reject', [AdminOrderController::class, 'reject'])->name('reject');

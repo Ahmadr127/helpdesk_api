@@ -38,7 +38,7 @@ class AdministrasiUmumController extends Controller
         $unitProses = UnitProses::where('status', 1)
             ->where('code', '!=', 'SIRS')
             ->get();
-        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        $kategoriOrders = KategoriOrder::forUser(auth()->user())->orderBy('name', 'asc')->get();
 
         if (request()->ajax()) {
             return response()->json([
@@ -122,7 +122,7 @@ class AdministrasiUmumController extends Controller
         $unitProses = UnitProses::where('status', 1)
             ->where('code', '!=', 'SIRS')
             ->get();
-        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        $kategoriOrders = KategoriOrder::forUser(auth()->user())->orderBy('name', 'asc')->get();
 
         if ($request->ajax()) {
             return response()->json([
@@ -145,7 +145,7 @@ class AdministrasiUmumController extends Controller
             $unitProses = UnitProses::where('status', 1)
                 ->where('code', '!=', 'SIRS')
                 ->get();
-            $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+            $kategoriOrders = KategoriOrder::forUser(auth()->user())->orderBy('name', 'asc')->get();
 
             // Get user data
             $user = auth()->user();
@@ -234,7 +234,8 @@ class AdministrasiUmumController extends Controller
         $order = $orderPerbaikan->load(['history.creator', 'location', 'creator']);
 
         // Check if the current user is authorized to view this order
-        if ($order->created_by !== auth()->id()) {
+        $canViewAll = auth()->user()->hasPermission('order.view_all') || auth()->user()->isAdminUmum() || auth()->user()->isAdminIT();
+        if (! $canViewAll && $order->created_by !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -255,7 +256,7 @@ class AdministrasiUmumController extends Controller
         }
 
         $locations = Location::orderBy('name', 'asc')->get();
-        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        $kategoriOrders = KategoriOrder::forUser(auth()->user())->orderBy('name', 'asc')->get();
 
         $department = $this->resolveDepartment(auth()->user());
         $departmentId = $department?->id;
