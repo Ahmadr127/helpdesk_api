@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\OrderPerbaikan\UpdateOrderSubmissionRequest;
 use App\Http\Requests\Api\OrderPerbaikan\UpdateStatusRequest;
 use App\Models\Building;
+use App\Models\Department;
 use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\OrderPerbaikan;

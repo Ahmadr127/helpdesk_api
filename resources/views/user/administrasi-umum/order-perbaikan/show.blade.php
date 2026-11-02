@@ -278,13 +278,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="px-4 py-5 h-72 overflow-y-auto bg-[#ECE5DD]">
                     <div class="space-y-3">
-                        @forelse($order->history()->latest()->get() as $history)
+                        @forelse($order->history()->oldest()->get() as $history)
                         @php
                             $isPengaju = $history->created_by
                                 ? ($order->created_by && $history->created_by == $order->created_by)
                                 : in_array($history->status, ['open', 'confirmed']);
                         @endphp
-                        @include('components.order-history-bubble', ['history' => $history, 'isPengaju' => $isPengaju])
+                        <x-order-history-bubble :history="$history" :is-pengaju="$isPengaju" />
                         @empty
                         <p class="text-center text-gray-500 text-sm py-8">Belum ada riwayat</p>
                         @endforelse
@@ -409,4 +409,10 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var box = document.querySelector('.px-4.py-5.h-72.overflow-y-auto');
+    if (box) { box.scrollTop = box.scrollHeight; }
+});
+</script>
 @endsection
