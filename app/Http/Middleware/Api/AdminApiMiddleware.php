@@ -14,7 +14,8 @@ class AdminApiMiddleware
         if (! $user) {
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
-        if (! $user->hasAnyPermission(['admin.dashboard', 'ticket.manage'])) {
+        // Gerbang admin IT: hanya pemegang dashboard.it (bukan sembarang pemegang ticket).
+        if (! $user->hasPermission('dashboard.it')) {
             return response()->json(['success' => false, 'message' => 'Forbidden - Admin IT only'], 403);
         }
 

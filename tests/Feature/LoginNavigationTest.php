@@ -54,7 +54,7 @@ class LoginNavigationTest extends TestCase
 
     public function test_admin_it_login_redirects_to_admin_dashboard()
     {
-        $this->grantPermission('admin.dashboard', 'admin');
+        $this->grantPermission('dashboard.it', 'admin');
         $this->makeUser(['name' => 'Admin IT', 'email' => 'adminit@example.com', 'role' => 'admin', 'position' => 'IT']);
 
         $this->post('/login', ['login' => 'adminit@example.com', 'password' => 'secret123'])
@@ -63,7 +63,7 @@ class LoginNavigationTest extends TestCase
 
     public function test_admin_umum_login_redirects_to_admin_ipsrs_dashboard()
     {
-        $this->grantPermission('ipsrs.dashboard', 'ipsrs');
+        $this->grantPermission('dashboard.ipsrs', 'ipsrs');
         $this->makeUser(['name' => 'Admin Umum', 'email' => 'adminumum@example.com', 'role' => 'ipsrs', 'position' => 'Administrasi']);
 
         $this->post('/login', ['login' => 'adminumum@example.com', 'password' => 'secret123'])
@@ -73,8 +73,8 @@ class LoginNavigationTest extends TestCase
     public function test_regular_user_login_redirects_to_user_dashboard()
     {
         // Seed permission rows agar fallback (permissions kosong => semua akses) tidak aktif
-        Permission::create(['name' => 'Admin Dashboard Access', 'slug' => 'admin.dashboard', 'group' => 'Admin']);
-        Permission::create(['name' => 'IPSRS Dashboard Access', 'slug' => 'ipsrs.dashboard', 'group' => 'Admin']);
+        Permission::create(['name' => 'Admin Dashboard Access', 'slug' => 'dashboard.it', 'group' => 'Admin']);
+        Permission::create(['name' => 'IPSRS Dashboard Access', 'slug' => 'dashboard.ipsrs', 'group' => 'Admin']);
         $this->makeUser(['name' => 'User', 'email' => 'user@example.com', 'role' => 'user', 'position' => null]);
 
         $this->post('/login', ['login' => 'user@example.com', 'password' => 'secret123'])
@@ -83,8 +83,8 @@ class LoginNavigationTest extends TestCase
 
     public function test_login_uses_role_permission_not_position_for_admin_it()
     {
-        $this->grantPermission('admin.dashboard', 'admin');
-        // Position display yang salah tetap dapat admin.dashboard karena akses berbasis role
+        $this->grantPermission('dashboard.it', 'admin');
+        // Position display yang salah tetap dapat dashboard.it karena akses berbasis role
         $this->makeUser(['name' => 'Admin IT', 'email' => 'adm1@example.com', 'role' => 'admin', 'position' => 'Administrasi']);
 
         $this->post('/login', ['login' => 'adm1@example.com', 'password' => 'secret123'])

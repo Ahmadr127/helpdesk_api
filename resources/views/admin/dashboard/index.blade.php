@@ -424,7 +424,7 @@ function updateCharts() {
     const timeFilter = timeFilterEl.value;
     const statusFilter = statusFilterEl.value;
 
-    fetch(`/admin/dashboard/stats?time=${timeFilter}&status=${statusFilter}`)
+    fetch(`/it-dashboard/stats?time=${timeFilter}&status=${statusFilter}`)
         .then(response => response.json())
         .then(data => {
             if (!data) return;

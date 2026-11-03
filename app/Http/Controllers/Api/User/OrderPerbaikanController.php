@@ -23,7 +23,7 @@ class OrderPerbaikanController extends BaseApiController
             $filters['status'] = $request->get('status', 'all');
         }
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->orderService->listForUser($request->user(), $filters, $perPage);
+        $paginator = $this->orderService->listForUser($request->user(), $filters, $perPage, true);
 
         return response()->json([
             'success' => true,
@@ -52,10 +52,11 @@ class OrderPerbaikanController extends BaseApiController
 
     public function show(Request $request, OrderPerbaikan $orderPerbaikan)
     {
-        if ($orderPerbaikan->created_by !== $request->user()->id) {
+        $canViewAll = $request->user()->hasPermission('order.view_all') || $request->user()->isAdminUmum() || $request->user()->isAdminIT();
+        if (! $canViewAll && $orderPerbaikan->created_by !== $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
+        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building', 'penanggungJawab']);
 
         return $this->success(new OrderPerbaikanResource($orderPerbaikan), 'Detail order');
     }
@@ -93,7 +94,7 @@ class OrderPerbaikanController extends BaseApiController
             $filters['start_date'] = $request->start_date;
             $filters['end_date'] = $request->end_date;
         }
-        $paginator = $this->orderService->listForUser($request->user(), $filters, (int) $request->get('per_page', 15));
+        $paginator = $this->orderService->listForUser($request->user(), $filters, (int) $request->get('per_page', 15), true);
 
         return response()->json([
             'success' => true,
@@ -115,7 +116,7 @@ class OrderPerbaikanController extends BaseApiController
             $filters['start_date'] = $request->start_date;
             $filters['end_date'] = $request->end_date;
         }
-        $paginator = $this->orderService->listForUser($request->user(), $filters, (int) $request->get('per_page', 15));
+        $paginator = $this->orderService->listForUser($request->user(), $filters, (int) $request->get('per_page', 15), true);
 
         return response()->json([
             'success' => true,

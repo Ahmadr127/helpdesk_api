@@ -30,8 +30,20 @@
                 <h3 class="text-sm font-semibold text-gray-900">Notifikasi Terbaru</h3>
             </div>
             @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
+            @php
+                // Notifikasi bisa bertipe tiket, order, atau lainnya — jangan
+                // asumsi key ticket_* selalu ada (sumber 500 Undefined array key).
+                $nData = $notification->data;
+                $nIsTicket = isset($nData['ticket_id']);
+                $nIsOrder = isset($nData['order_id']);
+                $nUrl = $nIsTicket
+                    ? route('admin.tickets.show', ['ticket' => $nData['ticket_id']])
+                    : ($nIsOrder
+                        ? route('admin.order-perbaikan.show', ['orderPerbaikan' => $nData['order_id']])
+                        : route('admin.notifications.index'));
+            @endphp
             <div class="block px-4 py-3 hover:bg-gray-50 transition duration-150 ease-in-out {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}"
-                x-data="{ markAndNavigate: function() { markAsRead('{{ $notification->id }}', '{{ route('admin.tickets.show', ['ticket' => $notification->data['ticket_id']]) }}') } }"
+                x-data="{ markAndNavigate: function() { markAsRead('{{ $notification->id }}', '{{ $nUrl }}') } }"
                 @click="markAndNavigate" role="menuitem" style="cursor: pointer;">
                 <div class="flex items-start space-x-3">
                     <div class="flex-shrink-0 mt-1">
@@ -42,35 +54,51 @@
                     <div class="min-w-0 flex-1">
                         <div class="flex justify-between items-start mb-1">
                             <p class="text-sm font-medium text-gray-900 truncate">
-                                {{ $notification->data['title'] }}
+                                {{ $nData['title'] ?? 'Notifikasi' }}
                             </p>
                             <p class="text-xs text-gray-500 whitespace-nowrap ml-2">
                                 {{ $notification->created_at->diffForHumans() }}
                             </p>
                         </div>
                         <p class="text-sm text-gray-600 line-clamp-2 mb-2">
-                            {{ $notification->data['message'] }}
+                            {{ $nData['message'] ?? '' }}
                         </p>
+                        @if($nIsTicket)
                         <div class="flex flex-wrap gap-2 text-xs">
                             <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-800 rounded-md">
-                                <span class="font-medium">Ticket #{{ $notification->data['ticket_number'] }}</span>
+                                <span class="font-medium">Ticket #{{ $nData['ticket_number'] ?? '-' }}</span>
                             </div>
                             <div class="inline-flex items-center px-2 py-1 rounded-md
-                                {{ $notification->data['ticket_status'] === 'open' ? 'bg-blue-100 text-blue-800' : 
-                                   ($notification->data['ticket_status'] === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
+                                {{ ($nData['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
+                                   ((($nData['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
                                    'bg-gray-100 text-gray-800') }}">
-                                {{ ucfirst($notification->data['ticket_status']) }}
+                                {{ ucfirst(str_replace('_', ' ', $nData['ticket_status'] ?? '-')) }}
                             </div>
                             <div class="inline-flex items-center px-2 py-1 rounded-md
-                                {{ $notification->data['ticket_priority'] === 'low' ? 'bg-gray-100 text-gray-800' : 
-                                   ($notification->data['ticket_priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
+                                {{ ($nData['ticket_priority'] ?? '') === 'low' ? 'bg-gray-100 text-gray-800' :
+                                   ((($nData['ticket_priority'] ?? '') === 'medium') ? 'bg-yellow-100 text-yellow-800' :
                                    'bg-red-100 text-red-800') }}">
-                                {{ ucfirst($notification->data['ticket_priority']) }} Priority
+                                {{ ucfirst($nData['ticket_priority'] ?? '-') }} Priority
                             </div>
                         </div>
-                        <div class="mt-2 text-xs text-gray-500">
-                            By: {{ $notification->data['responder_name'] }}
+                        @elseif($nIsOrder)
+                        @php($nOrderStatus = $nData['order_status'] ?? $nData['status'] ?? null)
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-800 rounded-md">
+                                <span class="font-medium">Order #{{ $nData['order_number'] ?? $nData['nomor'] ?? '-' }}</span>
+                            </div>
+                            @if(!empty($nOrderStatus))
+                            <div class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-800">
+                                {{ ucfirst(str_replace('_', ' ', $nOrderStatus)) }}
+                            </div>
+                            @endif
                         </div>
+                        @endif
+                        @if(!empty($nData['responder_name']))
+                        <div class="mt-2 text-xs text-gray-500">
+                            By: {{ $nData['responder_name'] }}
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -103,7 +131,7 @@
 @push('scripts')
 <script>
 function markAsRead(notificationId, url) {
-    fetch(`/admin/notifications/${notificationId}/mark-as-read`, {
+    fetch(`/notifications/${notificationId}/mark-as-read`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

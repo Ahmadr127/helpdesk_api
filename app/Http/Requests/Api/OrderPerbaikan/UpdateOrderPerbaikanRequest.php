@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\OrderPerbaikan;
 
+use App\Rules\KategoriOrderAllowed;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateOrderPerbaikanRequest extends FormRequest
@@ -14,9 +15,8 @@ class UpdateOrderPerbaikanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
-            'kategori_order' => 'nullable|string|exists:kategori_order,name',
+
+            'kategori_order' => ['nullable', 'string', new KategoriOrderAllowed()],
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',

@@ -38,7 +38,7 @@ class FeedbackApiTest extends TestCase
     public function test_user_can_create_feedback()
     {
         $resp = $this->withHeaders($this->auth($this->user))->postJson('/api/feedback', [
-            'rating' => 5, 'category' => 'Pelayanan', 'subject' => 'Bagus', 'message' => 'Pelayanan sangat bagus',
+            'rating' => 5, 'category' => 'SIRS', 'subject' => 'Bagus', 'message' => 'Pelayanan sangat bagus',
         ]);
         $resp->assertStatus(201)->assertJsonPath('data.rating', 5);
         $this->assertDatabaseHas('feedback', ['subject' => 'Bagus']);

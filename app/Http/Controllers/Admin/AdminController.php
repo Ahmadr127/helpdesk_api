@@ -43,7 +43,7 @@ class AdminController extends Controller
             : 0;
 
         // Get recent tickets with relationships
-        $recentTickets = Ticket::with(['user', 'location', 'category'])
+        $recentTickets = Ticket::with(['user'])
             ->where('status', 'open')
             ->latest()
             ->take(4)

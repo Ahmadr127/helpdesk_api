@@ -3,7 +3,7 @@
 @section('title', 'Kategori Order')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.kategori-order.index') }}" method="GET"
@@ -58,6 +58,8 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Kode</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Petugas (PJ)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Dibuat Pada</th>
@@ -74,6 +76,14 @@
                             </td>
                             <td class="px-6 py-4">{{ $kategori->name }}</td>
                             <td class="px-6 py-4">{{ $kategori->code ?? '-' }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                @php($pjNames = $kategori->users->pluck('name')->all())
+                                @if(count($pjNames))
+                                    {{ implode(', ', $pjNames) }}
+                                @else
+                                    <span class="text-gray-400">Belum ada petugas</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
@@ -153,6 +163,28 @@
                 </select>
             </div>
 
+            <div class="mb-4">
+                <label for="user_ids" class="block text-sm font-medium text-gray-700 mb-1">User (penugasan)</label>
+                <select name="user_ids[]" id="user_ids" multiple
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">User terpilih otomatis menjadi Petugas Penanggung Jawab (PJ) untuk order dengan kategori ini.</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="department_ids" class="block text-sm font-medium text-gray-700 mb-1">Unit/Departemen</label>
+                <select name="department_ids[]" id="department_ids" multiple
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    @foreach($departments as $d)
+                        <option value="{{ $d->id }}">{{ $d->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Saat ini tidak dipakai untuk penentuan PJ (PJ hanya dari penugasan user).</p>
+            </div>
+
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeModal()"
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all">Batal</button>
@@ -197,11 +229,24 @@ function openModal(kategori = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (kategori) {
-        form.action = `{{ url('admin/master/kategori-order') }}/${kategori.id}`;
+        form.action = `{{ url('master/kategori-order') }}/${kategori.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = kategori.name;
         document.getElementById('code').value = kategori.code || '';
         document.getElementById('status').value = kategori.status;
+        // populate multi-selects
+        const userSel = document.getElementById('user_ids');
+        const deptSel = document.getElementById('department_ids');
+        Array.from(userSel.options).forEach(o => o.selected = false);
+        Array.from(deptSel.options).forEach(o => o.selected = false);
+        (kategori.users || []).forEach(u => {
+            const opt = userSel.querySelector(`option[value="${u.id}"]`);
+            if (opt) opt.selected = true;
+        });
+        (kategori.departments || []).forEach(d => {
+            const opt = deptSel.querySelector(`option[value="${d.id}"]`);
+            if (opt) opt.selected = true;
+        });
         modalTitle.textContent = 'Edit Kategori Order';
     } else {
         form.action = "{{ route('admin.master.kategori-order.store') }}";
@@ -230,7 +275,7 @@ function deleteKategori(id) {
     if (confirm('Apakah Anda yakin ingin menghapus kategori order ini?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url('admin/master/kategori-order') }}/${id}`;
+        form.action = `{{ url('master/kategori-order') }}/${id}`;
         form.innerHTML = `
             @csrf
             @method('DELETE')

@@ -14,12 +14,11 @@ class DashboardController extends Controller
     private const CACHE_TTL = 30; // 30 seconds cache
 
     /**
-     * View namespace bervariasi per route: admin.* memakai admin.ipsrs-dashboard.*,
-     * administrasi-umum.* memakai administrasi-umum.dashboard.* (legacy).
+     * View namespace admin (tanpa prefix URL, nama route tetap admin.*).
      */
     private function viewNamespace(Request $request): string
     {
-        return $request->routeIs('admin.*') ? 'admin.ipsrs-dashboard' : 'administrasi-umum.dashboard';
+        return 'admin.ipsrs-dashboard';
     }
 
     public function index(Request $request)

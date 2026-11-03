@@ -27,8 +27,8 @@ use Illuminate\Support\Facades\Route;
 | Roles:
 |  - guest (no token): login, register
 |  - auth (any): me, logout, dashboard/user, lookup, tickets user, orders user, feedback
-|  - admin IT (role=admin, permission ticket.manage/admin.dashboard): master data, user mgmt, ticket admin, feedback admin, dashboard admin
-|  - admin IPSRS (role=ipsrs, permission order.manage/ipsrs.dashboard): order perbaikan admin, dashboard IPSRS
+|  - admin IT (role=admin, permission ticket/dashboard.it): master data, user mgmt, ticket admin, feedback admin, dashboard admin
+|  - admin IPSRS (role=ipsrs, permission order/dashboard.ipsrs): order perbaikan admin, dashboard IPSRS
 */
 
 // Public Auth
@@ -41,6 +41,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])->name('api.auth.me');
+        Route::get('/permissions', [AuthController::class, 'permissions'])->name('api.auth.permissions');
         Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
         Route::post('/logout-all', [AuthController::class, 'logoutAll'])->name('api.auth.logoutAll');
     });
@@ -59,13 +60,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/unit-proses', [LookupController::class, 'unitProses'])->name('unit-proses');
         Route::get('/positions', [LookupController::class, 'positions'])->name('positions');
         Route::get('/priorities', [LookupController::class, 'priorities'])->name('priorities');
+        Route::get('/users', [LookupController::class, 'users'])->name('users');
         Route::get('/kategori-order', [LookupController::class, 'kategoriOrders'])->name('kategori-order');
+        Route::get('/kategori-order-users', [LookupController::class, 'kategoriOrderUsers'])->name('kategori-order-users');
         Route::get('/ticket-statuses', [LookupController::class, 'ticketStatuses'])->name('ticket-statuses');
         Route::get('/order-statuses', [LookupController::class, 'orderStatuses'])->name('order-statuses');
     });
 
-    // User Ticket (owner only)
-    Route::prefix('tickets')->name('api.tickets.')->group(function () {
+    // User Ticket (owner only + permission myticket|ticket).
+    // Tanpa gate ini, cabut permission tidak memblokir edit (hanya owner+status yang dicek).
+    Route::prefix('tickets')->name('api.tickets.')->middleware('permission:myticket|ticket')->group(function () {
         Route::get('/', [UserTicketController::class, 'index'])->name('index');
         Route::post('/', [UserTicketController::class, 'store'])->name('store');
         Route::get('/filter/{status}', [UserTicketController::class, 'filterByStatus'])->where('status', 'all|open|pending|in_progress|closed|confirmed')->name('filter');
@@ -76,8 +80,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{ticket}/confirm', [UserTicketController::class, 'confirm'])->name('confirm');
     });
 
-    // User Order Perbaikan (owner only)
-    Route::prefix('order-perbaikan')->name('api.order-perbaikan.')->group(function () {
+    // User Order Perbaikan (owner only + permission myorder|order).
+    // Tanpa gate ini, cabut permission tidak memblokir edit (hanya owner+status yang dicek).
+    Route::prefix('order-perbaikan')->name('api.order-perbaikan.')->middleware('permission:myorder|order')->group(function () {
         Route::get('/', [UserOrderController::class, 'index'])->name('index');
         Route::post('/', [UserOrderController::class, 'store'])->name('store');
         Route::get('/konfirmasi', [UserOrderController::class, 'konfirmasi'])->name('konfirmasi');
@@ -131,6 +136,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{ticket}', [AdminTicketController::class, 'show'])->name('show');
             Route::post('/{ticket}/respond', [AdminTicketController::class, 'respond'])->name('respond');
             Route::put('/{ticket}', [AdminTicketController::class, 'update'])->name('update');
+            Route::put('/{ticket}/submission', [AdminTicketController::class, 'updateSubmission'])->name('updateSubmission');
         });
     });
 
@@ -143,6 +149,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/confirmed', [AdminOrderController::class, 'confirmed'])->name('confirmed');
             Route::get('/rejected', [AdminOrderController::class, 'rejected'])->name('rejected');
             Route::get('/{orderPerbaikan}', [AdminOrderController::class, 'show'])->name('show');
+            Route::put('/{orderPerbaikan}/submission', [AdminOrderController::class, 'updateSubmission'])->name('updateSubmission');
             Route::put('/{orderPerbaikan}/status', [AdminOrderController::class, 'updateStatus'])->name('updateStatus');
             Route::post('/{orderPerbaikan}/confirm', [AdminOrderController::class, 'confirm'])->name('confirm');
             Route::post('/{orderPerbaikan}/reject', [AdminOrderController::class, 'reject'])->name('reject');

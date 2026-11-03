@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\OrderPerbaikan;
 
+use App\Rules\KategoriOrderAllowed;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreOrderPerbaikanRequest extends FormRequest
@@ -23,10 +24,10 @@ class StoreOrderPerbaikanRequest extends FormRequest
                 },
             ],
             'department_id' => 'nullable|exists:departments,id',
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
-            'kategori_order' => 'nullable|string|exists:kategori_order,name',
+
+            'kategori_order' => ['nullable', 'string', new KategoriOrderAllowed()],
             'lokasi' => 'nullable|exists:locations,id',
+            'gedung' => 'nullable|string',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'tanggal' => 'required|date',

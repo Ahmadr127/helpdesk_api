@@ -43,13 +43,13 @@ class BuildingController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:buildings',
             'status' => 'required|boolean',
         ]);
 
-        Building::create($request->all());
+        Building::create($validated);
 
         return redirect()->route('admin.master.buildings.index')
             ->with('success', 'Gedung berhasil ditambahkan.');
@@ -57,13 +57,13 @@ class BuildingController extends Controller
 
     public function update(Request $request, Building $building)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => ['required', 'string', 'max:50', Rule::unique('buildings')->ignore($building)],
             'status' => 'required|boolean',
         ]);
 
-        $building->update($request->all());
+        $building->update($validated);
 
         return redirect()->route('admin.master.buildings.index')
             ->with('success', 'Gedung berhasil diperbarui.');

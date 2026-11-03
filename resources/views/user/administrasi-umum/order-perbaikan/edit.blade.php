@@ -89,13 +89,13 @@ function previewImage(input) {
                         readonly>
                 </div>
 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
+                    <textarea name="keluhan" rows="2"
+                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
-                        <input type="text" name="kode_inventaris"
-                            value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
-                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                         <select name="prioritas"
@@ -138,28 +138,16 @@ function previewImage(input) {
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                        @if(isset($departmentLocation) && $departmentLocation)
-                        <div class="flex items-center px-3 py-1.5 border border-gray-200 bg-gray-100 rounded-md">
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">
-                                    {{ $departmentLocation->name }}
-                                </p>
-                                <p class="text-xs text-gray-500">Otomatis dari departemen Anda</p>
-                            </div>
-                        </div>
-                        <input type="hidden" name="lokasi" value="{{ $departmentLocation->id }}">
-                        @else
                         <select name="lokasi"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                             <option value="">Pilih Lokasi (opsional)</option>
                             @foreach($locations as $location)
                             <option value="{{ $location->id }}"
-                                {{ old('lokasi', $orderPerbaikan->lokasi) == $location->id ? 'selected' : '' }}>
+                                {{ old('lokasi', $orderPerbaikan->lokasi ?? (isset($departmentLocation) && $departmentLocation ? $departmentLocation->id : null)) == $location->id ? 'selected' : '' }}>
                                 {{ $location->name }}
                             </option>
                             @endforeach
                         </select>
-                        @endif
                     </div>
 
                     <div>
@@ -175,12 +163,6 @@ function previewImage(input) {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan</label>
-                    <textarea name="keluhan" rows="2"
-                        class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
                 </div>
 
                 <!-- Foto Section -->

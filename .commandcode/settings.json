@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(php -l app/Http/Controllers/User/AdministrasiUmumController.php)",
+      "Shell(Select-String:*)",
+      "powershell",
+      "Shell(php -l app/Http/Controllers/User/TicketController.php)",
+      "Shell(php -l app/Services/Api/TicketService.php)",
+      "Shell(php -l app/Services/Api/OrderPerbaikanService.php)",
+      "Shell(php -l app/Services/DepartmentService.php)",
+      "Shell(php -l app/Http/Controllers/Admin/TicketAdminController.php)",
+      "Shell(php -l app/Http/Controllers/AdministrasiUmum/OrderPerbaikanController.php)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

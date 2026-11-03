@@ -20,6 +20,10 @@ class UserResource extends JsonResource
             'email_verified_at' => $this->email_verified_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            // Effective permissions (role + direct) — used by Flutter to gate UI without extra call.
+            'permissions' => method_exists($this->resource, 'effectivePermissionSlugs')
+                ? $this->resource->effectivePermissionSlugs()
+                : [],
         ];
     }
 }

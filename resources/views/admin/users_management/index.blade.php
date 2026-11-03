@@ -3,7 +3,7 @@
 @section('title', 'Manage Users')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <div class="card bg-white shadow-md rounded-xl overflow-hidden">
         <div class="p-6">
             <!-- Search and Filter Bar (server-side, support pagination) -->

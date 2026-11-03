@@ -3,23 +3,24 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Ticket\ConfirmTicketRequest;
+use App\Http\Requests\Api\Ticket\ReplyTicketRequest;
+use App\Http\Requests\Api\Ticket\StoreTicketRequest;
+use App\Http\Requests\Api\Ticket\UpdateTicketRequest;
+use App\Http\Requests\Api\Ticket\UpdateTicketStatusRequest;
 use App\Models\Building;
 use App\Models\Category;
-use App\Models\Department;
 use App\Models\Location;
 use App\Models\Ticket;
-use App\Models\User;
 use App\Services\Api\TicketService;
-use Carbon\Carbon;
+use App\Services\DepartmentService;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
-    public function index()
+    public function index(TicketService $service)
     {
-        $tickets = Ticket::where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $tickets = $service->allForUser(auth()->user());
 
         // Get categories from both SIRS and IPSRS units
         $categories = Category::where('status', 1)
@@ -31,7 +32,7 @@ class TicketController extends Controller
         return view('user.ticket.index', compact('tickets', 'categories'));
     }
 
-    public function create()
+    public function create(DepartmentService $departments)
     {
         // Check if user has a department
         if (! auth()->user()->department) {
@@ -48,46 +49,10 @@ class TicketController extends Controller
         $buildings = Building::where('status', 1)->get();
         $locations = Location::where('status', 1)->get();
 
-        // Get the authenticated user's department — robust lookup (support code, name, case-insensitive, and department_id)
+        // Get the authenticated user's department — robust lookup (code, name, case-insensitive, department_id)
         $user = auth()->user();
         $deptValue = $user->department;
-        $userDepartment = null;
-
-        // Prefer department_id FK if present and valid
-        if (! empty($user->department_id)) {
-            $userDepartment = Department::with(['location', 'building'])->find($user->department_id);
-        }
-
-        if (! $userDepartment && $deptValue) {
-            $userDepartment = Department::with(['location', 'building'])->where('code', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
-        }
-
-        // Graceful fallback instead of 500: redirect to settings if department not resolvable
-        if (! $userDepartment) {
-            // Auto-create missing department on-the-fly to unblock user (code=name=deptValue)
-            // Only if deptValue looks like a valid identifier and not empty
-            if ($deptValue && is_string($deptValue)) {
-                try {
-                    // Avoid duplicate code — check again case-insensitive
-                    $exists = Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])
-                        ->orWhereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
-                    if ($exists) {
-                        $userDepartment = $exists;
-                    } else {
-                        $userDepartment = Department::create([
-                            'code' => strtoupper(str_replace(' ', '_', trim($deptValue))),
-                            'name' => trim($deptValue),
-                            'status' => 1,
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                    \Log::warning('Auto-create department failed for value '.$deptValue.': '.$e->getMessage());
-                }
-            }
-        }
+        $userDepartment = $departments->resolveForUser($user, true);
 
         if (! $userDepartment) {
             return redirect()->route('user.settings')
@@ -97,7 +62,7 @@ class TicketController extends Controller
         return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
     }
 
-    public function store(Request $request, TicketService $service)
+    public function store(StoreTicketRequest $request, TicketService $service)
     {
         // Check if user has a department
         if (! auth()->user()->department) {
@@ -105,23 +70,7 @@ class TicketController extends Controller
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        $validated = $request->validate([
-            'category_id' => [
-                'required',
-                'exists:categories,id',
-                function ($attribute, $value, $fail) {
-                    $category = Category::with('unitProses')->find($value);
-                    if (! $category || $category->unitProses->code !== 'SIRS') {
-                        $fail('Kategori yang dipilih harus kategori dari unit SIRS.');
-                    }
-                },
-            ],
-            'location_id' => 'nullable|exists:locations,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'description' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
-            'photo' => 'nullable|image|max:5120', // 5MB max, optional
-        ]);
+        $validated = $request->validated();
 
         try {
             $ticket = $service->create(auth()->user(), $validated, $request->file('photo'));
@@ -150,7 +99,7 @@ class TicketController extends Controller
         return view('user.ticket.show', compact('ticket'));
     }
 
-    public function edit(Ticket $ticket)
+    public function edit(Ticket $ticket, DepartmentService $departments)
     {
         // Check if user owns the ticket
         if ($ticket->user_id !== auth()->id()) {
@@ -173,39 +122,14 @@ class TicketController extends Controller
         $locations = Location::where('status', 1)->get();
         $buildings = Building::where('status', 1)->get();
 
-        $userDepartment = $this->resolveUserDepartment(auth()->user());
+        $userDepartment = $departments->resolveForUser(auth()->user());
 
         return view('user.ticket.edit', compact('ticket', 'categories', 'locations', 'userDepartment', 'buildings'));
     }
 
-    protected function resolveUserDepartment(User $user): ?Department
+    public function update(UpdateTicketRequest $request, Ticket $ticket, TicketService $service)
     {
-        $dept = null;
-        if (! empty($user->department_id)) {
-            $dept = Department::with(['location', 'building'])->find($user->department_id);
-        }
-        if (! $dept && $user->department) {
-            $deptValue = $user->department;
-            $dept = Department::with(['location', 'building'])->where('code', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
-        }
-
-        return $dept;
-    }
-
-    public function update(Request $request, Ticket $ticket, TicketService $service)
-    {
-        $validated = $request->validate([
-            'description' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'department_id' => 'required|exists:departments,id',
-            'location_id' => 'nullable|exists:locations,id',
-            'building_id' => 'nullable|exists:buildings,id',
-            'priority' => 'required|in:low,medium,high',
-            'photo' => 'nullable|image|max:5120', // 5MB max
-        ]);
+        $validated = $request->validated();
 
         try {
             $ticket = $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photo'));
@@ -223,11 +147,9 @@ class TicketController extends Controller
         }
     }
 
-    public function updateStatus(Ticket $ticket, Request $request)
+    public function updateStatus(UpdateTicketStatusRequest $request, Ticket $ticket)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,open,in_progress,closed',
-        ]);
+        $validated = $request->validated();
 
         $timestamp_field = null;
         switch ($validated['status']) {
@@ -250,13 +172,9 @@ class TicketController extends Controller
         return back()->with('success', 'Ticket status updated successfully.');
     }
 
-    public function confirm(Request $request, Ticket $ticket, TicketService $service)
+    public function confirm(ConfirmTicketRequest $request, Ticket $ticket, TicketService $service)
     {
-        $validated = $request->validate([
-            'confirmation_notes' => 'required|string',
-            'photo' => 'nullable|image|max:5120',
-            'action' => 'required|in:confirm,reject',
-        ]);
+        $validated = $request->validated();
 
         try {
             $service->confirm(auth()->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photo'));
@@ -272,12 +190,9 @@ class TicketController extends Controller
         }
     }
 
-    public function reply(Request $request, Ticket $ticket, TicketService $service)
+    public function reply(ReplyTicketRequest $request, Ticket $ticket, TicketService $service)
     {
-        $validated = $request->validate([
-            'message' => 'required|string',
-            'photo' => 'nullable|image|max:5120', // 5MB max
-        ]);
+        $validated = $request->validated();
 
         try {
             $service->reply(auth()->user(), $ticket, $validated['message'], $request->file('photo'));
@@ -292,49 +207,14 @@ class TicketController extends Controller
         }
     }
 
-    public function filterByStatus($status, Request $request)
+    public function filterByStatus($status, Request $request, TicketService $service)
     {
-        // Base query for tickets belonging to current user
-        $baseQuery = Ticket::where('user_id', auth()->id());
+        $filters = $request->only(['ticket_number', 'category', 'priority', 'department', 'start_date', 'end_date']);
+        $filters['status'] = $status;
 
-        // Get ticket counts for statistics
-        $totalTickets = Ticket::where('user_id', auth()->id())->count();
-        $openTickets = Ticket::where('user_id', auth()->id())->where('status', 'open')->count();
-        $inProgressTickets = Ticket::where('user_id', auth()->id())->where('status', 'in_progress')->count();
-        $closedTickets = Ticket::where('user_id', auth()->id())->where('status', 'closed')->count();
-        $confirmedTickets = Ticket::where('user_id', auth()->id())->where('status', 'confirmed')->count();
-
-        // Reset the base query
-        $baseQuery = Ticket::where('user_id', auth()->id());
-
-        // Apply status filter if not 'all'
-        if ($status !== 'all') {
-            $baseQuery->where('status', $status);
-        }
-
-        // Apply date range filter if provided
-        if ($request->filled(['start_date', 'end_date'])) {
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $baseQuery->whereBetween('created_at', [$startDate, $endDate]);
-        }
-
-        // Apply search filters if provided
-        if ($request->filled('ticket_number')) {
-            $baseQuery->where('ticket_number', 'like', '%'.$request->ticket_number.'%');
-        }
-        if ($request->filled('category')) {
-            $baseQuery->where('category', $request->category);
-        }
-        if ($request->filled('priority')) {
-            $baseQuery->where('priority', $request->priority);
-        }
-        if ($request->filled('department')) {
-            $baseQuery->where('department', $request->department);
-        }
-
-        // Get the filtered tickets with pagination
-        $tickets = $baseQuery->latest()->paginate(10);
+        // Get the filtered tickets with pagination + statistics
+        $tickets = $service->listForUser(auth()->user(), $filters, 10);
+        $stats = $service->userStatistics(auth()->user());
 
         // Get categories only from SIRS unit
         $categories = Category::where('status', 1)
@@ -347,18 +227,13 @@ class TicketController extends Controller
         $departments = Ticket::distinct()->pluck('department');
         $priorities = ['low', 'medium', 'high'];
 
-        return view('user.ticket.filtered', compact(
+        return view('user.ticket.filtered', array_merge($stats, compact(
             'tickets',
             'status',
-            'totalTickets',
-            'openTickets',
-            'inProgressTickets',
-            'closedTickets',
-            'confirmedTickets',
             'categories',
             'departments',
             'priorities'
-        ));
+        )));
     }
 
     public function destroy(Ticket $ticket, TicketService $service)

@@ -16,13 +16,8 @@
         @endif
         @endif
     </td>
-    <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-gray-900">{{ $order->unit_proses_name }}</div>
-        <div class="text-xs text-gray-500">{{ $order->unit_proses }}</div>
-    </td>
     <td class="px-6 py-4">
-        <div class="text-sm text-gray-900">{{ $order->nama_barang }}</div>
-        <div class="text-xs text-gray-500">{{ $order->keluhan }}</div>
+        <div class="text-sm text-gray-900">{{ Str::limit($order->keluhan, 50) }}</div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
         <div class="text-sm text-gray-900">{{ $order->kategori_order ?? '-' }}</div>

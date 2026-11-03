@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.locations.index') }}" method="GET"
@@ -175,7 +175,7 @@ function openModal(location = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (location) {
-        form.action = `{{ url('admin/master/locations') }}/${location.id}`;
+        form.action = `{{ url('master/locations') }}/${location.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = location.name;
         document.getElementById('status').value = location.status;
@@ -207,7 +207,7 @@ function deleteLocation(id) {
     if (confirm('Are you sure you want to delete this location?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `{{ url('admin/master/locations') }}/${id}`;
+        form.action = `{{ url('master/locations') }}/${id}`;
         form.innerHTML = `
             @csrf
             @method('DELETE')

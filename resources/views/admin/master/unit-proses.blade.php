@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.unit-proses.index') }}" method="GET"
@@ -210,7 +210,7 @@ function openModal(unit = null) {
     const modalTitle = document.getElementById('modalTitle');
 
     if (unit) {
-        form.action = `{{ url('admin/master/unit-proses') }}/${unit.id}`;
+        form.action = `{{ url('master/unit-proses') }}/${unit.id}`;
         methodField.innerHTML = '@method("PUT")';
         document.getElementById('name').value = unit.name;
         document.getElementById('code').value = unit.code;
@@ -259,7 +259,7 @@ function deleteUnitProses(id) {
         if (result.isConfirmed) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `{{ url('admin/master/unit-proses') }}/${id}`;
+            form.action = `{{ url('master/unit-proses') }}/${id}`;
             form.innerHTML = `
                 @csrf
                 @method('DELETE')

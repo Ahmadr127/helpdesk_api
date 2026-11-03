@@ -9,6 +9,7 @@ use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\Position;
 use App\Models\UnitProses;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LookupController extends BaseApiController
@@ -84,12 +85,43 @@ class LookupController extends BaseApiController
 
     public function kategoriOrders(Request $request)
     {
+        // Semua kategori aktif bisa dipilih siapa pun. Assignment user/unit
+        // hanya menentukan PJ order (bukan pembatas pilihan).
         $query = KategoriOrder::where('status', 1);
         if ($request->filled('search')) {
             $query->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($request->search).'%']);
         }
 
         return $this->success($query->orderBy('name', 'asc')->get(), 'Kategori Order');
+    }
+
+    /**
+     * User yang ditugaskan pada sebuah kategori order (by name).
+     * Dipakai picker PJ: hanya user yang ditugaskan yang muncul.
+     */
+    public function kategoriOrderUsers(Request $request)
+    {
+        $name = trim((string) $request->get('name', ''));
+        if ($name === '') {
+            return $this->success([], 'Kategori Order Users');
+        }
+
+        $kategori = KategoriOrder::where('name', $name)->where('status', 1)->first();
+        $users = $kategori
+            ? $kategori->users()->where('users.status', 1)->orderBy('users.name')->get(['users.id', 'users.name'])
+            : collect();
+
+        return $this->success($users, 'Kategori Order Users');
+    }
+
+    public function users(Request $request)
+    {
+        $query = User::where('status', 1)->orderBy('name', 'asc');
+        if ($request->filled('search')) {
+            $query->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($request->search).'%']);
+        }
+
+        return $this->success($query->get(['id', 'name']), 'Users');
     }
 
     public function priorities()

@@ -115,13 +115,13 @@ class User extends Authenticatable
                     $sub->select('permission_user.user_id')
                         ->from('permission_user')
                         ->join('permissions', 'permissions.id', '=', 'permission_user.permission_id')
-                        ->whereIn('permissions.slug', ['admin.dashboard', 'ticket.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.it']);
                 })
                 ->orWhereIn('role', function ($sub) {
                     $sub->select('role_permissions.role')
                         ->from('role_permissions')
                         ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
-                        ->whereIn('permissions.slug', ['admin.dashboard', 'ticket.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.it']);
                 });
         });
     }
@@ -134,13 +134,13 @@ class User extends Authenticatable
                     $sub->select('permission_user.user_id')
                         ->from('permission_user')
                         ->join('permissions', 'permissions.id', '=', 'permission_user.permission_id')
-                        ->whereIn('permissions.slug', ['ipsrs.dashboard', 'order.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.ipsrs']);
                 })
                 ->orWhereIn('role', function ($sub) {
                     $sub->select('role_permissions.role')
                         ->from('role_permissions')
                         ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
-                        ->whereIn('permissions.slug', ['ipsrs.dashboard', 'order.manage']);
+                        ->whereIn('permissions.slug', ['dashboard.ipsrs']);
                 });
         });
     }
@@ -202,16 +202,33 @@ class User extends Authenticatable
         return true;
     }
 
+    /**
+     * Effective permission slugs (role + direct).
+     * Single source for API: GET /api/auth/me & GET /api/auth/permissions.
+     */
+    public function effectivePermissionSlugs(): array
+    {
+        $rolePerms = \Illuminate\Support\Facades\DB::table('role_permissions')
+            ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
+            ->where('role_permissions.role', $this->role)
+            ->pluck('permissions.slug')
+            ->all();
+
+        $directPerms = $this->permissions()->pluck('slug')->all();
+
+        return collect(array_merge($rolePerms, $directPerms))->unique()->values()->all();
+    }
+
     public function isAdminIT(): bool
     {
         return $this->hasRole('admin')
-            || $this->hasAnyPermission(['admin.dashboard', 'ticket.manage']);
+            || $this->hasPermission('dashboard.it');
     }
 
     public function isAdminUmum(): bool
     {
         return $this->hasRole('ipsrs')
-            || $this->hasAnyPermission(['ipsrs.dashboard', 'order.manage']);
+            || $this->hasPermission('dashboard.ipsrs');
     }
 
     /**

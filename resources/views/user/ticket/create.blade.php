@@ -114,26 +114,11 @@
                             <div>
                                 <label for="location_id-input"
                                     class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                                @if(isset($userDepartment) && $userDepartment && $userDepartment->location)
-                                <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
-                                    <div class="flex-1">
-                                        <p class="text-gray-900">{{ $userDepartment->location->name }}</p>
-                                        <p class="text-xs text-gray-500 flex items-center">
-                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                            </svg>
-                                            Otomatis dari departemen
-                                        </p>
-                                    </div>
-                                </div>
-                                <input type="hidden" name="location_id" value="{{ $userDepartment->location->id }}">
-                                @else
                                 <x-searchable-select name="location_id" id="location_id"
-                                    :options="$locations" :selected="old('location_id')"
+                                    :options="$locations" :selected="old('location_id', isset($userDepartment) && $userDepartment && $userDepartment->location ? $userDepartment->location->id : null)"
                                     value-field="id" label-field="name"
                                     placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi (opsional) —"
                                     accent="blue" />
-                                @endif
                                 @error('location_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
@@ -141,26 +126,11 @@
 
                             <div>
                                 <label for="building_id-input" class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
-                                @if(isset($userDepartment) && $userDepartment && $userDepartment->building)
-                                <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
-                                    <div class="flex-1">
-                                        <p id="building_display" class="text-gray-900">{{ $userDepartment->building->name }}</p>
-                                        <p class="text-xs text-gray-500">Otomatis dari departemen</p>
-                                    </div>
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                </div>
-                                <input type="hidden" name="building_id" id="building_id_hidden" value="{{ $userDepartment->building->id }}">
-                                @else
                                 <x-searchable-select name="building_id" id="building_id"
-                                    :options="$buildings" :selected="old('building_id')"
+                                    :options="$buildings" :selected="old('building_id', isset($userDepartment) && $userDepartment && $userDepartment->building ? $userDepartment->building->id : null)"
                                     value-field="id" label-field="name"
                                     placeholder="Ketik untuk cari gedung..." empty-label="— Tidak Ada —"
                                     accent="blue" />
-                                @endif
                             </div>
                         </div>
 

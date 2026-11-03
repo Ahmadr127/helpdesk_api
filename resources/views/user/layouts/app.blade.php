@@ -346,6 +346,8 @@
     </script>
 
     @stack('scripts')
+
+    @include('components.confirmation-popup')
 </body>
 
 </html>

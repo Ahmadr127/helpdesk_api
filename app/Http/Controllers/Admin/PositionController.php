@@ -29,15 +29,16 @@ class PositionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:255|unique:positions,code',
+            'status' => 'sometimes|boolean',
         ]);
 
         Position::create([
-            'name' => $request->name,
-            'code' => $request->code,
-            'status' => true,
+            'name' => $validated['name'],
+            'code' => $validated['code'],
+            'status' => $validated['status'] ?? true,
         ]);
 
         return back()->with('success', 'Position created successfully.');
@@ -45,14 +46,16 @@ class PositionController extends Controller
 
     public function update(Request $request, Position $position)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:255|unique:positions,code,'.$position->id,
+            'status' => 'sometimes|boolean',
         ]);
 
         $position->update([
-            'name' => $request->name,
-            'code' => $request->code,
+            'name' => $validated['name'],
+            'code' => $validated['code'],
+            'status' => $validated['status'] ?? $position->status,
         ]);
 
         return back()->with('success', 'Position updated successfully.');

@@ -3,7 +3,7 @@
 @section('title', 'Add New User')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="w-full">
     @if(session('success'))
     <div id="success-alert" class="mb-6 p-4 bg-white border-l-4 border-green-500 rounded-lg shadow-sm relative" role="alert">
         <div class="flex items-center">

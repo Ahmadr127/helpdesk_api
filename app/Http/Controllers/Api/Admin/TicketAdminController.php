@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Api\BaseApiController;
 use App\Http\Requests\Api\Ticket\AdminRespondRequest;
 use App\Http\Requests\Api\Ticket\AdminUpdateRequest;
+use App\Http\Requests\Api\Ticket\UpdateTicketSubmissionRequest;
 use App\Http\Resources\Api\TicketResource;
 use App\Models\Ticket;
 use App\Services\Api\TicketService;
@@ -41,7 +42,25 @@ class TicketAdminController extends BaseApiController
 
     public function show(Ticket $ticket)
     {
-        return $this->success(new TicketResource($ticket->load(['user', 'photos'])), 'Detail ticket');
+        return $this->success(new TicketResource($ticket->load(['user', 'photos', 'penanggungJawab'])), 'Detail ticket');
+    }
+
+    public function updateSubmission(UpdateTicketSubmissionRequest $request, Ticket $ticket)
+    {
+        try {
+            $validated = $request->validated();
+            $updated = $this->ticketService->updateAdminTicket(
+                $request->user(),
+                $ticket,
+                $validated,
+                $request->file('photo'),
+                $request->input('penanggung_jawab_ids', [])
+            );
+
+            return $this->success(new TicketResource($updated), 'Pengajuan tiket berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->error($e->getMessage(), 422);
+        }
     }
 
     public function respond(AdminRespondRequest $request, Ticket $ticket)

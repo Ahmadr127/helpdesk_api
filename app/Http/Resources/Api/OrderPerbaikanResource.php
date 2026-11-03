@@ -13,15 +13,10 @@ class OrderPerbaikanResource extends JsonResource
             'id' => $this->id,
             'nomor' => $this->nomor,
             'tanggal' => $this->tanggal,
-            'unit_proses' => $this->unit_proses,
-            'unit_proses_name' => $this->unit_proses_name,
-            'unit_penerima' => $this->unit_penerima,
             'nama_peminta' => $this->nama_peminta,
-            'nip_peminta' => $this->nip_peminta,
-            'kode_inventaris' => $this->kode_inventaris,
-            'nama_barang' => $this->nama_barang,
             'kategori_order' => $this->kategori_order,
             'lokasi' => $this->lokasi,
+            'gedung' => $this->gedung,
             'location' => $this->whenLoaded('location'),
             'department' => $this->whenLoaded('department', fn () => ['id' => $this->department->id, 'code' => $this->department->code, 'name' => $this->department->name, 'location' => $this->department->location?->name, 'building' => $this->department->building?->name]),
             'department_id' => $this->department_id,
@@ -30,6 +25,11 @@ class OrderPerbaikanResource extends JsonResource
             'status' => $this->status,
             'follow_up' => $this->follow_up,
             'nama_penanggung_jawab' => $this->nama_penanggung_jawab,
+            'penanggung_jawab' => $this->whenLoaded('penanggungJawab', fn () => $this->penanggungJawab->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+            ])->values()),
+            'penanggung_jawab_ids' => $this->whenLoaded('penanggungJawab', fn () => $this->penanggungJawab->pluck('id')->values()),
             'foto' => $this->foto,
             'foto_url' => $this->foto ? Storage::disk('public')->url($this->foto) : null,
             'creator' => $this->whenLoaded('creator', fn () => new UserResource($this->creator)),
@@ -47,6 +47,13 @@ class OrderPerbaikanResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
+            // Edit gate untuk Flutter: owner + status open (mirror OrderPerbaikanService::update).
+            'can_edit' => $request->user()
+                ? ($this->created_by === $request->user()->id && $this->status === 'open')
+                : false,
+            'can_delete' => $request->user()
+                ? ($this->created_by === $request->user()->id && $this->status === 'open')
+                : false,
         ];
     }
 }

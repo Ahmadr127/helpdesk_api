@@ -26,18 +26,14 @@ class OrderPerbaikan extends Model
         'nomor',
         'tanggal',
         'department_id',
-        'unit_proses_id',
-        'unit_penerima',
         'nama_peminta',
-        'kode_inventaris',
-        'nama_barang',
         'kategori_order',
         'lokasi',
+        'gedung',
         'keluhan',
         'prioritas',
         'status',
         'follow_up',
-        'nama_penanggung_jawab',
         'foto',
         'created_by',
         'updated_by',
@@ -68,31 +64,32 @@ class OrderPerbaikan extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function unitProses()
-    {
-        return $this->belongsTo(UnitProses::class);
-    }
-
     public function location()
     {
         return $this->belongsTo(Location::class, 'lokasi');
     }
 
-    // Unit Proses murni dari relasi unitProses, null jika tidak ada (konsisten web & mobile)
-    public function getUnitProsesAttribute()
+    public function penanggungJawab()
     {
-        if (! $this->relationLoaded('unitProses')) {
-            $this->load('unitProses');
-        }
-        return $this->relations['unitProses']?->code;
+        return $this->belongsToMany(User::class, 'order_perbaikan_penanggung_jawab', 'order_perbaikan_id', 'user_id')->withTimestamps();
     }
 
-    public function getUnitProsesNameAttribute()
+    /**
+     * Referensi kategori order (kolom string `kategori_order` = nama).
+     * Dipakai untuk visibilitas berbasis assignment/PJ.
+     */
+    public function kategoriOrderRef()
     {
-        if (! $this->relationLoaded('unitProses')) {
-            $this->load('unitProses');
+        return $this->belongsTo(KategoriOrder::class, 'kategori_order', 'name');
+    }
+
+    public function getNamaPenanggungJawabAttribute()
+    {
+        if (! $this->relationLoaded('penanggungJawab')) {
+            $this->load('penanggungJawab');
         }
-        return $this->relations['unitProses']?->name;
+
+        return $this->penanggungJawab->pluck('name')->implode(', ');
     }
 
     // Status helper methods

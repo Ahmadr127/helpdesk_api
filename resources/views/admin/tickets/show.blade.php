@@ -3,9 +3,16 @@
 @section('title', 'Proses Tiket')
 
 @section('content')
-<div class="container mx-auto px-3 py-3 max-w-8xl">
+@php
+    $categories = $categories ?? collect();
+    $locations = $locations ?? collect();
+    $buildings = $buildings ?? collect();
+    $users = $users ?? collect();
+    $selectedPjIds = $selectedPjIds ?? [auth()->id()];
+@endphp
+<div class="w-full">
     <!-- Back Button -->
-    <div class="mb-3">
+    <div class="mb-3 flex items-center gap-2">
         <a href="{{ route('admin.tickets.index') }}"
             class="inline-flex items-center text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,6 +21,12 @@
             </svg>
             Kembali ke Daftar Tiket
         </a>
+        @if(auth()->user()->hasPermission('ticket'))
+        <button type="button" onclick="openTicketSubmissionModal()"
+            class="inline-flex items-center text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
+            Edit Pengajuan
+        </button>
+        @endif
     </div>
 
     <!-- Main Content Grid -->
@@ -92,9 +105,15 @@
                                 @endphp
 
                                 @if(file_exists($fullPath) || file_exists($publicPath))
-                                <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket"
-                                    class="max-w-full max-h-full object-contain rounded-lg shadow-sm"
-                                    onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
+                                <a href="{{ asset('storage/' . $photoPath) }}" target="_blank" title="Klik untuk perbesar"
+                                    onclick="openTicketPhoto(event, '{{ asset('storage/' . $photoPath) }}')"
+                                    class="flex items-center justify-center h-full max-h-full max-w-full overflow-hidden cursor-zoom-in group relative">
+                                    <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket - klik untuk perbesar"
+                                        class="max-w-full max-h-36 object-contain rounded-lg shadow-sm group-hover:opacity-90 transition"
+                                        onerror="this.onerror=null; this.closest('a').outerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
+                                    <span
+                                        class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">Perbesar</span>
+                                </a>
                                 @else
                                 <div class="text-center p-4">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
@@ -238,94 +257,38 @@
                 </div>
 
                 <!-- Conversation Content -->
-                <div class="conversation-content h-full flex flex-col">
-                    <div class="conversation-messages flex-grow overflow-y-auto">
-                        @php
-                        $adminResponses = is_array($ticket->admin_responses) ?
-                        $ticket->admin_responses :
-                        (json_decode($ticket->admin_responses, true) ?? []);
+                @php
+                $adminResponses = is_array($ticket->admin_responses) ?
+                $ticket->admin_responses :
+                (json_decode($ticket->admin_responses, true) ?? []);
 
-                        $userReplies = is_array($ticket->user_replies) ?
-                        $ticket->user_replies :
-                        (json_decode($ticket->user_replies, true) ?? []);
+                $userReplies = is_array($ticket->user_replies) ?
+                $ticket->user_replies :
+                (json_decode($ticket->user_replies, true) ?? []);
 
-                        $allResponses = [];
+                $allResponses = [];
 
-                        foreach($adminResponses as $response) {
-                        $response['type'] = 'admin';
-                        $allResponses[] = $response;
-                        }
+                foreach($adminResponses as $response) {
+                $response['type'] = 'admin';
+                $allResponses[] = $response;
+                }
 
-                        foreach($userReplies as $reply) {
-                        $reply['type'] = 'user';
-                        $allResponses[] = $reply;
-                        }
+                foreach($userReplies as $reply) {
+                // Pertahankan aksi asli (confirm/reject) untuk badge — jangan tertimpa 'user'.
+                $reply['action'] = $reply['type'] ?? $reply['action'] ?? null;
+                $reply['type'] = 'user';
+                $allResponses[] = $reply;
+                }
 
-                        usort($allResponses, function($a, $b) {
-                        return strtotime($b['timestamp']) - strtotime($a['timestamp']);
-                        });
-                        @endphp
+                // Chat: urut kronologis (lama di atas, baru di bawah)
+                usort($allResponses, function($a, $b) {
+                return strtotime($a['timestamp']) - strtotime($b['timestamp']);
+                });
 
-                        @if(count($allResponses) > 0)
-                        @foreach($allResponses as $response)
-                        <div class="p-3 border-b border-gray-100">
-                            @if($response['type'] === 'admin')
-                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="text-sm font-medium text-blue-800">{{ $ticket->user->name }}</div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
-                                    </div>
-                                </div>
-                                <p class="text-sm whitespace-pre-line text-gray-800">{{ $response['notes'] ?? '' }}</p>
-                                @if(isset($response['photo']))
-                                <div class="mt-2">
-                                    <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
-                                        class="block">
-                                        <img src="{{ asset('storage/' . $response['photo']) }}" alt="Foto respon admin"
-                                            class="max-h-28 w-auto rounded border border-gray-200 mx-auto hover:opacity-90 transition">
-                                    </a>
-                                </div>
-                                @endif
-                            </div>
-                            @else
-                            <div class="bg-green-50 p-3 rounded-lg border border-green-100">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="text-sm font-medium text-green-800">{{ $ticket->user->name }}</div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($response['timestamp'])->format('d M Y H:i') }}
-                                    </div>
-                                </div>
-                                <p class="text-sm whitespace-pre-line text-gray-800">
-                                    {{ $response['message'] ?? $response['notes'] ?? '' }}</p>
-                                @if(isset($response['photo']))
-                                <div class="mt-2">
-                                    <a href="{{ asset('storage/' . $response['photo']) }}" target="_blank"
-                                        class="block">
-                                        <img src="{{ asset('storage/' . $response['photo']) }}"
-                                            alt="Foto respon pengguna"
-                                            class="max-h-28 w-auto rounded border border-gray-200 mx-auto hover:opacity-90 transition">
-                                    </a>
-                                </div>
-                                @endif
-                            </div>
-                            @endif
-                        </div>
-                        @endforeach
-                        @else
-                        <div class="flex flex-col items-center justify-center h-full p-6 text-center text-gray-500">
-                            <svg class="w-14 h-14 mb-3 text-gray-300" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-                                </path>
-                            </svg>
-                            <p class="text-base font-medium">Belum Ada Respon</p>
-                            <p class="mt-1 text-sm">Tiket ini belum memiliki balasan</p>
-                        </div>
-                        @endif
-                    </div>
-                </div>
+                $pengajuName = $ticket->user->name ?? 'Pengaju';
+                @endphp
+
+                @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $pengajuName])
             </div>
         </div>
     </div>
@@ -437,51 +400,12 @@
     flex-direction: column;
 }
 
-.conversation-content {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.conversation-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 0.75rem;
-    min-height: 350px;
-    max-height: none;
-}
-
-/* Custom scrollbar styles */
-.conversation-messages::-webkit-scrollbar {
-    width: 4px;
-}
-
-.conversation-messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 2px;
-}
-
-.conversation-messages::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 2px;
-}
-
-.conversation-messages::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
-}
-
 @media (min-width: 1024px) {
 
     .ticket-container,
     .conversation-container {
         position: sticky;
         top: 1rem;
-    }
-
-    .conversation-messages {
-        max-height: none;
-        height: calc(100vh - 180px);
     }
 }
 </style>
@@ -535,6 +459,55 @@ document.addEventListener('DOMContentLoaded', function() {
     // Run when images load
     window.addEventListener('load', adjustHeight);
 });
+
+function openTicketPhoto(e, src) {
+    e.preventDefault();
+    const modal = document.getElementById('ticketPhotoModal');
+    const img = document.getElementById('ticketPhotoModalImg');
+    const link = document.getElementById('ticketPhotoModalLink');
+    if (!modal || !img) {
+        window.open(src, '_blank');
+        return;
+    }
+    img.src = src;
+    if (link) link.href = src;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTicketPhoto() {
+    const modal = document.getElementById('ticketPhotoModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeTicketPhoto();
+});
 </script>
 
+<!-- Lightbox Foto Tiket -->
+<div id="ticketPhotoModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50" onclick="if(event.target===this)closeTicketPhoto()">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative max-w-4xl w-full">
+            <button type="button" onclick="closeTicketPhoto()"
+                class="absolute -top-10 right-0 text-white hover:text-gray-300 text-sm flex items-center gap-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Tutup
+            </button>
+            <img id="ticketPhotoModalImg" src="" alt="Foto Tiket"
+                class="max-h-[85vh] w-auto mx-auto rounded-lg shadow-2xl">
+            <div class="text-center mt-3">
+                <a id="ticketPhotoModalLink" href="#" target="_blank" class="text-sm text-blue-300 hover:text-blue-100 underline">
+                    Buka ukuran penuh di tab baru
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@include('admin.tickets._submission-modal')
 @endsection

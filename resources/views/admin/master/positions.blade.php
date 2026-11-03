@@ -3,7 +3,7 @@
 @section('title', 'Manage Positions')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <!-- Search Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
         <form id="filterForm" action="{{ route('admin.master.positions.index') }}" method="GET"
@@ -153,7 +153,7 @@ function openEditModal(id, name, code) {
     document.getElementById('editModal').classList.remove('hidden');
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_code').value = code;
-    document.getElementById('editForm').action = `/admin/master/positions/${id}`;
+    document.getElementById('editForm').action = `/master/positions/${id}`;
 }
 
 function closeEditModal() {

@@ -45,29 +45,19 @@
                 <input type="hidden" name="tanggal" value="{{ $tanggal ?? now()->format('Y-m-d H:i:s') }}">
                 <input type="hidden" name="department_id" value="{{ $departmentId ?? '' }}">
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
-                    <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Pengaju <span class="text-gray-400">(otomatis)</span></label>
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <span class="text-sm font-medium text-gray-900">{{ $unitPengajuName ?? '-' }} ({{ $unitPengajuCode ?? '-' }})</span>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Department ID: {{ $departmentId ?? '-' }} • {{ $user->department ?? '-' }}</p>
+                <div class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Unit Pengaju <span class="text-gray-400">(otomatis)</span></label>
+                    <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">{{ $unitPengajuName ?? '-' }} ({{ $unitPengajuCode ?? '-' }})</span>
                     </div>
-                    <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit Proses</label>
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <span class="text-sm text-gray-500">-</span>
-                        </div>
-                        <input type="hidden" name="unit_proses_code" value="">
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Department ID: {{ $departmentId ?? '-' }} • {{ $user->department ?? '-' }}</p>
                 </div>
-
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
-                        <input type="text" name="kode_inventaris" value="{{ old('kode_inventaris') }}" placeholder="Kode inventaris (opsional)"
-                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        @error('kode_inventaris') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan <span class="text-red-500">*</span></label>
+                        <textarea name="keluhan" rows="4" required placeholder="Jelaskan keluhan / kerusakan..."
+                                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ old('keluhan') }}</textarea>
+                        @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label for="prioritas-input" class="block text-sm font-medium text-gray-700 mb-1">Prioritas <span class="text-red-500">*</span></label>
@@ -79,12 +69,6 @@
                         @error('prioritas') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
-                        <input type="text" name="nama_barang" value="{{ old('nama_barang') }}" placeholder="Nama barang / peralatan"
-                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        @error('nama_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
                     <div>
                         <label for="kategori_order-input" class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
                         <x-searchable-select name="kategori_order" id="kategori_order"
@@ -95,44 +79,24 @@
                     </div>
                     <div>
                         <label for="lokasi-input" class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                        @if(isset($departmentLocation) && $departmentLocation)
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">
-                                    {{ $departmentLocation->name }}
-                                </p>
-                                <p class="text-xs text-gray-500">Otomatis dari departemen Anda</p>
-                            </div>
-                        </div>
-                        <input type="hidden" name="lokasi" value="{{ $departmentLocation->id }}">
-                        @else
                         <x-searchable-select name="lokasi" id="lokasi"
-                            :options="$locations->pluck('name', 'id')->toArray()" :selected="old('lokasi')"
+                            :options="$locations->pluck('name', 'id')->toArray()" :selected="old('lokasi', isset($departmentLocation) && $departmentLocation ? $departmentLocation->id : null)"
                             placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi —"
                             accent="green" />
-                        @endif
                         @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900" id="gedung_display">
-                                    {{ $departmentBuilding?->name ?? '-' }}
-                                </p>
-                                @if(isset($departmentBuilding) && $departmentBuilding)
-                                <p class="text-xs text-gray-500">Otomatis dari departemen</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan <span class="text-red-500">*</span></label>
-                        <textarea name="keluhan" rows="4" required placeholder="Jelaskan keluhan / kerusakan..."
-                                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ old('keluhan') }}</textarea>
-                        @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        <select name="gedung" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <option value="">— Pilih Gedung —</option>
+                            @foreach(($buildings ?? \App\Models\Building::where('status', 1)->orderBy('name')->get()) as $bld)
+                                <option value="{{ $bld->name }}" {{ old('gedung', $departmentBuilding?->name ?? '') == $bld->name ? 'selected' : '' }}>{{ $bld->name }}</option>
+                            @endforeach
+                        </select>
+                        @if(isset($departmentBuilding) && $departmentBuilding)
+                        <p class="text-xs text-gray-500 mt-1">Otomatis dari departemen, dapat diubah.</p>
+                        @endif
                     </div>
 
                     <div>

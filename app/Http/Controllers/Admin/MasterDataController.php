@@ -38,26 +38,64 @@ class MasterDataController extends Controller
         ));
     }
 
+    /**
+     * Canonical type map: menerima varian dash/underscore dari route.
+     * key = tipe ternormalisasi, value = [model, relasi eager, kolom search].
+     */
+    protected function masterMap(): array
+    {
+        return [
+            'categories' => [Category::class, ['unitProses'], ['name']],
+            'departments' => [Department::class, ['location', 'building'], ['name', 'code']],
+            'buildings' => [Building::class, [], ['name', 'code']],
+            'locations' => [Location::class, [], ['name']],
+            'unit_proses' => [UnitProses::class, ['categories'], ['name', 'code']],
+            'positions' => [Position::class, [], ['name', 'code']],
+            'kategori_order' => [KategoriOrder::class, [], ['name', 'code']],
+        ];
+    }
+
+    protected function normalizeType(string $type): ?string
+    {
+        $key = str_replace('-', '_', strtolower($type));
+
+        return array_key_exists($key, $this->masterMap()) ? $key : null;
+    }
+
     public function getData(Request $request, $type)
     {
-        $limit = $request->input('limit', 5);
+        $normalized = $this->normalizeType($type);
+        if (! $normalized) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tipe data tidak valid.',
+            ], 422);
+        }
+
+        [$model, $with, $searchColumns] = $this->masterMap()[$normalized];
+
+        $limit = (int) $request->input('limit', 5);
+        $limit = max(1, min(50, $limit));
         $status = $request->input('status');
+        $search = trim((string) $request->input('search', ''));
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
 
-        // Query untuk setiap model
-        $query = match ($type) {
-            'categories' => Category::query(),
-            'departments' => Department::query(),
-            'buildings' => Building::query(),
-            'locations' => Location::query(),
-            'positions' => Position::query(),
-            'kategori-order' => KategoriOrder::query(),
-        };
+        $query = $model::query()->with($with);
 
         // Terapkan filter
         if ($status !== null && $status !== '') {
             $query->where('status', $status);
+        }
+
+        if ($search !== '') {
+            $lower = mb_strtolower($search);
+            $query->where(function ($q) use ($searchColumns, $lower) {
+                foreach ($searchColumns as $i => $col) {
+                    $method = $i === 0 ? 'whereRaw' : 'orWhereRaw';
+                    $q->{$method}("LOWER({$col}) LIKE ?", ["%{$lower}%"]);
+                }
+            });
         }
 
         if ($fromDate) {
@@ -68,12 +106,12 @@ class MasterDataController extends Controller
             $query->whereDate('created_at', '<=', $toDate);
         }
 
-        // Gunakan limit() sebagai pengganti take() agar lebih fleksibel
         $data = $query->latest()->limit($limit)->get();
 
-        // Render partial view
-        $html = view("admin.master.partials.{$type}-table", [
-            $type => $data,
+        // Render satu partial generik (tanpa file per-tipe) agar kontrak {html} tetap terjaga.
+        $html = view('admin.master.partials.generic-table', [
+            'type' => $normalized,
+            'rows' => $data,
         ])->render();
 
         return response()->json([
@@ -121,6 +159,10 @@ class MasterDataController extends Controller
             case 'kategori-order':
                 $model = KategoriOrder::whereIn('id', $selected);
                 $typeMessage = 'Kategori Order';
+                break;
+            case 'positions':
+                $model = Position::whereIn('id', $selected);
+                $typeMessage = 'Posisi';
                 break;
             default:
                 return redirect()->back()->with('error', 'Tipe data tidak valid');

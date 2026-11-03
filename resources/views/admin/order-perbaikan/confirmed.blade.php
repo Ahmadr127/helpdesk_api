@@ -3,7 +3,7 @@
 @section('title', 'Order Perbaikan - Confirmed')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="w-full">
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <!-- Header with back button -->
         <div
@@ -193,8 +193,8 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_penanggung_jawab }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_barang }}
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ Str::limit($order->keluhan, 50) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span

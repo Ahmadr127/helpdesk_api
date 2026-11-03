@@ -3,7 +3,7 @@
 @section('title', 'Report SIRS')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="w-full">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Tiket Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
