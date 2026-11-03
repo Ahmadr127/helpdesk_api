@@ -60,7 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/unit-proses', [LookupController::class, 'unitProses'])->name('unit-proses');
         Route::get('/positions', [LookupController::class, 'positions'])->name('positions');
         Route::get('/priorities', [LookupController::class, 'priorities'])->name('priorities');
+        Route::get('/users', [LookupController::class, 'users'])->name('users');
         Route::get('/kategori-order', [LookupController::class, 'kategoriOrders'])->name('kategori-order');
+        Route::get('/kategori-order-users', [LookupController::class, 'kategoriOrderUsers'])->name('kategori-order-users');
         Route::get('/ticket-statuses', [LookupController::class, 'ticketStatuses'])->name('ticket-statuses');
         Route::get('/order-statuses', [LookupController::class, 'orderStatuses'])->name('order-statuses');
     });
@@ -134,6 +136,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{ticket}', [AdminTicketController::class, 'show'])->name('show');
             Route::post('/{ticket}/respond', [AdminTicketController::class, 'respond'])->name('respond');
             Route::put('/{ticket}', [AdminTicketController::class, 'update'])->name('update');
+            Route::put('/{ticket}/submission', [AdminTicketController::class, 'updateSubmission'])->name('updateSubmission');
         });
     });
 

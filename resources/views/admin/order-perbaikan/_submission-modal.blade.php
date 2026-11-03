@@ -10,32 +10,48 @@
             @csrf
             @method('PUT')
 
+            @if($errors->any())
+                <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Keluhan / Deskripsi Kerusakan</label>
-                <textarea name="keluhan" rows="4" disabled class="w-full px-3 py-2.5 border border-gray-200 bg-gray-100 rounded-lg text-sm text-gray-600">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
-                <input type="hidden" name="keluhan" value="{{ $orderPerbaikan->keluhan }}">
+                <textarea name="keluhan" rows="4" disabled class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-100">{{ old('keluhan', $orderPerbaikan->keluhan) }}</textarea>
+                @error('keluhan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
-                    <select disabled class="w-full px-3 py-2.5 border border-gray-200 bg-gray-100 rounded-lg text-sm text-gray-600">
-                        <option selected>{{ $orderPerbaikan->kategori_order ?? '-' }}</option>
+                    <select name="kategori_order" disabled class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-100">
+                        <option value="">- Pilih kategori -</option>
+                        @foreach(($kategoriOrders ?? collect()) as $kategori)
+                            <option value="{{ $kategori->name }}" {{ old('kategori_order', $orderPerbaikan->kategori_order) === $kategori->name ? 'selected' : '' }}>
+                                {{ $kategori->name }}
+                            </option>
+                        @endforeach
                     </select>
-                    <input type="hidden" name="kategori_order" value="{{ $orderPerbaikan->kategori_order }}">
+                    @error('kategori_order') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                    <select disabled class="w-full px-3 py-2.5 border border-gray-200 bg-gray-100 rounded-lg text-sm text-gray-600">
-                        <option selected>{{ optional(($locations ?? collect())->firstWhere('id', $orderPerbaikan->lokasi))->name ?? '-' }}</option>
+                    <select name="lokasi" disabled class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-100">
+                        <option value="">- Pilih lokasi -</option>
+                        @foreach(($locations ?? collect()) as $lokasi)
+                            <option value="{{ $lokasi->id }}" {{ (string) old('lokasi', $orderPerbaikan->lokasi) === (string) $lokasi->id ? 'selected' : '' }}>
+                                {{ $lokasi->name }}
+                            </option>
+                        @endforeach
                     </select>
-                    <input type="hidden" name="lokasi" value="{{ $orderPerbaikan->lokasi }}">
+                    @error('lokasi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas (Urgensi) - dapat diubah</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas (Urgensi)</label>
                     <select name="prioritas" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm">
                         <option value="RENDAH" {{ old('prioritas', $orderPerbaikan->prioritas) == 'RENDAH' ? 'selected' : '' }}>RENDAH</option>
                         <option value="SEDANG" {{ old('prioritas', $orderPerbaikan->prioritas) == 'SEDANG' ? 'selected' : '' }}>SEDANG</option>
@@ -44,14 +60,18 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional)</label>
-                    <input type="file" disabled class="w-full text-sm text-gray-500">
+                    <input type="file" name="foto" accept="image/*" disabled class="w-full text-sm text-gray-500 bg-gray-100">
+                    @if($orderPerbaikan->foto)
+                        <a href="{{ Storage::url($orderPerbaikan->foto) }}" target="_blank" class="text-xs text-indigo-600 hover:underline">Lihat foto saat ini</a>
+                    @endif
+                    @error('foto') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Petugas Penanggung Jawab (bisa lebih dari satu)</label>
-                <input type="text" id="orderPjSearch" placeholder="Cari nama petugas..." class="w-full mb-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm" oninput="filterPjOptions('orderPjSearch','orderPjSelect')">
-                <select id="orderPjSelect" name="penanggung_jawab_ids[]" multiple size="6" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm">
+                <input type="text" id="orderPjSearch" disabled placeholder="Cari nama petugas..." class="w-full mb-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-100">
+                <select id="orderPjSelect" name="penanggung_jawab_ids[]" multiple size="6" disabled class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-100">
                     @foreach(($users ?? collect()) as $u)
                         <option value="{{ $u->id }}" {{ in_array($u->id, old('penanggung_jawab_ids', $selectedPjIds ?? [auth()->id()])) ? 'selected' : '' }}>{{ $u->name }}</option>
                     @endforeach

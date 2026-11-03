@@ -29,6 +29,7 @@ class OrderPerbaikan extends Model
         'nama_peminta',
         'kategori_order',
         'lokasi',
+        'gedung',
         'keluhan',
         'prioritas',
         'status',
@@ -71,6 +72,15 @@ class OrderPerbaikan extends Model
     public function penanggungJawab()
     {
         return $this->belongsToMany(User::class, 'order_perbaikan_penanggung_jawab', 'order_perbaikan_id', 'user_id')->withTimestamps();
+    }
+
+    /**
+     * Referensi kategori order (kolom string `kategori_order` = nama).
+     * Dipakai untuk visibilitas berbasis assignment/PJ.
+     */
+    public function kategoriOrderRef()
+    {
+        return $this->belongsTo(KategoriOrder::class, 'kategori_order', 'name');
     }
 
     public function getNamaPenanggungJawabAttribute()

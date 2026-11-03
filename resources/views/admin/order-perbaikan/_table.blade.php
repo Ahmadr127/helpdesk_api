@@ -11,7 +11,7 @@
                 Peminta
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Barang
+                Keluhan
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategori
@@ -36,8 +36,8 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ $order->nama_peminta }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ $order->nama_barang }}
+            <td class="px-6 py-4 text-sm text-gray-500">
+                {{ \Illuminate\Support\Str::limit($order->keluhan, 40) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ $order->kategori_order ?? '-' }}

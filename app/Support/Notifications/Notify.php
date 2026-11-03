@@ -141,6 +141,42 @@ class Notify
         }
     }
 
+    /**
+     * Notify sekumpulan user tertentu (mis. PJ order yang ditugaskan).
+     * Dipakai agar notifikasi order hanya sampai ke petugas yang ditugaskan.
+     */
+    public static function orderToUsers(OrderPerbaikan $order, string $event, User $actor, iterable $users): void
+    {
+        try {
+            $tokens = [];
+            foreach ($users as $user) {
+                $tokens = array_merge($tokens, $user->getAllFcmTokens());
+            }
+            $tokens = array_values(array_unique(array_filter($tokens)));
+
+            if (empty($tokens)) {
+                Log::channel(self::logChannel())->info('notify orderToUsers no tokens', ['event' => $event, 'order_id' => $order->id]);
+
+                return;
+            }
+
+            [$title, $body, $data] = self::buildOrderUserPayload($order, $event, $actor);
+
+            $dto = FirebaseNotificationData::make(title: $title, body: $body, data: $data, image: self::orderImageUrl($order));
+
+            FirebaseNotification::queueToTokens($tokens, $dto);
+
+            Log::channel(self::logChannel())->info('notify orderToUsers queued', [
+                'event' => $event,
+                'order_id' => $order->id,
+                'users_count' => is_countable($users) ? count($users) : null,
+                'tokens_count' => count($tokens),
+            ]);
+        } catch (\Throwable $e) {
+            Log::channel(self::logChannel())->error('notify orderToUsers failed', ['error' => $e->getMessage(), 'order_id' => $order->id ?? null]);
+        }
+    }
+
     public static function orderToUser(OrderPerbaikan $order, string $event, User $actor): void
     {
         try {
@@ -232,6 +268,8 @@ class Notify
         $follow = $order->follow_up ? mb_strimwidth($order->follow_up, 0, 80, '...') : '';
 
         return match ($event) {
+            'order_created' => ["Order Baru {$order->nomor}", "{$actor->name}: ".mb_strimwidth((string) $order->keluhan, 0, 80, '...'), array_merge($data, ['type' => $event])],
+            'order_assigned' => ["Order Ditugaskan {$order->nomor}", "Anda ditugaskan menangani order ini: ".mb_strimwidth((string) $order->keluhan, 0, 80, '...'), array_merge($data, ['type' => $event])],
             'order_status_updated' => ["Order {$order->nomor} → {$order->status}", $follow ?: "Status order diperbarui ke {$order->status} oleh {$actor->name}", array_merge($data, ['type' => $event])],
             'order_confirmed' => ["Order Dikonfirmasi {$order->nomor}", 'Order Anda telah dikonfirmasi', array_merge($data, ['type' => $event])],
             'order_rejected' => ["Order Ditolak {$order->nomor}", $follow ?: 'Order ditolak', array_merge($data, ['type' => $event])],

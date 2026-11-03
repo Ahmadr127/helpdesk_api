@@ -3,6 +3,7 @@
 namespace App\Services\Api;
 
 use App\Models\Department;
+use App\Models\KategoriOrder;
 use App\Models\OrderPerbaikan;
 
 use App\Models\User;
@@ -12,14 +13,15 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderPerbaikanService
 {
-    public function listForUser(User $user, array $filters = [], int $perPage = 15)
+    public function listForUser(User $user, array $filters = [], int $perPage = 15, bool $forceOwner = false)
     {
-        $canViewAll = $user->hasPermission('order.view_all') || $user->isAdminUmum() || $user->isAdminIT();
+        $canViewAll = ! $forceOwner
+            && ($user->hasPermission('order.view_all') || $user->isAdminUmum() || $user->isAdminIT());
 
         if ($canViewAll) {
             $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'penanggungJawab']);
         } else {
-            $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building'])->where('created_by', $user->id);
+            $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'penanggungJawab'])->where('created_by', $user->id);
         }
 
         if (! empty($filters['status']) && $filters['status'] !== 'all') {
@@ -46,8 +48,9 @@ class OrderPerbaikanService
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
-    public function listForAdmin(array $filters = [], int $perPage = 15)
+    public function listForAdmin(array $filters = [], int $perPage = 15, ?User $viewer = null)
     {
+        $viewer ??= auth()->user();
         $query = OrderPerbaikan::with(['creator', 'history', 'location', 'penanggungJawab', 'department', 'department.location', 'department.building']);
 
         if (! empty($filters['search'])) {
@@ -98,6 +101,25 @@ class OrderPerbaikanService
             'sedangOrders' => OrderPerbaikan::where('prioritas', 'SEDANG')->count(),
             'tinggiOrders' => OrderPerbaikan::where('prioritas', 'TINGGI/URGENT')->count(),
         ];
+    }
+
+    /**
+     * Default PJ untuk sebuah kategori order: user yang ditugaskan pada
+     * kategori tsb. Assignment unit/departemen diabaikan.
+     */
+    public static function defaultPjIdsFor(?string $kategori): array
+    {
+        $name = trim((string) $kategori);
+        if ($name === '') {
+            return [];
+        }
+
+        $kategoriOrder = KategoriOrder::where('name', $name)->where('status', 1)->first();
+        if (! $kategoriOrder) {
+            return [];
+        }
+
+        return $kategoriOrder->users()->where('users.status', 1)->pluck('users.id')->all();
     }
 
     public function userStatistics(User $user): array
@@ -175,10 +197,10 @@ class OrderPerbaikanService
                 'nomor' => $nomor,
                 'tanggal' => $validated['tanggal'],
                 'department_id' => $departmentId,
-                'nip_peminta' => $user->nip ?? null,
                 'nama_peminta' => $user->name,
                 'kategori_order' => $validated['kategori_order'] ?? null,
                 'lokasi' => $validated['lokasi'] ?? null,
+                'gedung' => $validated['gedung'] ?? null,
                 'keluhan' => $validated['keluhan'],
                 'prioritas' => $validated['prioritas'],
                 'foto' => $fotoPath,
@@ -186,20 +208,38 @@ class OrderPerbaikanService
                 'created_by' => $user->id,
             ]);
 
+            // PJ otomatis mengikuti kategori order (user yang ditugaskan).
+            $pjIds = self::defaultPjIdsFor($order->kategori_order);
+            if (! empty($pjIds)) {
+                $order->penanggungJawab()->sync($pjIds);
+            }
+
             $order->history()->create([
                 'status' => 'open',
                 'keterangan' => '',
                 'created_by' => $user->id,
             ]);
 
-            return $order->load(['creator', 'history', 'location', 'department', 'department.location', 'department.building']);
+            return $order->fresh()->load(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'penanggungJawab']);
         });
 
-        // 1 baris FCM ke Admin Umum + DB inbox
-        Notify::orderToAdmins($order, $user);
-        $admins = User::adminUmum()->get();
-        foreach ($admins as $adm) {
-            $adm->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        // Notifikasi hanya ke PJ yang ditugaskan pada kategori order.
+        // Fallback ke Admin Umum bila kategori belum punya petugas.
+        $targets = $order->penanggungJawab;
+        if ($targets->isEmpty()) {
+            $targets = User::adminUmum()->get();
+        }
+        Notify::orderToUsers($order, 'order_created', $user, $targets);
+        foreach ($targets as $target) {
+            try {
+                $target->notify(new \App\Notifications\OrderPerbaikanAssigned($order));
+            } catch (\Throwable $e) {
+                \Log::warning('Gagal kirim notifikasi PJ order', [
+                    'order_id' => $order->id,
+                    'user_id' => $target->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         return $order;
@@ -227,11 +267,20 @@ class OrderPerbaikanService
             $order->update([
                 'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
                 'lokasi' => $validated['lokasi'] ?? $order->lokasi,
-                'keluhan' => $validated['keluhan'],
+                'gedung' => $validated['gedung'] ?? $order->gedung,
+                'keluhan' => $validated['keluhan'] ?? $order->keluhan,
                 'prioritas' => $validated['prioritas'],
                 'foto' => $validated['foto'] ?? $order->foto,
                 'updated_by' => $user->id,
             ]);
+
+            // Kategori berubah → PJ mengikuti user yang ditugaskan di kategori itu.
+            if (! empty($validated['kategori_order'])) {
+                $pjIds = self::defaultPjIdsFor($validated['kategori_order']);
+                if (! empty($pjIds)) {
+                    $order->penanggungJawab()->sync($pjIds);
+                }
+            }
 
             $order->history()->create([
                 'status' => $order->status,
@@ -239,13 +288,16 @@ class OrderPerbaikanService
                 'created_by' => $user->id,
             ]);
 
-            return $order->fresh()->load(['creator', 'history', 'location']);
+            return $order->fresh()->load(['creator', 'history', 'location', 'penanggungJawab']);
         });
     }
 
     public function updateAdminOrder(User $admin, OrderPerbaikan $order, array $validated, $fotoFile = null, array $pjIds = []): OrderPerbaikan
     {
         return DB::transaction(function () use ($admin, $order, $validated, $fotoFile, $pjIds) {
+            $oldPjNames = $order->penanggungJawab()->orderBy('name')->pluck('name')->all();
+            $oldPjIds = $order->penanggungJawab()->pluck('users.id')->all();
+
             if ($fotoFile) {
                 if ($order->foto) {
                     Storage::disk('public')->delete($order->foto);
@@ -258,20 +310,59 @@ class OrderPerbaikanService
             $order->update([
                 'kategori_order' => $validated['kategori_order'] ?? $order->kategori_order,
                 'lokasi' => $validated['lokasi'] ?? $order->lokasi,
-                'keluhan' => $validated['keluhan'],
+                'gedung' => $validated['gedung'] ?? $order->gedung,
+                'keluhan' => $validated['keluhan'] ?? $order->keluhan,
                 'prioritas' => $validated['prioritas'],
                 'foto' => $validated['foto'] ?? $order->foto,
                 'updated_by' => $admin->id,
             ]);
 
+            if (! empty($pjIds)) {
+                $ids = array_values(array_unique($pjIds));
+            } else {
+                // Belum ada PJ eksplisit → ikuti user yang ditugaskan di kategori.
+                $defaultPj = self::defaultPjIdsFor($validated['kategori_order'] ?? $order->kategori_order);
+                if (! empty($defaultPj)) {
+                    $ids = $defaultPj;
+                } else {
+                    $existing = $order->penanggungJawab()->pluck('id')->all();
+                    $ids = empty($existing) ? [$admin->id] : array_values(array_unique($existing));
+                }
+            }
+            $order->penanggungJawab()->sync($ids);
+
+            $newPjNames = $order->penanggungJawab()->orderBy('name')->pluck('name')->all();
+            $keterangan = 'Order diperbarui via Web (admin)';
+            if ($oldPjNames !== $newPjNames) {
+                $keterangan .= '. PJ: '.(empty($oldPjNames) ? '-' : implode(', ', $oldPjNames))
+                    .' -> '.(empty($newPjNames) ? '-' : implode(', ', $newPjNames));
+
+                // Beri tahu PJ baru setelah transaksi commit (tanpa memblokir edit).
+                DB::afterCommit(function () use ($order, $admin, $ids, $oldPjIds) {
+                    try {
+                        $addedIds = array_values(array_diff($ids, $oldPjIds));
+                        if (empty($addedIds)) {
+                            return;
+                        }
+                        $assigned = User::whereIn('id', $addedIds)->get();
+                        Notify::orderToUsers($order, 'order_assigned', $admin, $assigned);
+                        foreach ($assigned as $pj) {
+                            $pj->notify(new \App\Notifications\OrderPerbaikanAssigned($order));
+                        }
+                    } catch (\Throwable $e) {
+                        \Log::warning('Gagal kirim notifikasi PJ baru order', [
+                            'order_id' => $order->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                });
+            }
+
             $order->history()->create([
                 'status' => $order->status,
-                'keterangan' => 'Order diperbarui via Web (admin)',
+                'keterangan' => $keterangan,
                 'created_by' => $admin->id,
             ]);
-
-            $ids = empty($pjIds) ? [$admin->id] : array_values(array_unique($pjIds));
-            $order->penanggungJawab()->sync($ids);
 
             return $order->fresh()->load(['creator', 'history', 'location', 'penanggungJawab']);
         });

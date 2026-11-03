@@ -63,7 +63,7 @@ class OrderPerbaikanController extends Controller
     public function myorder(Request $request, OrderPerbaikanService $service)
     {
         $filters = $request->only(['search', 'status']);
-        $orders = $service->listForUser(auth()->user(), $filters, 10)->withQueryString();
+        $orders = $service->listForUser(auth()->user(), $filters, 10, true)->withQueryString();
 
         return view('admin.order-perbaikan.myorder.index', compact('orders'));
     }
@@ -82,7 +82,6 @@ class OrderPerbaikanController extends Controller
             return response()->json([
                 'nomor' => $orderPerbaikan->nomor,
                 'status' => $orderPerbaikan->status,
-                'nama_barang' => $orderPerbaikan->nama_barang,
                 'kategori_order' => $orderPerbaikan->kategori_order,
                 'keluhan' => $orderPerbaikan->keluhan,
                 'prioritas' => $orderPerbaikan->prioritas,
@@ -318,6 +317,8 @@ class OrderPerbaikanController extends Controller
 
         $locations = Location::orderBy('name', 'asc')->get();
         $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        // Picker PJ menampilkan semua user aktif; assignment kategori hanya
+        // menentukan PJ default order (tidak membatasi daftar).
         $users = \App\Models\User::where('status', 1)->orderBy('name')->get();
 
         $selectedPjIds = $orderPerbaikan->penanggungJawab->pluck('id')->toArray();

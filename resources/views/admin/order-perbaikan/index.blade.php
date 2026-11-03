@@ -164,7 +164,7 @@
                         </th>
                         <th scope="col"
                             class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Barang
+                            Keluhan
                         </th>
                         <th scope="col"
                             class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -196,8 +196,8 @@
                         <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_peminta }}
                         </td>
-                        <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_barang }}
+                        <td class="px-4 py-2.5 text-sm text-gray-500">
+                            {{ \Illuminate\Support\Str::limit($order->keluhan, 40) }}
                         </td>
                         <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->location ? $order->location->name : '-' }}

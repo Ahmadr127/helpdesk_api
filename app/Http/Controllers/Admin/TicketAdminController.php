@@ -252,7 +252,7 @@ class TicketAdminController extends Controller
      */
     public function myticket(Request $request)
     {
-        $query = Ticket::with(['user', 'category', 'department'])
+        $query = Ticket::with(['user'])
             ->where('user_id', auth()->id());
 
         if ($request->filled('search')) {

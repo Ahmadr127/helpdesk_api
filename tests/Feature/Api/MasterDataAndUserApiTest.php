@@ -144,6 +144,60 @@ class MasterDataAndUserApiTest extends TestCase
         $this->assertSoftDeleted('kategori_order', ['id' => $id]);
     }
 
+    public function test_kategori_order_assignment_user_and_department()
+    {
+        $h = $this->authHeader($this->admin);
+        $dept = Department::where('code', 'IT')->first();
+
+        // create dengan assignment ke user + unit
+        $create = $this->withHeaders($h)->postJson('/api/admin/master/kategori_order', [
+            'name' => 'Jaringan', 'code' => 'JRG', 'status' => true,
+            'user_ids' => [$this->user->id],
+            'department_ids' => [$dept->id],
+        ]);
+        $create->assertStatus(201);
+        $id = $create->json('data.id');
+
+        $this->assertDatabaseHas('kategori_order_user', [
+            'kategori_order_id' => $id, 'user_id' => $this->user->id,
+        ]);
+        $this->assertDatabaseHas('kategori_order_department', [
+            'kategori_order_id' => $id, 'department_id' => $dept->id,
+        ]);
+
+        // show mengembalikan relasi assignment
+        $show = $this->withHeaders($h)->getJson("/api/admin/master/kategori_order/{$id}");
+        $show->assertStatus(200)
+            ->assertJsonPath('data.users.0.id', $this->user->id)
+            ->assertJsonPath('data.departments.0.id', $dept->id);
+
+        // update: lepas semua assignment (array kosong)
+        $upd = $this->withHeaders($h)->putJson("/api/admin/master/kategori_order/{$id}", [
+            'name' => 'Jaringan', 'code' => 'JRG', 'status' => true,
+            'user_ids' => [], 'department_ids' => [],
+        ]);
+        $upd->assertStatus(200);
+        $this->assertDatabaseMissing('kategori_order_user', ['kategori_order_id' => $id]);
+        $this->assertDatabaseMissing('kategori_order_department', ['kategori_order_id' => $id]);
+    }
+
+    public function test_lookup_kategori_order_returns_all_active()
+    {
+        KategoriOrder::create(['name' => 'Umum', 'code' => 'UMM', 'status' => 1]);
+        $scoped = KategoriOrder::create(['name' => 'Khusus', 'code' => 'KHS', 'status' => 1]);
+        $scoped->users()->sync([$this->user->id]);
+        KategoriOrder::create(['name' => 'Nonaktif', 'code' => 'NON', 'status' => 0]);
+
+        // Assignment user/unit tidak lagi membatasi pilihan kategori;
+        // hanya status aktif yang disaring.
+        $h = $this->authHeader($this->admin);
+        $resp = $this->withHeaders($h)->getJson('/api/lookup/kategori-order');
+        $resp->assertStatus(200)
+            ->assertJsonFragment(['name' => 'Umum'])
+            ->assertJsonFragment(['name' => 'Khusus'])
+            ->assertJsonMissing(['name' => 'Nonaktif']);
+    }
+
     public function test_user_cannot_access_admin_master()
     {
         $h = $this->authHeader($this->user);

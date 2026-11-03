@@ -65,7 +65,7 @@ class TicketService
 
     public function listForAdmin(array $filters = [], int $perPage = 15)
     {
-        $query = Ticket::with(['user', 'category', 'department']);
+        $query = Ticket::with(['user']);
 
         if (! empty($filters['exclude_confirmed'])) {
             $query->whereNotIn('status', ['confirmed']);
@@ -136,7 +136,7 @@ class TicketService
      */
     public function history(array $filters = [], int $perPage = 15)
     {
-        $query = Ticket::with(['user', 'category', 'department'])
+        $query = Ticket::with(['user'])
             ->where('status', 'confirmed')
             ->where('user_confirmation', true);
 

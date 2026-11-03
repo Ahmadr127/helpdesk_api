@@ -58,6 +58,8 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Kode</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Petugas (PJ)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Dibuat Pada</th>
@@ -74,6 +76,14 @@
                             </td>
                             <td class="px-6 py-4">{{ $kategori->name }}</td>
                             <td class="px-6 py-4">{{ $kategori->code ?? '-' }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                @php($pjNames = $kategori->users->pluck('name')->all())
+                                @if(count($pjNames))
+                                    {{ implode(', ', $pjNames) }}
+                                @else
+                                    <span class="text-gray-400">Belum ada petugas</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2 py-1 text-xs rounded-full 
@@ -161,7 +171,7 @@
                         <option value="{{ $u->id }}">{{ $u->name }}</option>
                     @endforeach
                 </select>
-                <p class="text-xs text-gray-500 mt-1">Kosongkan = semua user.</p>
+                <p class="text-xs text-gray-500 mt-1">User terpilih otomatis menjadi Petugas Penanggung Jawab (PJ) untuk order dengan kategori ini.</p>
             </div>
 
             <div class="mb-4">
@@ -172,7 +182,7 @@
                         <option value="{{ $d->id }}">{{ $d->name }}</option>
                     @endforeach
                 </select>
-                <p class="text-xs text-gray-500 mt-1">Kosongkan = semua unit.</p>
+                <p class="text-xs text-gray-500 mt-1">Saat ini tidak dipakai untuk penentuan PJ (PJ hanya dari penugasan user).</p>
             </div>
 
             <div class="flex justify-end space-x-3">

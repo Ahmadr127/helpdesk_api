@@ -60,11 +60,6 @@ class Ticket extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function category()
-    {
-        return $this->belongsTo(Category::class, 'category_id');
-    }
-
     public function categoryRelation()
     {
         return $this->belongsTo(Category::class, 'category_id');
@@ -80,24 +75,9 @@ class Ticket extends Model
         return $this->belongsTo(Building::class, 'building_id');
     }
 
-    public function location()
-    {
-        return $this->belongsTo(Location::class, 'location_id');
-    }
-
     public function locationRelation()
     {
         return $this->belongsTo(Location::class, 'location_id');
-    }
-
-    public function building()
-    {
-        return $this->belongsTo(Building::class, 'building_id');
-    }
-
-    public function department()
-    {
-        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function photos()

@@ -55,7 +55,7 @@ class TicketController extends BaseApiController
             return $this->error('Unauthorized', 403);
         }
 
-        return $this->success(new TicketResource($ticket->load(['user', 'photos'])), 'Detail ticket');
+        return $this->success(new TicketResource($ticket->load(['user', 'photos', 'penanggungJawab'])), 'Detail ticket');
     }
 
     public function update(UpdateTicketRequest $request, Ticket $ticket)

@@ -35,6 +35,11 @@ class TicketResource extends JsonResource
             'opened_at' => $this->opened_at,
             'in_progress_at' => $this->in_progress_at,
             'closed_at' => $this->closed_at,
+            'penanggung_jawab' => $this->whenLoaded('penanggungJawab', fn () => $this->penanggungJawab->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+            ])->values()),
+            'penanggung_jawab_ids' => $this->whenLoaded('penanggungJawab', fn () => $this->penanggungJawab->pluck('id')->values()),
             'photos' => $this->whenLoaded('photos', function () {
                 return $this->photos->map(fn ($p) => [
                     'id' => $p->id,
