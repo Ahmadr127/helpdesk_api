@@ -30,7 +30,7 @@ class OrderPerbaikanAssigned extends Notification
             'deep_link' => "helpdesk://order/{$this->orderPerbaikan->id}",
             'url' => route('user.administrasi-umum.order-perbaikan.show', $this->orderPerbaikan),
             'title' => "Order {$this->orderPerbaikan->nomor} ditugaskan",
-            'message' => "Anda ditugaskan menangani order {$this->orderPerbaikan->nomor}",
+            'message' => "Anda ditugaskan menangani order ini",
         ];
     }
 }

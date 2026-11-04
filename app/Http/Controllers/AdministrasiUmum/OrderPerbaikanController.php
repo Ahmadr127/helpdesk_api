@@ -336,7 +336,7 @@ class OrderPerbaikanController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->updateAdminOrder(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), $request->input('penanggung_jawab_ids', []));
+            $service->updateAdminOrder(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), $request->input('penanggung_jawab_ids', []), 'Web');
 
             return redirect()->route('admin.order-perbaikan.show', $orderPerbaikan)
                 ->with('success', 'Pengajuan order berhasil diperbarui.');

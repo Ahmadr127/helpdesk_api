@@ -37,6 +37,7 @@ class OrderPerbaikan extends Model
         'foto',
         'created_by',
         'updated_by',
+        'closed_at',
     ];
 
     protected $casts = [

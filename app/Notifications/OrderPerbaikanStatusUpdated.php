@@ -65,7 +65,7 @@ class OrderPerbaikanStatusUpdated extends Notification
             'deep_link' => "helpdesk://order/{$this->orderPerbaikan->id}",
             'url' => route('user.administrasi-umum.order-perbaikan.show', $this->orderPerbaikan),
             'title' => "Order {$this->orderPerbaikan->nomor} - ".ucfirst($this->orderPerbaikan->status),
-            'message' => "Order perbaikan {$this->orderPerbaikan->nomor} telah diupdate ke status ".
+            'message' => "Order perbaikan telah diupdate ke status ".
                         strtoupper($this->orderPerbaikan->status),
         ];
     }

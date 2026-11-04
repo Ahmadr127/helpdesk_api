@@ -292,9 +292,9 @@ class OrderPerbaikanService
         });
     }
 
-    public function updateAdminOrder(User $admin, OrderPerbaikan $order, array $validated, $fotoFile = null, array $pjIds = []): OrderPerbaikan
+    public function updateAdminOrder(User $admin, OrderPerbaikan $order, array $validated, $fotoFile = null, array $pjIds = [], string $source = 'API'): OrderPerbaikan
     {
-        return DB::transaction(function () use ($admin, $order, $validated, $fotoFile, $pjIds) {
+        return DB::transaction(function () use ($admin, $order, $validated, $fotoFile, $pjIds, $source) {
             $oldPjNames = $order->penanggungJawab()->orderBy('name')->pluck('name')->all();
             $oldPjIds = $order->penanggungJawab()->pluck('users.id')->all();
 
@@ -332,7 +332,7 @@ class OrderPerbaikanService
             $order->penanggungJawab()->sync($ids);
 
             $newPjNames = $order->penanggungJawab()->orderBy('name')->pluck('name')->all();
-            $keterangan = 'Order diperbarui via Web (admin)';
+            $keterangan = 'Order diperbarui via '.$source.' (admin)';
             if ($oldPjNames !== $newPjNames) {
                 $keterangan .= '. PJ: '.(empty($oldPjNames) ? '-' : implode(', ', $oldPjNames))
                     .' -> '.(empty($newPjNames) ? '-' : implode(', ', $newPjNames));
@@ -407,6 +407,9 @@ class OrderPerbaikanService
                 ];
                 if (! empty($data['prioritas'])) {
                     $updateData['prioritas'] = $data['prioritas'];
+                }
+                if ($data['status'] === 'tutup') {
+                    $updateData['closed_at'] = now();
                 }
                 $order->update($updateData);
             }
@@ -560,5 +563,52 @@ class OrderPerbaikanService
         }
 
         return $order;
+    }
+
+/**
+     * Auto-confirm order yang sudah 'tutup' lebih dari $hours jam tanpa konfirmasi user.
+     * Dipanggil oleh scheduler (system actor, tanpa auth).
+     */
+    public function autoConfirmStale(int $hours = 24): int
+    {
+        $threshold = now()->subHours($hours);
+        $orders = OrderPerbaikan::where('status', OrderPerbaikan::STATUS_TUTUP)
+            ->where('closed_at', '<=', $threshold)
+            ->get();
+
+        $count = 0;
+        foreach ($orders as $order) {
+            DB::transaction(function () use ($order) {
+                $order->update([
+                    'status' => OrderPerbaikan::STATUS_CONFIRMED,
+                    'updated_by' => null,
+                ]);
+                $order->history()->create([
+                    'status' => OrderPerbaikan::STATUS_CONFIRMED,
+                    'keterangan' => 'Auto-confirm setelah 24 jam tanpa konfirmasi user.',
+                    'created_by' => null,
+                ]);
+            });
+
+            // Notifikasi ke creator + Admin Umum
+            try {
+                $creator = $order->creator ?? User::find($order->created_by);
+                if ($creator) {
+                    $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+                }
+                foreach (User::adminUmum()->get() as $adm) {
+                    $adm->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('Gagal kirim notif auto-confirm order', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $count++;
+        }
+
+        return $count;
     }
 }

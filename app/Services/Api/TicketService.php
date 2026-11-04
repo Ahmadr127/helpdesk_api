@@ -566,4 +566,48 @@ class TicketService
             return $ticket->fresh();
         });
     }
+
+/**
+     * Auto-confirm ticket yang sudah 'pending' (admin closed) lebih dari $hours jam
+     * tanpa konfirmasi user. Dipanggil oleh scheduler (system actor, tanpa auth).
+     */
+    public function autoConfirmStale(int $hours = 24): int
+    {
+        $threshold = now()->subHours($hours);
+        $tickets = Ticket::where('status', 'pending')
+            ->where('user_confirmation', false)
+            ->where('closed_at', '<=', $threshold)
+            ->get();
+
+        $count = 0;
+        foreach ($tickets as $ticket) {
+            DB::transaction(function () use ($ticket) {
+                $ticket->status = 'confirmed';
+                $ticket->user_confirmation = true;
+                $ticket->user_confirmed_at = now();
+                $ticket->save();
+            });
+
+            try {
+                $user = $ticket->user ?? User::find($ticket->user_id);
+                if ($user) {
+                    $user->notify(new \App\Notifications\TicketRespondedNotification($ticket, $user, "Auto-confirm setelah 24 jam tanpa konfirmasi user", false, 'confirmed'));
+                }
+                $admins = User::adminIT()->get();
+                foreach ($admins as $admin) {
+                    $admin->notify(new \App\Notifications\TicketRespondedNotification($ticket, $admin, "Auto-confirm setelah 24 jam tanpa konfirmasi user", true, 'confirmed'));
+                }
+                Notify::ticketToAdmins($ticket->fresh(), 'ticket_confirmed', $user ?? $admins->first());
+            } catch (\Throwable $e) {
+                \Log::warning('Gagal kirim notif auto-confirm ticket', [
+                    'ticket_id' => $ticket->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $count++;
+        }
+
+        return $count;
+    }
 }
