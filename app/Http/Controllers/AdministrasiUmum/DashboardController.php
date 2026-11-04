@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\AdministrasiUmum;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrderPerbaikan;
+use App\Models\KategoriOrder;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -16,10 +17,33 @@ class DashboardController extends Controller
     /**
      * View namespace admin (tanpa prefix URL, nama route tetap admin.*).
      */
-    private function viewNamespace(Request $request): string
-    {
-        return 'admin.ipsrs-dashboard';
+    private function assignedCategoryNames(User $user): \Illuminate\Support\Collection
+{
+    return KategoriOrder::where('status', 1)
+        ->whereHas('users', fn ($q) => $q->where('users.id', $user->id))
+        ->pluck('name');
+}
+
+private function applyPjScopeToQuery($query, User $user): void
+{
+    $names = $this->assignedCategoryNames($user);
+    if ($names->isNotEmpty()) {
+        $query->whereIn('kategori_order', $names->all());
+    } else {
+        $query->whereNotExists(function ($sub) {
+            $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                ->from('kategori_order as ko')
+                ->join('kategori_order_user as kou', 'kou.kategori_order_id', '=', 'ko.id')
+                ->whereColumn('ko.name', 'order_perbaikan.kategori_order')
+                ->where('ko.status', 1);
+        });
     }
+}
+
+private function viewNamespace(Request $request): string
+{
+    return 'admin.ipsrs-dashboard';
+}
 
     public function index(Request $request)
     {
@@ -50,7 +74,8 @@ class DashboardController extends Controller
 
     private function getDashboardData($timeFilter, $statusFilter, $fresh = false)
     {
-        $cacheKey = "dashboard_data_{$timeFilter}_{$statusFilter}";
+        $viewer = auth()->user();
+        $cacheKey = "dashboard_data_{$viewer?->id}_{$timeFilter}_{$statusFilter}";
 
         if (! $fresh && Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
@@ -76,6 +101,11 @@ class DashboardController extends Controller
         // Apply status filter if not 'all'
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);
+        }
+
+        // PJ scope: only orders from categories assigned to this user (or fallback no-PJ)
+        if ($viewer) {
+            $this->applyPjScopeToQuery($query, $viewer);
         }
 
         // Get all required statistics in a single query
@@ -105,6 +135,19 @@ class DashboardController extends Controller
             ->when($statusFilter !== 'all', function ($query) use ($statusFilter) {
                 return $query->where('status', $statusFilter);
             })
+            ->when($viewer, function ($query) use ($viewer) {
+                $names = $this->assignedCategoryNames($viewer);
+                if ($names->isNotEmpty()) {
+                    return $query->whereIn('kategori_order', $names->all());
+                }
+                return $query->whereNotExists(function ($sub) {
+                    $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                        ->from('kategori_order as ko')
+                        ->join('kategori_order_user as kou', 'kou.kategori_order_id', '=', 'ko.id')
+                        ->whereColumn('ko.name', 'order_perbaikan.kategori_order')
+                        ->where('ko.status', 1);
+                });
+            })
             ->first();
 
         // Calculate percentages
@@ -122,7 +165,7 @@ class DashboardController extends Controller
         $targetYear = Carbon::now()->addYear()->year;
 
         // Get order trends
-        $orderTrends = $this->getOrderTrends($timeFilter, $statusFilter);
+        $orderTrends = $this->getOrderTrends($timeFilter, $statusFilter, $viewer);
 
         // Get status distribution
         $statusDistribution = [
@@ -133,11 +176,12 @@ class DashboardController extends Controller
         ];
 
         // Get recent orders with eager loading
-        $recentOrders = OrderPerbaikan::with(['creator', 'location'])
-            ->whereIn('status', ['open', 'in_progress'])
-            ->latest()
-            ->take(8)
-            ->get();
+        $recentQuery = OrderPerbaikan::with(['creator', 'location'])
+            ->whereIn('status', ['open', 'in_progress']);
+        if ($viewer) {
+            $this->applyPjScopeToQuery($recentQuery, $viewer);
+        }
+        $recentOrders = $recentQuery->latest()->take(8)->get();
 
         // Calculate remaining orders
         $remainingOrders = $statistics->total_orders - $statistics->confirmed_orders;
@@ -167,17 +211,22 @@ class DashboardController extends Controller
         return $data;
     }
 
-    private function getOrderTrends($timeFilter, $statusFilter)
+    private function getOrderTrends($timeFilter, $statusFilter, $viewer = null)
     {
-        $cacheKey = "order_trends_{$timeFilter}_{$statusFilter}";
+        $cacheKey = "order_trends_{$viewer?->id}_{$timeFilter}_{$statusFilter}";
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($timeFilter, $statusFilter) {
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($timeFilter, $statusFilter, $viewer) {
             // Base query
             $query = OrderPerbaikan::query();
 
             // Apply status filter if not 'all'
             if ($statusFilter !== 'all') {
                 $query->where('status', $statusFilter);
+            }
+
+            // PJ scope
+            if ($viewer) {
+                $this->applyPjScopeToQuery($query, $viewer);
             }
 
             // Set time range and group format based on filter
@@ -255,6 +304,7 @@ class DashboardController extends Controller
     public function getStats(Request $request)
     {
         $query = OrderPerbaikan::query();
+        $viewer = auth()->user();
         $timeFilter = $request->input('time', 'all');
         $statusFilter = $request->input('status', 'all');
 
@@ -275,6 +325,11 @@ class DashboardController extends Controller
         // Status filter
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);
+        }
+
+        // PJ scope
+        if ($viewer) {
+            $this->applyPjScopeToQuery($query, $viewer);
         }
 
         // Get counts per date - using PostgreSQL date formatting

@@ -148,6 +148,7 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('locations', LocationController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('unit-proses', UnitProsesController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('kategori-order', KategoriOrderController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::post('kategori-order/assign-all', [KategoriOrderController::class, 'assignAllCategories'])->name('kategori-order.assign-all')->middleware('permission:master');
             Route::resource('positions', PositionController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status')->middleware('permission:master');
 

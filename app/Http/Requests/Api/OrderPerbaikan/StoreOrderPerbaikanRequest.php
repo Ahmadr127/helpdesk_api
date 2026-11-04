@@ -25,7 +25,7 @@ class StoreOrderPerbaikanRequest extends FormRequest
             ],
             'department_id' => 'nullable|exists:departments,id',
 
-            'kategori_order' => ['nullable', 'string', new KategoriOrderAllowed()],
+            'kategori_order' => ['required', 'string', new KategoriOrderAllowed()],
             'lokasi' => 'nullable|exists:locations,id',
             'gedung' => 'nullable|string',
             'keluhan' => 'required|string',

@@ -6,38 +6,44 @@
 <div class="w-full">
     <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
-        <form id="filterForm" action="{{ route('admin.master.kategori-order.index') }}" method="GET"
-            class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
-            <div class="md:col-span-4">
-                <label for="filter_search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <x-searchable-select name="search" :options="$searchOptions ?? []" :selected="request('search')" placeholder="Cari berdasarkan nama atau kode kategori…" id="filter_search" />
+<form id="filterForm" action="{{ route('admin.master.kategori-order.index') }}" method="GET"
+            class="space-y-4" onsubmit="return validateFilterForm()">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                <div class="md:col-span-2">
+                    <label for="filter_search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <x-searchable-select name="search" :options="$searchOptions ?? []" :selected="request('search')" placeholder="Cari berdasarkan nama atau kode kategori…" id="filter_search" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="filter_status"
+                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <option value="">Semua Status</option>
+                        <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Aktif</option>
+                        <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Nonaktif</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
+                    <input type="date" name="from_date" id="filter_from_date" value="{{ request('from_date') }}"
+                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                    <input type="date" name="to_date" id="filter_to_date" value="{{ request('to_date') }}"
+                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm font-medium w-full">Filter</button>
+                    <a href="{{ route('admin.master.kategori-order.index') }}"
+                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm font-medium text-center">Reset</a>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" id="filter_status"
-                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                    <option value="">Semua Status</option>
-                    <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Aktif</option>
-                    <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Nonaktif</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
-                <input type="date" name="from_date" id="filter_from_date" value="{{ request('from_date') }}"
-                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
-                <input type="date" name="to_date" id="filter_to_date" value="{{ request('to_date') }}"
-                    class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-            </div>
-            <div class="flex items-end space-x-2">
-                <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Filter</button>
-                <a href="{{ route('admin.master.kategori-order.index') }}"
-                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm">Reset</a>
+            <div class="flex flex-wrap items-center gap-3">
                 <button type="button" onclick="openModal()"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Tambah Kategori Order</button>
+                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm font-medium">Tambah Kategori Order</button>
+                <button type="button" onclick="openAssignAllModal()"
+                    class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-all shadow-sm font-medium">Assign User ke Semua Kategori</button>
             </div>
         </form>
     </div>
@@ -174,22 +180,38 @@
                 <p class="text-xs text-gray-500 mt-1">User terpilih otomatis menjadi Petugas Penanggung Jawab (PJ) untuk order dengan kategori ini.</p>
             </div>
 
-            <div class="mb-4">
-                <label for="department_ids" class="block text-sm font-medium text-gray-700 mb-1">Unit/Departemen</label>
-                <select name="department_ids[]" id="department_ids" multiple
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    @foreach($departments as $d)
-                        <option value="{{ $d->id }}">{{ $d->name }}</option>
-                    @endforeach
-                </select>
-                <p class="text-xs text-gray-500 mt-1">Saat ini tidak dipakai untuk penentuan PJ (PJ hanya dari penugasan user).</p>
-            </div>
-
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeModal()"
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all">Batal</button>
                 <button type="submit"
                     class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all shadow-sm">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Assign All Modal -->
+<div id="assignAllModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full backdrop-blur-sm transition-all">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-800">Assign User ke Semua Kategori Aktif</h3>
+            <button onclick="closeAssignAllModal()" class="text-gray-400 hover:text-gray-500 transition-all">
+                <span class="text-2xl">&times;</span>
+            </button>
+        </div>
+        <form action="{{ route('admin.master.kategori-order.assign-all') }}" method="POST">
+            @csrf
+            <div class="mb-4">
+                <label for="assign_user_id" class="block text-sm font-medium text-gray-700 mb-1">User</label>
+                <select name="user_id" id="assign_user_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeAssignAllModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all shadow-sm">Assign</button>
             </div>
         </form>
     </div>
@@ -236,15 +258,9 @@ function openModal(kategori = null) {
         document.getElementById('status').value = kategori.status;
         // populate multi-selects
         const userSel = document.getElementById('user_ids');
-        const deptSel = document.getElementById('department_ids');
         Array.from(userSel.options).forEach(o => o.selected = false);
-        Array.from(deptSel.options).forEach(o => o.selected = false);
         (kategori.users || []).forEach(u => {
             const opt = userSel.querySelector(`option[value="${u.id}"]`);
-            if (opt) opt.selected = true;
-        });
-        (kategori.departments || []).forEach(d => {
-            const opt = deptSel.querySelector(`option[value="${d.id}"]`);
             if (opt) opt.selected = true;
         });
         modalTitle.textContent = 'Edit Kategori Order';
@@ -260,6 +276,14 @@ function openModal(kategori = null) {
 
 function closeModal() {
     document.getElementById('formModal').classList.add('hidden');
+}
+
+function closeAssignAllModal() {
+    document.getElementById('assignAllModal').classList.add('hidden');
+}
+
+function openAssignAllModal() {
+    document.getElementById('assignAllModal').classList.remove('hidden');
 }
 
 // Close modal when clicking outside

@@ -7,12 +7,13 @@ use App\Http\Requests\Api\OrderPerbaikan\UpdateOrderSubmissionRequest;
 use App\Http\Requests\Api\OrderPerbaikan\UpdateStatusRequest;
 use App\Http\Resources\Api\OrderPerbaikanResource;
 use App\Models\OrderPerbaikan;
+use App\Services\Api\OrderPerbaikanPjScopeService;
 use App\Services\Api\OrderPerbaikanService;
 use Illuminate\Http\Request;
 
 class OrderPerbaikanAdminController extends BaseApiController
 {
-    public function __construct(protected OrderPerbaikanService $service) {}
+    public function __construct(protected OrderPerbaikanPjScopeService $service) {}
 
     public function index(Request $request)
     {

@@ -18,9 +18,4 @@ class KategoriOrder extends Model
     {
         return $this->belongsToMany(User::class, 'kategori_order_user', 'kategori_order_id', 'user_id')->withTimestamps();
     }
-
-    public function departments(): BelongsToMany
-    {
-        return $this->belongsToMany(Department::class, 'kategori_order_department', 'kategori_order_id', 'department_id')->withTimestamps();
-    }
 }

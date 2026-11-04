@@ -16,7 +16,7 @@ class UpdateOrderPerbaikanRequest extends FormRequest
     {
         return [
 
-            'kategori_order' => ['nullable', 'string', new KategoriOrderAllowed()],
+            'kategori_order' => ['required', 'string', new KategoriOrderAllowed()],
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',

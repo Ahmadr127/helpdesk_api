@@ -16,7 +16,7 @@ class OrderPerbaikanService
     public function listForUser(User $user, array $filters = [], int $perPage = 15, bool $forceOwner = false)
     {
         $canViewAll = ! $forceOwner
-            && ($user->hasPermission('order.view_all') || $user->isAdminUmum() || $user->isAdminIT());
+            && ($user->isAdminUmum() || $user->isAdminIT());
 
         if ($canViewAll) {
             $query = OrderPerbaikan::with(['creator', 'history', 'location', 'department', 'department.location', 'department.building', 'penanggungJawab']);

@@ -47,7 +47,7 @@ class MasterDataService
             $query->with(['location', 'building']);
         }
         if (in_array($type, ['kategori-order', 'kategori_order'], true)) {
-            $query->with(['users', 'departments']);
+            $query->with(['users']);
         }
 
         if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== null) {
@@ -80,7 +80,7 @@ class MasterDataService
             $model->load(['location', 'building']);
         }
         if (in_array($type, ['kategori-order', 'kategori_order'], true)) {
-            $model->load(['users', 'departments']);
+            $model->load(['users']);
         }
 
         return $model;
@@ -91,7 +91,6 @@ class MasterDataService
         $class = $this->getModelClass($type);
 
         $userIds = $data['user_ids'] ?? null;
-        $departmentIds = $data['department_ids'] ?? null;
         unset($data['user_ids'], $data['department_ids']);
 
         $model = $class::create($data);
@@ -100,10 +99,7 @@ class MasterDataService
             if (is_array($userIds)) {
                 $model->users()->sync($userIds);
             }
-            if (is_array($departmentIds)) {
-                $model->departments()->sync($departmentIds);
-            }
-            $model->load(['users', 'departments']);
+            $model->load(['users']);
         }
 
         return $model;
@@ -114,9 +110,7 @@ class MasterDataService
         $model = $this->find($type, $id);
 
         $hasUserIds = array_key_exists('user_ids', $data);
-        $hasDepartmentIds = array_key_exists('department_ids', $data);
         $userIds = $hasUserIds ? ($data['user_ids'] ?? []) : null;
-        $departmentIds = $hasDepartmentIds ? ($data['department_ids'] ?? []) : null;
         unset($data['user_ids'], $data['department_ids']);
 
         $model->update($data);
@@ -125,10 +119,7 @@ class MasterDataService
             if ($hasUserIds) {
                 $model->users()->sync($userIds ?? []);
             }
-            if ($hasDepartmentIds) {
-                $model->departments()->sync($departmentIds ?? []);
-            }
-            $model->load(['users', 'departments']);
+            $model->load(['users']);
         }
 
         return $model->fresh();

@@ -234,7 +234,7 @@ class AdministrasiUmumController extends Controller
         $order = $orderPerbaikan->load(['history.creator', 'location', 'creator']);
 
         // Check if the current user is authorized to view this order
-        $canViewAll = auth()->user()->hasPermission('order.view_all') || auth()->user()->isAdminUmum() || auth()->user()->isAdminIT();
+        $canViewAll = auth()->user()->isAdminUmum() || auth()->user()->isAdminIT();
         if (! $canViewAll && $order->created_by !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }

@@ -12,6 +12,7 @@ use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\OrderPerbaikan;
 use App\Models\UnitProses;
+use App\Services\Api\OrderPerbaikanPjScopeService;
 use App\Services\Api\OrderPerbaikanService;
 use App\Services\DepartmentService;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class OrderPerbaikanController extends Controller
         return 'admin.order-perbaikan';
     }
 
-    public function index(Request $request, OrderPerbaikanService $service)
+    public function index(Request $request, OrderPerbaikanPjScopeService $service)
     {
         $filters = $request->only(['search', 'date_from', 'date_to', 'status', 'prioritas', 'location_id']);
 
@@ -60,7 +61,7 @@ class OrderPerbaikanController extends Controller
      * Order milik sendiri (pembuat = user login) di shell admin.
      * Berbeda dari index (semua order, butuh permission `order` + cakupan admin).
      */
-    public function myorder(Request $request, OrderPerbaikanService $service)
+    public function myorder(Request $request, OrderPerbaikanPjScopeService $service)
     {
         $filters = $request->only(['search', 'status']);
         $orders = $service->listForUser(auth()->user(), $filters, 10, true)->withQueryString();
@@ -105,7 +106,7 @@ class OrderPerbaikanController extends Controller
     /**
      * Form buat order milik sendiri di shell admin.
      */
-    public function createMyorder(OrderPerbaikanService $service, DepartmentService $departments)
+    public function createMyorder(OrderPerbaikanPjScopeService $service, DepartmentService $departments)
     {
         $nomor = $service->nextNumber();
 
@@ -129,7 +130,7 @@ class OrderPerbaikanController extends Controller
     /**
      * Simpan order milik sendiri dari shell admin.
      */
-    public function storeMyorder(\App\Http\Requests\Api\OrderPerbaikan\StoreOrderPerbaikanRequest $request, OrderPerbaikanService $service)
+    public function storeMyorder(\App\Http\Requests\Api\OrderPerbaikan\StoreOrderPerbaikanRequest $request, OrderPerbaikanPjScopeService $service)
     {
         $validated = $request->validated();
 
@@ -170,7 +171,7 @@ class OrderPerbaikanController extends Controller
     /**
      * Update order milik sendiri.
      */
-    public function updateMyorder(\App\Http\Requests\Api\OrderPerbaikan\UpdateOrderPerbaikanRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function updateMyorder(\App\Http\Requests\Api\OrderPerbaikan\UpdateOrderPerbaikanRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         $validated = $request->validated();
 
@@ -188,7 +189,7 @@ class OrderPerbaikanController extends Controller
     /**
      * Hapus order milik sendiri (hanya saat open).
      */
-    public function destroyMyorder(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function destroyMyorder(OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         try {
             $service->delete(auth()->user(), $orderPerbaikan);
@@ -200,7 +201,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function filterOrders($type, $value, OrderPerbaikanService $service)
+    public function filterOrders($type, $value, OrderPerbaikanPjScopeService $service)
     {
         $filters = [];
 
@@ -218,7 +219,7 @@ class OrderPerbaikanController extends Controller
         ));
     }
 
-    public function inProgress(Request $request, OrderPerbaikanService $service)
+    public function inProgress(Request $request, OrderPerbaikanPjScopeService $service)
     {
         $filters = array_merge(
             $request->only(['search', 'prioritas', 'location_id']),
@@ -254,7 +255,7 @@ class OrderPerbaikanController extends Controller
         ]);
     }
 
-    public function confirmed(Request $request, OrderPerbaikanService $service)
+    public function confirmed(Request $request, OrderPerbaikanPjScopeService $service)
     {
         $filters = array_merge(
             $request->only(['search', 'date_from', 'date_to']),
@@ -275,7 +276,7 @@ class OrderPerbaikanController extends Controller
         ));
     }
 
-    public function rejected(Request $request, OrderPerbaikanService $service)
+    public function rejected(Request $request, OrderPerbaikanPjScopeService $service)
     {
         $filters = array_merge(
             $request->only(['search', 'date_from', 'date_to']),
@@ -330,7 +331,7 @@ class OrderPerbaikanController extends Controller
         return view($this->viewNamespace().'.show', compact('orderPerbaikan', 'locations', 'kategoriOrders', 'users', 'selectedPjIds'));
     }
 
-    public function updateSubmission(UpdateOrderSubmissionRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function updateSubmission(UpdateOrderSubmissionRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         $validated = $request->validated();
 
@@ -344,7 +345,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function updateStatus(UpdateStatusRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function updateStatus(UpdateStatusRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         $validated = $request->validated();
         if ($request->hasFile('lampiran')) {
@@ -369,7 +370,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function confirm(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function confirm(OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         try {
             $service->confirm(auth()->user(), $orderPerbaikan, 'Web');
@@ -380,7 +381,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function reject(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function reject(OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         try {
             $service->reject(auth()->user(), $orderPerbaikan, 'Web');
@@ -391,7 +392,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function complete(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function complete(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         try {
             // Alur baru: "Selesai" dari admin berarti menutup order untuk menunggu konfirmasi user.
@@ -410,7 +411,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function start(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function start(OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         try {
             $service->start(auth()->user(), $orderPerbaikan, 'Web');
@@ -421,7 +422,7 @@ class OrderPerbaikanController extends Controller
         }
     }
 
-    public function total(Request $request, OrderPerbaikanService $service)
+    public function total(Request $request, OrderPerbaikanPjScopeService $service)
     {
         $filters = $request->only(['search', 'status', 'date_from', 'date_to']);
         $orders = $service->listForAdmin($filters, 10)->withQueryString();

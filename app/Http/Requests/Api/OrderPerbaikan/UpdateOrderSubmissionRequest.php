@@ -17,7 +17,7 @@ class UpdateOrderSubmissionRequest extends FormRequest
         return [
             'keluhan' => 'nullable|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
-            'kategori_order' => ['nullable', 'string', new KategoriOrderAllowed()],
+            'kategori_order' => ['required', 'string', new KategoriOrderAllowed()],
             'lokasi' => 'nullable|exists:locations,id',
             'gedung' => 'nullable|string',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

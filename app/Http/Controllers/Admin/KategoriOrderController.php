@@ -35,12 +35,11 @@ class KategoriOrderController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        $kategoriOrders = $query->with(['users', 'departments'])->orderBy('created_at', 'desc')->paginate(10);
+        $kategoriOrders = $query->with(['users'])->orderBy('created_at', 'desc')->paginate(10);
         $searchOptions = KategoriOrder::orderBy('name')->pluck('name', 'name')->toArray();
         $users = User::where('status', 1)->orderBy('name')->get();
-        $departments = Department::where('status', 1)->orderBy('name')->get();
 
-        return view('admin.master.kategori-order', compact('kategoriOrders', 'searchOptions', 'users', 'departments'));
+        return view('admin.master.kategori-order', compact('kategoriOrders', 'searchOptions', 'users'));
     }
 
     public function store(Request $request)
@@ -51,8 +50,6 @@ class KategoriOrderController extends Controller
             'status' => 'required|boolean',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
-            'department_ids' => 'nullable|array',
-            'department_ids.*' => 'exists:departments,id',
         ]);
 
         $kategori = KategoriOrder::create([
@@ -62,7 +59,6 @@ class KategoriOrderController extends Controller
         ]);
 
         $kategori->users()->sync($validated['user_ids'] ?? []);
-        $kategori->departments()->sync($validated['department_ids'] ?? []);
 
         return redirect()->route('admin.master.kategori-order.index')
             ->with('success', 'Kategori Order berhasil ditambahkan.');
@@ -76,8 +72,6 @@ class KategoriOrderController extends Controller
             'status' => 'required|boolean',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
-            'department_ids' => 'nullable|array',
-            'department_ids.*' => 'exists:departments,id',
         ]);
 
         $kategoriOrder->update([
@@ -87,15 +81,32 @@ class KategoriOrderController extends Controller
         ]);
 
         $kategoriOrder->users()->sync($validated['user_ids'] ?? []);
-        $kategoriOrder->departments()->sync($validated['department_ids'] ?? []);
 
         return redirect()->route('admin.master.kategori-order.index')
             ->with('success', 'Kategori Order berhasil diperbarui.');
     }
 
-    public function destroy(KategoriOrder $kategoriOrder)
-    {
-        try {
+    public function assignAllCategories(Request $request)
+{
+    $validated = $request->validate([
+        'user_id' => 'required|exists:users,id',
+    ]);
+
+    $user = User::findOrFail($validated['user_id']);
+    $activeIds = KategoriOrder::where('status', 1)->pluck('id')->all();
+
+    foreach ($activeIds as $id) {
+        $kategori = KategoriOrder::find($id);
+        $kategori->users()->syncWithoutDetaching([$user->id]);
+    }
+
+    return redirect()->route('admin.master.kategori-order.index')
+        ->with('success', 'User '.$user->name.' ditugaskan ke semua kategori aktif.');
+}
+
+public function destroy(KategoriOrder $kategoriOrder)
+{
+    try {
             $kategoriOrder->delete();
 
             return redirect()->route('admin.master.kategori-order.index')
