@@ -294,6 +294,13 @@ class TicketService
             $admin->notify(new TicketRespondedNotification($ticket, $user, "Tiket baru #{$ticket->ticket_number}: {$ticket->description}", false, 'created'));
         }
 
+        // Pengajuan gabungan: buat Order Perbaikan bila kategori tiket termasuk target sinkron.
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->createCounterpartForTicket($user, $ticket);
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron pengajuan dari tiket gagal: '.$e->getMessage());
+        }
+
         return $ticket;
     }
 
@@ -541,7 +548,14 @@ class TicketService
             Notify::ticketToAdmins($ticket->fresh(), 'ticket_rejected', $user);
         }
 
-        return $ticket->fresh();
+        $ticket = $ticket->fresh();
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket, $user, 'user-confirm');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
+        }
+
+        return $ticket;
     }
 
     public function adminRespond(User $admin, Ticket $ticket, string $notes, string $status, $photoFiles = null): Ticket
@@ -593,7 +607,14 @@ class TicketService
         // FCM ke pengaju
         Notify::ticketToUser($ticket->fresh(), 'ticket_responded', $admin, $notes);
 
-        return $ticket->fresh();
+        $ticket = $ticket->fresh();
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket, $admin, 'admin-respond');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
+        }
+
+        return $ticket;
     }
 
     public function adminUpdate(User $admin, Ticket $ticket, string $notes, ?string $status, ?string $action, $photoFiles = null): Ticket
@@ -605,7 +626,7 @@ class TicketService
         }
         $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
 
-        return DB::transaction(function () use ($admin, $ticket, $notes, $status, $action, $photoFiles) {
+        $ticket = DB::transaction(function () use ($admin, $ticket, $notes, $status, $action, $photoFiles) {
             $responses = $ticket->admin_responses ? json_decode($ticket->admin_responses, true) : [];
             $timestamp = now();
             $response = [
@@ -649,6 +670,14 @@ class TicketService
 
             return $ticket->fresh();
         });
+
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket, $admin, 'admin-update');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
+        }
+
+        return $ticket;
     }
 
 /**
@@ -687,6 +716,12 @@ class TicketService
                     'ticket_id' => $ticket->id,
                     'error' => $e->getMessage(),
                 ]);
+            }
+
+            try {
+                app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket->fresh(), null, 'auto-confirm');
+            } catch (\Throwable $e) {
+                \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
             }
 
             $count++;

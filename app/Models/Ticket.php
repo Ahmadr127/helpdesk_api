@@ -104,4 +104,12 @@ class Ticket extends Model
     {
         return $this->photos()->whereIn('type', ['user_response', 'user_rejection'])->get();
     }
+
+    /**
+     * Penaut ke Order Perbaikan (pengajuan gabungan berbasis kategori target).
+     */
+    public function pengajuanLink()
+    {
+        return $this->hasOne(PengajuanLink::class);
+    }
 }

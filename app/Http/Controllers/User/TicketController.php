@@ -191,6 +191,12 @@ class TicketController extends Controller
             $timestamp_field => now(),
         ]);
 
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket->fresh(), auth()->user(), 'update-status');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
+        }
+
         return back()->with('success', 'Ticket status updated successfully.');
     }
 

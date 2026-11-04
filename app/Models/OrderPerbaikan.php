@@ -85,6 +85,14 @@ class OrderPerbaikan extends Model
         return $this->belongsTo(KategoriOrder::class, 'kategori_order', 'name');
     }
 
+    /**
+     * Penaut ke Ticket IT (pengajuan gabungan berbasis kategori target).
+     */
+    public function pengajuanLink()
+    {
+        return $this->hasOne(PengajuanLink::class, 'order_perbaikan_id');
+    }
+
     public function getNamaPenanggungJawabAttribute()
     {
         if (! $this->relationLoaded('penanggungJawab')) {

@@ -122,6 +122,12 @@ class TicketAdminController extends Controller
             'updated'
         ));
 
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket->fresh(), auth()->user(), 'admin-update-status');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
+        }
+
         return redirect()->back()->with('success', 'Status ticket berhasil diperbarui.');
     }
 
@@ -155,6 +161,12 @@ class TicketAdminController extends Controller
             'admin_confirmation_notes' => $validated['confirmation_notes'],
             'status' => 'closed',
         ]);
+
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromTicket($ticket->fresh(), auth()->user(), 'admin-confirm');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status tiket gagal: '.$e->getMessage());
+        }
 
         return back()->with('success', 'Ticket has been marked as resolved.');
     }

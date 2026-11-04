@@ -279,6 +279,13 @@ class OrderPerbaikanService
             }
         }
 
+        // Pengajuan gabungan: buat Tiket IT bila kategori order termasuk target sinkron.
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->createCounterpartForOrder($user, $order);
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron pengajuan dari order gagal: '.$e->getMessage());
+        }
+
         return $order;
     }
 
@@ -508,6 +515,12 @@ class OrderPerbaikanService
             $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
         }
 
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromOrder($order, $admin, 'update-status');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status order gagal: '.$e->getMessage());
+        }
+
         return $order;
     }
 
@@ -532,6 +545,12 @@ class OrderPerbaikanService
         $creator = $order->creator ?? User::find($order->created_by);
         if ($creator) {
             $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromOrder($order, $admin, 'confirm');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status order gagal: '.$e->getMessage());
         }
 
         return $order;
@@ -560,6 +579,12 @@ class OrderPerbaikanService
             $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
         }
 
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromOrder($order, $admin, 'reject');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status order gagal: '.$e->getMessage());
+        }
+
         return $order;
     }
 
@@ -584,6 +609,12 @@ class OrderPerbaikanService
         $creator = $order->creator ?? User::find($order->created_by);
         if ($creator) {
             $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        }
+
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromOrder($order, $admin, 'start');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status order gagal: '.$e->getMessage());
         }
 
         return $order;
@@ -644,6 +675,12 @@ class OrderPerbaikanService
             $pj->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
         }
 
+        try {
+            app(\App\Services\PengajuanSinkronService::class)->syncFromOrder($order, $user, 'user-confirm');
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkron status order gagal: '.$e->getMessage());
+        }
+
         return $order;
     }
 
@@ -690,6 +727,12 @@ class OrderPerbaikanService
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
+            }
+
+            try {
+                app(\App\Services\PengajuanSinkronService::class)->syncFromOrder($order->fresh(), null, 'auto-confirm');
+            } catch (\Throwable $e) {
+                \Log::warning('Sinkron status order gagal: '.$e->getMessage());
             }
 
             $count++;
