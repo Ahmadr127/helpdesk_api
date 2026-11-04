@@ -38,7 +38,8 @@ class TicketController extends BaseApiController
     public function store(StoreTicketRequest $request)
     {
         try {
-            $ticket = $this->ticketService->create($request->user(), $request->validated(), $request->file('photo'));
+            $photoFiles = $request->file('photos') ?? $request->file('photo');
+            $ticket = $this->ticketService->create($request->user(), $request->validated(), $photoFiles);
 
             return $this->success(new TicketResource($ticket->load('photos', 'user')), 'Ticket berhasil dibuat', 201);
         } catch (\Exception $e) {
@@ -61,7 +62,8 @@ class TicketController extends BaseApiController
     public function update(UpdateTicketRequest $request, Ticket $ticket)
     {
         try {
-            $updated = $this->ticketService->updateUserTicket($request->user(), $ticket, $request->validated(), $request->file('photo'));
+            $photoFiles = $request->file('photos') ?? $request->file('photo');
+            $updated = $this->ticketService->updateUserTicket($request->user(), $ticket, $request->validated(), $photoFiles);
 
             return $this->success(new TicketResource($updated), 'Ticket berhasil diperbarui');
         } catch (\Exception $e) {
@@ -87,7 +89,8 @@ class TicketController extends BaseApiController
     public function reply(ReplyTicketRequest $request, Ticket $ticket)
     {
         try {
-            $updated = $this->ticketService->reply($request->user(), $ticket, $request->validated()['message'], $request->file('photo'));
+            $photoFiles = $request->file('photos') ?? $request->file('photo');
+            $updated = $this->ticketService->reply($request->user(), $ticket, $request->validated()['message'], $photoFiles);
 
             return $this->success(new TicketResource($updated), 'Reply berhasil dikirim');
         } catch (\Exception $e) {
@@ -99,7 +102,8 @@ class TicketController extends BaseApiController
     {
         try {
             $validated = $request->validated();
-            $updated = $this->ticketService->confirm($request->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photo'));
+            $photoFiles = $request->file('photos') ?? $request->file('photo');
+            $updated = $this->ticketService->confirm($request->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $photoFiles);
 
             return $this->success(new TicketResource($updated), $validated['action'] === 'confirm' ? 'Ticket dikonfirmasi selesai' : 'Ticket dikembalikan ke in_progress');
         } catch (\Exception $e) {

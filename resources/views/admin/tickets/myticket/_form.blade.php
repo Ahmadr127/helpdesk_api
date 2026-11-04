@@ -105,7 +105,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional)</label>
         <label class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors">
             <span class="text-sm text-gray-700">Pilih Foto</span>
-            <input type="file" name="photo" accept="image/*" class="hidden photo-input">
+            <input type="file" name="photos[]" accept="image/*" class="hidden photo-input" multiple>
         </label>
         <p class="mt-1 text-xs text-gray-500 file-name">Ukuran file maksimum: 5MB</p>
         @error('photo')

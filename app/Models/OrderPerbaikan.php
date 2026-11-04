@@ -42,6 +42,7 @@ class OrderPerbaikan extends Model
 
     protected $casts = [
         'tanggal' => 'datetime:Y-m-d H:i:s',
+        'foto' => 'array',
     ];
 
     // Relationships
@@ -91,6 +92,27 @@ class OrderPerbaikan extends Model
         }
 
         return $this->penanggungJawab->pluck('name')->implode(', ');
+    }
+
+    /**
+     * Daftar path foto order sebagai array (dukung data lama berupa string).
+     */
+    public function getFotoPathsAttribute(): array
+    {
+        $foto = $this->foto;
+        if (is_array($foto)) {
+            return array_values(array_filter($foto));
+        }
+
+        return $foto ? [$foto] : [];
+    }
+
+    /**
+     * Daftar URL publik foto order.
+     */
+    public function getFotoUrlsAttribute(): array
+    {
+        return array_map(fn ($p) => \Illuminate\Support\Facades\Storage::disk('public')->url($p), $this->getFotoPathsAttribute());
     }
 
     // Status helper methods

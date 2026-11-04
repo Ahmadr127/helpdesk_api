@@ -16,6 +16,7 @@
     $senderName = $senderName ?? '';
     $message = $message ?? '';
     $photo = $photo ?? null;
+    $photos = is_array($photo) ? array_values(array_filter($photo)) : ($photo ? [$photo] : []);
     $timestamp = $timestamp ?? null;
     $action = $action ?? null;
     $isRight = $align === 'right';
@@ -152,11 +153,13 @@
         @if($message !== '' && $message !== null)
             <p class="cbubble__text">{{ $message }}</p>
         @endif
-        @if(!empty($photo))
-            <div class="cbubble__attach">
-                <a href="{{ asset('storage/' . $photo) }}" target="_blank">
-                    <img src="{{ asset('storage/' . $photo) }}" alt="Lampiran percakapan" loading="lazy">
+        @if(!empty($photos))
+            <div class="cbubble__attach flex flex-wrap gap-2">
+                @foreach($photos as $p)
+                <a href="{{ asset('storage/' . $p) }}" target="_blank">
+                    <img src="{{ asset('storage/' . $p) }}" alt="Lampiran percakapan" loading="lazy">
                 </a>
+                @endforeach
             </div>
         @endif
         @if($formattedTime !== '')

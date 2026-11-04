@@ -21,6 +21,8 @@ class UpdateOrderSubmissionRequest extends FormRequest
             'lokasi' => 'nullable|exists:locations,id',
             'gedung' => 'nullable|string',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'fotos' => 'nullable|array|max:3',
+            'fotos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'penanggung_jawab_ids' => 'nullable|array',
             'penanggung_jawab_ids.*' => 'exists:users,id',
         ];

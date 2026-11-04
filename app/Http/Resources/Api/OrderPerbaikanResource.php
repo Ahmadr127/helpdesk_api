@@ -31,7 +31,12 @@ class OrderPerbaikanResource extends JsonResource
             ])->values()),
             'penanggung_jawab_ids' => $this->whenLoaded('penanggungJawab', fn () => $this->penanggungJawab->pluck('id')->values()),
             'foto' => $this->foto,
-            'foto_url' => $this->foto ? Storage::disk('public')->url($this->foto) : null,
+            'foto_url' => is_array($this->foto) && ! empty($this->foto)
+                ? Storage::disk('public')->url($this->foto[0])
+                : ($this->foto ? Storage::disk('public')->url($this->foto) : null),
+            'foto_urls' => is_array($this->foto)
+                ? array_values(array_map(fn ($p) => Storage::disk('public')->url($p), $this->foto))
+                : ($this->foto ? [Storage::disk('public')->url($this->foto)] : []),
             'creator' => $this->whenLoaded('creator', fn () => new UserResource($this->creator)),
             'updater' => $this->whenLoaded('updater'),
             'history' => $this->whenLoaded('history', fn () => $this->history->map(fn ($h) => [
@@ -40,7 +45,12 @@ class OrderPerbaikanResource extends JsonResource
                 'keterangan' => $h->keterangan ?? $h->follow_up ?? null,
                 'follow_up' => $h->follow_up ?? null,
                 'lampiran' => $h->lampiran,
-                'lampiran_url' => $h->lampiran ? Storage::disk('public')->url($h->lampiran) : null,
+                'lampiran_url' => is_array($h->lampiran) && ! empty($h->lampiran)
+                    ? Storage::disk('public')->url($h->lampiran[0])
+                    : ($h->lampiran ? Storage::disk('public')->url($h->lampiran) : null),
+                'lampiran_urls' => is_array($h->lampiran)
+                    ? array_values(array_map(fn ($p) => Storage::disk('public')->url($p), $h->lampiran))
+                    : ($h->lampiran ? [Storage::disk('public')->url($h->lampiran)] : []),
                 'creator' => $h->creator ? ['id' => $h->creator->id, 'name' => $h->creator->name] : null,
                 'created_at' => $h->created_at,
             ])),

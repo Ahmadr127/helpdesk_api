@@ -237,31 +237,25 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             <!-- Photo -->
-            @if($order->foto)
+            @if(!empty($order->foto_urls))
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-base font-semibold text-gray-900 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
-                        Foto
+                        Foto ({{ count($order->foto_urls) }})
                     </h2>
                 </div>
                 <div class="p-6">
-                    <div class="relative rounded-lg overflow-hidden bg-gray-100 max-w-md">
-                        <img src="{{ Storage::url($order->foto) }}" alt="Foto Order Perbaikan"
-                            class="w-full h-64 object-cover cursor-zoom-in hover:opacity-95 transition-opacity"
-                            onclick="openImageModal(this.src)">
-                        <div class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                            <button onclick="openImageModal('{{ Storage::url($order->foto) }}')"
-                                class="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                                Lihat Foto
-                            </button>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach($order->foto_urls as $fotoUrl)
+                        <div class="relative rounded-lg overflow-hidden bg-gray-100">
+                            <img src="{{ $fotoUrl }}" alt="Foto Order Perbaikan"
+                                class="w-full h-40 object-cover cursor-zoom-in hover:opacity-95 transition-opacity"
+                                onclick="openImageModal(this.src)">
                         </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -323,10 +317,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-sm py-2.5 px-3 transition-all resize-none"
                             placeholder="Tulis catatan jika diperlukan..."></textarea>
                         
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Lampiran <span class="text-gray-400 font-normal">(opsional)</span></label>
-                            <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Lampiran <span class="text-gray-400 font-normal">(opsional, maks 3)</span></label>
+                            <input type="file" name="lampirans[]" accept=".jpg,.jpeg,.png" multiple
                                 class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-violet-700 hover:file:bg-violet-100 transition-all">
-                            <p class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG. Maks 5MB.</p>
+                            <p class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG. Maks 5MB per gambar, maksimal 3 gambar.</p>
                         
                         <button type="submit"
                             class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">

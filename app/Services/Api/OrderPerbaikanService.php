@@ -163,9 +163,44 @@ class OrderPerbaikanService
         return $file->storeAs('order-lampiran', $filename, 'public');
     }
 
-    public function create(User $user, array $validated, $fotoFile = null, string $source = 'API'): OrderPerbaikan
+    /**
+     * Simpan banyak lampiran, kembalikan array path.
+     */
+    public function storeLampirans(array $files): array
     {
-        $order = DB::transaction(function () use ($user, $validated, $fotoFile) {
+        $paths = [];
+        foreach ($files as $file) {
+            if ($file) {
+                $paths[] = $this->storeLampiran($file);
+            }
+        }
+        return array_values(array_filter($paths));
+    }
+
+    /**
+     * Nama file aman (tanpa spasi/karakter khusus) agar URL storage valid.
+     */
+    private function safeUploadName(string $originalName): string
+    {
+        $base = pathinfo($originalName, PATHINFO_FILENAME);
+        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION) ?: 'jpg');
+        $base = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $base) ?: 'foto';
+
+        return $base.'.'.$ext;
+    }
+
+    public function create(User $user, array $validated, $fotoFiles = null, string $source = 'API'): OrderPerbaikan
+    {
+        // Normalisasi ke array
+        if ($fotoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $fotoFiles = [$fotoFiles];
+        } elseif (! is_array($fotoFiles)) {
+            $fotoFiles = $fotoFiles ? [$fotoFiles] : [];
+        }
+        // Batasi maks 3
+        $fotoFiles = array_slice(array_values(array_filter($fotoFiles)), 0, 3);
+
+        $order = DB::transaction(function () use ($user, $validated, $fotoFiles) {
             $nomor = $this->nextNumber();
 
             $departmentId = $validated['department_id'] ?? null;
@@ -187,10 +222,12 @@ class OrderPerbaikanService
                 $departmentId = $department?->id;
             }
 
-            $fotoPath = null;
-            if ($fotoFile) {
-                $filename = 'order_'.time().'_'.$fotoFile->getClientOriginalName();
-                $fotoPath = $fotoFile->storeAs('order-photos', $filename, 'public');
+            $fotoPaths = [];
+            foreach ($fotoFiles as $fotoFile) {
+                if ($fotoFile) {
+                    $filename = 'order_'.time().'_'.$this->safeUploadName($fotoFile->getClientOriginalName());
+                    $fotoPaths[] = $fotoFile->storeAs('order-photos', $filename, 'public');
+                }
             }
 
             $order = OrderPerbaikan::create([
@@ -203,7 +240,7 @@ class OrderPerbaikanService
                 'gedung' => $validated['gedung'] ?? null,
                 'keluhan' => $validated['keluhan'],
                 'prioritas' => $validated['prioritas'],
-                'foto' => $fotoPath,
+                'foto' => ! empty($fotoPaths) ? $fotoPaths : null,
                 'status' => 'open',
                 'created_by' => $user->id,
             ]);
@@ -245,7 +282,7 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function update(User $user, OrderPerbaikan $order, array $validated, $fotoFile = null, string $source = 'API'): OrderPerbaikan
+    public function update(User $user, OrderPerbaikan $order, array $validated, $fotoFiles = null, string $source = 'API'): OrderPerbaikan
     {
         if ($order->created_by !== $user->id) {
             throw new \Exception('Unauthorized', 403);
@@ -254,14 +291,30 @@ class OrderPerbaikanService
             throw new \Exception('Hanya order dengan status open yang dapat diedit.', 422);
         }
 
-        return DB::transaction(function () use ($user, $order, $validated, $fotoFile, $source) {
-            if ($fotoFile) {
-                if ($order->foto) {
-                    Storage::disk('public')->delete($order->foto);
+        if ($fotoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $fotoFiles = [$fotoFiles];
+        } elseif (! is_array($fotoFiles)) {
+            $fotoFiles = $fotoFiles ? [$fotoFiles] : [];
+        }
+        $fotoFiles = array_slice(array_values(array_filter($fotoFiles)), 0, 3);
+
+        return DB::transaction(function () use ($user, $order, $validated, $fotoFiles, $source) {
+            if (! empty($fotoFiles)) {
+                if (is_array($order->foto)) {
+                    foreach ($order->foto as $old) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($old);
+                    }
+                } elseif ($order->foto) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($order->foto);
                 }
-                $filename = 'order_'.time().'_'.$fotoFile->getClientOriginalName();
-                $fotoPath = $fotoFile->storeAs('order-photos', $filename, 'public');
-                $validated['foto'] = $fotoPath;
+                $fotoPaths = [];
+                foreach ($fotoFiles as $fotoFile) {
+                    if ($fotoFile) {
+                        $filename = 'order_'.time().'_'.$this->safeUploadName($fotoFile->getClientOriginalName());
+                        $fotoPaths[] = $fotoFile->storeAs('order-photos', $filename, 'public');
+                    }
+                }
+                $validated['foto'] = ! empty($fotoPaths) ? $fotoPaths : $order->foto;
             }
 
             $order->update([
@@ -292,19 +345,35 @@ class OrderPerbaikanService
         });
     }
 
-    public function updateAdminOrder(User $admin, OrderPerbaikan $order, array $validated, $fotoFile = null, array $pjIds = [], string $source = 'API'): OrderPerbaikan
+    public function updateAdminOrder(User $admin, OrderPerbaikan $order, array $validated, $fotoFiles = null, array $pjIds = [], string $source = 'API'): OrderPerbaikan
     {
-        return DB::transaction(function () use ($admin, $order, $validated, $fotoFile, $pjIds, $source) {
+        if ($fotoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $fotoFiles = [$fotoFiles];
+        } elseif (! is_array($fotoFiles)) {
+            $fotoFiles = $fotoFiles ? [$fotoFiles] : [];
+        }
+        $fotoFiles = array_slice(array_values(array_filter($fotoFiles)), 0, 3);
+
+        return DB::transaction(function () use ($admin, $order, $validated, $fotoFiles, $pjIds, $source) {
             $oldPjNames = $order->penanggungJawab()->orderBy('name')->pluck('name')->all();
             $oldPjIds = $order->penanggungJawab()->pluck('users.id')->all();
 
-            if ($fotoFile) {
-                if ($order->foto) {
-                    Storage::disk('public')->delete($order->foto);
+            if (! empty($fotoFiles)) {
+                if (is_array($order->foto)) {
+                    foreach ($order->foto as $old) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($old);
+                    }
+                } elseif ($order->foto) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($order->foto);
                 }
-                $filename = 'order_'.time().'_'.$fotoFile->getClientOriginalName();
-                $fotoPath = $fotoFile->storeAs('order-photos', $filename, 'public');
-                $validated['foto'] = $fotoPath;
+                $fotoPaths = [];
+                foreach ($fotoFiles as $fotoFile) {
+                    if ($fotoFile) {
+                        $filename = 'order_'.time().'_'.$this->safeUploadName($fotoFile->getClientOriginalName());
+                        $fotoPaths[] = $fotoFile->storeAs('order-photos', $filename, 'public');
+                    }
+                }
+                $validated['foto'] = ! empty($fotoPaths) ? $fotoPaths : $order->foto;
             }
 
             $order->update([
@@ -520,8 +589,17 @@ class OrderPerbaikanService
         return $order;
     }
 
-    public function userConfirm(User $user, OrderPerbaikan $order, ?string $catatan = null, bool $selesai = true, ?string $lampiran = null): OrderPerbaikan
+    public function userConfirm(User $user, OrderPerbaikan $order, ?string $catatan = null, bool $selesai = true, $lampiran = null): OrderPerbaikan
     {
+        if (is_string($lampiran)) {
+            $lampiran = $lampiran ? [$lampiran] : null;
+        }
+        if (is_array($lampiran)) {
+            $lampiran = array_values(array_filter($lampiran));
+            if (empty($lampiran)) {
+                $lampiran = null;
+            }
+        }
         if ($order->created_by !== $user->id) {
             throw new \Exception('Unauthorized', 403);
         }
@@ -556,10 +634,14 @@ class OrderPerbaikanService
             return $order->fresh()->load(['creator', 'location']);
         });
 
-        // Beri tahu admin/IPSRS bahwa user sudah mengkonfirmasi (DB inbox)
-        $admins = User::adminUmum()->get();
-        foreach ($admins as $adm) {
-            $adm->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
+        // Beri tahu PJ kategori order (bukan semua Admin Umum) bahwa user
+        // sudah mengkonfirmasi, agar notifikasi hanya muncul ke penanggung jawab.
+        $targets = $order->penanggungJawab;
+        if ($targets->isEmpty()) {
+            $targets = User::adminUmum()->get();
+        }
+        foreach ($targets as $pj) {
+            $pj->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
         }
 
         return $order;
@@ -590,13 +672,17 @@ class OrderPerbaikanService
                 ]);
             });
 
-            // Notifikasi ke creator + Admin Umum
+            // Notifikasi ke creator + PJ kategori order (bukan semua Admin Umum).
             try {
                 $creator = $order->creator ?? User::find($order->created_by);
                 if ($creator) {
                     $creator->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
                 }
-                foreach (User::adminUmum()->get() as $adm) {
+                $targets = $order->penanggungJawab;
+                if ($targets->isEmpty()) {
+                    $targets = User::adminUmum()->get();
+                }
+                foreach ($targets as $adm) {
                     $adm->notify(new \App\Notifications\OrderPerbaikanStatusUpdated($order));
                 }
             } catch (\Throwable $e) {

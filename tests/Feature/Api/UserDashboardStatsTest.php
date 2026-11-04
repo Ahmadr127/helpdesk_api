@@ -25,13 +25,14 @@ class UserDashboardStatsTest extends TestCase
         $up = UnitProses::create(['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1]);
         $loc = Location::create(['name' => 'UGD', 'status' => 1]);
         $cat = \App\Models\Category::create(['name' => 'Hardware', 'status' => 1, 'unit_proses_id' => $sirs->id]);
+        \App\Models\KategoriOrder::create(['name' => 'Perbaikan', 'status' => 1]);
 
         $a = User::create(['name' => 'A', 'email' => 'a@x.com', 'password' => Hash::make('123'), 'phone' => '0811', 'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1]);
         $b = User::create(['name' => 'B', 'email' => 'b@x.com', 'password' => Hash::make('123'), 'phone' => '0812', 'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1]);
 
         $payload = fn (string $brg) => [
             'unit_proses_code' => $up->code, 'jenis_barang' => 'Inventaris',
-            'kode_inventaris' => 'INV-'.$brg, 'nama_barang' => $brg, 'lokasi' => $loc->id,
+            'kode_inventaris' => 'INV-'.$brg, 'nama_barang' => $brg, 'kategori_order' => 'Perbaikan', 'lokasi' => $loc->id,
             'keluhan' => 'rusak', 'prioritas' => 'RENDAH', 'tanggal' => now()->format('Y-m-d H:i:s'),
         ];
 

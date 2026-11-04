@@ -21,6 +21,8 @@ class UpdateOrderPerbaikanRequest extends FormRequest
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'fotos' => 'nullable|array|max:3',
+            'fotos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }

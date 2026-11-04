@@ -60,11 +60,13 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional)</label>
-                    <input type="file" name="foto" accept="image/*" disabled class="w-full text-sm text-gray-500 bg-gray-100">
-                    @if($orderPerbaikan->foto)
-                        <a href="{{ Storage::url($orderPerbaikan->foto) }}" target="_blank" class="text-xs text-indigo-600 hover:underline">Lihat foto saat ini</a>
-                    @endif
+                    <x-image-upload name="fotos[]" accent="green" :max="3" :max-size="2"
+                        accept="image/jpeg,image/png,image/jpg,image/gif"
+                        :existing="$orderPerbaikan->foto_urls"
+                        existing-label="Foto order saat ini" />
                     @error('foto') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('fotos') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('fotos.*') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 

@@ -174,7 +174,7 @@ class TicketService
         ];
     }
 
-    public function create(User $user, array $data, $photoFile = null): Ticket
+    public function create(User $user, array $data, $photoFiles = null): Ticket
     {
         if (! $user->department) {
             throw new \Exception('Mohon lengkapi data departemen Anda terlebih dahulu.');
@@ -235,7 +235,15 @@ class TicketService
             throw new \Exception('Kategori yang dipilih harus kategori dari unit SIRS.');
         }
 
-        $ticket = DB::transaction(function () use ($user, $data, $photoFile, $userDepartment, $location, $category, $building) {
+        // Normalisasi ke array (maks 3)
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
+
+        $ticket = DB::transaction(function () use ($user, $data, $photoFiles, $userDepartment, $location, $category, $building) {
             $date = date('dm');
             $lastTicket = Ticket::where('ticket_number', 'like', "T-{$date}-%")->orderBy('ticket_number', 'desc')->first();
             if ($lastTicket) {
@@ -262,15 +270,17 @@ class TicketService
                 'status' => 'open',
             ]);
 
-            if ($photoFile) {
-                $extension = $photoFile->getClientOriginalExtension();
-                $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
-                $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
-                TicketPhoto::create([
-                    'ticket_id' => $ticket->id,
-                    'photo_path' => $path,
-                    'type' => 'initial',
-                ]);
+            foreach ($photoFiles as $photoFile) {
+                if ($photoFile) {
+                    $extension = $photoFile->getClientOriginalExtension();
+                    $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
+                    $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
+                    TicketPhoto::create([
+                        'ticket_id' => $ticket->id,
+                        'photo_path' => $path,
+                        'type' => 'initial',
+                    ]);
+                }
             }
 
             return $ticket->load(['user', 'photos']);
@@ -287,7 +297,7 @@ class TicketService
         return $ticket;
     }
 
-    public function updateUserTicket(User $user, Ticket $ticket, array $data, $photoFile = null): Ticket
+    public function updateUserTicket(User $user, Ticket $ticket, array $data, $photoFiles = null): Ticket
     {
         if ($ticket->user_id !== $user->id) {
             throw new \Exception('Unauthorized', 403);
@@ -296,7 +306,14 @@ class TicketService
             throw new \Exception('Ticket can only be edited when in open status.', 422);
         }
 
-        return DB::transaction(function () use ($ticket, $data, $photoFile) {
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
+
+        return DB::transaction(function () use ($ticket, $data, $photoFiles) {
             $category = Category::findOrFail($data['category_id']);
             $department = Department::with('building')->findOrFail($data['department_id']);
             $location = ! empty($data['location_id']) ? Location::find($data['location_id']) : null;
@@ -317,29 +334,40 @@ class TicketService
                 'priority' => $data['priority'],
             ]);
 
-            if ($photoFile) {
-                $oldPhoto = $ticket->photos()->where('type', 'initial')->first();
-                if ($oldPhoto) {
+            if (! empty($photoFiles)) {
+                $oldPhotos = $ticket->photos()->where('type', 'initial')->get();
+                foreach ($oldPhotos as $oldPhoto) {
                     Storage::disk('public')->delete($oldPhoto->photo_path);
                     $oldPhoto->delete();
                 }
-                $extension = $photoFile->getClientOriginalExtension();
-                $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
-                $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
-                TicketPhoto::create([
-                    'ticket_id' => $ticket->id,
-                    'photo_path' => $path,
-                    'type' => 'initial',
-                ]);
+                foreach ($photoFiles as $photoFile) {
+                    if ($photoFile) {
+                        $extension = $photoFile->getClientOriginalExtension();
+                        $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
+                        $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
+                        TicketPhoto::create([
+                            'ticket_id' => $ticket->id,
+                            'photo_path' => $path,
+                            'type' => 'initial',
+                        ]);
+                    }
+                }
             }
 
             return $ticket->fresh()->load(['user', 'photos']);
         });
     }
 
-    public function updateAdminTicket(User $admin, Ticket $ticket, array $data, $photoFile = null, array $pjIds = []): Ticket
+    public function updateAdminTicket(User $admin, Ticket $ticket, array $data, $photoFiles = null, array $pjIds = []): Ticket
     {
-        return DB::transaction(function () use ($admin, $ticket, $data, $photoFile, $pjIds) {
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
+
+        return DB::transaction(function () use ($admin, $ticket, $data, $photoFiles, $pjIds) {
             $category = Category::findOrFail($data['category_id']);
             $department = Department::with('building')->findOrFail($data['department_id']);
             $location = ! empty($data['location_id']) ? Location::find($data['location_id']) : null;
@@ -360,20 +388,24 @@ class TicketService
                 'priority' => $data['priority'],
             ]);
 
-            if ($photoFile) {
-                $oldPhoto = $ticket->photos()->where('type', 'initial')->first();
-                if ($oldPhoto) {
+            if (! empty($photoFiles)) {
+                $oldPhotos = $ticket->photos()->where('type', 'initial')->get();
+                foreach ($oldPhotos as $oldPhoto) {
                     Storage::disk('public')->delete($oldPhoto->photo_path);
                     $oldPhoto->delete();
                 }
-                $extension = $photoFile->getClientOriginalExtension();
-                $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
-                $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
-                TicketPhoto::create([
-                    'ticket_id' => $ticket->id,
-                    'photo_path' => $path,
-                    'type' => 'initial',
-                ]);
+                foreach ($photoFiles as $photoFile) {
+                    if ($photoFile) {
+                        $extension = $photoFile->getClientOriginalExtension();
+                        $filename = 'ticket_'.uniqid().'_'.time().'.'.$extension;
+                        $path = $photoFile->storeAs('ticket-photos', $filename, 'public');
+                        TicketPhoto::create([
+                            'ticket_id' => $ticket->id,
+                            'photo_path' => $path,
+                            'type' => 'initial',
+                        ]);
+                    }
+                }
             }
 
             $ids = empty($pjIds) ? [$admin->id] : array_values(array_unique($pjIds));
@@ -394,25 +426,38 @@ class TicketService
         $ticket->delete();
     }
 
-    public function reply(User $user, Ticket $ticket, string $message, $photoFile = null): Ticket
+    public function reply(User $user, Ticket $ticket, string $message, $photoFiles = null): Ticket
     {
         if ($ticket->user_id !== $user->id) {
             throw new \Exception('Unauthorized', 403);
         }
+
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
 
         $reply = [
             'message' => $message,
             'timestamp' => now(),
         ];
 
-        if ($photoFile) {
-            $path = $photoFile->store('ticket-replies', 'public');
-            $reply['photo'] = $path;
-            TicketPhoto::create([
-                'ticket_id' => $ticket->id,
-                'photo_path' => $path,
-                'type' => 'user_response',
-            ]);
+        $paths = [];
+        foreach ($photoFiles as $photoFile) {
+            if ($photoFile) {
+                $path = $photoFile->store('ticket-replies', 'public');
+                $paths[] = $path;
+                TicketPhoto::create([
+                    'ticket_id' => $ticket->id,
+                    'photo_path' => $path,
+                    'type' => 'user_response',
+                ]);
+            }
+        }
+        if (! empty($paths)) {
+            $reply['photo'] = count($paths) === 1 ? $paths[0] : $paths;
         }
 
         $replies = $ticket->user_replies ? json_decode($ticket->user_replies, true) : [];
@@ -434,11 +479,18 @@ class TicketService
         return $ticket->fresh();
     }
 
-    public function confirm(User $user, Ticket $ticket, string $notes, string $action, $photoFile = null): Ticket
+    public function confirm(User $user, Ticket $ticket, string $notes, string $action, $photoFiles = null): Ticket
     {
         if ($ticket->user_id !== $user->id) {
             throw new \Exception('Unauthorized', 403);
         }
+
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
 
         $replies = $ticket->user_replies ? json_decode($ticket->user_replies, true) : [];
         $reply = [
@@ -447,14 +499,20 @@ class TicketService
             'timestamp' => now()->toDateTimeString(),
         ];
 
-        if ($photoFile) {
-            $path = $photoFile->store('ticket-responses', 'public');
-            $reply['photo'] = $path;
-            TicketPhoto::create([
-                'ticket_id' => $ticket->id,
-                'photo_path' => $path,
-                'type' => $action === 'confirm' ? 'user_response' : 'user_rejection',
-            ]);
+        $paths = [];
+        foreach ($photoFiles as $photoFile) {
+            if ($photoFile) {
+                $path = $photoFile->store('ticket-responses', 'public');
+                $paths[] = $path;
+                TicketPhoto::create([
+                    'ticket_id' => $ticket->id,
+                    'photo_path' => $path,
+                    'type' => $action === 'confirm' ? 'user_response' : 'user_rejection',
+                ]);
+            }
+        }
+        if (! empty($paths)) {
+            $reply['photo'] = count($paths) === 1 ? $paths[0] : $paths;
         }
 
         $replies[] = $reply;
@@ -486,8 +544,15 @@ class TicketService
         return $ticket->fresh();
     }
 
-    public function adminRespond(User $admin, Ticket $ticket, string $notes, string $status, $photoFile = null): Ticket
+    public function adminRespond(User $admin, Ticket $ticket, string $notes, string $status, $photoFiles = null): Ticket
     {
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
+
         $response = [
             'notes' => $notes,
             'timestamp' => now(),
@@ -498,14 +563,20 @@ class TicketService
 
         $responses = json_decode($ticket->admin_responses, true) ?? [];
 
-        if ($photoFile) {
-            $path = $photoFile->store('ticket-responses', 'public');
-            TicketPhoto::create([
-                'ticket_id' => $ticket->id,
-                'photo_path' => $path,
-                'type' => 'admin_response',
-            ]);
-            $response['photo'] = $path;
+        $paths = [];
+        foreach ($photoFiles as $photoFile) {
+            if ($photoFile) {
+                $path = $photoFile->store('ticket-responses', 'public');
+                $paths[] = $path;
+                TicketPhoto::create([
+                    'ticket_id' => $ticket->id,
+                    'photo_path' => $path,
+                    'type' => 'admin_response',
+                ]);
+            }
+        }
+        if (! empty($paths)) {
+            $response['photo'] = count($paths) === 1 ? $paths[0] : $paths;
         }
 
         $responses[] = $response;
@@ -525,9 +596,16 @@ class TicketService
         return $ticket->fresh();
     }
 
-    public function adminUpdate(User $admin, Ticket $ticket, string $notes, ?string $status, ?string $action, $photoFile = null): Ticket
+    public function adminUpdate(User $admin, Ticket $ticket, string $notes, ?string $status, ?string $action, $photoFiles = null): Ticket
     {
-        return DB::transaction(function () use ($admin, $ticket, $notes, $status, $action, $photoFile) {
+        if ($photoFiles instanceof \Illuminate\Http\UploadedFile) {
+            $photoFiles = [$photoFiles];
+        } elseif (! is_array($photoFiles)) {
+            $photoFiles = $photoFiles ? [$photoFiles] : [];
+        }
+        $photoFiles = array_slice(array_values(array_filter($photoFiles)), 0, 3);
+
+        return DB::transaction(function () use ($admin, $ticket, $notes, $status, $action, $photoFiles) {
             $responses = $ticket->admin_responses ? json_decode($ticket->admin_responses, true) : [];
             $timestamp = now();
             $response = [
@@ -536,15 +614,21 @@ class TicketService
                 'admin_id' => $admin->id,
                 'admin_name' => $admin->name,
             ];
-            if ($photoFile) {
-                $path = $photoFile->store('ticket-responses', 'public');
-                TicketPhoto::create([
-                    'ticket_id' => $ticket->id,
-                    'photo_path' => $path,
-                    'type' => 'admin_response',
-                    'created_at' => $timestamp,
-                ]);
-                $response['photo'] = $path;
+            $paths = [];
+            foreach ($photoFiles as $photoFile) {
+                if ($photoFile) {
+                    $path = $photoFile->store('ticket-responses', 'public');
+                    $paths[] = $path;
+                    TicketPhoto::create([
+                        'ticket_id' => $ticket->id,
+                        'photo_path' => $path,
+                        'type' => 'admin_response',
+                        'created_at' => $timestamp,
+                    ]);
+                }
+            }
+            if (! empty($paths)) {
+                $response['photo'] = count($paths) === 1 ? $paths[0] : $paths;
             }
             $responses[] = $response;
 

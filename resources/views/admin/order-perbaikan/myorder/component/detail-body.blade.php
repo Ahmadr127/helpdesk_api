@@ -69,13 +69,15 @@
     </div>
 </div>
 
-@if($order->foto)
+@if(!empty($order->foto_urls))
 <div class="mt-3 bg-white rounded-lg border border-gray-200 overflow-hidden">
     <div class="px-4 py-2 border-b border-gray-100 bg-gray-50/50">
-        <h4 class="text-sm font-semibold text-gray-900">Foto</h4>
+        <h4 class="text-sm font-semibold text-gray-900">Foto ({{ count($order->foto_urls) }})</h4>
     </div>
-    <div class="p-4">
-        <img src="{{ Storage::url($order->foto) }}" alt="Foto Order Perbaikan" class="w-full max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-100">
+    <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+        @foreach($order->foto_urls as $fotoUrl)
+            <img src="{{ $fotoUrl }}" alt="Foto Order Perbaikan" class="w-full h-32 object-cover rounded-lg border border-gray-200 bg-gray-100">
+        @endforeach
     </div>
 </div>
 @endif

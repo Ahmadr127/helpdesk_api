@@ -18,6 +18,8 @@ class UpdateStatusRequest extends FormRequest
             'follow_up' => 'required|string',
             'prioritas' => 'sometimes|required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'lampiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'lampirans' => 'nullable|array|max:3',
+            'lampirans.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
         ];
     }
 }

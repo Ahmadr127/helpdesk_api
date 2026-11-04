@@ -32,6 +32,8 @@ class StoreOrderPerbaikanRequest extends FormRequest
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'tanggal' => 'required|date',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'fotos' => 'nullable|array|max:3',
+            'fotos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }

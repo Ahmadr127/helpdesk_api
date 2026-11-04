@@ -56,7 +56,7 @@ class OrderPerbaikanAdminController extends BaseApiController
                 $request->user(),
                 $orderPerbaikan,
                 $validated,
-                $request->file('foto'),
+                $request->file('fotos') ?? $request->file('foto'),
                 $request->input('penanggung_jawab_ids', [])
             );
 
@@ -70,10 +70,20 @@ class OrderPerbaikanAdminController extends BaseApiController
     {
         try {
             $data = $request->validated();
-            if ($request->hasFile('lampiran')) {
-                $file = $request->file('lampiran');
-                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                $data['lampiran'] = $file->storeAs('order-lampiran', $filename, 'public');
+            $files = $request->file('lampirans') ?? $request->file('lampiran');
+            if ($files instanceof \Illuminate\Http\UploadedFile) {
+                $files = [$files];
+            } elseif (! is_array($files)) {
+                $files = $files ? [$files] : [];
+            }
+            $files = array_slice(array_values(array_filter($files)), 0, 3);
+            if (! empty($files)) {
+                $paths = [];
+                foreach ($files as $file) {
+                    $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+                    $paths[] = $file->storeAs('order-lampiran', $filename, 'public');
+                }
+                $data['lampiran'] = $paths;
             }
             $updated = $this->service->updateStatus($request->user(), $orderPerbaikan, $data);
 

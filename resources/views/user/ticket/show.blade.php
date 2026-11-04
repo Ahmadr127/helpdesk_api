@@ -155,39 +155,17 @@
                             <div>
                                 <h3 class="text-sm font-medium text-gray-700 mb-2">Foto Tiket</h3>
                                 <div
-                                    class="bg-gray-50 p-3 rounded-lg border border-gray-100 h-48 flex items-center justify-center">
-                                    @if($ticket->initialPhoto)
+                                    class="bg-gray-50 p-3 rounded-lg border border-gray-100 min-h-48 flex items-center justify-center">
                                     @php
-                                    $photoPath = $ticket->initialPhoto->photo_path;
-                                    $fullPath = storage_path('app/public/' . $photoPath);
-                                    $publicPath = public_path('storage/' . $photoPath);
-
-                                    // Debug information
-                                    $debug = [
-                                    'photo_exists_storage' => file_exists($fullPath),
-                                    'photo_exists_public' => file_exists($publicPath),
-                                    'storage_path' => $fullPath,
-                                    'public_path' => $publicPath,
-                                    'is_readable_storage' => is_readable($fullPath),
-                                    'is_readable_public' => is_readable($publicPath),
-                                    ];
+                                    $initialPhotos = $ticket->photos->where('type', 'initial');
                                     @endphp
-
-                                    @if($debug['photo_exists_storage'] || $debug['photo_exists_public'])
-                                    <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket"
-                                        class="max-w-full max-h-full object-contain rounded-lg shadow-sm"
-                                        onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
-                                    @else
-                                    <div class="text-center">
-                                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                            </path>
-                                        </svg>
-                                        <p class="mt-2 text-sm text-gray-500">Tidak ada foto</p>
+                                    @if($initialPhotos->isNotEmpty())
+                                    <div class="grid grid-cols-2 gap-2 w-full">
+                                        @foreach($initialPhotos as $p)
+                                        <img src="{{ asset('storage/' . $p->photo_path) }}" alt="Foto Tiket"
+                                            class="w-full max-h-48 object-contain rounded-lg shadow-sm">
+                                        @endforeach
                                     </div>
-                                    @endif
                                     @else
                                     <div class="text-center">
                                         <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24"
@@ -336,40 +314,7 @@
                 </div>
 
                 <!-- Conversation Content -->
-                @php
-                // Check if responses are already arrays
-                $adminResponses = is_array($ticket->admin_responses) ?
-                $ticket->admin_responses :
-                (json_decode($ticket->admin_responses, true) ?? []);
-
-                $userReplies = is_array($ticket->user_replies) ?
-                $ticket->user_replies :
-                (json_decode($ticket->user_replies, true) ?? []);
-
-                // Combine both arrays and sort by timestamp
-                $allResponses = [];
-
-                foreach($adminResponses as $response) {
-                $response['type'] = 'admin';
-                $allResponses[] = $response;
-                }
-
-                foreach($userReplies as $reply) {
-                // Pertahankan aksi asli (confirm/reject) untuk badge — jangan tertimpa 'user'.
-                $reply['action'] = $reply['type'] ?? $reply['action'] ?? null;
-                $reply['type'] = 'user';
-                $allResponses[] = $reply;
-                }
-
-                // Chat: urut kronologis (lama di atas, baru di bawah) — sama seperti admin
-                usort($allResponses, function($a, $b) {
-                return strtotime($a['timestamp']) - strtotime($b['timestamp']);
-                });
-
-                $pengajuName = $ticket->user->name ?? 'Anda';
-                @endphp
-
-                @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $pengajuName])
+                @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $ticket->user->name ?? 'Anda'])
             </div>
         </div>
     </div>
@@ -403,7 +348,7 @@
                     </label>
                     <div
                         class="relative border border-dashed border-gray-300 rounded-lg p-4 h-[calc(100%-2rem)] flex flex-col items-center justify-center">
-                        <input type="file" name="photo" accept="image/*" class="hidden" id="reply-photo-upload"
+                        <input type="file" name="photos[]" accept="image/*" class="hidden" id="reply-photo-upload" multiple
                             onchange="handleImagePreview(this)">
                         <div class="flex flex-col items-center justify-center h-full w-full" id="upload-placeholder">
                             <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -729,8 +674,8 @@ function removeConfirmationImage() {
                             Foto (Opsional)
                         </label>
                         <div class="relative border border-dashed border-gray-300 rounded-lg p-4">
-                            <input type="file" name="photo" accept="image/*" id="confirmation-photo-upload"
-                                class="hidden" onchange="handleConfirmationImagePreview(this)">
+                            <input type="file" name="photos[]" accept="image/*" id="confirmation-photo-upload"
+                                class="hidden" multiple onchange="handleConfirmationImagePreview(this)">
                             <div class="flex flex-col items-center justify-center" id="confirmation-upload-placeholder">
                                 <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -26,8 +26,8 @@ class TicketResource extends JsonResource
             'description' => $this->description,
             'priority' => $this->priority,
             'status' => $this->status,
-            'admin_responses' => $this->admin_responses ? json_decode($this->admin_responses, true) : [],
-            'user_replies' => $this->user_replies ? json_decode($this->user_replies, true) : [],
+            'admin_responses' => $this->admin_responses ? $this->normalizeResponsePhotos(json_decode($this->admin_responses, true)) : [],
+            'user_replies' => $this->user_replies ? $this->normalizeResponsePhotos(json_decode($this->user_replies, true)) : [],
             'user_confirmation' => (bool) $this->user_confirmation,
             'user_confirmed_at' => $this->user_confirmed_at,
             'rejection_count' => $this->rejection_count,
@@ -61,6 +61,36 @@ class TicketResource extends JsonResource
                 ? ($this->user_id === $request->user()->id && $this->status === 'open')
                 : false,
         ];
+    }
+
+    /**
+     * Normalisasi lampiran foto pada admin_responses / user_replies:
+     * tambahkan `photo_urls` (array URL publik) dari field `photo`
+     * yang bisa berupa string path atau array path. Backward-compat: `photo` tetap ada.
+     */
+    private function normalizeResponsePhotos($responses): array
+    {
+        if (! is_array($responses)) {
+            return [];
+        }
+        return array_values(array_map(function ($r) {
+            if (! is_array($r)) {
+                return $r;
+            }
+            $paths = [];
+            if (isset($r['photo']) && $r['photo'] !== null && $r['photo'] !== '') {
+                $p = $r['photo'];
+                $paths = is_array($p) ? array_values($p) : [$p];
+            }
+            $urls = [];
+            foreach ($paths as $p) {
+                if (is_string($p) && trim($p) !== '') {
+                    $urls[] = Storage::disk('public')->url($p);
+                }
+            }
+            $r['photo_urls'] = array_values(array_unique($urls));
+            return $r;
+        }, $responses));
     }
 
     private function buildTimeline(): array

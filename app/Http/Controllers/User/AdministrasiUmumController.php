@@ -200,7 +200,7 @@ class AdministrasiUmumController extends Controller
         $validated = $request->validated();
 
         try {
-            $orderPerbaikan = $service->create(auth()->user(), $validated, $request->file('foto'), 'Web');
+            $orderPerbaikan = $service->create(auth()->user(), $validated, $request->file('fotos') ?? $request->file('foto'), 'Web');
 
             if ($request->ajax()) {
                 return response()->json([
@@ -288,7 +288,7 @@ class AdministrasiUmumController extends Controller
         $validated = $request->validated();
 
         try {
-            $order = $service->update(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), 'Web');
+            $order = $service->update(auth()->user(), $orderPerbaikan, $validated, $request->file('fotos') ?? $request->file('foto'), 'Web');
 
             if ($request->ajax()) {
                 return response()->json([
@@ -340,14 +340,22 @@ class AdministrasiUmumController extends Controller
             'konfirmasi' => 'required|in:selesai,belum',
             'catatan' => 'nullable|string|max:1000',
             'lampiran' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'lampirans' => 'nullable|array|max:3',
+            'lampirans.*' => 'file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
         try {
-            $lampiranPath = null;
-            if ($request->hasFile('lampiran')) {
-                $file = $request->file('lampiran');
+            $lampiranPaths = [];
+            $files = $request->file('lampirans') ?? $request->file('lampiran');
+            if ($files instanceof \Illuminate\Http\UploadedFile) {
+                $files = [$files];
+            } elseif (! is_array($files)) {
+                $files = $files ? [$files] : [];
+            }
+            $files = array_slice(array_values(array_filter($files)), 0, 3);
+            foreach ($files as $file) {
                 $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
+                $lampiranPaths[] = $file->storeAs('order-lampiran', $filename, 'public');
             }
 
             $service->userConfirm(
@@ -355,7 +363,7 @@ class AdministrasiUmumController extends Controller
                 $orderPerbaikan,
                 $validated['catatan'] ?? null,
                 $validated['konfirmasi'] === 'selesai',
-                $lampiranPath
+                $lampiranPaths
             );
 
             return redirect()

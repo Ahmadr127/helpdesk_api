@@ -4,25 +4,6 @@
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<script>
-// Define previewImage function globally
-function previewImage(input) {
-    const previewImage = document.getElementById('preview-image');
-    const noPhotoText = document.getElementById('no-photo-text');
-
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            previewImage.src = e.target.result;
-            previewImage.classList.remove('hidden');
-            noPhotoText.classList.add('hidden');
-        }
-
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-</script>
 
 <div class="w-full">
     <div class="bg-white rounded-lg shadow-lg mb-4">
@@ -115,8 +96,8 @@ function previewImage(input) {
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
-                        <select name="kategori_order"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order <span class="text-red-500">*</span></label>
+                        <select name="kategori_order" required
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                             <option value="">Pilih Kategori</option>
                             @foreach($kategoriOrders as $kat)
@@ -174,46 +155,13 @@ function previewImage(input) {
                 <!-- Foto Section -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Foto</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <!-- Photo Preview -->
-                        <div class="bg-gray-100 p-2 rounded-lg">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">Preview Foto</h4>
-                            <div class="bg-white rounded-lg overflow-hidden">
-                                <div id="preview-container" class="flex items-center justify-center h-48">
-                                    <img id="preview-image"
-                                        src="{{ $orderPerbaikan->foto ? Storage::url($orderPerbaikan->foto) : '' }}"
-                                        alt="Preview Photo"
-                                        class="w-full h-48 object-contain {{ $orderPerbaikan->foto ? '' : 'hidden' }}">
-                                    <p id="no-photo-text" class="text-sm text-gray-500 {{ $orderPerbaikan->foto ? 'hidden' : '' }}">
-                                        Tidak ada foto
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Upload New Photo -->
-                        <div class="bg-gray-100 p-2 rounded-lg">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">Upload Foto Baru</h4>
-                            <div class="mt-1 flex justify-center px-4 py-2 border-2 border-gray-300 border-dashed rounded-lg">
-                                <div class="space-y-2 text-center">
-                                    <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none"
-                                        viewBox="0 0 48 48">
-                                        <path
-                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                    <div class="flex text-sm text-gray-600 justify-center">
-                                        <label for="foto"
-                                            class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                                            <span>Upload foto</span>
-                                            <input id="foto" name="foto" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
-                                        </label>
-                                    </div>
-                                    <p class="text-xs text-gray-500">PNG, JPG, GIF maks 2MB (otomatis dikompresi)</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <x-image-upload name="fotos[]" accent="green" :max="3" :max-size="2"
+                        accept="image/jpeg,image/png,image/jpg,image/gif"
+                        :existing="$orderPerbaikan->foto_urls"
+                        existing-label="Foto order saat ini" />
+                    @error('foto') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('fotos') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('fotos.*') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
 
@@ -234,99 +182,3 @@ function previewImage(input) {
 
 @endsection
 
-@section('scripts')
-<script>
-// Drag and drop functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const dropZone = document.querySelector('.border-dashed');
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function handleDrop(e) {
-        preventDefaults(e);
-        const dt = e.dataTransfer;
-        const file = dt.files[0];
-
-        if (file && file.type.startsWith('image/')) {
-            const input = document.getElementById('foto');
-            input.files = dt.files;
-            previewImage(input);
-        }
-    }
-
-    function highlight(e) {
-        preventDefaults(e);
-        dropZone.classList.add('border-blue-500', 'bg-blue-50');
-    }
-
-    function unhighlight(e) {
-        preventDefaults(e);
-        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-    }
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults);
-    });
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight);
-    });
-
-    dropZone.addEventListener('drop', handleDrop);
-
-    // Kompresi otomatis saat submit agar lolos limit upload server (~2MB)
-    function compressImageFile(file, maxDim, quality){
-        maxDim=maxDim||1600; quality=quality||0.82;
-        return new Promise(function(resolve,reject){
-            const url=URL.createObjectURL(file);
-            const img=new Image();
-            img.onload=function(){
-                URL.revokeObjectURL(url);
-                try{
-                    let w=img.width,h=img.height;
-                    const scale=Math.min(1, maxDim/Math.max(w,h));
-                    w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
-                    const c=document.createElement('canvas'); c.width=w; c.height=h;
-                    const ctx=c.getContext('2d');
-                    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
-                    ctx.drawImage(img,0,0,w,h);
-                    c.toBlob(function(b){ b?resolve(b):reject(new Error('compress')); },'image/jpeg',quality);
-                }catch(err){ reject(err); }
-            };
-            img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('load')); };
-            img.src=url;
-        });
-    }
-    const editForm=document.getElementById('editOrderForm');
-    const editFoto=document.getElementById('foto');
-    if(editForm && editFoto){
-        editForm.addEventListener('submit', function(e){
-            const f=editFoto.files && editFoto.files[0];
-            if(!f || f.size <= 1536*1024) return;
-            e.preventDefault();
-            const btn=editForm.querySelector('button[type="submit"]');
-            const origText=btn?btn.textContent:'';
-            if(btn){ btn.disabled=true; btn.textContent='Mengompresi foto...'; }
-            compressImageFile(f).then(function(blob){
-                const dt=new DataTransfer();
-                const base=((f.name||'foto').replace(/\.[^.]+$/,'')||'foto');
-                dt.items.add(new File([blob], base+'.jpg',{type:'image/jpeg'}));
-                editFoto.files=dt.files;
-                if(btn){ btn.disabled=false; btn.textContent=origText; }
-                editForm.submit();
-            }).catch(function(){
-                if(btn){ btn.disabled=false; btn.textContent=origText; }
-                editForm.submit();
-            });
-        });
-    }
-});
-</script>
-@endsection

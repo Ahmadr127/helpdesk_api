@@ -336,7 +336,7 @@ class OrderPerbaikanController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->updateAdminOrder(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), $request->input('penanggung_jawab_ids', []), 'Web');
+            $service->updateAdminOrder(auth()->user(), $orderPerbaikan, $validated, $request->file('fotos') ?? $request->file('foto'), $request->input('penanggung_jawab_ids', []), 'Web');
 
             return redirect()->route('admin.order-perbaikan.show', $orderPerbaikan)
                 ->with('success', 'Pengajuan order berhasil diperbarui.');
@@ -348,8 +348,15 @@ class OrderPerbaikanController extends Controller
     public function updateStatus(UpdateStatusRequest $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanPjScopeService $service)
     {
         $validated = $request->validated();
-        if ($request->hasFile('lampiran')) {
-            $validated['lampiran'] = $service->storeLampiran($request->file('lampiran'));
+        $files = $request->file('lampirans') ?? $request->file('lampiran');
+        if ($files instanceof \Illuminate\Http\UploadedFile) {
+            $files = [$files];
+        } elseif (! is_array($files)) {
+            $files = $files ? [$files] : [];
+        }
+        $files = array_slice(array_values(array_filter($files)), 0, 3);
+        if (! empty($files)) {
+            $validated['lampiran'] = $service->storeLampirans($files);
         }
 
         try {

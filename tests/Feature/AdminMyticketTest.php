@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
+use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\OrderPerbaikan;
 use App\Models\Role;
@@ -234,6 +235,7 @@ class AdminMyticketTest extends TestCase
         $this->seedRolePermissions();
         Location::create(['name' => 'UGD', 'status' => 1]);
         UnitProses::create(['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1]);
+        KategoriOrder::create(['name' => 'Perbaikan', 'status' => 1]);
         $admin = $this->makeUser('admin', 'admin@example.com');
         $user = $this->makeUser('user', 'user@example.com');
 
@@ -241,6 +243,7 @@ class AdminMyticketTest extends TestCase
         $this->actingAs($admin)->get(route('admin.order-perbaikan.myorder.create'))->assertStatus(200);
         $this->actingAs($admin)->post(route('admin.order-perbaikan.myorder.store'), [
             'keluhan' => 'AC admin rusak',
+            'kategori_order' => 'Perbaikan',
             'prioritas' => 'RENDAH',
             'tanggal' => now()->format('Y-m-d H:i:s'),
         ])->assertRedirect(route('admin.order-perbaikan.myorder'));
@@ -251,6 +254,7 @@ class AdminMyticketTest extends TestCase
         $this->actingAs($ipsrs)->get(route('admin.order-perbaikan.myorder.create'))->assertStatus(200);
         $this->actingAs($ipsrs)->post(route('admin.order-perbaikan.myorder.store'), [
             'keluhan' => 'AC rusak',
+            'kategori_order' => 'Perbaikan',
             'prioritas' => 'RENDAH',
             'tanggal' => now()->format('Y-m-d H:i:s'),
         ])->assertRedirect(route('admin.order-perbaikan.myorder'));
@@ -261,6 +265,7 @@ class AdminMyticketTest extends TestCase
         $this->actingAs($ipsrs)->get(route('admin.order-perbaikan.myorder.edit', $order))->assertStatus(200);
         $this->actingAs($ipsrs)->put(route('admin.order-perbaikan.myorder.update', $order), [
             'keluhan' => 'AC rusak parah',
+            'kategori_order' => 'Perbaikan',
             'prioritas' => 'RENDAH',
         ])->assertRedirect(route('admin.order-perbaikan.myorder.show', $order));
         $this->assertEquals('AC rusak parah', $order->fresh()->keluhan);

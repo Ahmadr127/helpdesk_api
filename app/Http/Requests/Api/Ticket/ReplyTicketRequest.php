@@ -16,6 +16,8 @@ class ReplyTicketRequest extends FormRequest
         return [
             'message' => 'required|string',
             'photo' => 'nullable|image|max:5120',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|max:5120',
         ];
     }
 }

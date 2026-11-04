@@ -18,6 +18,10 @@ class OrderPerbaikanHistory extends Model
         'created_by',
     ];
 
+    protected $casts = [
+        'lampiran' => 'array',
+    ];
+
     public function order()
     {
         return $this->belongsTo(OrderPerbaikan::class, 'order_perbaikan_id');

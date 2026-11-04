@@ -81,7 +81,7 @@ class TicketAdminController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->updateAdminTicket(auth()->user(), $ticket, $validated, $request->file('photo'), $request->input('penanggung_jawab_ids', []));
+            $service->updateAdminTicket(auth()->user(), $ticket, $validated, $request->file('photos') ?? $request->file('photo'), $request->input('penanggung_jawab_ids', []));
 
             return redirect()->route('admin.tickets.show', $ticket)
                 ->with('success', 'Pengajuan tiket berhasil diperbarui.');
@@ -163,7 +163,7 @@ class TicketAdminController extends Controller
     {
         $validated = $request->validated();
 
-        $service->adminRespond(auth()->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photo'));
+        $service->adminRespond(auth()->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photos') ?? $request->file('photo'));
 
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
@@ -173,7 +173,7 @@ class TicketAdminController extends Controller
     {
         $validated = $request->validated();
 
-        $service->adminUpdate(auth()->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photo'));
+        $service->adminUpdate(auth()->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photos') ?? $request->file('photo'));
 
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', $request->input('action') === 'reply' ? 'Reply sent successfully.' : 'Ticket berhasil diperbarui.');
@@ -344,7 +344,7 @@ class TicketAdminController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->create(auth()->user(), $validated, $request->file('photo'));
+            $service->create(auth()->user(), $validated, $request->file('photos') ?? $request->file('photo'));
 
             return redirect()->route('admin.tickets.myticket')
                 ->with('success', 'Tiket berhasil dibuat.');
@@ -388,7 +388,7 @@ class TicketAdminController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photo'));
+            $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photos') ?? $request->file('photo'));
 
             return redirect()->route('admin.tickets.myticket.show', $ticket)
                 ->with('success', 'Tiket berhasil diperbarui.');

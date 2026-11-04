@@ -21,6 +21,8 @@ class UpdateTicketRequest extends FormRequest
             'building_id' => 'nullable|exists:buildings,id',
             'priority' => 'required|in:low,medium,high',
             'photo' => 'nullable|image|max:5120',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|max:5120',
         ];
     }
 }

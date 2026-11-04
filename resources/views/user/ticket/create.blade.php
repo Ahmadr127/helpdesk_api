@@ -155,22 +155,14 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional)</label>
-                                <div class="flex items-center">
-                                    <label
-                                        class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors">
-                                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                            </path>
-                                        </svg>
-                                        <span class="text-sm text-gray-700">Pilih Foto</span>
-                                        <input type="file" name="photo" accept="image/*" class="hidden"
-                                            id="photo-input">
-                                    </label>
-                                </div>
-                                <p id="file-name" class="mt-1 text-xs text-gray-500">Ukuran file maksimum: 5MB</p>
+                                <x-image-upload name="photos[]" accent="blue" :max="3" :max-size="5" />
                                 @error('photo')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                @error('photos')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                @error('photos.*')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -194,23 +186,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Show selected file name
-    const photoInput = document.getElementById('photo-input');
-    const fileNameDisplay = document.getElementById('file-name');
-
-    photoInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const fileName = this.files[0].name;
-            const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // Convert to MB
-            fileNameDisplay.textContent = `${fileName} (${fileSize} MB)`;
-        } else {
-            fileNameDisplay.textContent = 'Ukuran file maksimum: 5MB';
-        }
-    });
-});
-</script>
-@endpush
 @endsection

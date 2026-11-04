@@ -17,6 +17,8 @@ class UserConfirmOrderRequest extends FormRequest
             'konfirmasi' => 'required|in:selesai,belum',
             'catatan' => 'nullable|string|max:1000',
             'lampiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'lampirans' => 'nullable|array|max:3',
+            'lampirans.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
         ];
     }
 

@@ -96,35 +96,44 @@
                         <div>
                             <h3 class="text-sm font-medium text-gray-500 mb-2">Foto Tiket</h3>
                             <div
-                                class="bg-gray-50 p-3 rounded-lg border border-gray-100 h-40 flex items-center justify-center">
-                                @if($ticket->initialPhoto)
+                                class="bg-gray-50 p-3 rounded-lg border border-gray-100 min-h-40 max-h-40 overflow-auto flex items-center justify-center">
                                 @php
-                                $photoPath = $ticket->initialPhoto->photo_path;
-                                $fullPath = storage_path('app/public/' . $photoPath);
-                                $publicPath = public_path('storage/' . $photoPath);
+                                $initialPhotos = $ticket->photos->where('type', 'initial');
                                 @endphp
 
-                                @if(file_exists($fullPath) || file_exists($publicPath))
-                                <a href="{{ asset('storage/' . $photoPath) }}" target="_blank" title="Klik untuk perbesar"
-                                    onclick="openTicketPhoto(event, '{{ asset('storage/' . $photoPath) }}')"
-                                    class="flex items-center justify-center h-full max-h-full max-w-full overflow-hidden cursor-zoom-in group relative">
-                                    <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket - klik untuk perbesar"
-                                        class="max-w-full max-h-36 object-contain rounded-lg shadow-sm group-hover:opacity-90 transition"
-                                        onerror="this.onerror=null; this.closest('a').outerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
-                                    <span
-                                        class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">Perbesar</span>
-                                </a>
-                                @else
-                                <div class="text-center p-4">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <p class="mt-2 text-sm text-gray-500">File foto tidak ditemukan</p>
+                                @if($initialPhotos->isNotEmpty())
+                                <div class="grid grid-cols-2 gap-2 w-full">
+                                    @foreach($initialPhotos as $photo)
+                                    @php
+                                    $photoPath = $photo->photo_path;
+                                    $fullPath = storage_path('app/public/' . $photoPath);
+                                    $publicPath = public_path('storage/' . $photoPath);
+                                    @endphp
+
+                                    @if(file_exists($fullPath) || file_exists($publicPath))
+                                    <a href="{{ asset('storage/' . $photoPath) }}" target="_blank"
+                                        title="Klik untuk perbesar"
+                                        onclick="openTicketPhoto(event, '{{ asset('storage/' . $photoPath) }}')"
+                                        class="flex items-center justify-center h-full max-h-full max-w-full overflow-hidden cursor-zoom-in group relative">
+                                        <img src="{{ asset('storage/' . $photoPath) }}"
+                                            alt="Foto Tiket - klik untuk perbesar"
+                                            class="max-w-full max-h-24 object-contain rounded-lg shadow-sm group-hover:opacity-90 transition">
+                                        <span
+                                            class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">Perbesar</span>
+                                    </a>
+                                    @else
+                                    <div class="text-center p-4">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                            </path>
+                                        </svg>
+                                        <p class="mt-2 text-sm text-gray-500">File foto tidak ditemukan</p>
+                                    </div>
+                                    @endif
+                                    @endforeach
                                 </div>
-                                @endif
                                 @else
                                 <div class="text-center">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
@@ -331,7 +340,7 @@
                             Lampirkan Foto (Opsional)
                         </label>
                         <div class="relative border border-dashed border-gray-300 rounded-lg p-3">
-                            <input type="file" name="photo" accept="image/*" class="hidden" id="photo-upload"
+                            <input type="file" name="photos[]" accept="image/*" class="hidden" id="photo-upload" multiple
                                 onchange="handleImagePreview(this)">
                             <label for="photo-upload" class="cursor-pointer block text-center">
                                 <div class="flex flex-col items-center justify-center" id="upload-placeholder">

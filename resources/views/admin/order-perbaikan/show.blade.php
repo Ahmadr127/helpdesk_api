@@ -110,7 +110,7 @@
                 </div>
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 content-start {{ $orderPerbaikan->foto ? '' : 'md:col-span-2' }}">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 content-start {{ !empty($orderPerbaikan->foto_urls) ? '' : 'md:col-span-2' }}">
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kategori_order ?? '-' }}</dd>
@@ -129,21 +129,15 @@
                             <dd class="mt-1 text-sm text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-100">{{ $orderPerbaikan->keluhan }}</dd>
                         </div>
                     </dl>
-                    @if($orderPerbaikan->foto)
+                    @if(!empty($orderPerbaikan->foto_urls))
                     <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Foto Barang</p>
-                        <div class="relative rounded-lg overflow-hidden bg-gray-100">
-                            <img src="{{ Storage::url($orderPerbaikan->foto) }}" alt="Foto Order"
-                                class="w-full h-64 object-cover">
-                            <div class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                                <a href="{{ Storage::url($orderPerbaikan->foto) }}" target="_blank"
-                                    class="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
-                                    </svg>
-                                    Lihat Full Size
-                                </a>
-                            </div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Foto Barang ({{ count($orderPerbaikan->foto_urls) }})</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            @foreach($orderPerbaikan->foto_urls as $fotoUrl)
+                            <a href="{{ $fotoUrl }}" target="_blank" class="relative rounded-lg overflow-hidden bg-gray-100 block">
+                                <img src="{{ $fotoUrl }}" alt="Foto Order" class="w-full h-40 object-cover hover:opacity-95 transition-opacity">
+                            </a>
+                            @endforeach
                         </div>
                     </div>
                     @endif
@@ -221,8 +215,8 @@
                             </div>
                             <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
                                 <div class="flex-1 min-w-0">
-                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Lampiran <span class="text-gray-400 font-normal">(opsional, JPG/PNG 5MB)</span></label>
-                                    <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
+                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Lampiran <span class="text-gray-400 font-normal">(opsional, JPG/PNG 5MB, maks 3)</span></label>
+                                    <input type="file" name="lampirans[]" accept=".jpg,.jpeg,.png" multiple
                                         class="w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all">
                                 </div>
                                 <button type="submit" name="action" value="update"

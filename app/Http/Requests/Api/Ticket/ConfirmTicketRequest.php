@@ -17,6 +17,8 @@ class ConfirmTicketRequest extends FormRequest
             'confirmation_notes' => 'required|string',
             'action' => 'required|in:confirm,reject',
             'photo' => 'nullable|image|max:5120',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|max:5120',
         ];
     }
 }

@@ -99,13 +99,19 @@
                 @endif
             </p>
 
-            @if(isset($response['content']['photo']))
-            <div class="mt-3">
-                <a href="{{ Storage::url($response['content']['photo']) }}" target="_blank"
+            @php
+                $respPhoto = $response['content']['photo'] ?? null;
+                $respPhotos = is_array($respPhoto) ? array_values(array_filter($respPhoto)) : ($respPhoto ? [$respPhoto] : []);
+            @endphp
+            @if(!empty($respPhotos))
+            <div class="mt-3 flex flex-wrap gap-2">
+                @foreach($respPhotos as $rp)
+                <a href="{{ Storage::url($rp) }}" target="_blank"
                     class="block max-w-xs overflow-hidden rounded-lg shadow-sm hover:opacity-90">
-                    <img src="{{ Storage::url($response['content']['photo']) }}" alt="Response Photo"
+                    <img src="{{ Storage::url($rp) }}" alt="Response Photo"
                         class="w-full h-auto">
                 </a>
+                @endforeach
             </div>
             @endif
         </div>

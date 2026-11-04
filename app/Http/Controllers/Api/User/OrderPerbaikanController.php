@@ -42,7 +42,7 @@ class OrderPerbaikanController extends BaseApiController
     public function store(StoreOrderPerbaikanRequest $request)
     {
         try {
-            $order = $this->orderService->create($request->user(), $request->validated(), $request->file('foto'));
+            $order = $this->orderService->create($request->user(), $request->validated(), $request->file('fotos') ?? $request->file('foto'));
 
             return $this->success(new OrderPerbaikanResource($order), 'Order perbaikan berhasil dibuat', 201);
         } catch (\Exception $e) {
@@ -64,7 +64,7 @@ class OrderPerbaikanController extends BaseApiController
     public function update(UpdateOrderPerbaikanRequest $request, OrderPerbaikan $orderPerbaikan)
     {
         try {
-            $updated = $this->orderService->update($request->user(), $orderPerbaikan, $request->validated(), $request->file('foto'));
+            $updated = $this->orderService->update($request->user(), $orderPerbaikan, $request->validated(), $request->file('fotos') ?? $request->file('foto'));
 
             return $this->success(new OrderPerbaikanResource($updated), 'Order berhasil diperbarui');
         } catch (\Exception $e) {
@@ -134,11 +134,17 @@ class OrderPerbaikanController extends BaseApiController
     public function konfirmasiSelesai(UserConfirmOrderRequest $request, OrderPerbaikan $orderPerbaikan)
     {
         try {
-            $lampiranPath = null;
-            if ($request->hasFile('lampiran')) {
-                $file = $request->file('lampiran');
+            $lampiranPaths = [];
+            $files = $request->file('lampirans') ?? $request->file('lampiran');
+            if ($files instanceof \Illuminate\Http\UploadedFile) {
+                $files = [$files];
+            } elseif (! is_array($files)) {
+                $files = $files ? [$files] : [];
+            }
+            $files = array_slice(array_values(array_filter($files)), 0, 3);
+            foreach ($files as $file) {
                 $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
+                $lampiranPaths[] = $file->storeAs('order-lampiran', $filename, 'public');
             }
 
             $order = $this->orderService->userConfirm(
@@ -146,7 +152,7 @@ class OrderPerbaikanController extends BaseApiController
                 $orderPerbaikan,
                 $request->input('catatan'),
                 $request->input('konfirmasi') === 'selesai',
-                $lampiranPath
+                $lampiranPaths
             );
 
             return $this->success(new OrderPerbaikanResource($order), $request->input('konfirmasi') === 'selesai' ? 'Terima kasih, order telah dikonfirmasi selesai.' : 'Order dibuka kembali karena belum selesai.');

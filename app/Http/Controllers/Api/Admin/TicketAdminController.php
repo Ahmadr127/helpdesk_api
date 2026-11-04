@@ -53,7 +53,7 @@ class TicketAdminController extends BaseApiController
                 $request->user(),
                 $ticket,
                 $validated,
-                $request->file('photo'),
+                $request->file('photos') ?? $request->file('photo'),
                 $request->input('penanggung_jawab_ids', [])
             );
 
@@ -66,7 +66,7 @@ class TicketAdminController extends BaseApiController
     public function respond(AdminRespondRequest $request, Ticket $ticket)
     {
         $validated = $request->validated();
-        $updated = $this->ticketService->adminRespond($request->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photo'));
+        $updated = $this->ticketService->adminRespond($request->user(), $ticket, $validated['notes'], $validated['status'], $request->file('photos') ?? $request->file('photo'));
 
         return $this->success(new TicketResource($updated), 'Response berhasil ditambahkan');
     }
@@ -74,7 +74,7 @@ class TicketAdminController extends BaseApiController
     public function update(AdminUpdateRequest $request, Ticket $ticket)
     {
         $validated = $request->validated();
-        $updated = $this->ticketService->adminUpdate($request->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photo'));
+        $updated = $this->ticketService->adminUpdate($request->user(), $ticket, $validated['notes'], $validated['status'] ?? null, $validated['action'] ?? null, $request->file('photos') ?? $request->file('photo'));
 
         return $this->success(new TicketResource($updated), $validated['action'] === 'reply' ? 'Reply terkirim' : 'Ticket diperbarui');
     }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Building;
 use App\Models\Department;
+use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\OrderPerbaikan;
 use App\Models\Position;
@@ -27,6 +28,8 @@ class OrderNotificationTest extends TestCase
 
     protected UnitProses $unitProses;
 
+    protected KategoriOrder $kategori;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -39,6 +42,7 @@ class OrderNotificationTest extends TestCase
         UnitProses::create(['name' => 'SIRS', 'code' => 'SIRS', 'status' => 1]);
         $building = Building::create(['name' => 'Gedung A', 'code' => 'A', 'status' => 1]);
         $this->location = Location::create(['name' => 'UGD', 'status' => 1]);
+        $this->kategori = KategoriOrder::create(['name' => 'Umum', 'code' => 'UMUM', 'status' => 1]);
 
         $this->user = User::create([
             'name' => 'Regular', 'email' => 'user@example.com', 'password' => Hash::make('123'),
@@ -66,6 +70,7 @@ class OrderNotificationTest extends TestCase
             'jenis_barang' => 'Umum',
             'kode_inventaris' => 'INV-001',
             'nama_barang' => 'AC',
+            'kategori_order' => $this->kategori->name,
             'lokasi' => $this->location->id,
             'keluhan' => 'Rusak',
             'prioritas' => 'RENDAH',

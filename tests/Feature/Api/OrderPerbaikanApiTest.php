@@ -67,6 +67,7 @@ class OrderPerbaikanApiTest extends TestCase
             'jenis_barang' => 'Inventaris',
             'kode_inventaris' => 'INV-001',
             'nama_barang' => 'AC Rusak',
+            'kategori_order' => 'Perbaikan',
             'lokasi' => $this->location->id,
             'keluhan' => 'Tidak dingin',
             'prioritas' => 'RENDAH',
@@ -175,6 +176,7 @@ class OrderPerbaikanApiTest extends TestCase
         ]);
         $resp = $this->withHeaders($this->authHeader($this->user))->putJson("/api/order-perbaikan/{$order->id}", [
             'jenis_barang' => 'Inventaris', 'kode_inventaris' => 'INV-3', 'nama_barang' => 'Updated', 'lokasi' => $this->location->id,
+            'kategori_order' => 'Perbaikan',
             'keluhan' => 'Updated keluhan', 'prioritas' => 'TINGGI/URGENT',
         ]);
         $resp->assertStatus(200)->assertJsonPath('data.keluhan', 'Updated keluhan');
@@ -244,6 +246,7 @@ class OrderPerbaikanApiTest extends TestCase
             'jenis_barang' => 'Umum',
             'kode_inventaris' => 'INV-007',
             'nama_barang' => 'With Photo',
+            'kategori_order' => 'Perbaikan',
             'lokasi' => $this->location->id,
             'keluhan' => 'Test photo',
             'prioritas' => 'SEDANG',

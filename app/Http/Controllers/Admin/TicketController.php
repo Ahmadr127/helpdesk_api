@@ -15,6 +15,8 @@ class TicketController extends Controller
         $validated = $request->validate([
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|max:5120',
         ]);
 
         // Get existing admin responses or create new array
@@ -28,14 +30,20 @@ class TicketController extends Controller
             'admin_name' => auth()->user()?->name ?? 'Admin',
         ];
 
-        // Save admin response photo if exists
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('ticket-responses', 'public');
+        // Save admin response photo(s) if exists
+        $files = $this->normalizeFiles($request);
+        $paths = [];
+        foreach ($files as $file) {
+            $path = $file->store('ticket-responses', 'public');
+            $paths[] = $path;
             TicketPhoto::create([
                 'ticket_id' => $ticket->id,
                 'photo_path' => $path,
                 'type' => 'admin_response',
             ]);
+        }
+        if (! empty($paths)) {
+            $response['photo'] = count($paths) === 1 ? $paths[0] : $paths;
         }
 
         // Add new response to array
@@ -92,6 +100,8 @@ class TicketController extends Controller
         $validated = $request->validate([
             'notes' => 'required|string',
             'photo' => 'nullable|image|max:5120',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|max:5120',
             'status' => 'required|in:in_progress,closed',
         ]);
 
@@ -107,8 +117,11 @@ class TicketController extends Controller
         $responses = json_decode($ticket->admin_responses, true) ?? [];
 
         // Handle photo upload if provided
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('ticket-responses', 'public');
+        $files = $this->normalizeFiles($request);
+        $paths = [];
+        foreach ($files as $file) {
+            $path = $file->store('ticket-responses', 'public');
+            $paths[] = $path;
 
             // Create ticket photo record
             TicketPhoto::create([
@@ -116,6 +129,9 @@ class TicketController extends Controller
                 'photo_path' => $path,
                 'type' => 'admin_response',
             ]);
+        }
+        if (! empty($paths)) {
+            $response['photo'] = count($paths) === 1 ? $paths[0] : $paths;
         }
 
         // Add new response to array
@@ -138,5 +154,20 @@ class TicketController extends Controller
 
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
+    }
+
+    /**
+     * Normalisasi input foto: dukung `photos[]` (banyak, maks 3) atau `photo` (tunggal).
+     */
+    private function normalizeFiles(Request $request): array
+    {
+        $files = $request->file('photos') ?? $request->file('photo');
+        if ($files instanceof \Illuminate\Http\UploadedFile) {
+            $files = [$files];
+        } elseif (! is_array($files)) {
+            $files = $files ? [$files] : [];
+        }
+
+        return array_slice(array_values(array_filter($files)), 0, 3);
     }
 }

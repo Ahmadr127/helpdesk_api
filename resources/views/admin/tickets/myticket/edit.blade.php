@@ -168,73 +168,18 @@
                     <!-- Photo Upload Section -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Foto</label>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Current Photo Preview -->
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-600 mb-2">Foto Tiket</h3>
-                                <div id="photo-container">
-                                    @if($ticket->photos->where('type', 'initial')->first())
-                                    <div class="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                                        <img id="displayed-photo"
-                                            src="{{ Storage::url($ticket->photos->where('type', 'initial')->first()->photo_path) }}"
-                                            alt="Ticket Photo" class="w-full h-48 object-cover">
-                                        <div id="photo-filename"
-                                            class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-2 truncate">
-                                            {{ basename($ticket->photos->where('type', 'initial')->first()->photo_path) }}
-                                        </div>
-                                    </div>
-                                    @else
-                                    <div
-                                        class="border border-dashed border-gray-300 rounded-lg h-48 flex items-center justify-center bg-gray-50">
-                                        <div class="text-center px-4">
-                                            <svg class="mx-auto h-10 w-10 text-gray-400" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                                </path>
-                                            </svg>
-                                            <p class="mt-1 text-sm text-gray-500">
-                                                Tidak ada foto
-                                            </p>
-                                        </div>
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Upload Area -->
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-600 mb-2">Upload Foto Baru</h3>
-                                <div
-                                    class="border border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                                    <div class="text-center">
-                                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
-                                            </path>
-                                        </svg>
-                                        <div class="mt-3 flex text-sm leading-6 text-gray-600 justify-center">
-                                            <label for="photo"
-                                                class="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
-                                                <span>Upload file</span>
-                                                <input id="photo" name="photo" type="file" class="sr-only"
-                                                    accept="image/*">
-                                            </label>
-                                            <p class="pl-1">atau drop file di sini</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-2">
-                                            PNG, JPG, GIF hingga 5MB
-                                        </p>
-                                    </div>
-                                </div>
-
-                                @error('photo')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
+                        <x-image-upload name="photos[]" accent="blue" :max="3" :max-size="5"
+                            :existing="$ticket->photos->where('type', 'initial')->map(fn ($p) => Storage::url($p->photo_path))->values()->all()"
+                            existing-label="Foto tiket saat ini" />
+                        @error('photo')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('photos')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('photos.*')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Action Buttons -->
@@ -253,91 +198,5 @@
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // File preview functionality
-    const photoInput = document.getElementById('photo');
-    const displayedPhoto = document.getElementById('displayed-photo');
-    const photoFilename = document.getElementById('photo-filename');
-    const photoContainer = document.getElementById('photo-container');
-
-    photoInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const file = this.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                // If there's no photo container yet, create one
-                if (!displayedPhoto) {
-                    const newPhotoContainer = `
-                        <div class="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                            <img id="displayed-photo" src="${e.target.result}" alt="Ticket Photo" class="w-full h-48 object-cover">
-                            <div id="photo-filename" class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-2 truncate">
-                                ${file.name}
-                            </div>
-                        </div>
-                    `;
-                    photoContainer.innerHTML = newPhotoContainer;
-                } else {
-                    // Update existing photo
-                    displayedPhoto.src = e.target.result;
-                    photoFilename.textContent = file.name;
-                }
-            }
-
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // Drag and drop functionality
-    const dropZone = document.querySelector('.border-dashed');
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight() {
-        dropZone.classList.add('border-blue-400', 'bg-blue-50');
-    }
-
-    function unhighlight() {
-        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
-    }
-
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
-        if (files && files.length) {
-            photoInput.files = files;
-
-            // Trigger change event
-            const event = new Event('change', {
-                bubbles: true
-            });
-            photoInput.dispatchEvent(event);
-        }
-    }
-});
-</script>
-@endpush
 
 @endsection

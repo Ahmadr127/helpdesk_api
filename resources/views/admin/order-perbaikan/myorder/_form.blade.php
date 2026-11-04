@@ -29,11 +29,11 @@
         @error('nama_barang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
     </div>
     <div>
-        <label for="kategori_order-input" class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
+        <label for="kategori_order-input" class="block text-sm font-medium text-gray-700 mb-1">Kategori Order <span class="text-red-500">*</span></label>
         <x-searchable-select name="kategori_order" id="kategori_order"
             :options="$kategoriOrders->pluck('name', 'name')->toArray()" :selected="old('kategori_order', $orderPerbaikan->kategori_order ?? '')"
             placeholder="Ketik untuk cari kategori..." empty-label="— Pilih Kategori —"
-            accent="green" />
+            accent="green" :required="true" />
         @error('kategori_order') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
     </div>
 
@@ -81,7 +81,7 @@
     <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional, maks 2MB)</label>
     <label class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors">
         <span class="text-sm text-gray-700">Pilih Foto</span>
-        <input type="file" name="foto" accept="image/*" class="hidden photo-input">
+        <input type="file" name="fotos[]" accept="image/*" multiple class="hidden photo-input">
     </label>
     <p class="mt-1 text-xs text-gray-500 file-name">Ukuran file maksimum: 2MB</p>
     @error('foto') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

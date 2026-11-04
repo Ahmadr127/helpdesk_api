@@ -73,7 +73,7 @@ class TicketController extends Controller
         $validated = $request->validated();
 
         try {
-            $ticket = $service->create(auth()->user(), $validated, $request->file('photo'));
+            $ticket = $service->create(auth()->user(), $validated, $request->file('photos') ?? $request->file('photo'));
 
             return redirect()->route('user.ticket.index')
                 ->with('success', 'Ticket created successfully.');
@@ -96,7 +96,29 @@ class TicketController extends Controller
             abort(403);
         }
 
-        return view('user.ticket.show', compact('ticket'));
+        $adminResponses = is_array($ticket->admin_responses)
+            ? $ticket->admin_responses
+            : (json_decode($ticket->admin_responses, true) ?? []);
+
+        $userReplies = is_array($ticket->user_replies)
+            ? $ticket->user_replies
+            : (json_decode($ticket->user_replies, true) ?? []);
+
+        $allResponses = [];
+        foreach ($adminResponses as $response) {
+            $response['type'] = 'admin';
+            $allResponses[] = $response;
+        }
+        foreach ($userReplies as $reply) {
+            $reply['action'] = $reply['type'] ?? $reply['action'] ?? null;
+            $reply['type'] = 'user';
+            $allResponses[] = $reply;
+        }
+        usort($allResponses, function ($a, $b) {
+            return strtotime($a['timestamp'] ?? '') - strtotime($b['timestamp'] ?? '');
+        });
+
+        return view('user.ticket.show', compact('ticket', 'allResponses'));
     }
 
     public function edit(Ticket $ticket, DepartmentService $departments)
@@ -132,7 +154,7 @@ class TicketController extends Controller
         $validated = $request->validated();
 
         try {
-            $ticket = $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photo'));
+            $ticket = $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photos') ?? $request->file('photo'));
 
             return redirect()->route('user.ticket.show', $ticket)
                 ->with('success', 'Ticket has been updated successfully.');
@@ -177,7 +199,7 @@ class TicketController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->confirm(auth()->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photo'));
+            $service->confirm(auth()->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photos') ?? $request->file('photo'));
 
             return redirect()->route('user.ticket.show', $ticket)
                 ->with('success', $validated['action'] === 'confirm' ? 'Ticket has been confirmed as completed.' : 'Ticket has been returned to in progress status.');
@@ -195,7 +217,7 @@ class TicketController extends Controller
         $validated = $request->validated();
 
         try {
-            $service->reply(auth()->user(), $ticket, $validated['message'], $request->file('photo'));
+            $service->reply(auth()->user(), $ticket, $validated['message'], $request->file('photos') ?? $request->file('photo'));
 
             return back()->with('success', 'Reply sent successfully.');
         } catch (\Exception $e) {
