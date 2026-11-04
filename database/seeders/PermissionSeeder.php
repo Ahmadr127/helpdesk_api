@@ -71,6 +71,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Kelola Permission', 'slug' => 'permission', 'group' => 'User Management', 'description' => 'Kelola permission per role & user'],
             // Reports
             ['name' => 'Laporan', 'slug' => 'report', 'group' => 'Reports', 'description' => 'Lihat & generate laporan'],
+            ['name' => 'Audit Log', 'slug' => 'audit', 'group' => 'Reports', 'description' => 'Lihat audit log aktivitas sistem'],
             ['name' => 'Report SIRS', 'slug' => 'report.sirs', 'group' => 'Reports', 'description' => 'Akses Report SIRS'],
             // Feedback
             ['name' => 'Feedback', 'slug' => 'feedback', 'group' => 'Feedback', 'description' => 'Akses feedback (buat, lihat, balas, hapus)'],
@@ -135,6 +136,7 @@ class PermissionSeeder extends Seeder
                 'report', 'report.sirs',
                 'feedback', 'knowledge',
                 'notification', 'fcm',
+                'audit',
             ],
             'ipsrs' => [
                 'dashboard.ipsrs', 'layout.admin',

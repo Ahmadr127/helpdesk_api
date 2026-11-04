@@ -221,6 +221,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Feedback routes - permission protected
         Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index')->middleware('permission:feedback');
+        Route::get('/audit-log', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-log.index')->middleware('permission:audit');
+        Route::get('/audit-log/{auditLog}', [\App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-log.show')->middleware('permission:audit');
         Route::post('/feedback/{feedback}/reply', [FeedbackController::class, 'reply'])->name('feedback.reply')->middleware('permission:dashboard.it');
         Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('feedback.destroy')->middleware('permission:dashboard.it');
 

@@ -4,6 +4,10 @@ namespace App\Providers;
 
 use App\Models\OrderPerbaikan;
 use App\Models\Ticket;
+use App\Models\AuditLog;
+use App\Observers\AuditObserver;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +30,19 @@ class AppServiceProvider extends ServiceProvider
         // Paksa https hanya jika FORCE_HTTPS=true di .env — bisa dimatikan untuk local/dev
         if (config('app.force_https')) {
             URL::forceScheme('https');
+        }
+
+        // Auto audit log: register observer ke semua model di app/Models secara otomatis,
+        // sehingga model baru otomatis ter-audit tanpa setup ulang.
+        foreach (File::files(app_path('Models')) as $file) {
+            $class = 'App\\Models\\'.pathinfo($file->getFilename(), PATHINFO_FILENAME);
+            if (! class_exists($class)) {
+                continue;
+            }
+            if ($class === AuditLog::class) {
+                continue; // hindari rekursif
+            }
+            $class::observe(AuditObserver::class);
         }
 
         // Popup pengingat konfirmasi: tiket `closed` milik user +
