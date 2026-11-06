@@ -17,9 +17,12 @@ class UpdateRoleRequest extends FormRequest
         $slug = $this->route('role')?->slug ?? $this->route('slug');
 
         return [
-            'slug' => ['sometimes', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/', Rule::unique('roles', 'slug')->ignore($slug, 'slug')],
             'name' => 'sometimes|required|string|max:100',
             'description' => 'nullable|string|max:255',
+            'permission_ids' => 'nullable|array',
+            'permission_ids.*' => 'integer|exists:permissions,id',
+            'kategori_ids' => 'nullable|array',
+            'kategori_ids.*' => 'integer|exists:kategori_pengajuan,id',
         ];
     }
 }

@@ -17,6 +17,10 @@ class StoreRoleRequest extends FormRequest
             'slug' => 'required|string|max:50|unique:roles,slug|regex:/^[a-z0-9_]+$/',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string|max:255',
+            'permission_ids' => 'nullable|array',
+            'permission_ids.*' => 'integer|exists:permissions,id',
+            'kategori_ids' => 'nullable|array',
+            'kategori_ids.*' => 'integer|exists:kategori_pengajuan,id',
         ];
     }
 }

@@ -95,24 +95,22 @@ class PermissionSeeder extends Seeder
         // Clear previous role_permissions to re-seed
         DB::table('role_permissions')->delete();
 
-        $hasPositionColumn = Schema::hasColumn('role_permissions', 'position');
-
         foreach (self::rolePermissionsMap() as $role => $slugs) {
             // Skip unknown roles so dynamic roles stay manageable via RoleSeeder.
-            if (! Role::where('slug', $role)->exists()) {
+            $roleId = Role::where('slug', $role)->value('id');
+            if (! $roleId) {
                 continue;
             }
             foreach ($slugs as $slug) {
                 $perm = Permission::where('slug', $slug)->first();
                 if ($perm) {
-                    $key = ['role' => $role, 'permission_id' => $perm->id];
-                    if ($hasPositionColumn) {
-                        $key['position'] = null;
-                    }
-                    DB::table('role_permissions')->updateOrInsert(
-                        $key,
-                        ['created_at' => now(), 'updated_at' => now()]
-                    );
+                    DB::table('role_permissions')->insert([
+                        'role' => $role,
+                        'role_id' => $roleId,
+                        'permission_id' => $perm->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
             }
         }

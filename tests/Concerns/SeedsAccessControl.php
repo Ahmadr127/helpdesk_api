@@ -27,13 +27,11 @@ trait SeedsAccessControl
             'slug' => $slug,
             'group' => 'Admin',
         ]);
-        $key = ['role' => $role, 'permission_id' => $perm->id];
-        if (Schema::hasColumn('role_permissions', 'position')) {
-            $key['position'] = null;
-        }
+        $roleId = Role::where('slug', $role)->value('id');
+        $key = ['role_id' => $roleId, 'permission_id' => $perm->id];
         \Illuminate\Support\Facades\DB::table('role_permissions')->updateOrInsert(
             $key,
-            ['created_at' => now(), 'updated_at' => now()]
+            ['role' => $role, 'created_at' => now(), 'updated_at' => now()]
         );
     }
 

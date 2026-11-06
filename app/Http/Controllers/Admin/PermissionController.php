@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePermissionRequest;
 use App\Http\Requests\Admin\SyncRolePermissionsRequest;
+use App\Http\Requests\Admin\UpdatePermissionRequest;
 use App\Http\Requests\Admin\SyncUserPermissionsRequest;
 use App\Models\Permission;
 use App\Models\User;
@@ -59,8 +60,23 @@ class PermissionController extends Controller
 
     public function destroy(Permission $permission)
     {
+        if ($permission->is_system) {
+            return back()->with('error', 'Permission sistem tidak dapat dihapus.');
+        }
+
         $permission->delete();
 
         return back()->with('success', 'Permission dihapus.');
+    }
+
+    public function update(UpdatePermissionRequest $request, Permission $permission)
+    {
+        if ($permission->is_system) {
+            return back()->with('error', 'Permission sistem tidak dapat diubah.');
+        }
+
+        $permission->update($request->validated());
+
+        return back()->with('success', 'Permission berhasil diperbarui.');
     }
 }

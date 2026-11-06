@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FcmMonitoringController;
 use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\Admin\KategoriOrderController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
@@ -131,10 +132,13 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('permissions')->name('permissions.')->middleware('permission:permission')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Admin\PermissionController::class, 'store'])->name('store');
+            Route::put('/{permission}', [\App\Http\Controllers\Admin\PermissionController::class, 'update'])->name('update');
             Route::delete('/{permission}', [\App\Http\Controllers\Admin\PermissionController::class, 'destroy'])->name('destroy');
             Route::post('/role', [\App\Http\Controllers\Admin\PermissionController::class, 'updateRole'])->name('role.update');
             Route::put('/user/{user}', [\App\Http\Controllers\Admin\PermissionController::class, 'updateUser'])->name('user.update');
-        });
+    });
+
+    Route::resource('roles', RoleController::class)->middleware('permission:permission');
 
         // Master Data Routes - GREEN not for admin IT? Keep BLUE for IT but permission protected
         // only() : controller hanya punya index/store/update/destroy (+toggle-status positions).

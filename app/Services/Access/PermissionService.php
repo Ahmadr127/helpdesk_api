@@ -17,8 +17,9 @@ class PermissionService
     public function slugsForRole(string $role): array
     {
         return DB::table('role_permissions')
+            ->join('roles', 'roles.id', '=', 'role_permissions.role_id')
             ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
-            ->where('role_permissions.role', $role)
+            ->where('roles.slug', $role)
             ->pluck('permissions.slug')
             ->all();
     }
