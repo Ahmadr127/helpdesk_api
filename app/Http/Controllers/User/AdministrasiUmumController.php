@@ -3,345 +3,51 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
-use App\Models\KategoriOrder;
-use App\Models\Location;
-use App\Models\OrderPerbaikan;
-use App\Models\UnitProses;
-use App\Services\Api\OrderPerbaikanService;
+use App\Models\KategoriPengajuan;
+use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanScopeService;
+use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanWorkflowService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class AdministrasiUmumController extends Controller
 {
-    public function orderBarang(Request $request)
+    public function __construct(
+        protected PengajuanService $service,
+        protected PengajuanWorkflowService $workflow,
+        protected PengajuanScopeService $scope,
+    ) {}
+
+    private function ipsrsQuery()
     {
-        // Base query for in progress orders
-        $inProgressQuery = OrderPerbaikan::with(['creator'])
-            ->where('created_by', auth()->id())
-            ->where('status', 'in_progress');
-
-        // Add search for in progress orders
-        if ($request->search) {
-            $search = $request->search;
-            $inProgressQuery->where(function ($q) use ($search) {
-                $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
-                    ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
-                    ->orWhere('kategori_order', 'like', "%{$search}%");
-            });
-        }
-
-        // Add kategori filter for in progress orders
-        if ($request->kategori_order) {
-            $inProgressQuery->where('kategori_order', $request->kategori_order);
-        }
-
-        // Add date filter for in progress orders
-        if ($request->start_date && $request->end_date) {
-            $inProgressQuery->whereBetween('tanggal', [
-                $request->start_date.' 00:00:00',
-                $request->end_date.' 23:59:59',
-            ]);
-        }
-
-        $inProgressOrders = $inProgressQuery->latest()->take(6)->get();
-
-        // Get open orders for table
-        $query = OrderPerbaikan::with(['creator', 'history'])
-            ->where('created_by', auth()->id())
-            ->where('status', 'open');
-
-        // Add search functionality
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
-                    ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
-                    ->orWhere('kategori_order', 'like', "%{$search}%");
-            });
-        }
-
-        // Add kategori filter for open orders
-        if ($request->kategori_order) {
-            $query->where('kategori_order', $request->kategori_order);
-        }
-
-        // Filter tanggal for open orders
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('tanggal', [
-                $request->start_date.' 00:00:00',
-                $request->end_date.' 23:59:59',
-            ]);
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-        $locations = Location::orderBy('name', 'asc')->get();
-        $unitProses = UnitProses::where('status', 1)
-            ->where('code', '!=', 'SIRS')
-            ->get();
-        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
-
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
-                'inProgressHtml' => view('user.administrasi-umum.order-perbaikan._in_progress_cards', compact('inProgressOrders'))->render(),
-            ]);
-        }
-
-        return view('user.administrasi-umum.order-barang', compact('orders', 'inProgressOrders', 'locations', 'unitProses', 'kategoriOrders'));
-    }
-
-    public function orderBarangKonfirmasi(Request $request)
-    {
-        $query = OrderPerbaikan::with(['creator', 'history'])
-            ->where('created_by', auth()->id())
-            ->where('status', 'confirmed');
-
-        // Filter tanggal
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('tanggal', [
-                $request->start_date.' 00:00:00',
-                $request->end_date.' 23:59:59',
-            ]);
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
-            ]);
-        }
-
-        return view('user.administrasi-umum.order-barang-konfirmasi', compact('orders'));
-    }
-
-    public function orderBarangTutup(Request $request)
-    {
-        $query = OrderPerbaikan::with(['creator', 'history'])
-            ->where('created_by', auth()->id())
-            ->where('status', 'tutup');
-
-        // Filter tanggal
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('tanggal', [
-                $request->start_date.' 00:00:00',
-                $request->end_date.' 23:59:59',
-            ]);
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
-            ]);
-        }
-
-        return view('user.administrasi-umum.order-barang-tutup', compact('orders'));
-    }
-
-    public function orderBarangReject(Request $request)
-    {
-        $query = OrderPerbaikan::with(['creator', 'history'])
-            ->where('created_by', auth()->id())
-            ->where('status', 'rejected');
-
-        // Filter tanggal
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('tanggal', [
-                $request->start_date.' 00:00:00',
-                $request->end_date.' 23:59:59',
-            ]);
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'html' => view('user.administrasi-umum.order-perbaikan._table', compact('orders'))->render(),
-            ]);
-        }
-
-        return view('user.administrasi-umum.order-barang-reject', compact('orders'));
-    }
-
-    public function storeOrder(Request $request)
-    {
-        $request->validate([
-            'nomor' => 'required|unique:order_perbaikan,nomor',
-            'tanggal' => 'required|date',
-            'unit_proses' => 'required',
-            'unit_penerima' => 'required',
-            'no_penerima' => 'required',
-            'items' => 'required|array|min:1',
-            'items.*.kode_inventaris' => 'required',
-            'items.*.nama_barang' => 'required',
-            'items.*.lokasi' => 'required',
-            'items.*.jenis_barang' => 'required|in:Inventaris,Umum',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $order = OrderPerbaikan::create([
-                'nomor' => $request->nomor,
-                'tanggal' => $request->tanggal,
-                'unit_proses' => $request->unit_proses,
-                'unit_penerima' => $request->unit_penerima,
-                'no_penerima' => $request->no_penerima,
-                'status' => 'open',
-                'created_by' => Auth::id(),
-            ]);
-
-            foreach ($request->items as $item) {
-                $order->items()->create($item);
-            }
-
-            // Create initial history
-            $order->history()->create([
-                'status' => 'open',
-                'keterangan' => 'Order dibuat',
-                'created_by' => Auth::id(),
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Order berhasil dibuat',
-                'order' => $order->load('items'),
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat membuat order',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function updateOrder(Request $request, OrderPerbaikan $order)
-    {
-        $request->validate([
-            'nomor' => 'required|unique:order_perbaikan,nomor,'.$order->id,
-            'tanggal' => 'required|date',
-            'unit_proses' => 'required',
-            'unit_penerima' => 'required',
-            'no_penerima' => 'required',
-            'items' => 'required|array|min:1',
-            'items.*.kode_inventaris' => 'required',
-            'items.*.nama_barang' => 'required',
-            'items.*.lokasi' => 'required',
-            'items.*.jenis_barang' => 'required|in:Inventaris,Umum',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $order->update([
-                'nomor' => $request->nomor,
-                'tanggal' => $request->tanggal,
-                'unit_proses' => $request->unit_proses,
-                'unit_penerima' => $request->unit_penerima,
-                'no_penerima' => $request->no_penerima,
-                'updated_by' => Auth::id(),
-            ]);
-
-            // Delete existing items and replace with new ones
-            $order->items()->delete();
-            foreach ($request->items as $item) {
-                $order->items()->create($item);
-            }
-
-            // Add history entry for update
-            $order->history()->create([
-                'status' => $order->status,
-                'keterangan' => 'Order diperbarui',
-                'created_by' => Auth::id(),
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Order berhasil diperbarui',
-                'order' => $order->load('items'),
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat memperbarui order',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function getOrder(OrderPerbaikan $order)
-    {
-        return response()->json($order->load(['items', 'history.creator', 'creator']));
-    }
-
-    public function searchOrders(Request $request)
-    {
-        $query = OrderPerbaikan::with(['items', 'creator']);
-
-        if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('nomor', 'like', "%{$request->search}%")
-                    ->orWhere('unit_proses', 'like', "%{$request->search}%")
-                    ->orWhere('unit_penerima', 'like', "%{$request->search}%");
-            });
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->get();
-
-        return response()->json($orders);
+        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'));
     }
 
     public function indexOrderPerbaikan(Request $request)
     {
         $status = $request->status ?? 'all';
 
-        // Base query
-        $query = OrderPerbaikan::with(['creator', 'history'])
-            ->where('created_by', auth()->id());
+        $query = $this->ipsrsQuery()
+            ->where('pemohon_id', auth()->id());
 
-        // Filter by status if specified
         if ($status !== 'all') {
-            $query->where('status', $status);
+            $query->where('status', $status === 'tutup' ? 'pending_confirmation' : $status);
         }
 
-        // Add search functionality
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
+                    ->orWhere('deskripsi', 'like', "%{$search}%")
                     ->orWhere('nama_barang', 'like', "%{$search}%")
-                    ->orWhere('keluhan', 'like', "%{$search}%")
-                    ->orWhere('kode_inventaris', 'like', "%{$search}%")
-                    ->orWhere('kategori_order', 'like', "%{$search}%");
+                    ->orWhere('kode_inventaris', 'like', "%{$search}%");
             });
         }
 
-        // Filter by kategori
         if ($request->kategori_order) {
-            $query->where('kategori_order', $request->kategori_order);
+            $query->whereHas('kategori', fn ($q) => $q->where('name', $request->kategori_order));
         }
 
-        // Filter by date range
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('tanggal', [
                 $request->start_date.' 00:00:00',
@@ -350,19 +56,17 @@ class AdministrasiUmumController extends Controller
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
-        $locations = Location::all();
-        $unitProses = UnitProses::where('status', 1)
-            ->where('code', '!=', 'SIRS')
-            ->get();
-        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
 
-        // Get statistics excluding soft-deleted records
+        $locations = \App\Models\Location::all();
+        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
+        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+
         $stats = [
-            'total' => OrderPerbaikan::where('created_by', auth()->id())->count(),
-            'in_progress' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'in_progress')->count(),
-            'tutup' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'tutup')->count(),
-            'confirmed' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'confirmed')->count(),
-            'rejected' => OrderPerbaikan::where('created_by', auth()->id())->where('status', 'rejected')->count(),
+            'total' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->count(),
+            'in_progress' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'in_progress')->count(),
+            'tutup' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'pending_confirmation')->count(),
+            'confirmed' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->count(),
+            'rejected' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'rejected')->count(),
         ];
 
         if ($request->ajax()) {
@@ -377,192 +81,143 @@ class AdministrasiUmumController extends Controller
 
     public function createOrderPerbaikan()
     {
-        try {
-            // Generate nomor otomatis sesuai format: OP/RTG/MTC-YYYYMMDD001
-            $currentDate = now();
-            $prefix = 'OP/RTG/MTC-'.$currentDate->format('Ymd');
-
-            // Get the last order number for today, including soft deleted records
-            $lastOrder = OrderPerbaikan::withTrashed()
-                ->where('nomor', 'like', $prefix.'%')
-                ->orderBy('nomor', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = (int) substr($lastOrder->nomor, -3);
-                $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-            } else {
-                $newNumber = '001';
-            }
-
-            $nomor = $prefix.$newNumber;
-            $locations = Location::orderBy('name', 'asc')->get();
-            $unitProses = UnitProses::where('status', 1)
-                ->where('code', '!=', 'SIRS')
-                ->get();
-            $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
-
-            // Get user data
-            $user = auth()->user();
-
-            // Resolve departemen user (utamakan department_id, fallback lookup string)
-            $department = $this->resolveDepartment($user);
-            $departmentId = $department?->id;
-            $departmentLocation = $department?->location;
-            $departmentBuilding = $department?->building;
-
-            // Unit pengaju otomatis dari departemen user
-            $unitPengajuCode = $department?->code ?? $user->department ?? 'GENERAL';
-            $unitPengajuName = $department?->name ?? Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
-
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'nomor' => $nomor,
-                        'tanggal' => $currentDate->format('Y-m-d H:i:s'),
-                        'locations' => $locations,
-                        'unitPengajuCode' => $unitPengajuCode,
-                        'unitPengajuName' => $unitPengajuName,
-                        'departmentId' => $departmentId,
-                        'defaultLocation' => $departmentLocation,
-                        'defaultBuilding' => $departmentBuilding,
-                        'kategoriOrders' => $kategoriOrders,
-                        'user' => [
-                            'nip' => $user->nip,
-                            'name' => $user->name,
-                        ],
-                    ],
-                ]);
-            }
-
-            return view('user.administrasi-umum.order-perbaikan.create',
-                compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
-
-        } catch (\Exception $e) {
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Terjadi kesalahan: '.$e->getMessage(),
-                ], 500);
-            }
-            throw $e;
+        $user = auth()->user();
+        if (! $user->department && ! $user->department_id) {
+            return redirect()->route('user.settings')
+                ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu.');
         }
+
+        $locations = \App\Models\Location::orderBy('name', 'asc')->get();
+        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
+        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+
+        $department = null;
+        if (! empty($user->department_id)) {
+            $department = \App\Models\Department::with(['location', 'building'])->find($user->department_id);
+        }
+        $departmentId = $department?->id;
+        $departmentLocation = $department?->location;
+        $departmentBuilding = $department?->building;
+
+        $unitPengajuCode = $department?->code ?? $user->department ?? 'GENERAL';
+        $unitPengajuName = $department?->name ?? \App\Models\Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
+
+        $prefix = 'OP/RTG/MTC-'.now()->format('Ymd');
+        $lastOrder = Pengajuan::where('nomor', 'like', $prefix.'%')->orderBy('nomor', 'desc')->first();
+        if ($lastOrder) {
+            $lastNumber = (int) substr($lastOrder->nomor, -3);
+            $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '001';
+        }
+        $nomor = $prefix.$newNumber;
+
+        return view('user.administrasi-umum.order-perbaikan.create', compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
     }
 
-    public function storeOrderPerbaikan(Request $request, OrderPerbaikanService $service)
+    public function storeOrderPerbaikan(Request $request)
     {
+        $user = auth()->user();
+        if (! $user->department && ! $user->department_id) {
+            return redirect()->route('user.settings')
+                ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu.');
+        }
+
         $validated = $request->validate([
-            'unit_proses_code' => 'nullable|string',
-            'department_id' => 'nullable|exists:departments,id',
+            'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
+            'keluhan' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+            'unit_penerima' => 'nullable|string',
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'nullable|string',
-            'kategori_order' => 'nullable|string',
-            'lokasi' => 'nullable|exists:locations,id',
-            'keluhan' => 'required|string',
-            'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
-            'tanggal' => 'required|date',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'unit_proses_id' => 'nullable|exists:unit_proses,id',
+            'photo' => 'nullable|image|max:5120',
         ]);
 
-        try {
-            $orderPerbaikan = $service->create(auth()->user(), $validated, $request->file('foto'), 'Web');
+        $data = [
+            'kategori_id' => $validated['kategori_id'],
+            'lokasi_id' => $validated['location_id'] ?? null,
+            'building_id' => $validated['building_id'] ?? null,
+            'deskripsi' => $validated['keluhan'],
+            'prioritas' => $validated['priority'],
+            'department_id' => $user->department_id,
+            'unit_penerima' => $validated['unit_penerima'] ?? null,
+            'kode_inventaris' => $validated['kode_inventaris'] ?? null,
+            'nama_barang' => $validated['nama_barang'] ?? null,
+            'unit_proses_id' => $validated['unit_proses_id'] ?? null,
+        ];
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Order perbaikan berhasil dibuat dengan nomor: '.$orderPerbaikan->nomor,
-                    'data' => $orderPerbaikan,
-                ]);
-            }
+        $files = $request->file('photo') ? [$request->file('photo')] : [];
+        $pengajuan = $this->service->create($user, $data, $files);
 
-            return redirect()
-                ->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
-                ->with('success', 'Order perbaikan berhasil dibuat dengan nomor: '.$orderPerbaikan->nomor);
-
-        } catch (\Exception $e) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Terjadi kesalahan saat membuat order: '.$e->getMessage(),
-                ], 500);
-            }
-
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan saat membuat order: '.$e->getMessage())
-                ->withInput();
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order perbaikan berhasil dibuat dengan nomor: '.$pengajuan->nomor,
+                'data' => $pengajuan,
+            ]);
         }
+
+        return redirect()
+            ->route('user.administrasi-umum.order-perbaikan.show', $pengajuan)
+            ->with('success', 'Order perbaikan berhasil dibuat dengan nomor: '.$pengajuan->nomor);
     }
 
-    public function showOrderPerbaikan(OrderPerbaikan $orderPerbaikan)
+    public function showOrderPerbaikan(Pengajuan $orderPerbaikan)
     {
-        // Load the relationships we need
-        $order = $orderPerbaikan->load(['history.creator', 'location', 'creator']);
-
-        // Check if the current user is authorized to view this order
-        if ($order->created_by !== auth()->id()) {
+        if ((int) $orderPerbaikan->pemohon_id !== (int) auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
-        return view('user.administrasi-umum.order-perbaikan.show', compact('order'));
+        return view('user.administrasi-umum.order-perbaikan.show', compact('orderPerbaikan'));
     }
 
-    public function editOrderPerbaikan(OrderPerbaikan $orderPerbaikan)
+    public function editOrderPerbaikan(Pengajuan $orderPerbaikan)
     {
-        // Check if the current user is authorized to edit this order
-        if ($orderPerbaikan->created_by !== auth()->id()) {
+        if ((int) $orderPerbaikan->pemohon_id !== (int) auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
-
-        // Check if the order is still editable (open status)
         if ($orderPerbaikan->status !== 'open') {
             return redirect()->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
                 ->with('error', 'Hanya order dengan status open yang dapat diedit.');
         }
 
-        $locations = Location::orderBy('name', 'asc')->get();
-        $kategoriOrders = KategoriOrder::where('status', 1)->orderBy('name', 'asc')->get();
+        $locations = \App\Models\Location::orderBy('name', 'asc')->get();
+        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
 
-        $department = $this->resolveDepartment(auth()->user());
-        $departmentId = $department?->id;
-        $departmentLocation = $department?->location;
-        $departmentBuilding = $department?->building;
-
-        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'kategoriOrders'));
     }
 
-    protected function resolveDepartment($user): ?Department
+    public function updateOrderPerbaikan(Request $request, Pengajuan $orderPerbaikan)
     {
-        $department = null;
-        if (! empty($user->department_id)) {
-            $department = Department::with(['location', 'building'])->find($user->department_id);
-        }
-        if (! $department && $user->department) {
-            $deptValue = $user->department;
-            $department = Department::with(['location', 'building'])->where('code', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        if ((int) $orderPerbaikan->pemohon_id !== (int) auth()->id()) {
+            abort(403, 'Unauthorized action.');
         }
 
-        return $department;
-    }
-
-    public function updateOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
-    {
         $validated = $request->validate([
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'nullable|string',
-            'kategori_order' => 'nullable|string',
+            'kategori_id' => 'required|exists:kategori_pengajuan,id',
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
-            'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // maks 2MB (limit upload server)
+            'prioritas' => 'required|in:low,medium,high',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
+        $data = [
+            'kategori_id' => $validated['kategori_id'],
+            'deskripsi' => $validated['keluhan'],
+            'prioritas' => $validated['prioritas'],
+            'lokasi_id' => $validated['lokasi'] ?? $orderPerbaikan->lokasi_id,
+            'kode_inventaris' => $validated['kode_inventaris'] ?? null,
+            'nama_barang' => $validated['nama_barang'] ?? null,
+        ];
+
         try {
-            $order = $service->update(auth()->user(), $orderPerbaikan, $validated, $request->file('foto'), 'Web');
+            $order = $this->service->updateOwn(auth()->user(), $orderPerbaikan, $data, $request->file('foto') ? [$request->file('foto')] : []);
 
             if ($request->ajax()) {
                 return response()->json([
@@ -589,26 +244,28 @@ class AdministrasiUmumController extends Controller
         }
     }
 
-    public function deleteOrderPerbaikan(OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function deleteOrderPerbaikan(Pengajuan $orderPerbaikan)
     {
+        if ((int) $orderPerbaikan->pemohon_id !== (int) auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
         try {
-            $service->delete(auth()->user(), $orderPerbaikan);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Order perbaikan berhasil dihapus',
-            ]);
+            $this->service->deleteOwn(auth()->user(), $orderPerbaikan);
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Order perbaikan berhasil dihapus']);
+            }
+            return redirect()->route('user.dashboard')
+                ->with('success', 'Order has been deleted successfully.');
         } catch (\Exception $e) {
             $code = $e->getCode() === 403 ? 403 : ($e->getCode() === 422 ? 422 : 500);
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], $code);
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], $code);
+            }
+            return back()->withErrors(['error' => 'Failed to delete order: '.$e->getMessage()]);
         }
     }
 
-    public function confirmOrderPerbaikan(Request $request, OrderPerbaikan $orderPerbaikan, OrderPerbaikanService $service)
+    public function confirmOrderPerbaikan(Request $request, Pengajuan $orderPerbaikan)
     {
         $validated = $request->validate([
             'konfirmasi' => 'required|in:selesai,belum',
@@ -624,12 +281,12 @@ class AdministrasiUmumController extends Controller
                 $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
             }
 
-            $service->userConfirm(
+            $this->workflow->userConfirm(
                 auth()->user(),
                 $orderPerbaikan,
                 $validated['catatan'] ?? null,
                 $validated['konfirmasi'] === 'selesai',
-                $lampiranPath
+                $lampiranPath ? [$lampiranPath] : []
             );
 
             return redirect()
@@ -638,9 +295,17 @@ class AdministrasiUmumController extends Controller
                     ? 'Terima kasih, order telah dikonfirmasi selesai.'
                     : 'Order dibuka kembali karena belum selesai.');
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
+    // stubs for other methods
+    public function orderBarang(Request $request) { return view('user.administrasi-umum.order-barang'); }
+    public function orderBarangKonfirmasi(Request $request) { return view('user.administrasi-umum.order-barang-konfirmasi'); }
+    public function orderBarangTutup(Request $request) { return view('user.administrasi-umum.order-barang-tutup'); }
+    public function orderBarangReject(Request $request) { return view('user.administrasi-umum.order-barang-reject'); }
+    public function storeOrder(Request $request) { return back(); }
+    public function updateOrder(Request $request, Pengajuan $order) { return back(); }
+    public function getOrder(Pengajuan $order) { return response()->json($order); }
+    public function searchOrders(Request $request) { return response()->json([]); }
 }

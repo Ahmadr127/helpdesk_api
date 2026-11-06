@@ -52,7 +52,20 @@ class TicketController extends Controller
         $buildings = \App\Models\Building::where('status', 1)->get();
         $locations = \App\Models\Location::where('status', 1)->get();
 
-        return view('user.ticket.create', compact('categories', 'buildings', 'locations'));
+        $user = auth()->user();
+        $userDepartment = null;
+        if (! empty($user->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($user->department_id);
+        }
+        if (! $userDepartment && $user->department) {
+            $deptValue = $user->department;
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->where('code', $deptValue)->first()
+                ?? \App\Models\Department::with(['location', 'building'])->where('name', $deptValue)->first()
+                ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        }
+
+        return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
     }
 
     public function store(Request $request)
@@ -94,7 +107,7 @@ class TicketController extends Controller
             abort(403);
         }
 
-        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesan.sender', 'lampirans', 'penugasan.user']);
+        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.ticket.show', compact('ticket'));
     }

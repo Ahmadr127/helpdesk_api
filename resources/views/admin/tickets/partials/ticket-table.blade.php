@@ -21,7 +21,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->user->name }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->category }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->department }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->department?->name ?? '-' }}</td>
             <td class="px-6 py-4 text-sm text-gray-500 max-w-xs">
                 <div class="truncate tooltip w-48 md:w-64" title="{{ $ticket->description }}">{{ $ticket->description }}
                 </div>

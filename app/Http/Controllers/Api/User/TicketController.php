@@ -3,29 +3,37 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Api\BaseApiController;
-use App\Http\Requests\Api\Ticket\ConfirmTicketRequest;
-use App\Http\Requests\Api\Ticket\ReplyTicketRequest;
-use App\Http\Requests\Api\Ticket\StoreTicketRequest;
-use App\Http\Requests\Api\Ticket\UpdateTicketRequest;
-use App\Http\Resources\Api\TicketResource;
-use App\Models\Ticket;
-use App\Services\Api\TicketService;
+use App\Models\KategoriPengajuan;
+use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanScopeService;
 use Illuminate\Http\Request;
 
 class TicketController extends BaseApiController
 {
-    public function __construct(protected TicketService $ticketService) {}
+    public function __construct(
+        protected PengajuanService $service,
+        protected PengajuanScopeService $scope,
+    ) {}
+
+    private function itQuery($user)
+    {
+        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'))
+            ->where('pemohon_id', $user->id);
+    }
 
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
-        $filters = $request->only(['status', 'priority', 'search', 'start_date', 'end_date']);
-        $paginator = $this->ticketService->listForUser($request->user(), $filters, $perPage);
+        $paginator = $this->itQuery($request->user())
+            ->with(['kategori.jenis'])
+            ->latest()
+            ->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Daftar ticket',
-            'data' => TicketResource::collection($paginator->items()),
+            'data' => $paginator->items(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -35,73 +43,94 @@ class TicketController extends BaseApiController
         ]);
     }
 
-    public function store(StoreTicketRequest $request)
+    public function store(Request $request)
     {
+        $validated = $request->validate([
+            'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
+            'description' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+        ]);
         try {
-            $ticket = $this->ticketService->create($request->user(), $request->validated(), $request->file('photo'));
-
-            return $this->success(new TicketResource($ticket->load('photos', 'user')), 'Ticket berhasil dibuat', 201);
+            $data = [
+                'kategori_id' => $validated['kategori_id'],
+                'deskripsi' => $validated['description'],
+                'prioritas' => $validated['priority'],
+                'department_id' => $request->user()->department_id,
+            ];
+            $pengajuan = $this->service->create($request->user(), $data, $request->file('photo') ? [$request->file('photo')] : []);
+            return $this->success($pengajuan, 'Ticket berhasil dibuat', 201);
         } catch (\Exception $e) {
             $code = in_array($e->getCode(), [403, 422]) ? $e->getCode() : 500;
-
             return $this->error($e->getMessage(), $code);
         }
     }
 
-    public function show(Request $request, Ticket $ticket)
+    public function show(Request $request, Pengajuan $ticket)
     {
-        if ($ticket->user_id !== $request->user()->id) {
-            // admin can also view? For user endpoint only owner
+        if ((int) $ticket->pemohon_id !== (int) $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-
-        return $this->success(new TicketResource($ticket->load(['user', 'photos'])), 'Detail ticket');
+        $ticket->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans']);
+        return $this->success($ticket, 'Detail ticket');
     }
 
-    public function update(UpdateTicketRequest $request, Ticket $ticket)
+    public function update(Request $request, Pengajuan $ticket)
     {
+        if ((int) $ticket->pemohon_id !== (int) $request->user()->id) {
+            return $this->error('Unauthorized', 403);
+        }
         try {
-            $updated = $this->ticketService->updateUserTicket($request->user(), $ticket, $request->validated(), $request->file('photo'));
-
-            return $this->success(new TicketResource($updated), 'Ticket berhasil diperbarui');
+            $validated = $request->validate([
+                'description' => 'required|string',
+                'priority' => 'required|in:low,medium,high',
+            ]);
+            $data = ['deskripsi' => $validated['description'], 'prioritas' => $validated['priority']];
+            $updated = $this->service->updateOwn($request->user(), $ticket, $data, []);
+            return $this->success($updated, 'Ticket berhasil diperbarui');
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-
             return $this->error($e->getMessage(), $code);
         }
     }
 
-    public function destroy(Request $request, Ticket $ticket)
+    public function destroy(Request $request, Pengajuan $ticket)
     {
+        if ((int) $ticket->pemohon_id !== (int) $request->user()->id) {
+            return $this->error('Unauthorized', 403);
+        }
         try {
-            $this->ticketService->deleteUserTicket($request->user(), $ticket);
-
+            $this->service->deleteOwn($request->user(), $ticket);
             return $this->success(null, 'Ticket berhasil dihapus');
         } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-
-            return $this->error($e->getMessage(), $code);
+            return $this->error($e->getMessage(), 500);
         }
     }
 
-    public function reply(ReplyTicketRequest $request, Ticket $ticket)
+    public function reply(Request $request, Pengajuan $ticket)
     {
+        $validated = $request->validate(['message' => 'required|string']);
         try {
-            $updated = $this->ticketService->reply($request->user(), $ticket, $request->validated()['message'], $request->file('photo'));
-
-            return $this->success(new TicketResource($updated), 'Reply berhasil dikirim');
+            $updated = $this->service->addMessage($request->user(), $ticket, $validated['message'], []);
+            return $this->success($updated, 'Reply berhasil dikirim');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), $e->getCode() ?: 500);
         }
     }
 
-    public function confirm(ConfirmTicketRequest $request, Ticket $ticket)
+    public function confirm(Request $request, Pengajuan $ticket)
     {
+        $validated = $request->validate([
+            'confirmation_notes' => 'required|string',
+            'action' => 'required|in:confirm,reject',
+        ]);
         try {
-            $validated = $request->validated();
-            $updated = $this->ticketService->confirm($request->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photo'));
-
-            return $this->success(new TicketResource($updated), $validated['action'] === 'confirm' ? 'Ticket dikonfirmasi selesai' : 'Ticket dikembalikan ke in_progress');
+            $this->service->addMessage($request->user(), $ticket, $validated['confirmation_notes'], []);
+            if ($validated['action'] === 'confirm') {
+                $ticket->update(['status' => 'confirmed', 'user_confirmation' => true, 'user_confirmed_at' => now(), 'confirmed_at' => now()]);
+            } else {
+                $ticket->update(['status' => 'in_progress', 'rejection_count' => $ticket->rejection_count + 1, 'user_confirmation' => false, 'user_confirmed_at' => now()]);
+            }
+            return $this->success($ticket, $validated['action'] === 'confirm' ? 'Ticket dikonfirmasi selesai' : 'Ticket dikembalikan ke in_progress');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), $e->getCode() ?: 500);
         }
@@ -109,16 +138,16 @@ class TicketController extends BaseApiController
 
     public function filterByStatus(Request $request, $status)
     {
-        $filters = $request->only(['priority', 'search', 'start_date', 'end_date', 'ticket_number', 'category', 'department']);
-        // map legacy filter status param
-        $filters['status'] = $status;
+        $query = $this->itQuery($request->user());
+        if ($status !== 'all') {
+            $query->where('status', $status === 'closed' ? 'pending_confirmation' : $status);
+        }
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->ticketService->listForUser($request->user(), $filters, $perPage);
-
+        $paginator = $query->latest()->paginate($perPage);
         return response()->json([
             'success' => true,
             'message' => "Filter status {$status}",
-            'data' => TicketResource::collection($paginator->items()),
+            'data' => $paginator->items(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),

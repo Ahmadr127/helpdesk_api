@@ -70,7 +70,7 @@ class PengajuanController extends Controller
     public function show(Pengajuan $pengajuan)
     {
         $this->authorize('view', $pengajuan);
-        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesan.sender', 'lampirans', 'penugasan.user']);
+        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.pengajuan.show', compact('pengajuan'));
     }

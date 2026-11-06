@@ -34,7 +34,7 @@ class PengajuanController extends Controller
 
     public function show(Pengajuan $pengajuan)
     {
-        $pengajuan->load(['kategori.jenis', 'pemohon', 'historis', 'pesan', 'lampirans', 'orderDetail']);
+        $pengajuan->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans', 'orderDetail']);
 
         return response()->json(['data' => $pengajuan]);
     }

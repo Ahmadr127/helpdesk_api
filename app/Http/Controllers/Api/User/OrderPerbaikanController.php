@@ -3,155 +3,147 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Api\BaseApiController;
-use App\Http\Requests\Api\OrderPerbaikan\StoreOrderPerbaikanRequest;
-use App\Http\Requests\Api\OrderPerbaikan\UpdateOrderPerbaikanRequest;
-use App\Http\Requests\Api\OrderPerbaikan\UserConfirmOrderRequest;
-use App\Http\Resources\Api\OrderPerbaikanResource;
-use App\Models\OrderPerbaikan;
-use App\Services\Api\OrderPerbaikanService;
+use App\Models\KategoriPengajuan;
+use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanScopeService;
 use Illuminate\Http\Request;
 
 class OrderPerbaikanController extends BaseApiController
 {
-    public function __construct(protected OrderPerbaikanService $orderService) {}
+    public function __construct(
+        protected PengajuanService $service,
+        protected PengajuanScopeService $scope,
+    ) {}
+
+    private function ipsrsQuery($user)
+    {
+        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))
+            ->where('pemohon_id', $user->id);
+    }
 
     public function index(Request $request)
     {
-        $filters = $request->only(['status', 'search', 'start_date', 'end_date', 'prioritas', 'kategori_order']);
-        // support 'all' default
-        if (! isset($filters['status'])) {
-            $filters['status'] = $request->get('status', 'all');
-        }
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->orderService->listForUser($request->user(), $filters, $perPage);
+        $query = $this->ipsrsQuery($request->user());
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status === 'tutup' ? 'pending_confirmation' : $request->status);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor', 'like', "%{$search}%")
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('tanggal', [$request->start_date.' 00:00:00', $request->end_date.' 23:59:59']);
+        }
+
+        $paginator = $query->latest()->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Daftar order perbaikan',
-            'data' => OrderPerbaikanResource::collection($paginator->items()),
+            'data' => $paginator->items(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
                 'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
             ],
-            'stats' => $this->orderService->userStatistics($request->user()),
         ]);
     }
 
-    public function store(StoreOrderPerbaikanRequest $request)
+    public function store(Request $request)
     {
+        $validated = $request->validate([
+            'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
+            'keluhan' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+            'unit_penerima' => 'nullable|string',
+            'kode_inventaris' => 'nullable|string',
+            'nama_barang' => 'nullable|string',
+            'location_id' => 'nullable|exists:locations,id',
+            'photo' => 'nullable|image|max:5120',
+        ]);
         try {
-            $order = $this->orderService->create($request->user(), $request->validated(), $request->file('foto'));
-
-            return $this->success(new OrderPerbaikanResource($order), 'Order perbaikan berhasil dibuat', 201);
+            $data = [
+                'kategori_id' => $validated['kategori_id'],
+                'deskripsi' => $validated['keluhan'],
+                'prioritas' => $validated['priority'],
+                'department_id' => $request->user()->department_id,
+                'lokasi_id' => $validated['location_id'] ?? null,
+                'unit_penerima' => $validated['unit_penerima'] ?? null,
+                'kode_inventaris' => $validated['kode_inventaris'] ?? null,
+                'nama_barang' => $validated['nama_barang'] ?? null,
+            ];
+            $pengajuan = $this->service->create($request->user(), $data, $request->file('photo') ? [$request->file('photo')] : []);
+            return $this->success($pengajuan, 'Order perbaikan berhasil dibuat', 201);
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
     }
 
-    public function show(Request $request, OrderPerbaikan $orderPerbaikan)
+    public function show(Request $request, Pengajuan $orderPerbaikan)
     {
-        if ($orderPerbaikan->created_by !== $request->user()->id) {
+        if ((int) $orderPerbaikan->pemohon_id !== (int) $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $orderPerbaikan->load(['creator', 'history.creator', 'location', 'department', 'department.location', 'department.building', 'unitProses']);
-
-        return $this->success(new OrderPerbaikanResource($orderPerbaikan), 'Detail order');
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans', 'orderDetail']);
+        return $this->success($orderPerbaikan, 'Detail order');
     }
 
-    public function update(UpdateOrderPerbaikanRequest $request, OrderPerbaikan $orderPerbaikan)
+    public function update(Request $request, Pengajuan $orderPerbaikan)
     {
+        if ((int) $orderPerbaikan->pemohon_id !== (int) $request->user()->id) {
+            return $this->error('Unauthorized', 403);
+        }
         try {
-            $updated = $this->orderService->update($request->user(), $orderPerbaikan, $request->validated(), $request->file('foto'));
-
-            return $this->success(new OrderPerbaikanResource($updated), 'Order berhasil diperbarui');
+            $validated = $request->validate([
+                'keluhan' => 'required|string',
+                'priority' => 'required|in:low,medium,high',
+            ]);
+            $data = ['deskripsi' => $validated['keluhan'], 'prioritas' => $validated['priority']];
+            $updated = $this->service->updateOwn($request->user(), $orderPerbaikan, $data, []);
+            return $this->success($updated, 'Order berhasil diperbarui');
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-
             return $this->error($e->getMessage(), $code);
         }
     }
 
-    public function destroy(Request $request, OrderPerbaikan $orderPerbaikan)
+    public function destroy(Request $request, Pengajuan $orderPerbaikan)
     {
+        if ((int) $orderPerbaikan->pemohon_id !== (int) $request->user()->id) {
+            return $this->error('Unauthorized', 403);
+        }
         try {
-            $this->orderService->delete($request->user(), $orderPerbaikan);
-
+            $this->service->deleteOwn($request->user(), $orderPerbaikan);
             return $this->success(null, 'Order berhasil dihapus');
         } catch (\Exception $e) {
-            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-
-            return $this->error($e->getMessage(), $code);
+            return $this->error($e->getMessage(), 500);
         }
     }
 
-    public function konfirmasi(Request $request)
+    public function konfirmasiSelesai(Request $request, Pengajuan $orderPerbaikan)
     {
-        $filters = ['status' => 'confirmed'];
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $filters['start_date'] = $request->start_date;
-            $filters['end_date'] = $request->end_date;
-        }
-        $paginator = $this->orderService->listForUser($request->user(), $filters, (int) $request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order confirmed',
-            'data' => OrderPerbaikanResource::collection($paginator->items()),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-            ],
+        $validated = $request->validate([
+            'konfirmasi' => 'required|in:selesai,belum',
+            'catatan' => 'nullable|string|max:1000',
         ]);
-    }
-
-    public function rejected(Request $request)
-    {
-        $filters = ['status' => 'rejected'];
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $filters['start_date'] = $request->start_date;
-            $filters['end_date'] = $request->end_date;
-        }
-        $paginator = $this->orderService->listForUser($request->user(), $filters, (int) $request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order rejected',
-            'data' => OrderPerbaikanResource::collection($paginator->items()),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-            ],
-        ]);
-    }
-
-    public function konfirmasiSelesai(UserConfirmOrderRequest $request, OrderPerbaikan $orderPerbaikan)
-    {
         try {
-            $lampiranPath = null;
-            if ($request->hasFile('lampiran')) {
-                $file = $request->file('lampiran');
-                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
+            $this->service->addMessage($request->user(), $orderPerbaikan, $validated['catatan'] ?? '', []);
+            if ($validated['konfirmasi'] === 'selesai') {
+                $orderPerbaikan->update(['status' => 'confirmed', 'user_confirmation' => true, 'user_confirmed_at' => now(), 'confirmed_at' => now()]);
+            } else {
+                $orderPerbaikan->update(['status' => 'in_progress', 'rejection_count' => $orderPerbaikan->rejection_count + 1, 'user_confirmation' => false, 'user_confirmed_at' => now()]);
             }
-
-            $order = $this->orderService->userConfirm(
-                $request->user(),
-                $orderPerbaikan,
-                $request->input('catatan'),
-                $request->input('konfirmasi') === 'selesai',
-                $lampiranPath
-            );
-
-            return $this->success(new OrderPerbaikanResource($order), $request->input('konfirmasi') === 'selesai' ? 'Terima kasih, order telah dikonfirmasi selesai.' : 'Order dibuka kembali karena belum selesai.');
+            return $this->success($orderPerbaikan, $validated['konfirmasi'] === 'selesai' ? 'Terima kasih, order telah dikonfirmasi selesai.' : 'Order dibuka kembali karena belum selesai.');
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-
             return $this->error($e->getMessage(), $code);
         }
     }

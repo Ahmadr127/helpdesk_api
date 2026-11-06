@@ -136,6 +136,28 @@ class Pengajuan extends Model
         return $this->pemohon_id;
     }
 
+    // Backward-compat: old Ticket/OrderPerbaikan stored these as strings.
+    // Return the related model's name so views/exports keep working without per-view changes.
+    public function getDepartmentAttribute()
+    {
+        return $this->relations['department']?->name ?? $this->department_id ? \App\Models\Department::find($this->department_id)?->name : null;
+    }
+
+    public function getBuildingAttribute()
+    {
+        return $this->relations['building']?->name ?? ($this->building_id ? \App\Models\Building::find($this->building_id)?->name : null);
+    }
+
+    public function getLocationAttribute()
+    {
+        return $this->lokasi?->name;
+    }
+
+    public function getUserAttribute()
+    {
+        return $this->pemohon;
+    }
+
     public function getCategoryAttribute(): ?string
     {
         return $this->kategori?->name;
@@ -144,6 +166,11 @@ class Pengajuan extends Model
     public function getPhotoAttribute(): ?string
     {
         return $this->lampirans->first()?->path;
+    }
+
+    public function getPhotosAttribute()
+    {
+        return $this->lampirans;
     }
 
     public function getUnitPenerimaAttribute(): ?string

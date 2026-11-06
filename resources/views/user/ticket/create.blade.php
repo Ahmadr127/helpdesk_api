@@ -73,12 +73,12 @@
                             <div>
                                 <label for="category_id-input"
                                     class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                                <x-searchable-select name="category_id" id="category_id"
-                                    :options="$categories" :selected="old('category_id')"
+                                <x-searchable-select name="kategori_id" id="kategori_id"
+                                    :options="$categories" :selected="old('kategori_id')"
                                     value-field="id" label-field="name"
                                     placeholder="Ketik untuk cari kategori..." empty-label="— Pilih Kategori —"
                                     accent="blue" :required="true" />
-                                @error('category_id')
+                                @error('kategori_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
