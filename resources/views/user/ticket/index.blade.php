@@ -157,10 +157,10 @@
                             </td>
                             <td class="px-6 py-4 text-sm">{{ ucfirst($ticket->category) }}</td>
                             <td class="px-6 py-4 text-sm">
-                                {{ $ticket->department }}
-                                <div class="text-xs text-gray-500">{{ $ticket->building }}</div>
+                                {{ $ticket->department?->name }}
+                                <div class="text-xs text-gray-500">{{ $ticket->building?->name }}</div>
                             </td>
-                            <td class="px-6 py-4 text-sm">{{ $ticket->location }}</td>
+                            <td class="px-6 py-4 text-sm">{{ $ticket->lokasi?->name }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     class="px-2.5 py-1 text-xs rounded-full inline-flex items-center
@@ -318,8 +318,8 @@
                                 <div class="flex items-start">
                                     <span class="text-sm text-gray-500 w-24">Departemen:</span>
                                     <span class="text-sm font-medium text-gray-800">
-                                        {{ ucfirst($ticket->department) }}
-                                        <div class="text-xs text-gray-500 mt-0.5">{{ $ticket->building }}</div>
+                                        {{ ucfirst($ticket->department?->name ?? '') }}
+                                        <div class="text-xs text-gray-500 mt-0.5">{{ $ticket->building?->name }}</div>
                                     </span>
                                 </div>
                                 <div class="flex items-center">
@@ -350,7 +350,7 @@
                                 </div>
                                 <div class="flex items-center">
                                     <span class="text-sm text-gray-500 w-24">Lokasi:</span>
-                                    <span class="text-sm text-gray-800">{{ $ticket->location }}</span>
+                                    <span class="text-sm text-gray-800">{{ $ticket->lokasi?->name }}</span>
                                 </div>
                             </div>
 

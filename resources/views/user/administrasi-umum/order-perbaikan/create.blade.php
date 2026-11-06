@@ -110,16 +110,11 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
-                        <div class="flex items-center px-3 py-2.5 border border-gray-200 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900" id="gedung_display">
-                                    {{ $departmentBuilding?->name ?? '-' }}
-                                </p>
-                                @if(isset($departmentBuilding) && $departmentBuilding)
-                                <p class="text-xs text-gray-500">Otomatis dari departemen</p>
-                                @endif
-                            </div>
-                        </div>
+                        <x-searchable-select name="building_id" id="building_id"
+                            :options="$buildings->pluck('name', 'id')->toArray()" :selected="old('building_id', $departmentBuilding?->id)"
+                            placeholder="Ketik untuk cari gedung..." empty-label="— Pilih Gedung —"
+                            accent="green" />
+                        @error('building_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>

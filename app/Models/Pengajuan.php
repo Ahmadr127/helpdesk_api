@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pengajuan extends Model
@@ -90,6 +91,18 @@ class Pengajuan extends Model
         return $this->hasOne(PengajuanOrderDetail::class, 'pengajuan_id');
     }
 
+    public function unitProses(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            \App\Models\UnitProses::class,
+            PengajuanOrderDetail::class,
+            'pengajuan_id',
+            'id',
+            'id',
+            'unit_proses_id'
+        );
+    }
+
     public function historis(): HasMany
     {
         return $this->hasMany(PengajuanHistori::class, 'pengajuan_id');
@@ -115,6 +128,30 @@ class Pengajuan extends Model
         return $this->hasOne(LegacyMap::class, 'pengajuan_id');
     }
 
+    public function getStatusText(): string
+    {
+        return match ($this->status) {
+            'open' => 'Open',
+            'in_progress' => 'In Progress',
+            'pending_confirmation' => 'Tutup',
+            'confirmed' => 'Confirmed',
+            'rejected' => 'Rejected',
+            default => 'Unknown',
+        };
+    }
+
+    public function getStatusBadgeClass(): string
+    {
+        return match ($this->status) {
+            'open' => 'bg-blue-100 text-blue-800',
+            'in_progress' => 'bg-yellow-100 text-yellow-800',
+            'pending_confirmation' => 'bg-violet-100 text-violet-800',
+            'confirmed' => 'bg-green-100 text-green-800',
+            'rejected' => 'bg-red-100 text-red-800',
+            default => 'bg-gray-100 text-gray-800',
+        };
+    }
+
     // Backward-compat accessors for legacy views
     public function getTicketNumberAttribute(): string
     {
@@ -136,22 +173,6 @@ class Pengajuan extends Model
         return $this->pemohon_id;
     }
 
-    // Backward-compat: old Ticket/OrderPerbaikan stored these as strings.
-    // Return the related model's name so views/exports keep working without per-view changes.
-    public function getDepartmentAttribute()
-    {
-        return $this->relations['department']?->name ?? $this->department_id ? \App\Models\Department::find($this->department_id)?->name : null;
-    }
-
-    public function getBuildingAttribute()
-    {
-        return $this->relations['building']?->name ?? ($this->building_id ? \App\Models\Building::find($this->building_id)?->name : null);
-    }
-
-    public function getLocationAttribute()
-    {
-        return $this->lokasi?->name;
-    }
 
     public function getUserAttribute()
     {

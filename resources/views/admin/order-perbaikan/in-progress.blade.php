@@ -151,7 +151,7 @@
                             <div class="text-xs text-gray-400">{{ $order->creator->email }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ optional($order->location)->name ?? $order->lokasi }}</td>
+                            {{ $order->lokasi?->name ?? '-' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_barang }}
                             <div class="text-xs text-gray-400">{{ $order->kode_inventaris }}</div>

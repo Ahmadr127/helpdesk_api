@@ -68,7 +68,7 @@
             @endif
             <div class="sm:col-span-2">
                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Lokasi</dt>
-                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->location?->name ?? '-' }}</dd>
+                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->lokasi?->name ?? '-' }}</dd>
             </div>
             <div class="sm:col-span-2">
                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Keluhan</dt>

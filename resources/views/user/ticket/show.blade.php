@@ -128,21 +128,17 @@
                         </div>
                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Departemen</h3>
-                            <p class="text-sm text-gray-800">{{ $ticket->department }}</p>
+                            <p class="text-sm text-gray-800">{{ $ticket->department?->name }}</p>
                         </div>
                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Gedung</h3>
                             <p class="text-sm text-gray-800">
-                                @if($ticket->buildingRelation)
-                                {{ $ticket->buildingRelation->name }} ({{ $ticket->building }})
-                                @else
-                                {{ $ticket->building }}
-                                @endif
+                                {{ $ticket->building?->name ?? '-' }}
                             </p>
                         </div>
                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Lokasi</h3>
-                            <p class="text-sm text-gray-800">{{ $ticket->location }}</p>
+                            <p class="text-sm text-gray-800">{{ $ticket->lokasi?->name }}</p>
                         </div>
                     </div>
 

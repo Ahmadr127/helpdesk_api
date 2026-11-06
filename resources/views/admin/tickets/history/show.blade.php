@@ -118,15 +118,15 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-sm text-gray-600">Department:</span>
-                            <span class="text-sm font-medium">{{ $ticket->department }}</span>
+                            <span class="text-sm font-medium">{{ $ticket->department?->name }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-sm text-gray-600">Location:</span>
-                            <span class="text-sm font-medium">{{ $ticket->location }}</span>
+                            <span class="text-sm font-medium">{{ $ticket->lokasi?->name }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-sm text-gray-600">Building:</span>
-                            <span class="text-sm font-medium">{{ $ticket->building }}</span>
+                            <span class="text-sm font-medium">{{ $ticket->building?->name }}</span>
                         </div>
                     </div>
                 </div>

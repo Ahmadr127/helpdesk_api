@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FcmMonitoringController;
 use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\Admin\KategoriOrderController;
+use App\Http\Controllers\Admin\KategoriPengajuanController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\MasterDataController;
@@ -156,6 +157,7 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('locations', LocationController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('unit-proses', UnitProsesController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('kategori-order', KategoriOrderController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('kategori-pengajuan', KategoriPengajuanController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('positions', PositionController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status')->middleware('permission:master');
 

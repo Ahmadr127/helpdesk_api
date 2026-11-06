@@ -200,7 +200,7 @@
                             {{ $order->nama_barang }}
                         </td>
                         <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->location ? $order->location->name : '-' }}
+                            {{ $order->lokasi?->name ?? '-' }}
                         </td>
                         <td class="px-4 py-2.5 whitespace-nowrap">
                             <span class="px-3 py-1.5 text-xs font-medium rounded-full shadow-sm 

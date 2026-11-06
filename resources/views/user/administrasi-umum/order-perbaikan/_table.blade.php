@@ -7,7 +7,7 @@
         <div class="text-sm text-gray-900">{{ $order->tanggal->format('d/m/Y H:i') }}</div>
         @if($order->status == 'confirmed' || $order->status == 'rejected')
         @php
-        $statusHistory = $order->history->where('status', $order->status)->first();
+        $statusHistory = $order->historis->where('status', $order->status)->first();
         @endphp
         @if($statusHistory)
         <div class="text-xs text-gray-500">
@@ -17,15 +17,15 @@
         @endif
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-gray-900">{{ $order->unit_proses_name }}</div>
-        <div class="text-xs text-gray-500">{{ $order->unit_proses }}</div>
+        <div class="text-sm text-gray-900">{{ $order->unitProses?->name ?? '-' }}</div>
+        <div class="text-xs text-gray-500">{{ $order->unitProses?->code ?? '-' }}</div>
     </td>
     <td class="px-6 py-4">
         <div class="text-sm text-gray-900">{{ $order->nama_barang }}</div>
         <div class="text-xs text-gray-500">{{ $order->keluhan }}</div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-gray-900">{{ $order->kategori_order ?? '-' }}</div>
+        <div class="text-sm text-gray-900">{{ $order->kategori?->name ?? '-' }}</div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
         <span class="px-2 py-1 text-xs font-medium rounded-full {{ $order->getStatusBadgeClass() }}">

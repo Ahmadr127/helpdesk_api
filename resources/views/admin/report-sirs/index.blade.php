@@ -190,7 +190,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->user->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ ucfirst($ticket->category) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->department }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->department?->name }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">
                                 {{ Str::limit($ticket->description, 100) }}
                             </td>

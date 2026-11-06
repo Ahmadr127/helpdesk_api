@@ -88,6 +88,7 @@ class AdministrasiUmumController extends Controller
         }
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
+        $buildings = \App\Models\Building::where('status', 1)->get();
         $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
         $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
 
@@ -112,7 +113,7 @@ class AdministrasiUmumController extends Controller
         }
         $nomor = $prefix.$newNumber;
 
-        return view('user.administrasi-umum.order-perbaikan.create', compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+        return view('user.administrasi-umum.order-perbaikan.create', compact('nomor', 'locations', 'buildings', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
     }
 
     public function storeOrderPerbaikan(Request $request)
@@ -124,11 +125,11 @@ class AdministrasiUmumController extends Controller
         }
 
         $validated = $request->validate([
-            'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
+            'kategori_order' => 'nullable|string',
             'location_id' => 'nullable|exists:locations,id',
             'building_id' => 'nullable|exists:buildings,id',
             'keluhan' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
+            'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
             'unit_penerima' => 'nullable|string',
             'kode_inventaris' => 'nullable|string',
             'nama_barang' => 'nullable|string',
@@ -136,12 +137,26 @@ class AdministrasiUmumController extends Controller
             'photo' => 'nullable|image|max:5120',
         ]);
 
+        // Resolve kategori_id from kategori_order name (IPSRS)
+        $kategoriId = null;
+        if (! empty($validated['kategori_order'])) {
+            $kp = \App\Models\KategoriPengajuan::where('name', $validated['kategori_order'])
+                ->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))
+                ->first();
+            $kategoriId = $kp?->id;
+        }
+        if (! $kategoriId) {
+            $kategoriId = \App\Models\KategoriPengajuan::whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->first()?->id;
+        }
+
+        $prioritasMap = ['RENDAH' => 'low', 'SEDANG' => 'medium', 'TINGGI/URGENT' => 'high'];
+
         $data = [
-            'kategori_id' => $validated['kategori_id'],
+            'kategori_id' => $kategoriId,
             'lokasi_id' => $validated['location_id'] ?? null,
             'building_id' => $validated['building_id'] ?? null,
             'deskripsi' => $validated['keluhan'],
-            'prioritas' => $validated['priority'],
+            'prioritas' => $prioritasMap[$validated['prioritas']] ?? 'medium',
             'department_id' => $user->department_id,
             'unit_penerima' => $validated['unit_penerima'] ?? null,
             'kode_inventaris' => $validated['kode_inventaris'] ?? null,
@@ -172,7 +187,7 @@ class AdministrasiUmumController extends Controller
         }
         $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
-        return view('user.administrasi-umum.order-perbaikan.show', compact('orderPerbaikan'));
+        return view('user.administrasi-umum.order-perbaikan.show', ['order' => $orderPerbaikan]);
     }
 
     public function editOrderPerbaikan(Pengajuan $orderPerbaikan)
@@ -300,7 +315,13 @@ class AdministrasiUmumController extends Controller
     }
 
     // stubs for other methods
-    public function orderBarang(Request $request) { return view('user.administrasi-umum.order-barang'); }
+    public function orderBarang(Request $request) {
+        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
+        $kategoriOrders = \App\Models\KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+        $inProgressOrders = \App\Models\Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('pemohon_id', auth()->id())->where('status', 'in_progress')->get();
+        $orders = \App\Models\Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('pemohon_id', auth()->id())->where('status', 'open')->latest()->paginate(10);
+        return view('user.administrasi-umum.order-barang', compact('kategoriOrders', 'unitProses', 'inProgressOrders', 'orders'));
+    }
     public function orderBarangKonfirmasi(Request $request) { return view('user.administrasi-umum.order-barang-konfirmasi'); }
     public function orderBarangTutup(Request $request) { return view('user.administrasi-umum.order-barang-tutup'); }
     public function orderBarangReject(Request $request) { return view('user.administrasi-umum.order-barang-reject'); }

@@ -139,7 +139,7 @@ class TicketsExport
                 $ticket->ticket_number,
                 $ticket->user->name,
                 $ticket->category,
-                $ticket->department,
+                $ticket->department?->name,
                 ucfirst($ticket->priority),
                 ucfirst($ticket->status),
                 $ticket->created_at->format('d/m/Y'),

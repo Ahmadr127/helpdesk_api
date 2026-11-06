@@ -170,8 +170,8 @@
                     <tr class="text-gray-700">
                         <td class="px-4 py-3">{{ $ticket->ticket_number }}</td>
                         <td class="px-4 py-3">{{ $ticket->category }}</td>
-                        <td class="px-4 py-3">{{ $ticket->department }}</td>
-                        <td class="px-4 py-3">{{ $ticket->building }}</td>
+                        <td class="px-4 py-3">{{ $ticket->department?->name }}</td>
+                        <td class="px-4 py-3">{{ $ticket->building?->name }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}

@@ -74,7 +74,7 @@
                                 class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
                             <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
                                 <div class="flex-1">
-                                    <p class="text-gray-900">{{ $ticket->department }}</p>
+                                    <p class="text-gray-900">{{ $ticket->department?->name }}</p>
                                 </div>
                                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">

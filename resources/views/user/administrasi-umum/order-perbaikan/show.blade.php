@@ -181,22 +181,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Pengaju</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->department?->name ?? $order->unit_proses_name }}</dd>
-                        </div>
-                        @php
-                            $unitProsesModel = $order->relationLoaded('unitProses') ? $order->getRelation('unitProses') : $order->unitProses()->getResults();
-                        @endphp
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Proses</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->department?->name ?? $order->unitProses?->name }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Penerima</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->unit_penerima ?? '-' }}</dd>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Gedung</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->building?->name ?? '-' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->nama_peminta }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->pemohon_nama }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -222,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         @endif
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->kategori_order ?? '-' }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->kategori?->name ?? '-' }}</dd>
                         </div>
                         @if(!empty($order->nama_barang))
                         <div class="sm:col-span-2">
@@ -232,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         @endif
                         <div class="sm:col-span-2">
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Lokasi</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->location?->name ?? '-' }}</dd>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->lokasi?->name ?? '-' }}</dd>
                         </div>
                         <div class="sm:col-span-2">
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Keluhan</dt>
@@ -288,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="px-4 py-5 h-72 overflow-y-auto bg-[#ECE5DD]">
                     <div class="space-y-3">
-                        @forelse($order->history()->latest()->get() as $history)
+                        @forelse($order->historis as $history)
                         @php
                             $isPengaju = $history->created_by
                                 ? ($order->created_by && $history->created_by == $order->created_by)
