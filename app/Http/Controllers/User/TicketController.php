@@ -3,29 +3,36 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Building;
-use App\Models\Category;
-use App\Models\Department;
-use App\Models\Location;
-use App\Models\Ticket;
-use App\Models\User;
-use App\Services\Api\TicketService;
-use Carbon\Carbon;
+use App\Models\KategoriPengajuan;
+use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanScopeService;
+use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanWorkflowService;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
+    public function __construct(
+        protected PengajuanService $service,
+        protected PengajuanWorkflowService $workflow,
+        protected PengajuanScopeService $scope,
+    ) {}
+
+    private function itQuery()
+    {
+        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+    }
+
     public function index()
     {
-        $tickets = Ticket::where('user_id', auth()->id())
+        $tickets = $this->itQuery()
+            ->where('pemohon_id', auth()->id())
+            ->with(['kategori.jenis'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get categories from both SIRS and IPSRS units
-        $categories = Category::where('status', 1)
-            ->whereHas('unitProses', function ($query) {
-                $query->whereIn('code', ['SIRS', 'IPSRS']);
-            })
+        $categories = KategoriPengajuan::where('status', 1)
+            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
             ->get();
 
         return view('user.ticket.index', compact('tickets', 'categories'));
@@ -33,224 +40,134 @@ class TicketController extends Controller
 
     public function create()
     {
-        // Check if user has a department
-        if (! auth()->user()->department) {
+        $user = auth()->user();
+        if (! $user->department && ! $user->department_id) {
             return redirect()->route('user.settings')
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        // Get only active categories from SIRS unit
-        $categories = Category::where('status', 1)
-            ->whereHas('unitProses', function ($query) {
-                $query->where('code', 'SIRS');
-            })
+        $categories = KategoriPengajuan::where('status', 1)
+            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
             ->get();
-        $buildings = Building::where('status', 1)->get();
-        $locations = Location::where('status', 1)->get();
+        $buildings = \App\Models\Building::where('status', 1)->get();
+        $locations = \App\Models\Location::where('status', 1)->get();
 
-        // Get the authenticated user's department — robust lookup (support code, name, case-insensitive, and department_id)
-        $user = auth()->user();
-        $deptValue = $user->department;
-        $userDepartment = null;
-
-        // Prefer department_id FK if present and valid
-        if (! empty($user->department_id)) {
-            $userDepartment = Department::with(['location', 'building'])->find($user->department_id);
-        }
-
-        if (! $userDepartment && $deptValue) {
-            $userDepartment = Department::with(['location', 'building'])->where('code', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
-        }
-
-        // Graceful fallback instead of 500: redirect to settings if department not resolvable
-        if (! $userDepartment) {
-            // Auto-create missing department on-the-fly to unblock user (code=name=deptValue)
-            // Only if deptValue looks like a valid identifier and not empty
-            if ($deptValue && is_string($deptValue)) {
-                try {
-                    // Avoid duplicate code — check again case-insensitive
-                    $exists = Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])
-                        ->orWhereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
-                    if ($exists) {
-                        $userDepartment = $exists;
-                    } else {
-                        $userDepartment = Department::create([
-                            'code' => strtoupper(str_replace(' ', '_', trim($deptValue))),
-                            'name' => trim($deptValue),
-                            'status' => 1,
-                        ]);
-                    }
-                } catch (\Throwable $e) {
-                    \Log::warning('Auto-create department failed for value '.$deptValue.': '.$e->getMessage());
-                }
-            }
-        }
-
-        if (! $userDepartment) {
-            return redirect()->route('user.settings')
-                ->with('error', 'Departemen "'.e($deptValue).'" tidak ditemukan di master data. Silakan perbarui departemen Anda di pengaturan profil atau hubungi administrator.');
-        }
-
-        return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
+        return view('user.ticket.create', compact('categories', 'buildings', 'locations'));
     }
 
-    public function store(Request $request, TicketService $service)
+    public function store(Request $request)
     {
-        // Check if user has a department
-        if (! auth()->user()->department) {
+        $user = auth()->user();
+        if (! $user->department && ! $user->department_id) {
             return redirect()->route('user.settings')
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
         $validated = $request->validate([
-            'category_id' => [
-                'required',
-                'exists:categories,id',
-                function ($attribute, $value, $fail) {
-                    $category = Category::with('unitProses')->find($value);
-                    if (! $category || $category->unitProses->code !== 'SIRS') {
-                        $fail('Kategori yang dipilih harus kategori dari unit SIRS.');
-                    }
-                },
-            ],
+            'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
             'location_id' => 'nullable|exists:locations,id',
             'building_id' => 'nullable|exists:buildings,id',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high',
-            'photo' => 'nullable|image|max:5120', // 5MB max, optional
+            'photo' => 'nullable|image|max:5120',
         ]);
 
-        try {
-            $ticket = $service->create(auth()->user(), $validated, $request->file('photo'));
+        $data = [
+            'kategori_id' => $validated['kategori_id'],
+            'lokasi_id' => $validated['location_id'] ?? null,
+            'building_id' => $validated['building_id'] ?? null,
+            'deskripsi' => $validated['description'],
+            'prioritas' => $validated['priority'],
+            'department_id' => $user->department_id,
+        ];
 
-            return redirect()->route('user.ticket.index')
-                ->with('success', 'Ticket created successfully.');
-        } catch (\Exception $e) {
-            \Log::error('Error creating ticket: '.$e->getMessage());
-            $code = $e->getCode();
-            if ($code === 422 || str_contains($e->getMessage(), 'SIRS')) {
-                return back()->withInput()->with('error', $e->getMessage());
-            }
+        $files = $request->file('photo') ? [$request->file('photo')] : [];
+        $pengajuan = $this->service->create($user, $data, $files);
 
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create ticket. Please try again. Error: '.$e->getMessage());
-        }
+        return redirect()->route('user.ticket.show', $pengajuan)
+            ->with('success', 'Ticket created successfully.');
     }
 
-    public function show(Ticket $ticket)
+    public function show(Pengajuan $ticket)
     {
-        if ($ticket->user_id !== auth()->id()) {
+        if ((int) $ticket->pemohon_id !== (int) auth()->id()) {
             abort(403);
         }
+
+        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesan.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.ticket.show', compact('ticket'));
     }
 
-    public function edit(Ticket $ticket)
+    public function edit(Pengajuan $ticket)
     {
-        // Check if user owns the ticket
-        if ($ticket->user_id !== auth()->id()) {
+        if ((int) $ticket->pemohon_id !== (int) auth()->id()) {
             abort(403);
         }
-
-        // Check if ticket is still editable (open status)
         if ($ticket->status !== 'open') {
             return redirect()->route('user.ticket.show', $ticket)
                 ->with('error', 'Ticket can only be edited when in open status.');
         }
 
-        // Get only active categories from SIRS unit
-        $categories = Category::where('status', 1)
-            ->whereHas('unitProses', function ($query) {
-                $query->where('code', 'SIRS');
-            })
+        $categories = KategoriPengajuan::where('status', 1)
+            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
             ->get();
+        $locations = \App\Models\Location::where('status', 1)->get();
+        $buildings = \App\Models\Building::where('status', 1)->get();
 
-        $locations = Location::where('status', 1)->get();
-        $buildings = Building::where('status', 1)->get();
-
-        $userDepartment = $this->resolveUserDepartment(auth()->user());
-
-        return view('user.ticket.edit', compact('ticket', 'categories', 'locations', 'userDepartment', 'buildings'));
+        return view('user.ticket.edit', compact('ticket', 'categories', 'locations', 'buildings'));
     }
 
-    protected function resolveUserDepartment(User $user): ?Department
+    public function update(Request $request, Pengajuan $ticket)
     {
-        $dept = null;
-        if (! empty($user->department_id)) {
-            $dept = Department::with(['location', 'building'])->find($user->department_id);
-        }
-        if (! $dept && $user->department) {
-            $deptValue = $user->department;
-            $dept = Department::with(['location', 'building'])->where('code', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->where('name', $deptValue)->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
-                ?? Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        if ((int) $ticket->pemohon_id !== (int) auth()->id()) {
+            abort(403);
         }
 
-        return $dept;
-    }
-
-    public function update(Request $request, Ticket $ticket, TicketService $service)
-    {
         $validated = $request->validate([
             'description' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'department_id' => 'required|exists:departments,id',
+            'kategori_id' => 'required|exists:kategori_pengajuan,id',
+            'department_id' => 'nullable|exists:departments,id',
             'location_id' => 'nullable|exists:locations,id',
             'building_id' => 'nullable|exists:buildings,id',
             'priority' => 'required|in:low,medium,high',
-            'photo' => 'nullable|image|max:5120', // 5MB max
+            'photo' => 'nullable|image|max:5120',
         ]);
 
-        try {
-            $ticket = $service->updateUserTicket(auth()->user(), $ticket, $validated, $request->file('photo'));
+        $data = [
+            'kategori_id' => $validated['kategori_id'],
+            'deskripsi' => $validated['description'],
+            'prioritas' => $validated['priority'],
+            'lokasi_id' => $validated['location_id'] ?? $ticket->lokasi_id,
+            'building_id' => $validated['building_id'] ?? $ticket->building_id,
+            'department_id' => $validated['department_id'] ?? $ticket->department_id,
+        ];
 
-            return redirect()->route('user.ticket.show', $ticket)
-                ->with('success', 'Ticket has been updated successfully.');
-        } catch (\Exception $e) {
-            \Log::error('Ticket update error: '.$e->getMessage());
-            $msg = $e->getMessage();
-            if (str_contains($msg, 'Unauthorized') || str_contains($msg, '403')) {
-                abort(403);
-            }
+        $files = $request->file('photo') ? [$request->file('photo')] : [];
+        $this->service->updateOwn(auth()->user(), $ticket, $data, $files);
 
-            return back()->withErrors(['error' => 'Failed to update ticket: '.$msg])->withInput();
-        }
+        return redirect()->route('user.ticket.show', $ticket)
+            ->with('success', 'Ticket has been updated successfully.');
     }
 
-    public function updateStatus(Ticket $ticket, Request $request)
+    public function destroy(Pengajuan $ticket)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,open,in_progress,closed',
-        ]);
-
-        $timestamp_field = null;
-        switch ($validated['status']) {
-            case 'open':
-                $timestamp_field = 'opened_at';
-                break;
-            case 'in_progress':
-                $timestamp_field = 'in_progress_at';
-                break;
-            case 'closed':
-                $timestamp_field = 'closed_at';
-                break;
+        if ((int) $ticket->pemohon_id !== (int) auth()->id()) {
+            abort(403);
         }
-
-        $ticket->update([
-            'status' => $validated['status'],
-            $timestamp_field => now(),
-        ]);
-
-        return back()->with('success', 'Ticket status updated successfully.');
+        try {
+            $this->service->deleteOwn(auth()->user(), $ticket);
+            return redirect()->route('user.dashboard')
+                ->with('success', 'Ticket has been deleted successfully.');
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Only open') || str_contains($e->getMessage(), 'open')) {
+                return redirect()->route('user.ticket.show', $ticket)->with('error', $e->getMessage());
+            }
+            return back()->withErrors(['error' => 'Failed to delete ticket: '.$e->getMessage()]);
+        }
     }
 
-    public function confirm(Request $request, Ticket $ticket, TicketService $service)
+    public function confirm(Request $request, Pengajuan $ticket)
     {
         $validated = $request->validate([
             'confirmation_notes' => 'required|string',
@@ -259,125 +176,76 @@ class TicketController extends Controller
         ]);
 
         try {
-            $service->confirm(auth()->user(), $ticket, $validated['confirmation_notes'], $validated['action'], $request->file('photo'));
-
+            if ($validated['action'] === 'confirm') {
+                $this->workflow->userConfirm(auth()->user(), $ticket, $validated['confirmation_notes'], true, $request->file('photo') ? [$request->file('photo')] : []);
+            } else {
+                $this->workflow->userConfirm(auth()->user(), $ticket, $validated['confirmation_notes'], false, $request->file('photo') ? [$request->file('photo')] : []);
+            }
             return redirect()->route('user.ticket.show', $ticket)
                 ->with('success', $validated['action'] === 'confirm' ? 'Ticket has been confirmed as completed.' : 'Ticket has been returned to in progress status.');
         } catch (\Exception $e) {
             if (str_contains($e->getMessage(), 'Unauthorized')) {
                 abort(403);
             }
-
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
 
-    public function reply(Request $request, Ticket $ticket, TicketService $service)
+    public function reply(Request $request, Pengajuan $ticket)
     {
         $validated = $request->validate([
             'message' => 'required|string',
-            'photo' => 'nullable|image|max:5120', // 5MB max
+            'photo' => 'nullable|image|max:5120',
         ]);
 
         try {
-            $service->reply(auth()->user(), $ticket, $validated['message'], $request->file('photo'));
-
+            $this->service->addMessage(auth()->user(), $ticket, $validated['message'], $request->file('photo') ? [$request->file('photo')] : []);
             return back()->with('success', 'Reply sent successfully.');
         } catch (\Exception $e) {
             if (str_contains($e->getMessage(), 'Unauthorized')) {
                 abort(403);
             }
-
             return back()->with('error', $e->getMessage())->withInput();
         }
     }
 
     public function filterByStatus($status, Request $request)
     {
-        // Base query for tickets belonging to current user
-        $baseQuery = Ticket::where('user_id', auth()->id());
+        $baseQuery = $this->itQuery()->where('pemohon_id', auth()->id());
 
-        // Get ticket counts for statistics
-        $totalTickets = Ticket::where('user_id', auth()->id())->count();
-        $openTickets = Ticket::where('user_id', auth()->id())->where('status', 'open')->count();
-        $inProgressTickets = Ticket::where('user_id', auth()->id())->where('status', 'in_progress')->count();
-        $closedTickets = Ticket::where('user_id', auth()->id())->where('status', 'closed')->count();
-        $confirmedTickets = Ticket::where('user_id', auth()->id())->where('status', 'confirmed')->count();
+        $totalTickets = $this->itQuery()->where('pemohon_id', auth()->id())->count();
+        $openTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'open')->count();
+        $inProgressTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'in_progress')->count();
+        $closedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'pending_confirmation')->count();
+        $confirmedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->count();
 
-        // Reset the base query
-        $baseQuery = Ticket::where('user_id', auth()->id());
-
-        // Apply status filter if not 'all'
         if ($status !== 'all') {
-            $baseQuery->where('status', $status);
+            $baseQuery->where('status', $status === 'closed' ? 'pending_confirmation' : $status);
         }
 
-        // Apply date range filter if provided
         if ($request->filled(['start_date', 'end_date'])) {
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
             $baseQuery->whereBetween('created_at', [$startDate, $endDate]);
         }
 
-        // Apply search filters if provided
         if ($request->filled('ticket_number')) {
-            $baseQuery->where('ticket_number', 'like', '%'.$request->ticket_number.'%');
-        }
-        if ($request->filled('category')) {
-            $baseQuery->where('category', $request->category);
+            $baseQuery->where('nomor', 'like', '%'.$request->ticket_number.'%');
         }
         if ($request->filled('priority')) {
-            $baseQuery->where('priority', $request->priority);
-        }
-        if ($request->filled('department')) {
-            $baseQuery->where('department', $request->department);
+            $baseQuery->where('prioritas', $request->priority);
         }
 
-        // Get the filtered tickets with pagination
         $tickets = $baseQuery->latest()->paginate(10);
 
-        // Get categories only from SIRS unit
-        $categories = Category::where('status', 1)
-            ->whereHas('unitProses', function ($query) {
-                $query->where('code', 'SIRS');
-            })
+        $categories = KategoriPengajuan::where('status', 1)
+            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
             ->pluck('name');
-
-        // Get unique departments and set priorities
-        $departments = Ticket::distinct()->pluck('department');
         $priorities = ['low', 'medium', 'high'];
 
         return view('user.ticket.filtered', compact(
-            'tickets',
-            'status',
-            'totalTickets',
-            'openTickets',
-            'inProgressTickets',
-            'closedTickets',
-            'confirmedTickets',
-            'categories',
-            'departments',
-            'priorities'
+            'tickets', 'status', 'totalTickets', 'openTickets', 'inProgressTickets',
+            'closedTickets', 'confirmedTickets', 'categories', 'priorities'
         ));
-    }
-
-    public function destroy(Ticket $ticket, TicketService $service)
-    {
-        try {
-            $service->deleteUserTicket(auth()->user(), $ticket);
-
-            return redirect()->route('user.dashboard')
-                ->with('success', 'Ticket has been deleted successfully.');
-        } catch (\Exception $e) {
-            if (str_contains($e->getMessage(), 'Unauthorized')) {
-                abort(403);
-            }
-            if (str_contains($e->getMessage(), 'Only open')) {
-                return redirect()->route('user.ticket.show', $ticket)->with('error', $e->getMessage());
-            }
-            \Log::error('Ticket deletion error: '.$e->getMessage());
-
-            return back()->withErrors(['error' => 'Failed to delete ticket: '.$e->getMessage()]);
-        }
     }
 }

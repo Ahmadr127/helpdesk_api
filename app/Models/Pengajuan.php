@@ -114,4 +114,60 @@ class Pengajuan extends Model
     {
         return $this->hasOne(LegacyMap::class, 'pengajuan_id');
     }
+
+    // Backward-compat accessors for legacy views
+    public function getTicketNumberAttribute(): string
+    {
+        return (string) $this->nomor;
+    }
+
+    public function getDescriptionAttribute(): ?string
+    {
+        return $this->deskripsi;
+    }
+
+    public function getPriorityAttribute(): ?string
+    {
+        return $this->prioritas;
+    }
+
+    public function getUserIdAttribute(): ?int
+    {
+        return $this->pemohon_id;
+    }
+
+    public function getCategoryAttribute(): ?string
+    {
+        return $this->kategori?->name;
+    }
+
+    public function getPhotoAttribute(): ?string
+    {
+        return $this->lampirans->first()?->path;
+    }
+
+    public function getUnitPenerimaAttribute(): ?string
+    {
+        return $this->orderDetail?->unit_penerima;
+    }
+
+    public function getKodeInventarisAttribute(): ?string
+    {
+        return $this->orderDetail?->kode_inventaris;
+    }
+
+    public function getNamaBarangAttribute(): ?string
+    {
+        return $this->orderDetail?->nama_barang;
+    }
+
+    public function getUnitProsesIdAttribute(): ?int
+    {
+        return $this->orderDetail?->unit_proses_id;
+    }
+
+    public function getKeluhanAttribute(): ?string
+    {
+        return $this->deskripsi;
+    }
 }

@@ -180,7 +180,7 @@ Legenda status:
 
 ### T-RBAC-004 — User role dan direct permission
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-RBAC-001
 - **Files:** `UserManagementController`, `PermissionController`
 - **Tujuan:** Tetap satu role/user; direct permission additive.
@@ -189,7 +189,7 @@ Legenda status:
 
 ### T-RBAC-005 — Hapus hardcode akses
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-RBAC-003
 - **Files:** `User.php`, `routes/web.php`, middleware API, `OrderPerbaikanPjScopeService`
 - **Tujuan:** Scope hanya dari role_kategori; `isAdminIT/Umum` tidak menentukan data.
@@ -211,7 +211,7 @@ Legenda status:
 
 ### T-MIG-001 — Preflight dan orphan report
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-BASE-002, T-DB-002
 - **Files:** command `migration:preflight`
 - **Acceptance:** Laporan count/orphan/duplikasi tersimpan.
@@ -219,7 +219,7 @@ Legenda status:
 
 ### T-MIG-002 — Migrasi kategori
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-001, T-DB-001
 - **Files:** command `migration:categories`
 - **Langkah:** `categories`→IT, `kategori_order`→IPSRS; mapping table.
@@ -228,7 +228,7 @@ Legenda status:
 
 ### T-MIG-003 — Migrasi tiket
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-002, T-DB-002
 - **Files:** command `migration:tickets`
 - **Acceptance:** 16/16 tiket → pengajuan; nomor sama; legacy_map lengkap.
@@ -236,7 +236,7 @@ Legenda status:
 
 ### T-MIG-004 — Migrasi order
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-002, T-DB-002
 - **Files:** command `migration:orders`
 - **Acceptance:** 7/7 order; detail IPSRS terisi; status benar.
@@ -244,7 +244,7 @@ Legenda status:
 
 ### T-MIG-005 — Histori dan pesan
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-003, T-MIG-004
 - **Files:** command
 - **Acceptance:** 17 histori order pindah; JSON responses/replies menjadi pesan/histori; tidak ada duplikasi.
@@ -252,7 +252,7 @@ Legenda status:
 
 ### T-MIG-006 — Lampiran
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-003, T-MIG-004
 - **Files:** command
 - **Acceptance:** Semua path terhitung; file missing dilaporkan.
@@ -260,7 +260,7 @@ Legenda status:
 
 ### T-MIG-007 — Penugasan dan role-kategori
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-004, T-RBAC-006
 - **Files:** command
 - **Acceptance:** `nama_penanggung_jawab` resolve unik; ambigu → orphan; role_kategori sesuai seed.
@@ -276,7 +276,7 @@ Legenda status:
 
 ### T-MIG-009 — Validasi dan laporan
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-005..008
 - **Files:** command `migration:validate`
 - **Acceptance:** Laporan memenuhi semua kriteria §13 `04`.
@@ -284,7 +284,7 @@ Legenda status:
 
 ### T-MIG-010 — Idempotensi dan rollback
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-009
 - **Files:** command/checkpoint
 - **Acceptance:** Jalankan ulang tidak menggandakan; rollback ke kode lama tetap berfungsi.
@@ -344,7 +344,7 @@ Legenda status:
 
 ### T-APP-007 — Web controller dan route
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-APP-003..006
 - **Files:** controller, `routes/web.php`
 - **Acceptance:** URL/route name lama tetap; halaman utama berfungsi.
@@ -352,7 +352,7 @@ Legenda status:
 
 ### T-APP-008 — Blade views
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-APP-007
 - **Files:** `resources/views/**`
 - **Acceptance:** Tampilan/istilah lama; field khusus IPSRS; role/kategori CRUD.
@@ -384,7 +384,7 @@ Legenda status:
 
 ### T-APP-012 — Audit
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-APP-003..011
 - **Files:** `AuditObserver`, `AuditService`
 - **Acceptance:** CRUD + pivot + workflow tercatat.
@@ -392,7 +392,7 @@ Legenda status:
 
 ### T-APP-013 — Admin role/kategori UI
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-RBAC-001..003
 - **Files:** view/routes
 - **Acceptance:** CRUD role, permission, kategori, assignment.
@@ -400,7 +400,7 @@ Legenda status:
 
 ### T-APP-014 — Legacy resolver
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETED
 - **Depends:** T-MIG-003/004
 - **Files:** `LegacyPengajuanResolver`, compatibility resource
 - **Acceptance:** ID lama dan baru dapat dibuka.

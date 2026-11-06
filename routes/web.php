@@ -51,6 +51,10 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 
 // Middleware auth group untuk semua user yang sudah login
 Route::middleware(['auth'])->group(function () {
+    Route::resource('pengajuan', \App\Http\Controllers\User\PengajuanController::class)->names('user.pengajuan');
+    Route::post('pengajuan/{pengajuan}/start', [\App\Http\Controllers\User\PengajuanController::class, 'start'])->name('user.pengajuan.start');
+    Route::post('pengajuan/{pengajuan}/close', [\App\Http\Controllers\User\PengajuanController::class, 'close'])->name('user.pengajuan.close');
+    Route::post('pengajuan/{pengajuan}/message', [\App\Http\Controllers\User\PengajuanController::class, 'message'])->name('user.pengajuan.message');
     Route::get('/dashboard', function () {
         $user = auth()->user();
 
