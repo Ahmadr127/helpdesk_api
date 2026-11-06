@@ -49,12 +49,10 @@ class AdminController extends Controller
             ->take(4)
             ->get();
 
-        // Get recent users
         $recentUsers = User::latest()
             ->take(5)
             ->get();
 
-        // Priority distribution
         $priorityDistribution = [
             'low' => (clone $baseQuery)->where('priority', 'low')->count(),
             'medium' => (clone $baseQuery)->where('priority', 'medium')->count(),
@@ -72,7 +70,6 @@ class AdminController extends Controller
             'recentTickets' => $recentTickets,
             'recentUsers' => $recentUsers,
             'priorityDistribution' => $priorityDistribution,
-            // Stats for the top cards
             'openTickets' => (clone $baseQuery)->where('status', 'open')->count(),
             'inProgressTickets' => (clone $baseQuery)->where('status', 'in_progress')->count(),
             'closedAndConfirmedTickets' => (clone $baseQuery)->whereIn('status', ['closed', 'confirmed'])->count(),
