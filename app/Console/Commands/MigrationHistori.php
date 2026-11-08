@@ -31,14 +31,17 @@ class MigrationHistori extends Command
                     continue;
                 }
 
-                $pengajuan->historis()->create([
+                $histori = $pengajuan->historis()->create([
                     'status' => $this->mapStatus($h->status ?? $pengajuan->status),
                     'action' => $h->action ?? 'migrated_history',
                     'notes' => $h->notes ?? $h->catatan ?? null,
                     'actor_id' => $h->user_id ?? $h->created_by ?? null,
                     'actor_type' => 'user',
-                    'created_at' => $h->created_at ?? now(),
                 ]);
+                // created_at tidak ada di $fillable, jadi diset manual agar tidak jadi waktu migrasi.
+                $histori->created_at = $h->created_at ?? now();
+                $histori->updated_at = $h->updated_at ?? $h->created_at ?? now();
+                $histori->saveQuietly();
 
                 $migrated++;
             }

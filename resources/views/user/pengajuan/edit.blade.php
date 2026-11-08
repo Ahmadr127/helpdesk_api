@@ -1,22 +1,38 @@
 @extends('user.layouts.app')
+@section('title', 'Edit Pengajuan')
 @section('content')
-<div class="container">
-    <h2>Edit Pengajuan {{ $pengajuan->nomor }}</h2>
-    <form method="POST" action="{{ route('user.pengajuan.update', $pengajuan) }}">
-        @csrf @method('PUT')
-        <div class="mb-3">
-            <label>Deskripsi</label>
-            <textarea name="deskripsi" class="form-control" required>{{ $pengajuan->deskripsi }}</textarea>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-green-400 px-6 py-4">
+                <h2 class="text-2xl font-bold text-white">Edit Pengajuan {{ $pengajuan->nomor }}</h2>
+            </div>
+            <div class="p-6">
+                @if($errors->any())
+                    <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                        <ul class="list-disc list-inside text-sm">
+                            @foreach($errors->all() as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                @include('user.pengajuan._form', [
+                    'action' => route('user.pengajuan.update', $pengajuan),
+                    'method' => 'PUT',
+                    'accent' => 'green',
+                    'pengajuan' => $pengajuan,
+                    'kategoris' => $kategoris,
+                    'locations' => $locations,
+                    'buildings' => $buildings,
+
+                    'userDepartment' => $userDepartment,
+                    'submitLabel' => 'Simpan Perubahan',
+                    'cancelUrl' => route('user.pengajuan.show', $pengajuan),
+                    'showOrderFields' => ($pengajuan->kategori?->jenis?->code === 'IPSRS'),
+                ])
+            </div>
         </div>
-        <div class="mb-3">
-            <label>Prioritas</label>
-            <select name="prioritas" class="form-control">
-                <option value="low" @selected($pengajuan->prioritas==='low')>Low</option>
-                <option value="medium" @selected($pengajuan->prioritas==='medium')>Medium</option>
-                <option value="high" @selected($pengajuan->prioritas==='high')>High</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Simpan</button>
-    </form>
+    </div>
 </div>
 @endsection

@@ -89,7 +89,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
             Route::get('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'indexOrderPerbaikan'])->name('index');
             Route::get('/create', [App\Http\Controllers\User\AdministrasiUmumController::class, 'createOrderPerbaikan'])->name('create')->middleware('permission:order|myorder');
-            Route::post('/', [App\Http\Controllers\User\AdministrasiUmumController::class, 'storeOrderPerbaikan'])->name('store')->middleware('permission:order|myorder');
+            Route::post('/', [App\Http\Controllers\User\PengajuanController::class, 'store'])->name('store')->middleware('permission:order|myorder');
             Route::get('/{orderPerbaikan}', [App\Http\Controllers\User\AdministrasiUmumController::class, 'showOrderPerbaikan'])->name('show');
             Route::post('/{orderPerbaikan}/konfirmasi-selesai', [App\Http\Controllers\User\AdministrasiUmumController::class, 'confirmOrderPerbaikan'])->name('konfirmasi-selesai');
             Route::get('/{orderPerbaikan}/edit', [App\Http\Controllers\User\AdministrasiUmumController::class, 'editOrderPerbaikan'])->name('edit')->middleware('permission:order|myorder');
@@ -101,7 +101,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('ticket')->name('user.ticket.')->middleware('permission:ticket|myticket')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');
         Route::get('/create', [TicketController::class, 'create'])->name('create')->middleware('permission:ticket|myticket');
-        Route::post('/store', [TicketController::class, 'store'])->name('store')->middleware('permission:ticket|myticket');
+        Route::post('/store', [PengajuanController::class, 'store'])->name('store')->middleware('permission:ticket|myticket');
         Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
         Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit')->middleware('permission:ticket|myticket');
         Route::put('/{ticket}', [TicketController::class, 'update'])->name('update')->middleware('permission:ticket|myticket');

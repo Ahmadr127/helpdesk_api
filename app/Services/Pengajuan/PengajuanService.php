@@ -55,7 +55,10 @@ class PengajuanService
                 'updated_by' => $actor->id,
             ]);
 
-            if ($jenisCode === 'IPSRS') {
+            if ($jenisCode === 'IPSRS' && (
+                ! empty($data['unit_penerima']) || ! empty($data['kode_inventaris'])
+                || ! empty($data['nama_barang']) || ! empty($data['unit_proses_id'])
+            )) {
                 PengajuanOrderDetail::create([
                     'pengajuan_id' => $pengajuan->id,
                     'unit_penerima' => $data['unit_penerima'] ?? null,
@@ -80,7 +83,7 @@ class PengajuanService
                 $actor
             );
 
-            return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis', 'lampirans']);
+            return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
         });
 
         $this->notificationService->notifyCreated($pengajuan, $actor);
@@ -135,7 +138,10 @@ class PengajuanService
                 'updated_by' => $actor->id,
             ]);
 
-            if ($pengajuan->kategori->jenis->code === 'IPSRS') {
+            if ($pengajuan->kategori->jenis->code === 'IPSRS' && (
+                array_key_exists('unit_penerima', $data) || array_key_exists('kode_inventaris', $data)
+                || array_key_exists('nama_barang', $data) || array_key_exists('unit_proses_id', $data)
+            )) {
                 $detail = $pengajuan->orderDetail ?: new PengajuanOrderDetail(['pengajuan_id' => $pengajuan->id]);
                 $detail->fill([
                     'unit_penerima' => array_key_exists('unit_penerima', $data) ? $data['unit_penerima'] : $detail->unit_penerima,
@@ -159,7 +165,7 @@ class PengajuanService
                 'actor_type' => 'user',
             ]);
 
-            return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis', 'lampirans']);
+            return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
         });
     }
 

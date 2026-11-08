@@ -50,7 +50,7 @@ class MigrationOrders extends Command
                 $kategoriId = $catMap[$o->kategori_order ?? null] ?? KategoriPengajuan::where('jenis_id', $jenisIpsrs->id)->first()?->id;
                 $pemohon = $o->created_by ? User::find($o->created_by) : null;
 
-                $pengajuan = Pengajuan::create([
+                $pengajuan = new Pengajuan([
                     'nomor' => $o->nomor ?? ('OP-'.$o->id),
                     'kategori_id' => $kategoriId,
                     'pemohon_id' => $pemohon?->id ?? User::first()->id,
@@ -68,6 +68,10 @@ class MigrationOrders extends Command
                     'legacy_source' => 'order',
                     'legacy_id' => $o->id,
                 ]);
+                // Jangan ikut waktu migrasi: pertahankan timestamp asli legacy.
+                $pengajuan->created_at = $o->created_at ?? $o->tanggal ?? now();
+                $pengajuan->updated_at = $o->updated_at ?? $o->tanggal ?? $o->created_at ?? now();
+                $pengajuan->save();
 
                 PengajuanOrderDetail::create([
                     'pengajuan_id' => $pengajuan->id,

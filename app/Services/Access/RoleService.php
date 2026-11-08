@@ -2,6 +2,7 @@
 
 namespace App\Services\Access;
 
+use App\Models\KategoriPengajuan;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\RoleKategori;

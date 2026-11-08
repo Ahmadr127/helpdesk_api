@@ -276,7 +276,7 @@ class TicketAdminController extends Controller
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))->get();
+        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $user = auth()->user();
@@ -334,11 +334,16 @@ class TicketAdminController extends Controller
                 ->with('error', 'Tiket hanya bisa diubah saat status open.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))->get();
+        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
 
-        return view('admin.tickets.myticket.edit', compact('ticket', 'categories', 'locations', 'buildings'));
+        $userDepartment = null;
+        if (! empty($ticket->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($ticket->department_id);
+        }
+
+        return view('admin.tickets.myticket.edit', compact('ticket', 'categories', 'locations', 'buildings', 'userDepartment'));
     }
 
     public function updateMyticket(Request $request, Pengajuan $ticket)

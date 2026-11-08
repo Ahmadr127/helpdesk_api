@@ -55,7 +55,7 @@ class MigrationTickets extends Command
 
                 $pemohon = $t->user_id ? User::find($t->user_id) : null;
 
-                $pengajuan = Pengajuan::create([
+                $pengajuan = new Pengajuan([
                     'nomor' => $t->ticket_number ?? ('T-'.str_pad((string) $t->id, 3, '0', STR_PAD_LEFT)),
                     'kategori_id' => $kategoriId,
                     'pemohon_id' => $pemohon?->id ?? User::first()->id,
@@ -72,6 +72,10 @@ class MigrationTickets extends Command
                     'legacy_source' => 'ticket',
                     'legacy_id' => $t->id,
                 ]);
+                // Jangan ikut waktu migrasi: pertahankan timestamp asli legacy.
+                $pengajuan->created_at = $t->created_at ?? now();
+                $pengajuan->updated_at = $t->updated_at ?? $t->created_at ?? now();
+                $pengajuan->save();
 
                 $pengajuan->historis()->create([
                     'status' => $pengajuan->status,

@@ -1,30 +1,36 @@
 @extends('user.layouts.app')
+@section('title', 'Buat Pengajuan')
 @section('content')
-<div class="container">
-    <h2>Buat Pengajuan</h2>
-    <form method="POST" action="{{ route('user.pengajuan.store') }}" enctype="multipart/form-data">
-        @csrf
-        <div class="mb-3">
-            <label>Kategori</label>
-            <select name="kategori_id" class="form-control" required>
-                @foreach($kategoris as $k)
-                    <option value="{{ $k->id }}">{{ $k->name }}</option>
-                @endforeach
-            </select>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-green-400 px-6 py-4">
+                <h2 class="text-2xl font-bold text-white">Buat Pengajuan Baru</h2>
+            </div>
+            <div class="p-6">
+                @if($errors->any())
+                    <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                        <ul class="list-disc list-inside text-sm">
+                            @foreach($errors->all() as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                @include('user.pengajuan._form', [
+                    'action' => route('user.pengajuan.store'),
+                    'method' => 'POST',
+                    'accent' => 'green',
+                    'kategoris' => $kategoris,
+                    'locations' => $locations,
+                    'buildings' => $buildings,
+
+                    'userDepartment' => $userDepartment,
+                    'submitLabel' => 'Kirim Pengajuan',
+                    'cancelUrl' => route('user.pengajuan.index'),
+                ])
+            </div>
         </div>
-        <div class="mb-3">
-            <label>Deskripsi</label>
-            <textarea name="deskripsi" class="form-control" required></textarea>
-        </div>
-        <div class="mb-3">
-            <label>Prioritas</label>
-            <select name="prioritas" class="form-control">
-                <option value="low">Low</option>
-                <option value="medium" selected>Medium</option>
-                <option value="high">High</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Simpan</button>
-    </form>
+    </div>
 </div>
 @endsection

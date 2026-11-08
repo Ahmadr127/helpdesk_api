@@ -89,12 +89,19 @@ class AdministrasiUmumController extends Controller
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
-        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
         $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
 
         $department = null;
         if (! empty($user->department_id)) {
             $department = \App\Models\Department::with(['location', 'building'])->find($user->department_id);
+        }
+        if (! $department && $user->department) {
+            $deptValue = $user->department;
+            $department = \App\Models\Department::with(['location', 'building'])->where('code', $deptValue)->first()
+                ?? \App\Models\Department::with(['location', 'building'])->where('name', $deptValue)->first()
+                ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
         }
         $departmentId = $department?->id;
         $departmentLocation = $department?->location;
@@ -102,6 +109,8 @@ class AdministrasiUmumController extends Controller
 
         $unitPengajuCode = $department?->code ?? $user->department ?? 'GENERAL';
         $unitPengajuName = $department?->name ?? \App\Models\Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
+
+        $userDepartment = $department;
 
         $prefix = 'OP/RTG/MTC-'.now()->format('Ymd');
         $lastOrder = Pengajuan::where('nomor', 'like', $prefix.'%')->orderBy('nomor', 'desc')->first();
@@ -113,7 +122,7 @@ class AdministrasiUmumController extends Controller
         }
         $nomor = $prefix.$newNumber;
 
-        return view('user.administrasi-umum.order-perbaikan.create', compact('nomor', 'locations', 'buildings', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+        return view('user.administrasi-umum.order-perbaikan.create', compact('nomor', 'locations', 'buildings', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'kategoris', 'departmentId', 'departmentLocation', 'departmentBuilding', 'userDepartment'));
     }
 
     public function storeOrderPerbaikan(Request $request)
@@ -125,6 +134,7 @@ class AdministrasiUmumController extends Controller
         }
 
         $validated = $request->validate([
+            'kategori_id' => 'nullable|exists:kategori_pengajuan,id',
             'kategori_order' => 'nullable|string',
             'location_id' => 'nullable|exists:locations,id',
             'building_id' => 'nullable|exists:buildings,id',
@@ -137,9 +147,9 @@ class AdministrasiUmumController extends Controller
             'photo' => 'nullable|image|max:5120',
         ]);
 
-        // Resolve kategori_id from kategori_order name (IPSRS)
-        $kategoriId = null;
-        if (! empty($validated['kategori_order'])) {
+        // Resolve kategori_id (prefer id, fallback resolve by name for legacy)
+        $kategoriId = $validated['kategori_id'] ?? null;
+        if (! $kategoriId && ! empty($validated['kategori_order'])) {
             $kp = \App\Models\KategoriPengajuan::where('name', $validated['kategori_order'])
                 ->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))
                 ->first();
@@ -201,9 +211,27 @@ class AdministrasiUmumController extends Controller
         }
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
-        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+        $buildings = \App\Models\Building::where('status', 1)->get();
+        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
 
-        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'kategoriOrders'));
+        $userDepartment = null;
+        if (! empty($orderPerbaikan->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($orderPerbaikan->department_id);
+        }
+        if (! $userDepartment) {
+            $user = auth()->user();
+            if (! empty($user->department_id)) {
+                $userDepartment = \App\Models\Department::with(['location', 'building'])->find($user->department_id);
+            } elseif ($user->department) {
+                $deptValue = $user->department;
+                $userDepartment = \App\Models\Department::with(['location', 'building'])->where('code', $deptValue)->first()
+                    ?? \App\Models\Department::with(['location', 'building'])->where('name', $deptValue)->first()
+                    ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                    ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+            }
+        }
+
+        return view('user.administrasi-umum.order-perbaikan.edit', compact('orderPerbaikan', 'locations', 'buildings', 'kategoris', 'userDepartment'));
     }
 
     public function updateOrderPerbaikan(Request $request, Pengajuan $orderPerbaikan)

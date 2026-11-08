@@ -46,11 +46,10 @@ class TicketController extends Controller
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)
-            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
-            ->get();
+        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
         $locations = \App\Models\Location::where('status', 1)->get();
+        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
 
         $user = auth()->user();
         $userDepartment = null;
@@ -65,7 +64,7 @@ class TicketController extends Controller
                 ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
         }
 
-        return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
+        return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'unitProses', 'userDepartment'));
     }
 
     public function store(Request $request)
@@ -122,13 +121,16 @@ class TicketController extends Controller
                 ->with('error', 'Ticket can only be edited when in open status.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)
-            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
-            ->get();
+        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
 
-        return view('user.ticket.edit', compact('ticket', 'categories', 'locations', 'buildings'));
+        $userDepartment = null;
+        if (! empty($ticket->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($ticket->department_id);
+        }
+
+        return view('user.ticket.edit', compact('ticket', 'categories', 'locations', 'buildings', 'userDepartment'));
     }
 
     public function update(Request $request, Pengajuan $ticket)

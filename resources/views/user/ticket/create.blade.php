@@ -9,7 +9,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-7xl mx-auto">
 
-        @if(!auth()->user()->department)
+        @if(!auth()->user()->department && !auth()->user()->department_id)
         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -51,166 +51,31 @@
 
                 <!-- Form Content -->
                 <div class="p-6">
-                    <form action="{{ route('user.ticket.store') }}" method="POST" enctype="multipart/form-data"
-                        class="space-y-6">
-                        @csrf
-
-                        <!-- Description Field -->
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi
-                                Masalah</label>
-                            <textarea name="description" id="description" rows="4"
-                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="Jelaskan masalah yang Anda alami..."
-                                required>{{ old('description') }}</textarea>
-                            @error('description')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
+                    @if($errors->any())
+                        <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                            <ul class="list-disc list-inside text-sm">
+                                @foreach($errors->all() as $err)
+                                    <li>{{ $err }}</li>
+                                @endforeach
+                            </ul>
                         </div>
+                    @endif
+                    @include('user.pengajuan._form', [
+                        'action' => route('user.pengajuan.store'),
+                        'method' => 'POST',
+                        'accent' => 'blue',
+                        'kategoris' => $categories,
+                        'locations' => $locations,
+                        'buildings' => $buildings,
 
-                        <!-- First Row: Category & Department -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="category_id-input"
-                                    class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                                <x-searchable-select name="kategori_id" id="kategori_id"
-                                    :options="$categories" :selected="old('kategori_id')"
-                                    value-field="id" label-field="name"
-                                    placeholder="Ketik untuk cari kategori..." empty-label="— Pilih Kategori —"
-                                    accent="blue" :required="true" />
-                                @error('kategori_id')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
-                                @if(isset($userDepartment) && $userDepartment)
-                                <div class="flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-gray-50">
-                                    <div class="flex-1">
-                                        <p class="text-gray-900">{{ $userDepartment->name ?? $userDepartment->code ?? auth()->user()->department }}</p>
-                                        <p class="text-xs text-gray-500">Kode: {{ $userDepartment->code ?? '-' }}</p>
-                                    </div>
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                </div>
-                                <input type="hidden" name="department_id" value="{{ $userDepartment->id }}">
-                                @else
-                                <div class="flex items-center px-4 py-2 rounded-lg border border-red-200 bg-red-50">
-                                    <div class="flex-1">
-                                        <p class="text-red-700 text-sm">Departemen tidak ditemukan: {{ auth()->user()->department ?? '-' }}</p>
-                                        <p class="text-xs text-red-500">Silakan perbarui di <a href="{{ route('user.settings') }}" class="underline">pengaturan profil</a>.</p>
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Second Row: Location & Building -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="location_id-input"
-                                    class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                                <x-searchable-select name="location_id" id="location_id"
-                                    :options="$locations" :selected="old('location_id', isset($userDepartment) && $userDepartment && $userDepartment->location ? $userDepartment->location->id : null)"
-                                    value-field="id" label-field="name"
-                                    placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi (opsional) —"
-                                    accent="blue" />
-                                @error('location_id')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="building_id-input" class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
-                                <x-searchable-select name="building_id" id="building_id"
-                                    :options="$buildings" :selected="old('building_id', isset($userDepartment) && $userDepartment && $userDepartment->building ? $userDepartment->building->id : null)"
-                                    value-field="id" label-field="name"
-                                    placeholder="Ketik untuk cari gedung..." empty-label="— Tidak Ada —"
-                                    accent="blue" />
-                            </div>
-                        </div>
-
-                        <!-- Third Row: Priority & Photo -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="priority"
-                                    class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
-                                <select name="priority" id="priority"
-                                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                    required>
-                                    <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Rendah</option>
-                                    <option value="medium" {{ old('priority') == 'medium' ? 'selected' : '' }}>Sedang
-                                    </option>
-                                    <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>Tinggi
-                                    </option>
-                                </select>
-                                @error('priority')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Foto (opsional)</label>
-                                <div class="flex items-center">
-                                    <label
-                                        class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors">
-                                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                            </path>
-                                        </svg>
-                                        <span class="text-sm text-gray-700">Pilih Foto</span>
-                                        <input type="file" name="photo" accept="image/*" class="hidden"
-                                            id="photo-input">
-                                    </label>
-                                </div>
-                                <p id="file-name" class="mt-1 text-xs text-gray-500">Ukuran file maksimum: 5MB</p>
-                                @error('photo')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                            <a href="{{ route('user.ticket.index') }}"
-                                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
-                                Batal
-                            </a>
-                            <button type="submit"
-                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                                Buat Tiket
-                            </button>
-                        </div>
-                    </form>
+                        'userDepartment' => $userDepartment,
+                        'submitLabel' => 'Buat Tiket',
+                        'cancelUrl' => route('user.ticket.index'),
+                        'showOrderFields' => false,
+                    ])
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Show selected file name
-    const photoInput = document.getElementById('photo-input');
-    const fileNameDisplay = document.getElementById('file-name');
-
-    photoInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const fileName = this.files[0].name;
-            const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // Convert to MB
-            fileNameDisplay.textContent = `${fileName} (${fileSize} MB)`;
-        } else {
-            fileNameDisplay.textContent = 'Ukuran file maksimum: 5MB';
-        }
-    });
-});
-</script>
-@endpush
 @endsection

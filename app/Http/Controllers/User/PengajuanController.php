@@ -37,12 +37,24 @@ class PengajuanController extends Controller
 
     public function create(Request $request)
     {
-        $jenis = $request->get('jenis', 'IT');
-        $kategoris = KategoriPengajuan::where('status', 1)
-            ->whereHas('jenis', fn ($q) => $q->where('code', $jenis))
-            ->get();
+        $user = auth()->user();
+        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $locations = \App\Models\Location::where('status', 1)->get();
+        $buildings = \App\Models\Building::where('status', 1)->get();
 
-        return view('user.pengajuan.create', compact('jenis', 'kategoris'));
+        $userDepartment = null;
+        if (! empty($user->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($user->department_id);
+        }
+        if (! $userDepartment && $user->department) {
+            $deptValue = $user->department;
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->where('code', $deptValue)->first()
+                ?? \App\Models\Department::with(['location', 'building'])->where('name', $deptValue)->first()
+                ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(code) = LOWER(?)', [$deptValue])->first()
+                ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
+        }
+
+        return view('user.pengajuan.create', compact('kategoris', 'locations', 'buildings', 'userDepartment'));
     }
 
     public function store(Request $request)
@@ -54,10 +66,6 @@ class PengajuanController extends Controller
             'department_id' => ['nullable', 'exists:departments,id'],
             'lokasi_id' => ['nullable', 'exists:locations,id'],
             'building_id' => ['nullable', 'exists:buildings,id'],
-            'unit_penerima' => ['nullable', 'string'],
-            'kode_inventaris' => ['nullable', 'string'],
-            'nama_barang' => ['nullable', 'string'],
-            'unit_proses_id' => ['nullable', 'exists:unit_proses,id'],
         ]);
 
         $files = $request->file('photos', []);
@@ -70,7 +78,7 @@ class PengajuanController extends Controller
     public function show(Pengajuan $pengajuan)
     {
         $this->authorize('view', $pengajuan);
-        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.pengajuan.show', compact('pengajuan'));
     }
@@ -78,9 +86,20 @@ class PengajuanController extends Controller
     public function edit(Pengajuan $pengajuan)
     {
         $this->authorize('update', $pengajuan);
-        $kategoris = KategoriPengajuan::where('status', 1)->get();
+        $user = auth()->user();
+        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $locations = \App\Models\Location::where('status', 1)->get();
+        $buildings = \App\Models\Building::where('status', 1)->get();
 
-        return view('user.pengajuan.edit', compact('pengajuan', 'kategoris'));
+        $userDepartment = null;
+        if (! empty($pengajuan->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($pengajuan->department_id);
+        }
+        if (! $userDepartment && ! empty($user->department_id)) {
+            $userDepartment = \App\Models\Department::with(['location', 'building'])->find($user->department_id);
+        }
+
+        return view('user.pengajuan.edit', compact('pengajuan', 'kategoris', 'locations', 'buildings', 'userDepartment'));
     }
 
     public function update(Request $request, Pengajuan $pengajuan)
