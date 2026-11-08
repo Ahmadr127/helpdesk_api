@@ -122,7 +122,7 @@ class PengajuanScopeServiceTest extends TestCase
         $this->assertNotContains($hiddenPengajuan->id, $visibleIds);
     }
 
-    public function test_active_assignment_grants_visibility(): void
+    public function test_active_assignment_does_not_grant_visibility(): void
     {
         $jenis = JenisPengajuan::firstOrCreate(
             ['code' => 'IT'],
@@ -175,8 +175,8 @@ class PengajuanScopeServiceTest extends TestCase
 
         $service = app(PengajuanScopeService::class);
 
-        $this->assertTrue($service->canView($user, $pengajuan));
-        $this->assertTrue($service->canAct($user, $pengajuan));
-        $this->assertContains($pengajuan->id, $service->visibleTo($user)->pluck('id')->all());
+        $this->assertFalse($service->canView($user, $pengajuan));
+        $this->assertFalse($service->canAct($user, $pengajuan));
+        $this->assertNotContains($pengajuan->id, $service->visibleTo($user)->pluck('id')->all());
     }
 }

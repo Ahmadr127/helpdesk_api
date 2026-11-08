@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
 use Illuminate\Http\Request;
@@ -14,11 +15,13 @@ class TicketAdminController extends Controller
     public function __construct(
         protected PengajuanService $service,
         protected PengajuanWorkflowService $workflow,
+        protected PengajuanScopeService $scope,
     ) {}
 
     private function itQuery()
     {
-        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+        return $this->scope->visibleTo(auth()->user())
+            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
     }
 
     public function index(Request $request)

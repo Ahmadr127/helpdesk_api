@@ -80,7 +80,10 @@ class PengajuanController extends Controller
         $this->authorize('view', $pengajuan);
         $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
-        return view('user.pengajuan.show', compact('pengajuan'));
+        $candidates = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->candidates($pengajuan);
+        $activePj = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->active($pengajuan);
+
+        return view('user.pengajuan.show', compact('pengajuan', 'candidates', 'activePj'));
     }
 
     public function edit(Pengajuan $pengajuan)
@@ -151,4 +154,19 @@ class PengajuanController extends Controller
 
         return back()->with('success', 'Pesan terkirim.');
     }
+
+    public function assign(Request $request, Pengajuan $pengajuan)
+    {
+        $this->authorize('update', $pengajuan);
+
+        $userIds = $request->input('user_ids', []);
+        if (! is_array($userIds)) {
+            $userIds = [$userIds];
+        }
+
+        $this->service->assign(auth()->user(), $pengajuan, $userIds);
+
+        return back()->with('success', 'Penanggung jawab berhasil diperbarui.');
+    }
+
 }

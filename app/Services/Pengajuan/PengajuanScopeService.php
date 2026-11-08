@@ -38,11 +38,6 @@ class PengajuanScopeService
             if ($allowedCategoryIds !== []) {
                 $query->orWhereIn('kategori_id', $allowedCategoryIds);
             }
-
-            $query->orWhereHas('penugasan', function (Builder $assignment) use ($user): void {
-                $assignment->where('user_id', $user->id)
-                    ->whereNull('released_at');
-            });
         });
     }
 
@@ -56,14 +51,7 @@ class PengajuanScopeService
             return true;
         }
 
-        if (in_array((int) $pengajuan->kategori_id, $this->categoryIdsFor($user), true)) {
-            return true;
-        }
-
-        return PengajuanPenugasan::where('pengajuan_id', $pengajuan->id)
-            ->where('user_id', $user->id)
-            ->whereNull('released_at')
-            ->exists();
+        return in_array((int) $pengajuan->kategori_id, $this->categoryIdsFor($user), true);
     }
 
     public function canAct(User $user, Pengajuan $pengajuan): bool
@@ -72,13 +60,6 @@ class PengajuanScopeService
             return true;
         }
 
-        if (in_array((int) $pengajuan->kategori_id, $this->categoryIdsFor($user), true)) {
-            return true;
-        }
-
-        return PengajuanPenugasan::where('pengajuan_id', $pengajuan->id)
-            ->where('user_id', $user->id)
-            ->whereNull('released_at')
-            ->exists();
+        return in_array((int) $pengajuan->kategori_id, $this->categoryIdsFor($user), true);
     }
 }

@@ -20,7 +20,8 @@ class PengajuanService
         protected PengajuanAttachmentService $attachmentService,
         protected DepartmentService $departmentService,
         protected PengajuanScopeService $scopeService,
-        protected PengajuanNotificationService $notificationService
+        protected PengajuanNotificationService $notificationService,
+        protected PengajuanPenugasanService $penugasanService
     ) {
     }
 
@@ -226,42 +227,14 @@ class PengajuanService
 
     public function assign(User $actor, Pengajuan $pengajuan, array $userIds): void
     {
-        if (! app(PengajuanScopeService::class)->canAct($actor, $pengajuan)) {
+        if (! $this->scopeService->canAct($actor, $pengajuan)) {
             throw new \Exception('Unauthorized', 403);
         }
 
         DB::transaction(function () use ($actor, $pengajuan, $userIds): void {
-            $active = $pengajuan->penugasan()->whereNull('released_at')->get();
-            $keep = array_map('intval', $userIds);
+            $this->penugasanService->release($pengajuan);
 
-            foreach ($active as $assignment) {
-                if (! in_array((int) $assignment->user_id, $keep, true)) {
-                    $assignment->update(['released_at' => now()]);
-                }
-            }
-
-            foreach ($keep as $userId) {
-                $user = User::find($userId);
-                if (! $user) {
-                    continue;
-                }
-
-                $assignment = $pengajuan->penugasan()
-                    ->where('user_id', $userId)
-                    ->whereNull('released_at')
-                    ->first();
-
-                if (! $assignment) {
-                    $role = Role::where('slug', $user->role)->first();
-
-                    $pengajuan->penugasan()->create([
-                        'user_id' => $user->id,
-                        'role_id' => $role?->id,
-                        'assigned_by' => $actor->id,
-                        'assigned_at' => now(),
-                    ]);
-                }
-            }
+            $this->penugasanService->assign($pengajuan, $userIds, $actor);
 
             $pengajuan->historis()->create([
                 'status' => $pengajuan->status,
@@ -269,7 +242,7 @@ class PengajuanService
                 'notes' => 'Penugasan pengajuan diperbarui.',
                 'actor_id' => $actor->id,
                 'actor_type' => 'user',
-                'metadata' => ['user_ids' => array_values($keep)],
+                'metadata' => ['user_ids' => array_values(array_map('intval', $userIds))],
             ]);
         });
     }

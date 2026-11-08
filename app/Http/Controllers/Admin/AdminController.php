@@ -3,80 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Pengajuan\PengajuanDashboardService;
+use App\Services\Pengajuan\PengajuanScopeService;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
+    public function __construct(protected PengajuanDashboardService $dashboard, protected PengajuanScopeService $scope) {}
+
     public function dashboard(Request $request)
     {
         $timeFilter = $request->input('time', 'all');
         $statusFilter = $request->input('status', 'all');
 
-        // Base query with time filter
-        $baseQuery = Ticket::query();
-        $this->applyTimeFilter($baseQuery, $timeFilter);
-
-        // Get total tickets based on filters
-        $totalActiveTickets = (clone $baseQuery)
-            ->whereIn('status', ['open', 'in_progress', 'pending'])
-            ->count();
-
-        $completedTickets = (clone $baseQuery)
-            ->whereIn('status', ['closed', 'confirmed'])
-            ->count();
-
-        $totalTickets = $totalActiveTickets + $completedTickets;
-
-        // Calculate remaining tickets (those not completed)
-        $remainingTickets = $totalActiveTickets;
-
-        // Calculate processing percentage
-        $processingPercentage = $totalTickets > 0
-            ? round(($completedTickets / $totalTickets) * 100, 1)
-            : 0;
-
-        // Calculate ticket progress
-        $ticketProgress = $totalTickets > 0
-            ? round(($completedTickets / $totalTickets) * 100, 1)
-            : 0;
-
-        // Get recent tickets with relationships
-        $recentTickets = Ticket::with(['user', 'location', 'category'])
-            ->where('status', 'open')
-            ->latest()
-            ->take(4)
-            ->get();
-
-        // Get recent users
-        $recentUsers = User::latest()
-            ->take(5)
-            ->get();
-
-        // Priority distribution
-        $priorityDistribution = [
-            'low' => (clone $baseQuery)->where('priority', 'low')->count(),
-            'medium' => (clone $baseQuery)->where('priority', 'medium')->count(),
-            'high' => (clone $baseQuery)->where('priority', 'high')->count(),
-            'urgent' => (clone $baseQuery)->where('priority', 'urgent')->count(),
-        ];
-
-        $data = [
-            'totalTickets' => $totalTickets,
-            'totalActiveTickets' => $totalActiveTickets,
-            'remainingTickets' => $remainingTickets,
-            'completedTickets' => $completedTickets,
-            'processingPercentage' => $processingPercentage,
-            'ticketProgress' => $ticketProgress,
-            'recentTickets' => $recentTickets,
-            'recentUsers' => $recentUsers,
-            'priorityDistribution' => $priorityDistribution,
-            // Stats for the top cards
-            'openTickets' => (clone $baseQuery)->where('status', 'open')->count(),
-            'inProgressTickets' => (clone $baseQuery)->where('status', 'in_progress')->count(),
-            'closedAndConfirmedTickets' => (clone $baseQuery)->whereIn('status', ['closed', 'confirmed'])->count(),
-        ];
+        $data = $this->dashboard->itDashboardData($timeFilter, $statusFilter, auth()->user());
 
         return view('admin.dashboard.index', $data);
     }
@@ -102,111 +43,40 @@ class AdminController extends Controller
 
     public function getStats(Request $request)
     {
-        $query = Ticket::query();
         $timeFilter = $request->input('time', 'all');
         $statusFilter = $request->input('status', 'all');
 
-        // Create base query for time filtering
-        $baseTimeQuery = function ($q) use ($timeFilter) {
-            $this->applyTimeFilter($q, $timeFilter);
-        };
+        $query = $this->scope->visibleTo(auth()->user())
+            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+        $this->applyTimeFilter($query, $timeFilter);
 
-        // Create base query for status filtering
-        $baseStatusQuery = function ($q) use ($statusFilter) {
-            if ($statusFilter !== 'all') {
-                if ($statusFilter === 'closed') {
-                    $q->where('status', 'closed')
-                        ->where('user_confirmation', false);
-                } elseif ($statusFilter === 'confirmed') {
-                    $q->where('status', 'confirmed');
-                } else {
-                    $q->where('status', $statusFilter);
-                }
-            }
-        };
+        if ($statusFilter !== 'all') {
+            $query->where('status', $statusFilter);
+        }
 
-        // Apply filters to main query
-        $baseTimeQuery($query);
-        $baseStatusQuery($query);
-
-        // Get counts per date
-        $ticketCounts = $query->clone()
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $countsByDate = (clone $query)
+            ->selectRaw("TO_CHAR(created_at, 'YYYY-MM-DD') as date, COUNT(*) as count")
             ->groupBy('date')
             ->pluck('count', 'date')
             ->toArray();
 
-        // Get status distribution with both filters
         $statusDistribution = [
-            'open' => Ticket::query()
-                ->tap($baseTimeQuery)
-                ->tap($baseStatusQuery)
-                ->where('status', 'open')
-                ->count(),
-            'in_progress' => Ticket::query()
-                ->tap($baseTimeQuery)
-                ->tap($baseStatusQuery)
-                ->where('status', 'in_progress')
-                ->count(),
-            'confirmed' => Ticket::query()
-                ->tap($baseTimeQuery)
-                ->tap($baseStatusQuery)
-                ->where('status', 'confirmed')
-                ->count(),
-            'closed' => Ticket::query()
-                ->tap($baseTimeQuery)
-                ->tap($baseStatusQuery)
-                ->where('status', 'closed')
-                ->where('user_confirmation', false)
-                ->count(),
+            'open' => (clone $query)->where('status', 'open')->count(),
+            'in_progress' => (clone $query)->where('status', 'in_progress')->count(),
+            'confirmed' => (clone $query)->where('status', 'confirmed')->count(),
+            'closed' => (clone $query)->where('status', 'pending_confirmation')->count(),
         ];
 
-        // Generate dates array based on time filter
-        switch ($timeFilter) {
-            case 'today':
-                $dates = [today()->format('Y-m-d')];
-                break;
-            case 'week':
-                $dates = collect(range(0, 6))->map(fn ($day) => now()->startOfWeek()->addDays($day)->format('Y-m-d'));
-                break;
-            case 'month':
-                $dates = collect(range(1, now()->daysInMonth))
-                    ->map(fn ($day) => now()->startOfMonth()->addDays($day - 1)->format('Y-m-d'));
-                break;
-            default:
-                // For 'all' time, get all unique dates from the database
-                $dates = Ticket::selectRaw('DISTINCT DATE(created_at) as date')
-                    ->orderBy('date')
-                    ->pluck('date')
-                    ->toArray();
-        }
+        $dates = array_keys($countsByDate);
+        $counts = array_values($countsByDate);
 
-        // Fill in missing dates with 0
-        $counts = collect($dates)->map(fn ($date) => $ticketCounts[$date] ?? 0)->toArray();
-
-        // Get updated summary data
-        $baseQuery = Ticket::query();
-        $this->applyTimeFilter($baseQuery, $timeFilter);
-
-        $totalActiveTickets = (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'pending'])->count();
-        $completedTickets = (clone $baseQuery)->whereIn('status', ['closed', 'confirmed'])->count();
-        $totalTickets = $totalActiveTickets + $completedTickets;
-        $remainingTickets = $totalActiveTickets;
-        $processingPercentage = $totalTickets > 0 ? round(($completedTickets / $totalTickets) * 100, 1) : 0;
-        $ticketProgress = $totalTickets > 0 ? round(($completedTickets / $totalTickets) * 100, 1) : 0;
+        $summary = $this->dashboard->itDashboardData($timeFilter, $statusFilter, auth()->user());
 
         return response()->json([
             'dates' => $dates,
             'counts' => $counts,
             'statusDistribution' => $statusDistribution,
-            'summary' => [
-                'totalTickets' => $totalTickets,
-                'totalActiveTickets' => $totalActiveTickets,
-                'remainingTickets' => $remainingTickets,
-                'completedTickets' => $completedTickets,
-                'processingPercentage' => $processingPercentage,
-                'ticketProgress' => $ticketProgress,
-            ],
+            'summary' => $summary,
         ]);
     }
 

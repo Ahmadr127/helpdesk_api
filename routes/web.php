@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('pengajuan/{pengajuan}/start', [\App\Http\Controllers\User\PengajuanController::class, 'start'])->name('user.pengajuan.start');
     Route::post('pengajuan/{pengajuan}/close', [\App\Http\Controllers\User\PengajuanController::class, 'close'])->name('user.pengajuan.close');
     Route::post('pengajuan/{pengajuan}/message', [\App\Http\Controllers\User\PengajuanController::class, 'message'])->name('user.pengajuan.message');
+    Route::post('pengajuan/{pengajuan}/assign', [\App\Http\Controllers\User\PengajuanController::class, 'assign'])->name('user.pengajuan.assign');
     Route::get('/dashboard', function () {
         $user = auth()->user();
 
@@ -101,7 +102,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('ticket')->name('user.ticket.')->middleware('permission:ticket|myticket')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('index');
         Route::get('/create', [TicketController::class, 'create'])->name('create')->middleware('permission:ticket|myticket');
-        Route::post('/store', [PengajuanController::class, 'store'])->name('store')->middleware('permission:ticket|myticket');
+        Route::post('/store', [\App\Http\Controllers\User\PengajuanController::class, 'store'])->name('store')->middleware('permission:ticket|myticket');
         Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
         Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit')->middleware('permission:ticket|myticket');
         Route::put('/{ticket}', [TicketController::class, 'update'])->name('update')->middleware('permission:ticket|myticket');
