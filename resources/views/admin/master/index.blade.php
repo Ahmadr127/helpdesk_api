@@ -315,8 +315,12 @@
                 </table>
             </div>
         </div>
-    <!-- Kategori Order Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
+    </div>
+
+    <!-- Kategori Order & Kategori Pengajuan side by side -->
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 20px; margin-top: 24px;">
+        <!-- Kategori Order Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,7 +344,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="kategoriOrderTable">
+                    <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($kategoriOrders as $kategori)
                         <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $kategori->name }}</td>
@@ -357,6 +361,48 @@
                 </table>
             </div>
         </div>
+
+        <!-- Kategori Pengajuan Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
+            <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                    </svg>
+                    Kategori Pengajuan
+                </h2>
+                <a href="{{ route('admin.master.kategori-pengajuan.index') }}" title="Kelola Kategori Pengajuan" class="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h15" />
+                    </svg>
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @forelse($kategoriPengajuan as $kp)
+                        <tr class="hover:bg-slate-50 transition-all">
+                            <td class="px-6 py-4">{{ $kp->name }}</td>
+                            <td class="px-6 py-4">{{ $kp->jenis?->code }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $kp->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $kp->status ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Tidak ada data.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
 @endsection

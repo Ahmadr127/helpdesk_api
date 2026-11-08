@@ -7,6 +7,7 @@ use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\KategoriOrder;
+use App\Models\KategoriPengajuan;
 use App\Models\Location;
 use App\Models\Position;
 use App\Models\UnitProses;
@@ -26,6 +27,7 @@ class MasterDataController extends Controller
         $unitProses = UnitProses::latest()->limit($limit)->get();
         $positions = Position::latest()->limit($limit)->get();
         $kategoriOrders = KategoriOrder::latest()->limit($limit)->get();
+        $kategoriPengajuan = KategoriPengajuan::with('jenis')->latest()->limit($limit)->get();
 
         return view('admin.master.index', compact(
             'categories',
@@ -34,7 +36,8 @@ class MasterDataController extends Controller
             'locations',
             'unitProses',
             'positions',
-            'kategoriOrders'
+            'kategoriOrders',
+            'kategoriPengajuan'
         ));
     }
 

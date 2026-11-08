@@ -45,7 +45,12 @@ class KategoriPengajuanController extends Controller
             'status' => 'required|boolean',
         ]);
 
-        KategoriPengajuan::create($validated);
+        try {
+            KategoriPengajuan::create($validated);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return redirect()->route('admin.master.kategori-pengajuan.index')
+                ->with('error', 'Kategori dengan nama tersebut sudah ada untuk jenis ini.');
+        }
 
         return redirect()->route('admin.master.kategori-pengajuan.index')
             ->with('success', 'Kategori Pengajuan berhasil ditambahkan.');
@@ -61,7 +66,12 @@ class KategoriPengajuanController extends Controller
             'status' => 'required|boolean',
         ]);
 
-        $kategoriPengajuan->update($validated);
+        try {
+            $kategoriPengajuan->update($validated);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return redirect()->route('admin.master.kategori-pengajuan.index')
+                ->with('error', 'Kategori dengan nama tersebut sudah ada untuk jenis ini.');
+        }
 
         return redirect()->route('admin.master.kategori-pengajuan.index')
             ->with('success', 'Kategori Pengajuan berhasil diperbarui.');

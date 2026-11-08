@@ -2,15 +2,16 @@
 @section('title', 'Kategori Pengajuan')
 @section('content')
 <div class="w-full">
+    <!-- Filter Section -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6 border border-gray-100">
-        <form action="{{ route('admin.master.kategori-pengajuan.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="filterForm" action="{{ route('admin.master.kategori-pengajuan.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4" onsubmit="return validateFilterForm()">
             <div class="md:col-span-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}" class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Cari nama atau kode...">
+                <label for="filter_search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <x-searchable-select name="search" :options="$searchOptions ?? []" :selected="request('search')" placeholder="Cari berdasarkan nama atau kode kategori…" id="filter_search" />
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
-                <select name="jenis_id" class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                <select name="jenis_id" id="filter_jenis" class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                     <option value="">Semua</option>
                     @foreach($jenisList as $j)
                         <option value="{{ $j->id }}" {{ request('jenis_id') == $j->id ? 'selected' : '' }}>{{ $j->code }} - {{ $j->name }}</option>
@@ -19,8 +20,8 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                    <option value="">Semua</option>
+                <select name="status" id="filter_status" class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <option value="">Semua Status</option>
                     <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Aktif</option>
                     <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Nonaktif</option>
                 </select>
@@ -28,42 +29,36 @@
             <div class="flex items-end space-x-2">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Filter</button>
                 <a href="{{ route('admin.master.kategori-pengajuan.index') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm">Reset</a>
+                <button type="button" onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Tambah Kategori</button>
             </div>
         </form>
     </div>
 
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead class="bg-slate-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($kategoris as $k)
-                <tr>
+                <tr class="hover:bg-slate-50 transition-all">
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $k->name }}</td>
                     <td class="px-6 py-4 text-sm text-gray-500">{{ $k->code ?? '-' }}</td>
                     <td class="px-6 py-4 text-sm text-gray-500">{{ $k->jenis?->code }}</td>
                     <td class="px-6 py-4 text-sm">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $k->status ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">{{ $k->status ? 'Aktif' : 'Nonaktif' }}</span>
+                        <span class="px-2 py-1 text-xs rounded-full {{ $k->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">{{ $k->status ? 'Aktif' : 'Nonaktif' }}</span>
                     </td>
                     <td class="px-6 py-4 text-sm">
-                        <form action="{{ route('admin.master.kategori-pengajuan.update', $k) }}" method="POST" class="inline">
-                            @csrf @method('PUT')
-                            <input type="hidden" name="jenis_id" value="{{ $k->jenis_id }}">
-                            <input type="hidden" name="name" value="{{ $k->name }}">
-                            <input type="hidden" name="code" value="{{ $k->code }}">
-                            <input type="hidden" name="status" value="{{ $k->status ? 0 : 1 }}">
-                            <button type="submit" class="text-blue-600 hover:text-blue-900 text-sm">{{ $k->status ? 'Nonaktifkan' : 'Aktifkan' }}</button>
-                        </form>
+                        <button type="button" onclick='editKategori(@json($k))' class="text-blue-600 hover:text-blue-900 text-sm mr-2">Edit</button>
                         <form action="{{ route('admin.master.kategori-pengajuan.destroy', $k) }}" method="POST" class="inline" onsubmit="return confirm('Hapus kategori?')">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm ml-2">Hapus</button>
+                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm">Hapus</button>
                         </form>
                     </td>
                 </tr>
@@ -75,38 +70,91 @@
         <div class="p-4">{{ $kategoris->links() }}</div>
     </div>
 
-    <!-- Add form -->
-    <div class="bg-white rounded-lg shadow-md p-6 mt-6 border border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Tambah Kategori Pengajuan</h2>
-        <form action="{{ route('admin.master.kategori-pengajuan.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            @csrf
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
-                <select name="jenis_id" required class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                    @foreach($jenisList as $j)
-                        <option value="{{ $j->id }}">{{ $j->code }} - {{ $j->name }}</option>
-                    @endforeach
-                </select>
+    <!-- Modal -->
+    <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full backdrop-blur-sm transition-all">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-800" id="modalTitle">Tambah Kategori Pengajuan</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500 transition-all">
+                    <span class="text-2xl">&times;</span>
+                </button>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                <input type="text" name="name" required class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kode</label>
-                <input type="text" name="code" class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" required class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                    <option value="1">Aktif</option>
-                    <option value="0">Nonaktif</option>
-                </select>
-            </div>
-            <div class="md:col-span-4">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Tambah</button>
-            </div>
-        </form>
+            <form id="kategoriForm" action="{{ route('admin.master.kategori-pengajuan.store') }}" method="POST">
+                @csrf
+                <div id="methodField"></div>
+                <div class="mb-4">
+                    <label for="jenis_id" class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
+                    <select name="jenis_id" id="jenis_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        @foreach($jenisList as $j)
+                            <option value="{{ $j->id }}">{{ $j->code }} - {{ $j->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                    <input type="text" name="name" id="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Kode</label>
+                    <input type="text" name="code" id="code" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="1">Aktif</option>
+                        <option value="0">Nonaktif</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all shadow-sm">Simpan</button>
+                </div>
+            </form>
+        </div>
     </div>
+
+    @push('scripts')
+    <script>
+    function validateFilterForm() { return true; }
+    function openModal(kategori = null) {
+        const modal = document.getElementById('formModal');
+        const form = document.getElementById('kategoriForm');
+        const methodField = document.getElementById('methodField');
+        const modalTitle = document.getElementById('modalTitle');
+        if (kategori) {
+            form.action = '{{ url('admin/master/kategori-pengajuan') }}/' + kategori.id;
+            methodField.innerHTML = '@method("PUT")';
+            document.getElementById('jenis_id').value = kategori.jenis_id;
+            document.getElementById('name').value = kategori.name;
+            document.getElementById('code').value = kategori.code || '';
+            document.getElementById('status').value = kategori.status;
+            modalTitle.textContent = 'Edit Kategori Pengajuan';
+        } else {
+            form.action = "{{ route('admin.master.kategori-pengajuan.store') }}";
+            methodField.innerHTML = '';
+            form.reset();
+            modalTitle.textContent = 'Tambah Kategori Pengajuan';
+        }
+        modal.classList.remove('hidden');
+    }
+    function closeModal() {
+        document.getElementById('formModal').classList.add('hidden');
+    }
+    document.getElementById('formModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    function editKategori(kategori) { openModal(kategori); }
+    function deleteKategori(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus kategori ini?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url('admin/master/kategori-pengajuan') }}/' + id;
+            form.innerHTML = '@csrf @method("DELETE")';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    </script>
+    @endpush
 </div>
 @endsection
