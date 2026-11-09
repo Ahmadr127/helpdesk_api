@@ -11,6 +11,14 @@ class StoreRoleRequest extends FormRequest
         return $this->user()?->hasPermission('permission') ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'permission_ids' => $this->input('permission_ids', []),
+            'kategori_ids' => $this->input('kategori_ids', []),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

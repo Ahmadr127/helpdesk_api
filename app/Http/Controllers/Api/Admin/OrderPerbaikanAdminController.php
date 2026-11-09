@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseApiController;
-use App\Models\KategoriPengajuan;
+use App\Http\Resources\Api\PengajuanResource;
 use App\Models\Pengajuan;
-use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanNotificationService;
+use App\Services\Pengajuan\PengajuanPenugasanService;
 use App\Services\Pengajuan\PengajuanScopeService;
+use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
 use Illuminate\Http\Request;
 
@@ -16,23 +18,25 @@ class OrderPerbaikanAdminController extends BaseApiController
         protected PengajuanService $service,
         protected PengajuanScopeService $scope,
         protected PengajuanWorkflowService $workflow,
+        protected PengajuanPenugasanService $penugasanService,
+        protected PengajuanNotificationService $notificationService,
     ) {}
 
     private function ipsrsQuery()
     {
-        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'));
+        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))
+            ->with(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user']);
     }
 
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
-        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori', 'department', 'lokasi']);
+        $query = $this->ipsrsQuery();
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('pemohon_nama', 'like', "%{$search}%")
                     ->orWhere('deskripsi', 'like', "%{$search}%");
             });
@@ -49,13 +53,14 @@ class OrderPerbaikanAdminController extends BaseApiController
             $query->where('status', $request->status === 'ditutup' ? 'ditutup' : $request->status);
         }
         if ($request->filled('prioritas')) $query->where('prioritas', $request->prioritas);
+        if ($request->filled('priority')) $query->where('prioritas', $request->priority);
 
         $paginator = $query->latest()->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Daftar order perbaikan (administrasi)',
-            'data' => $paginator->items(),
+            'data' => PengajuanResource::collection($paginator->items())->resolve(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -63,32 +68,33 @@ class OrderPerbaikanAdminController extends BaseApiController
                 'total' => $paginator->total(),
             ],
             'statistics' => [
-                'totalOrders' => $this->ipsrsQuery()->count(),
-                'openOrders' => $this->ipsrsQuery()->where('status', 'open')->count(),
-                'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(),
-                'confirmedOrders' => $this->ipsrsQuery()->where('status', 'confirmed')->count(),
-                'tutupOrders' => $this->ipsrsQuery()->where('status', 'ditutup')->count(),
-                'rejectedOrders' => $this->ipsrsQuery()->where('status', 'rejected')->count(),
+                'totalOrders' => Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->count(),
+                'openOrders' => Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('status', 'open')->count(),
+                'inProgressOrders' => Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('status', 'in_progress')->count(),
+                'confirmedOrders' => Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('status', 'confirmed')->count(),
+                'tutupOrders' => Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('status', 'ditutup')->count(),
+                'rejectedOrders' => Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('status', 'rejected')->count(),
             ],
         ]);
     }
 
     public function show(Pengajuan $orderPerbaikan)
     {
-        $orderPerbaikan->load(['pemohon', 'historis', 'pesans', 'lampirans']);
-        return $this->success($orderPerbaikan, 'Detail order');
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user', 'historis', 'pesans.sender', 'lampirans']);
+        return $this->success(new PengajuanResource($orderPerbaikan), 'Detail order');
     }
 
     public function updatePriority(Request $request, Pengajuan $orderPerbaikan)
     {
         try {
             $validated = $request->validate([
-                'prioritas' => 'required|in:low,medium,high',
-                'priority' => 'nullable|in:low,medium,high',
+                'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
+                'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
             ]);
             $prioritas = $validated['prioritas'] ?? $validated['priority'];
             $orderPerbaikan->update(['prioritas' => $prioritas]);
-            return $this->success($orderPerbaikan, 'Prioritas order berhasil diperbarui');
+            $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($orderPerbaikan), 'Prioritas order berhasil diperbarui');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 422);
         }
@@ -98,14 +104,69 @@ class OrderPerbaikanAdminController extends BaseApiController
     {
         try {
             $validated = $request->validate([
-                'status' => 'required|in:in_progress,pending_confirmation,rejected',
+                'status' => 'required|in:in_progress,pending_confirmation,rejected,ditutup,tutup',
                 'follow_up' => 'nullable|string',
+                'penanggung_jawab_ids' => 'nullable|array',
+                'penanggung_jawab_ids.*' => 'integer|exists:users,id',
             ]);
+            $status = $validated['status'];
+            if ($status === 'tutup') $status = 'ditutup';
             $orderPerbaikan->update([
-                'status' => $validated['status'],
+                'status' => $status,
                 'follow_up' => $validated['follow_up'] ?? $orderPerbaikan->follow_up,
             ]);
-            return $this->success($orderPerbaikan, 'Status berhasil diperbarui');
+            $newlyAssigned = [];
+            if (array_key_exists('penanggung_jawab_ids', $validated)) {
+                $newlyAssigned = $this->penugasanService->sync($orderPerbaikan, $validated['penanggung_jawab_ids'] ?? [], $request->user());
+            }
+            $orderPerbaikan->refresh();
+            $this->notificationService->notifyStatusChanged($orderPerbaikan, $request->user(), 'status_updated');
+            if (!empty($newlyAssigned)) {
+                $this->notificationService->notifyAssigned($orderPerbaikan, $newlyAssigned, $request->user());
+            }
+            $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($orderPerbaikan), 'Status berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    public function updateSubmission(Request $request, Pengajuan $orderPerbaikan)
+    {
+        try {
+            $validated = $request->validate([
+                'keluhan' => 'sometimes|required|string',
+                'deskripsi' => 'sometimes|required|string',
+                'prioritas' => 'nullable|in:low,medium,high',
+                'priority' => 'nullable|in:low,medium,high',
+                'kategori_id' => 'nullable|integer',
+                'kategori_order' => 'nullable|string',
+                'lokasi' => 'nullable|integer',
+                'location_id' => 'nullable|integer',
+                'building_id' => 'nullable|integer',
+                'penanggung_jawab_ids' => 'nullable|array',
+                'penanggung_jawab_ids.*' => 'integer|exists:users,id',
+            ]);
+            $payload = [];
+            $deskripsi = $validated['keluhan'] ?? $validated['deskripsi'] ?? null;
+            if ($deskripsi !== null) $payload['deskripsi'] = $deskripsi;
+            $prio = $validated['prioritas'] ?? $validated['priority'] ?? null;
+            if ($prio !== null) $payload['prioritas'] = $prio;
+            if (array_key_exists('kategori_id', $validated) && $validated['kategori_id']) $payload['kategori_id'] = $validated['kategori_id'];
+            $lokasi = $validated['location_id'] ?? $validated['lokasi'] ?? null;
+            if ($lokasi !== null) $payload['lokasi_id'] = $lokasi;
+            if (array_key_exists('building_id', $validated)) $payload['building_id'] = $validated['building_id'];
+            if (!empty($payload)) $orderPerbaikan->update($payload);
+            $newlyAssigned = [];
+            if (array_key_exists('penanggung_jawab_ids', $validated)) {
+                $newlyAssigned = $this->penugasanService->sync($orderPerbaikan, $validated['penanggung_jawab_ids'] ?? [], $request->user());
+            }
+            $orderPerbaikan->refresh();
+            if (!empty($newlyAssigned)) {
+                $this->notificationService->notifyAssigned($orderPerbaikan, $newlyAssigned, $request->user());
+            }
+            $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($orderPerbaikan), 'Pengajuan diperbarui');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 422);
         }
@@ -144,22 +205,22 @@ class OrderPerbaikanAdminController extends BaseApiController
     public function inProgress(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->ipsrsQuery()->with('pemohon')->where('status', 'in_progress')->latest()->paginate($perPage);
-        return response()->json(['success' => true, 'message' => 'In progress orders', 'data' => $paginator->items(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
+        $paginator = $this->ipsrsQuery()->where('status', 'in_progress')->latest()->paginate($perPage);
+        return response()->json(['success' => true, 'message' => 'In progress orders', 'data' => PengajuanResource::collection($paginator->items())->resolve(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
     }
 
     public function confirmed(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->ipsrsQuery()->with('pemohon')->where('status', 'confirmed')->latest()->paginate($perPage);
-        return response()->json(['success' => true, 'message' => 'Confirmed orders', 'data' => $paginator->items(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
+        $paginator = $this->ipsrsQuery()->where('status', 'confirmed')->latest()->paginate($perPage);
+        return response()->json(['success' => true, 'message' => 'Confirmed orders', 'data' => PengajuanResource::collection($paginator->items())->resolve(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
     }
 
     public function rejected(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->ipsrsQuery()->with('pemohon')->where('status', 'rejected')->latest()->paginate($perPage);
-        return response()->json(['success' => true, 'message' => 'Rejected orders', 'data' => $paginator->items(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
+        $paginator = $this->ipsrsQuery()->where('status', 'rejected')->latest()->paginate($perPage);
+        return response()->json(['success' => true, 'message' => 'Rejected orders', 'data' => PengajuanResource::collection($paginator->items())->resolve(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
     }
 
     public function statistics()

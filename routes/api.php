@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/kategori-order', [LookupController::class, 'kategoriOrders'])->name('kategori-order');
         Route::get('/ticket-statuses', [LookupController::class, 'ticketStatuses'])->name('ticket-statuses');
         Route::get('/order-statuses', [LookupController::class, 'orderStatuses'])->name('order-statuses');
+        Route::get('/users', [LookupController::class, 'users'])->name('users');
     });
 
     // User Ticket (owner only + permission myticket|ticket).
@@ -133,6 +134,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/history/{ticket}', [AdminTicketController::class, 'historyShow'])->name('historyShow');
             Route::get('/{ticket}', [AdminTicketController::class, 'show'])->name('show');
             Route::put('/{ticket}/priority', [AdminTicketController::class, 'updatePriority'])->name('priority');
+            Route::put('/{ticket}/submission', [AdminTicketController::class, 'updateSubmission'])->name('updateSubmission');
             Route::post('/{ticket}/respond', [AdminTicketController::class, 'respond'])->name('respond');
             Route::put('/{ticket}', [AdminTicketController::class, 'update'])->name('update');
         });
@@ -149,6 +151,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{orderPerbaikan}', [AdminOrderController::class, 'show'])->name('show');
             Route::put('/{orderPerbaikan}/priority', [AdminOrderController::class, 'updatePriority'])->name('updatePriority');
             Route::put('/{orderPerbaikan}/status', [AdminOrderController::class, 'updateStatus'])->name('updateStatus');
+            Route::put('/{orderPerbaikan}/submission', [AdminOrderController::class, 'updateSubmission'])->name('updateSubmission');
             Route::post('/{orderPerbaikan}/confirm', [AdminOrderController::class, 'confirm'])->name('confirm');
             Route::post('/{orderPerbaikan}/reject', [AdminOrderController::class, 'reject'])->name('reject');
             Route::post('/{orderPerbaikan}/start', [AdminOrderController::class, 'start'])->name('start');

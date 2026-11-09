@@ -77,11 +77,15 @@ class PengajuanPenugasanService
     }
 
     /**
-     * Assign beberapa user sekaligus, hanya yang valid.
+     * Assign beberapa user sekaligus, hanya kandidat PJ valid dari role_kategori.
+     * Jika kategori belum punya kandidat (role_kategori kosong), tidak ada yang di-assign.
      */
     public function assign(Pengajuan $pengajuan, array $userIds, ?User $actor = null): void
     {
-        $validIds = $this->candidates($pengajuan)->pluck('id')->map('intval')->all();
+        $validIds = $this->candidates($pengajuan)
+            ->pluck('id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
 
         foreach ($userIds as $userId) {
             $userId = (int) $userId;
@@ -91,9 +95,68 @@ class PengajuanPenugasanService
 
             $user = User::find($userId);
             if ($user) {
-                $this->assignOne($pengajuan, $user, $actor);
+                $existing = $pengajuan->penugasan()
+                    ->where('user_id', $user->id)
+                    ->whereNull('released_at')
+                    ->first();
+                if ($existing) {
+                    continue;
+                }
+                $role = Role::where('slug', $user->role)->first();
+                $pengajuan->penugasan()->create([
+                    'user_id' => $user->id,
+                    'role_id' => $role?->id,
+                    'assigned_by' => $actor?->id,
+                    'assigned_at' => now(),
+                ]);
             }
         }
+    }
+
+    /**
+     * Sinkronkan PJ aktif agar persis sesuai $userIds (hanya kandidat valid dari role_kategori).
+     * Jika kategori belum punya kandidat, daftar valid kosong (semua PJ aktif akan dilepas
+     * bila $userIds diisi dengan non-kandidat; kirim $userIds=[] untuk melepas semua).
+     * Mengembalikan daftar user yang baru ditugaskan (untuk notifikasi).
+     */
+    public function sync(Pengajuan $pengajuan, array $userIds, ?User $actor = null): array
+    {
+        $validIds = $this->candidates($pengajuan)
+            ->pluck('id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+
+        $desired = collect($userIds)->filter()->map(fn ($v) => (int) $v)->unique()->values()
+            ->filter(fn ($id) => in_array($id, $validIds, true))->values();
+
+        $now = now();
+        $active = $pengajuan->penugasan()->whereNull('released_at')->get();
+        foreach ($active as $a) {
+            if (! $desired->contains((int) $a->user_id)) {
+                $a->update(['released_at' => $now]);
+            }
+        }
+
+        $newlyAssigned = [];
+        foreach ($desired as $uid) {
+            $exists = $pengajuan->penugasan()
+                ->where('user_id', $uid)->whereNull('released_at')->exists();
+            if (! $exists) {
+                $user = User::find($uid);
+                $role = $user ? Role::where('slug', $user->role)->first() : null;
+                $pengajuan->penugasan()->create([
+                    'pengajuan_id' => $pengajuan->id,
+                    'user_id' => $uid,
+                    'role_id' => $role?->id,
+                    'assigned_by' => $actor?->id,
+                    'assigned_at' => $now,
+                ]);
+                if ($user) {
+                    $newlyAssigned[] = $user;
+                }
+            }
+        }
+        return $newlyAssigned;
     }
 
     /**

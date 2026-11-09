@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Api\BaseApiController;
-use App\Models\KategoriPengajuan;
+use App\Http\Resources\Api\PengajuanResource;
 use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanScopeService;
@@ -19,21 +19,21 @@ class TicketController extends BaseApiController
     private function itQuery($user)
     {
         return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'))
-            ->where('pemohon_id', $user->id);
+            ->where('pemohon_id', $user->id)
+            ->with(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building']);
     }
 
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
         $paginator = $this->itQuery($request->user())
-            ->with(['kategori.jenis'])
             ->latest()
             ->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Daftar ticket',
-            'data' => $paginator->items(),
+            'data' => PengajuanResource::collection($paginator->items())->resolve(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -47,18 +47,27 @@ class TicketController extends BaseApiController
     {
         $validated = $request->validate([
             'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
-            'description' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
+            'description' => 'required_without:deskripsi|nullable|string',
+            'deskripsi' => 'required_without:description|nullable|string',
+            'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
+            'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
+            'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'photo' => 'nullable|image|max:5120',
         ]);
         try {
             $data = [
                 'kategori_id' => $validated['kategori_id'],
-                'deskripsi' => $validated['description'],
-                'prioritas' => $validated['priority'],
-                'department_id' => $request->user()->department_id,
+                'deskripsi' => $validated['description'] ?? $validated['deskripsi'],
+                'prioritas' => $validated['priority'] ?? $validated['prioritas'],
+                'department_id' => $validated['department_id'] ?? $request->user()->department_id,
             ];
+            if (array_key_exists('location_id', $validated)) $data['lokasi_id'] = $validated['location_id'];
+            if (array_key_exists('building_id', $validated)) $data['building_id'] = $validated['building_id'];
             $pengajuan = $this->service->create($request->user(), $data, $request->file('photo') ? [$request->file('photo')] : []);
-            return $this->success($pengajuan, 'Ticket berhasil dibuat', 201);
+            $pengajuan->loadMissing(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($pengajuan), 'Ticket berhasil dibuat', 201);
         } catch (\Exception $e) {
             $code = in_array($e->getCode(), [403, 422]) ? $e->getCode() : 500;
             return $this->error($e->getMessage(), $code);
@@ -70,8 +79,8 @@ class TicketController extends BaseApiController
         if ((int) $ticket->pemohon_id !== (int) $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $ticket->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans']);
-        return $this->success($ticket, 'Detail ticket');
+        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+        return $this->success(new PengajuanResource($ticket), 'Detail ticket');
     }
 
     public function update(Request $request, Pengajuan $ticket)
@@ -81,12 +90,25 @@ class TicketController extends BaseApiController
         }
         try {
             $validated = $request->validate([
-                'description' => 'required|string',
-                'priority' => 'required|in:low,medium,high',
+                'description' => 'required_without:deskripsi|nullable|string',
+                'deskripsi' => 'required_without:description|nullable|string',
+                'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
+                'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
+                'location_id' => 'nullable|exists:locations,id',
+                'building_id' => 'nullable|exists:buildings,id',
+                'kategori_id' => 'nullable|exists:kategori_pengajuan,id',
+                'photo' => 'nullable|image|max:5120',
             ]);
-            $data = ['deskripsi' => $validated['description'], 'prioritas' => $validated['priority']];
-            $updated = $this->service->updateOwn($request->user(), $ticket, $data, []);
-            return $this->success($updated, 'Ticket berhasil diperbarui');
+            $data = [
+                'deskripsi' => $validated['description'] ?? $validated['deskripsi'] ?? null,
+                'prioritas' => $validated['priority'] ?? $validated['prioritas'] ?? null,
+            ];
+            if (array_key_exists('location_id', $validated)) $data['lokasi_id'] = $validated['location_id'];
+            if (array_key_exists('building_id', $validated)) $data['building_id'] = $validated['building_id'];
+            if (! empty($validated['kategori_id'])) $data['kategori_id'] = $validated['kategori_id'];
+            $updated = $this->service->updateOwn($request->user(), $ticket, $data, $request->file('photo') ? [$request->file('photo')] : []);
+            $updated->loadMissing(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($updated), 'Ticket berhasil diperbarui');
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
             return $this->error($e->getMessage(), $code);
@@ -110,10 +132,12 @@ class TicketController extends BaseApiController
     {
         $validated = $request->validate(['message' => 'required|string']);
         try {
-            $updated = $this->service->addMessage($request->user(), $ticket, $validated['message'], []);
-            return $this->success($updated, 'Reply berhasil dikirim');
+            $pesan = $this->service->addMessage($request->user(), $ticket, $validated['message'], $request->file('photo') ? [$request->file('photo')] : []);
+            $pesan->loadMissing(['sender', 'lampirans']);
+            return $this->success($pesan, 'Reply berhasil dikirim');
         } catch (\Exception $e) {
-            return $this->error($e->getMessage(), $e->getCode() ?: 500);
+            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
+            return $this->error($e->getMessage(), $code);
         }
     }
 
@@ -130,24 +154,26 @@ class TicketController extends BaseApiController
             } else {
                 $ticket->update(['status' => 'in_progress', 'rejection_count' => $ticket->rejection_count + 1, 'user_confirmation' => false, 'user_confirmed_at' => now()]);
             }
-            return $this->success($ticket, $validated['action'] === 'confirm' ? 'Ticket dikonfirmasi selesai' : 'Ticket dikembalikan ke in_progress');
+            $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($ticket), $validated['action'] === 'confirm' ? 'Ticket dikonfirmasi selesai' : 'Ticket dikembalikan ke in_progress');
         } catch (\Exception $e) {
-            return $this->error($e->getMessage(), $e->getCode() ?: 500);
+            $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
+            return $this->error($e->getMessage(), $code);
         }
     }
 
     public function filterByStatus(Request $request, $status)
     {
+        $perPage = (int) $request->get('per_page', 15);
         $query = $this->itQuery($request->user());
         if ($status !== 'all') {
             $query->where('status', $status === 'ditutup' ? 'ditutup' : $status);
         }
-        $perPage = (int) $request->get('per_page', 15);
         $paginator = $query->latest()->paginate($perPage);
         return response()->json([
             'success' => true,
             'message' => "Filter status {$status}",
-            'data' => $paginator->items(),
+            'data' => PengajuanResource::collection($paginator->items())->resolve(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),

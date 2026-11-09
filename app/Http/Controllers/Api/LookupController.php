@@ -6,24 +6,41 @@ use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\KategoriOrder;
+use App\Models\KategoriPengajuan;
 use App\Models\Location;
 use App\Models\Position;
 use App\Models\UnitProses;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LookupController extends BaseApiController
 {
     public function categories(Request $request)
     {
-        $query = Category::with('unitProses')->where('status', 1);
-        if ($request->filled('unit_proses_code')) {
-            $query->whereHas('unitProses', fn ($q) => $q->where('code', $request->unit_proses_code));
-        }
+        // Unified pengajuan: get all active KategoriPengajuan (all jenis), no jenis filter.
+        $query = KategoriPengajuan::with('jenis')->where('status', 1);
         if ($request->filled('search')) {
             $query->where('name', 'like', "%{$request->search}%");
         }
+        $items = $query->orderBy('name')->get();
 
-        return $this->success($query->get(), 'Categories');
+        if ($items->isNotEmpty()) {
+            $mapped = $items->map(fn ($k) => [
+                'id' => $k->id,
+                'name' => $k->name,
+                'code' => $k->code ?? null,
+                'jenis_id' => $k->jenis_id,
+                'jenis' => $k->jenis ? ['id' => $k->jenis->id, 'code' => $k->jenis->code, 'name' => $k->jenis->name] : null,
+            ]);
+            return $this->success($mapped, 'Categories');
+        }
+
+        // Legacy fallback only when unified table has no data
+        $legacy = Category::with('unitProses')->where('status', 1);
+        if ($request->filled('search')) {
+            $legacy->where('name', 'like', "%{$request->search}%");
+        }
+        return $this->success($legacy->orderBy('name')->get(), 'Categories');
     }
 
     public function departments(Request $request)
@@ -116,5 +133,18 @@ class LookupController extends BaseApiController
         return $this->success([
             'open', 'in_progress', 'confirmed', 'rejected',
         ], 'Order Statuses');
+    }
+
+    public function users(Request $request)
+    {
+        $query = User::query()->select(['id', 'name']);
+        if ($request->filled('search')) {
+            $query->where('name', 'like', "%{$request->search}%");
+        }
+        $users = $query->orderBy('name')->limit(500)->get()->map(fn ($u) => [
+            'id' => $u->id,
+            'name' => $u->name,
+        ]);
+        return $this->success($users, 'Users');
     }
 }

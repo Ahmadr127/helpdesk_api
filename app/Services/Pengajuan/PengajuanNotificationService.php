@@ -21,14 +21,36 @@ class PengajuanNotificationService
 
         $roles = Role::whereIn('id', $roleIds)->pluck('slug');
 
-        $users = User::whereIn('role', $roles)
-            ->where('status', 1);
+        $users = $roles->isNotEmpty()
+            ? User::whereIn('role', $roles)->where('status', 1)->get()
+            : collect();
 
+        // Sertakan PJ aktif (penugasan) agar selalu menerima notifikasi.
+        $pengajuan->loadMissing('penugasan.user');
+        $assigned = $pengajuan->penugasan
+            ->whereNull('released_at')
+            ->map(fn ($a) => $a->user)
+            ->filter(fn ($u) => $u && (int) $u->status === 1);
+
+        $merged = $users->merge($assigned)->unique('id')->values();
         if ($except) {
-            $users->where('id', '!=', $except->id);
+            $merged = $merged->filter(fn ($u) => (int) $u->id !== (int) $except->id)->values();
         }
+        return $merged;
+    }
 
-        return $users->get();
+    public function notifyAssigned(Pengajuan $pengajuan, array $newUsers, ?User $actor = null): void
+    {
+        $recipients = collect($newUsers)
+            ->filter(fn ($u) => $u instanceof User && (int) $u->status === 1)
+            ->filter(fn ($u) => ! $actor || (int) $u->id !== (int) $actor->id)
+            ->unique('id')->values();
+        if ($recipients->isEmpty()) {
+            return;
+        }
+        $title = "Penugasan {$pengajuan->nomor}";
+        $body = 'Anda ditugaskan sebagai penanggung jawab oleh '.($actor?->name ?? 'Admin').'.';
+        $this->dispatch($recipients, $title, $body, $this->payload($pengajuan, 'assigned'));
     }
 
     public function notifyCreated(Pengajuan $pengajuan, User $actor): void

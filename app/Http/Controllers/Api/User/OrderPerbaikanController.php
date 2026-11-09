@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Api\BaseApiController;
-use App\Models\KategoriPengajuan;
+use App\Http\Resources\Api\PengajuanResource;
 use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanScopeService;
@@ -19,7 +19,8 @@ class OrderPerbaikanController extends BaseApiController
     private function ipsrsQuery($user)
     {
         return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))
-            ->where('pemohon_id', $user->id);
+            ->where('pemohon_id', $user->id)
+            ->with(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building']);
     }
 
     public function index(Request $request)
@@ -34,8 +35,8 @@ class OrderPerbaikanController extends BaseApiController
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
+                    ->orWhere('deskripsi', 'like', "%{$search}%")
+                    ->orWhere('pemohon_nama', 'like', "%{$search}%");
             });
         }
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -47,7 +48,7 @@ class OrderPerbaikanController extends BaseApiController
         return response()->json([
             'success' => true,
             'message' => 'Daftar order perbaikan',
-            'data' => $paginator->items(),
+            'data' => PengajuanResource::collection($paginator->items())->resolve(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -61,21 +62,27 @@ class OrderPerbaikanController extends BaseApiController
     {
         $validated = $request->validate([
             'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
-            'keluhan' => 'required|string',
-            'priority' => 'required|in:low,medium,high',
+            'keluhan' => 'required_without:deskripsi|nullable|string',
+            'deskripsi' => 'required_without:keluhan|nullable|string',
+            'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
+            'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
             'location_id' => 'nullable|exists:locations,id',
+            'building_id' => 'nullable|exists:buildings,id',
+            'department_id' => 'nullable|exists:departments,id',
             'photo' => 'nullable|image|max:5120',
         ]);
         try {
             $data = [
                 'kategori_id' => $validated['kategori_id'],
-                'deskripsi' => $validated['keluhan'],
-                'prioritas' => $validated['priority'],
-                'department_id' => $request->user()->department_id,
+                'deskripsi' => $validated['keluhan'] ?? $validated['deskripsi'],
+                'prioritas' => $validated['priority'] ?? $validated['prioritas'],
+                'department_id' => $validated['department_id'] ?? $request->user()->department_id,
                 'lokasi_id' => $validated['location_id'] ?? null,
+                'building_id' => $validated['building_id'] ?? null,
             ];
             $pengajuan = $this->service->create($request->user(), $data, $request->file('photo') ? [$request->file('photo')] : []);
-            return $this->success($pengajuan, 'Order perbaikan berhasil dibuat', 201);
+            $pengajuan->loadMissing(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($pengajuan), 'Order perbaikan berhasil dibuat', 201);
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -86,8 +93,8 @@ class OrderPerbaikanController extends BaseApiController
         if ((int) $orderPerbaikan->pemohon_id !== (int) $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans']);
-        return $this->success($orderPerbaikan, 'Detail order');
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+        return $this->success(new PengajuanResource($orderPerbaikan), 'Detail order');
     }
 
     public function update(Request $request, Pengajuan $orderPerbaikan)
@@ -97,12 +104,25 @@ class OrderPerbaikanController extends BaseApiController
         }
         try {
             $validated = $request->validate([
-                'keluhan' => 'required|string',
-                'priority' => 'required|in:low,medium,high',
+                'keluhan' => 'required_without:deskripsi|nullable|string',
+                'deskripsi' => 'required_without:keluhan|nullable|string',
+                'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
+                'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
+                'location_id' => 'nullable|exists:locations,id',
+                'building_id' => 'nullable|exists:buildings,id',
+                'kategori_id' => 'nullable|exists:kategori_pengajuan,id',
+                'photo' => 'nullable|image|max:5120',
             ]);
-            $data = ['deskripsi' => $validated['keluhan'], 'prioritas' => $validated['priority']];
-            $updated = $this->service->updateOwn($request->user(), $orderPerbaikan, $data, []);
-            return $this->success($updated, 'Order berhasil diperbarui');
+            $data = [
+                'deskripsi' => $validated['keluhan'] ?? $validated['deskripsi'] ?? null,
+                'prioritas' => $validated['priority'] ?? $validated['prioritas'] ?? null,
+            ];
+            if (array_key_exists('location_id', $validated)) $data['lokasi_id'] = $validated['location_id'];
+            if (array_key_exists('building_id', $validated)) $data['building_id'] = $validated['building_id'];
+            if (! empty($validated['kategori_id'])) $data['kategori_id'] = $validated['kategori_id'];
+            $updated = $this->service->updateOwn($request->user(), $orderPerbaikan, $data, $request->file('photo') ? [$request->file('photo')] : []);
+            $updated->loadMissing(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($updated), 'Order berhasil diperbarui');
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
             return $this->error($e->getMessage(), $code);
@@ -135,7 +155,8 @@ class OrderPerbaikanController extends BaseApiController
             } else {
                 $orderPerbaikan->update(['status' => 'in_progress', 'rejection_count' => $orderPerbaikan->rejection_count + 1, 'user_confirmation' => false, 'user_confirmed_at' => now()]);
             }
-            return $this->success($orderPerbaikan, $validated['konfirmasi'] === 'selesai' ? 'Terima kasih, order telah dikonfirmasi selesai.' : 'Order dibuka kembali karena belum selesai.');
+            $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'pesans.sender', 'lampirans']);
+            return $this->success(new PengajuanResource($orderPerbaikan), $validated['konfirmasi'] === 'selesai' ? 'Terima kasih, order telah dikonfirmasi selesai.' : 'Order dibuka kembali karena belum selesai.');
         } catch (\Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
             return $this->error($e->getMessage(), $code);

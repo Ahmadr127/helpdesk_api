@@ -59,7 +59,7 @@ class PengajuanWorkflowService
             throw new \Exception('Unauthorized', 403);
         }
 
-        return DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
+        $pengajuan = DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
             $pengajuan->update([
                 'status' => 'ditutup',
                 'closed_at' => now(),
@@ -76,6 +76,9 @@ class PengajuanWorkflowService
 
             return $pengajuan->fresh(['historis']);
         });
+
+        $this->notificationService->notifyStatusChanged($pengajuan, $actor, 'closed');
+        return $pengajuan;
     }
 
     public function adminConfirm(User $actor, Pengajuan $pengajuan, ?string $notes = null): Pengajuan
@@ -88,7 +91,7 @@ class PengajuanWorkflowService
             throw new \Exception('Unauthorized', 403);
         }
 
-        return DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
+        $pengajuan = DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
             $pengajuan->update([
                 'status' => 'confirmed',
                 'confirmed_at' => now(),
@@ -105,6 +108,9 @@ class PengajuanWorkflowService
 
             return $pengajuan->fresh(['historis']);
         });
+
+        $this->notificationService->notifyStatusChanged($pengajuan, $actor, 'admin_confirmed');
+        return $pengajuan;
     }
 
     public function adminReject(User $actor, Pengajuan $pengajuan, ?string $notes = null): Pengajuan
@@ -117,7 +123,7 @@ class PengajuanWorkflowService
             throw new \Exception('Unauthorized', 403);
         }
 
-        return DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
+        $pengajuan = DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
             $pengajuan->update([
                 'status' => 'rejected',
                 'rejected_at' => now(),
@@ -134,6 +140,9 @@ class PengajuanWorkflowService
 
             return $pengajuan->fresh(['historis']);
         });
+
+        $this->notificationService->notifyStatusChanged($pengajuan, $actor, 'admin_rejected');
+        return $pengajuan;
     }
 
     public function userConfirm(User $actor, Pengajuan $pengajuan, ?string $notes = null, bool $selesai = true, array $files = []): Pengajuan
@@ -146,7 +155,7 @@ class PengajuanWorkflowService
             throw new \Exception('Pengajuan hanya dapat dikonfirmasi pemilik saat status ditutup.', 422);
         }
 
-        return DB::transaction(function () use ($actor, $pengajuan, $notes, $selesai, $files): Pengajuan {
+        $pengajuan = DB::transaction(function () use ($actor, $pengajuan, $notes, $selesai, $files): Pengajuan {
             if ($selesai) {
                 $pengajuan->update([
                     'status' => 'confirmed',
@@ -201,6 +210,10 @@ class PengajuanWorkflowService
 
             return $pengajuan->fresh(['historis', 'lampirans']);
         });
+
+        $event = $selesai ? 'user_confirmed' : 'user_rejected_confirmation';
+        $this->notificationService->notifyStatusChanged($pengajuan, $actor, $event);
+        return $pengajuan;
     }
 
     public function autoConfirmStale(int $hours = 24): int
