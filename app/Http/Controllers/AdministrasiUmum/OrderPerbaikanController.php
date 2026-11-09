@@ -36,7 +36,7 @@ class OrderPerbaikanController extends Controller
             'openOrders' => $this->ipsrsQuery()->where('status', 'open')->count(),
             'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(),
             'confirmedOrders' => $this->ipsrsQuery()->where('status', 'confirmed')->count(),
-            'tutupOrders' => $this->ipsrsQuery()->where('status', 'pending_confirmation')->count(),
+            'tutupOrders' => $this->ipsrsQuery()->where('status', 'ditutup')->count(),
             'rejectedOrders' => $this->ipsrsQuery()->where('status', 'rejected')->count(),
             'rendahOrders' => $this->ipsrsQuery()->where('prioritas', 'low')->count(),
             'sedangOrders' => $this->ipsrsQuery()->where('prioritas', 'medium')->count(),
@@ -64,7 +64,7 @@ class OrderPerbaikanController extends Controller
             $query->whereDate('tanggal', '<=', $request->date_to);
         }
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status === 'tutup' ? 'pending_confirmation' : $request->status);
+            $query->where('status', $request->status === 'ditutup' ? 'ditutup' : $request->status);
         }
         if ($request->filled('prioritas')) {
             $query->where('prioritas', $request->prioritas);
@@ -339,7 +339,7 @@ class OrderPerbaikanController extends Controller
 
     public function total(Request $request)
     {
-        $orders = $this->ipsrsQuery()->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi'])->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.total', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 

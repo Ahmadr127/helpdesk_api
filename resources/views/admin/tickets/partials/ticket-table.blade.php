@@ -32,14 +32,14 @@
                 'open' => 'bg-blue-100 text-blue-800',
                 'in_progress' => 'bg-yellow-100 text-yellow-800',
                 'pending' => 'bg-red-100 text-red-800',
-                'closed' => 'bg-red-100 text-red-800',
+                'ditutup' => 'bg-red-100 text-red-800',
                 'confirmed' => 'bg-green-100 text-green-800'
                 ];
                 $statusLabels = [
                 'open' => 'Dibuka',
                 'in_progress' => 'Dalam Proses',
                 'pending' => 'Menunggu Konfirmasi',
-                'closed' => 'Menunggu Konfirmasi',
+                'ditutup' => 'Menunggu Konfirmasi',
                 'confirmed' => 'Dikonfirmasi'
                 ];
                 @endphp
@@ -61,23 +61,15 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 @if($ticket->user_confirmed_at)
                 {{ $ticket->user_confirmed_at->format('H:i') }}
-                @elseif($ticket->status === 'closed' || $ticket->status === 'pending')
+                @elseif($ticket->status === 'ditutup' || $ticket->status === 'pending')
                 {{ $ticket->closed_at ? $ticket->closed_at->format('H:i') : '-' }}
                 @else
                 -
                 @endif
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                @if(!empty($myticketActions))
-                <button type="button" data-url="{{ route('admin.tickets.myticket.show', $ticket->id) }}" onclick="openMyticketDetail(this)" class="text-blue-600 hover:text-blue-900">Lihat
-                    Detail</button>
-                @elseif($ticket->status === 'confirmed')
-                <a href="{{ route('admin.tickets.history.show', $ticket->id) }}"
-                    class="text-blue-600 hover:text-blue-900">Lihat Detail</a>
-                @else
                 <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="text-blue-600 hover:text-blue-900">Lihat
                     Detail</a>
-                @endif
                 @if(!empty($myticketActions) && $ticket->user_id === auth()->id() && $ticket->status === 'open')
                 <a href="{{ route('admin.tickets.myticket.edit', $ticket->id) }}" class="ml-2 text-yellow-600 hover:text-yellow-900">Ubah</a>
                 <button type="button" data-delete-url="{{ route('admin.tickets.myticket.destroy', $ticket->id) }}" onclick="openMyticketDelete(this)" class="ml-2 text-red-600 hover:text-red-900">Hapus</button>

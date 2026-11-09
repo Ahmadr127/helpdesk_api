@@ -140,7 +140,7 @@ class TicketController extends BaseApiController
     {
         $query = $this->itQuery($request->user());
         if ($status !== 'all') {
-            $query->where('status', $status === 'closed' ? 'pending_confirmation' : $status);
+            $query->where('status', $status === 'ditutup' ? 'ditutup' : $status);
         }
         $perPage = (int) $request->get('per_page', 15);
         $paginator = $query->latest()->paginate($perPage);

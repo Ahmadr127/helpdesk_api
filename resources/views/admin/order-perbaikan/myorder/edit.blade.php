@@ -83,7 +83,7 @@ function previewImage(input) {
             <!-- Editable Fields -->
             <div class="bg-gray-50 p-3 rounded-lg space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Peminta</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pengguna</label>
                     <input type="text" value="{{ auth()->user()->name }}"
                         class="w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm text-gray-700"
                         readonly>

@@ -8,7 +8,7 @@
                 Tanggal
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Peminta
+                Pengguna
             </th>
 
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -32,7 +32,7 @@
                 {{ $order->tanggal->format('d/m/Y H:i') }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ $order->nama_peminta }}
+                {{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -43,7 +43,7 @@
                     {{ match($order->status) {
                         'open' => 'bg-blue-100 text-blue-800',
                         'in_progress' => 'bg-yellow-100 text-yellow-800',
-                        'tutup' => 'bg-violet-100 text-violet-800',
+                        'ditutup' => 'bg-violet-100 text-violet-800',
                         'confirmed' => 'bg-green-100 text-green-800',
                         'rejected' => 'bg-red-100 text-red-800',
                         default => 'bg-gray-100 text-gray-800'
@@ -51,7 +51,7 @@
                     {{ match($order->status) {
                         'open' => 'Dibuka',
                         'in_progress' => 'Dalam Diproses',
-                        'tutup' => 'Tutup',
+                        'ditutup' => 'Tutup',
                         'confirmed' => 'Dikonfirmasi',
                         'rejected' => 'Ditolak',
                         default => $order->status

@@ -38,4 +38,56 @@ class PengajuanHistori extends Model
     {
         return $this->hasMany(PengajuanLampiran::class, 'histori_id');
     }
+
+    // Backward-compat accessors for legacy order views/components
+    public function getCreatorAttribute()
+    {
+        return $this->actor;
+    }
+
+    public function getCreatedByAttribute(): ?int
+    {
+        return $this->actor_id;
+    }
+
+    public function getKeteranganAttribute(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function getFollowUpAttribute(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function getLampiranAttribute(): ?string
+    {
+        $lampiran = $this->lampirans->first();
+
+        return $lampiran?->path;
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'open' => 'Open',
+            'in_progress' => 'In Progress',
+            'ditutup', 'tutup', 'closed', 'pending' => 'Ditutup',
+            'confirmed' => 'Confirmed',
+            'rejected' => 'Rejected',
+            default => ucfirst(str_replace('_', ' ', (string) $this->status)),
+        };
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status) {
+            'open' => 'bg-blue-100 text-blue-800',
+            'in_progress' => 'bg-yellow-100 text-yellow-800',
+            'ditutup', 'tutup', 'closed', 'pending' => 'bg-violet-100 text-violet-800',
+            'confirmed' => 'bg-green-100 text-green-800',
+            'rejected' => 'bg-red-100 text-red-800',
+            default => 'bg-gray-100 text-gray-800',
+        };
+    }
 }

@@ -42,7 +42,7 @@
 
         <!-- Confirmed Orders -->
         <a href="{{ route('user.administrasi-umum.order-perbaikan.index', ['status' => 'tutup']) }}"
-            class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 hover:shadow-md transition-all {{ $status === 'tutup' ? 'ring-2 ring-violet-500' : '' }}">
+            class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 hover:shadow-md transition-all {{ $status === 'ditutup' ? 'ring-2 ring-violet-500' : '' }}">
             <div class="flex flex-col items-center">
                 <span class="text-violet-600 font-bold text-2xl">{{ $stats['tutup'] }}</span>
                 <span class="text-gray-700 text-sm mt-1">Menunggu Konfirmasi</span>
@@ -185,13 +185,13 @@
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}
                                 {{ $order->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                {{ $order->status === 'tutup' ? 'bg-violet-100 text-violet-800' : '' }}
+                                {{ $order->status === 'ditutup' ? 'bg-violet-100 text-violet-800' : '' }}
                                 {{ $order->status === 'confirmed' ? 'bg-green-100 text-green-800' : '' }}
                                 {{ $order->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}">
                                 {{ match($order->status) {
                                     'open' => 'Terbuka',
                                     'in_progress' => 'Diproses',
-                                    'tutup' => 'Menunggu Konfirmasi',
+                                    'ditutup' => 'Menunggu Konfirmasi',
                                     'confirmed' => 'Dikonfirmasi',
                                     'rejected' => 'Ditolak',
                                     default => $order->status

@@ -31,7 +31,7 @@ class AdministrasiUmumController extends Controller
             ->where('pemohon_id', auth()->id());
 
         if ($status !== 'all') {
-            $query->where('status', $status === 'tutup' ? 'pending_confirmation' : $status);
+            $query->where('status', $status === 'ditutup' ? 'ditutup' : $status);
         }
 
         if ($request->search) {
@@ -64,7 +64,7 @@ class AdministrasiUmumController extends Controller
         $stats = [
             'total' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->count(),
             'in_progress' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'in_progress')->count(),
-            'tutup' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'pending_confirmation')->count(),
+            'ditutup' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'ditutup')->count(),
             'confirmed' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->count(),
             'rejected' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'rejected')->count(),
         ];

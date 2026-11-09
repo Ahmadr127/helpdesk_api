@@ -28,7 +28,7 @@ class OrderPerbaikanController extends BaseApiController
         $query = $this->ipsrsQuery($request->user());
 
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status === 'tutup' ? 'pending_confirmation' : $request->status);
+            $query->where('status', $request->status === 'ditutup' ? 'ditutup' : $request->status);
         }
         if ($request->filled('search')) {
             $search = $request->search;

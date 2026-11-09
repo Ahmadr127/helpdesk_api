@@ -46,7 +46,7 @@ class OrderPerbaikanAdminController extends BaseApiController
             $query->whereDate('created_at', '<=', $dt);
         }
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status === 'tutup' ? 'pending_confirmation' : $request->status);
+            $query->where('status', $request->status === 'ditutup' ? 'ditutup' : $request->status);
         }
         if ($request->filled('prioritas')) $query->where('prioritas', $request->prioritas);
 
@@ -67,7 +67,7 @@ class OrderPerbaikanAdminController extends BaseApiController
                 'openOrders' => $this->ipsrsQuery()->where('status', 'open')->count(),
                 'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(),
                 'confirmedOrders' => $this->ipsrsQuery()->where('status', 'confirmed')->count(),
-                'tutupOrders' => $this->ipsrsQuery()->where('status', 'pending_confirmation')->count(),
+                'tutupOrders' => $this->ipsrsQuery()->where('status', 'ditutup')->count(),
                 'rejectedOrders' => $this->ipsrsQuery()->where('status', 'rejected')->count(),
             ],
         ]);
@@ -154,7 +154,7 @@ class OrderPerbaikanAdminController extends BaseApiController
             'openOrders' => $this->ipsrsQuery()->where('status', 'open')->count(),
             'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(),
             'confirmedOrders' => $this->ipsrsQuery()->where('status', 'confirmed')->count(),
-            'tutupOrders' => $this->ipsrsQuery()->where('status', 'pending_confirmation')->count(),
+            'tutupOrders' => $this->ipsrsQuery()->where('status', 'ditutup')->count(),
             'rejectedOrders' => $this->ipsrsQuery()->where('status', 'rejected')->count(),
         ], 'Statistics');
     }

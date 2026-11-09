@@ -17,21 +17,41 @@ class MigrationPenugasan extends Command
 
     public function handle(): int
     {
-        $orders = DB::table('order_perbaikan')->whereNotNull('nama_penanggung_jawab')->get();
-        $this->info("Orders with PJ name: {$orders->count()}");
+        $orders = DB::table('order_perbaikan')->orderBy('created_at')->orderBy('id')->get();
+        $withName = $orders->filter(fn ($o) => trim((string) ($o->nama_penanggung_jawab ?? '')) !== '')->values();
+        $this->info("Orders with PJ name: {$withName->count()} (total orders: {$orders->count()})");
 
         if ($this->option('dry-run')) {
             $this->warn('DRY-RUN');
+
+            $would = 0;
+            $orphans = 0;
+            foreach ($withName as $o) {
+                $pengajuan = Pengajuan::where('legacy_source', 'order')->where('legacy_id', $o->id)->first();
+                if (! $pengajuan) {
+                    $orphans++;
+                    continue;
+                }
+                $users = User::where('name', trim((string) $o->nama_penanggung_jawab))->get();
+                if ($users->count() !== 1) {
+                    $orphans++;
+                    continue;
+                }
+                $would++;
+            }
+            $this->line("would assign: {$would}; orphans: {$orphans}.");
 
             return self::SUCCESS;
         }
 
         $assigned = 0;
         $orphans = 0;
-        DB::transaction(function () use ($orders, &$assigned, &$orphans): void {
-            foreach ($orders as $o) {
+        $skipped = 0;
+        DB::transaction(function () use ($withName, &$assigned, &$orphans, &$skipped): void {
+            foreach ($withName as $o) {
                 $pengajuan = Pengajuan::where('legacy_source', 'order')->where('legacy_id', $o->id)->first();
                 if (! $pengajuan) {
+                    $orphans++;
                     continue;
                 }
 
@@ -40,16 +60,16 @@ class MigrationPenugasan extends Command
                     continue;
                 }
 
-                $user = User::where('name', $name)->first();
-                if (! $user) {
+                $users = User::where('name', $name)->get();
+                if ($users->count() !== 1) {
                     $orphans++;
-
                     continue;
                 }
 
+                $user = $users->first();
                 $role = Role::where('slug', $user->role)->first();
 
-                PengajuanPenugasan::firstOrCreate([
+                $existing = PengajuanPenugasan::firstOrCreate([
                     'pengajuan_id' => $pengajuan->id,
                     'user_id' => $user->id,
                     'released_at' => null,
@@ -59,11 +79,15 @@ class MigrationPenugasan extends Command
                     'assigned_at' => now(),
                 ]);
 
-                $assigned++;
+                if ($existing->wasRecentlyCreated) {
+                    $assigned++;
+                } else {
+                    $skipped++;
+                }
             }
         });
 
-        $this->info("Assigned: {$assigned}; orphans: {$orphans}.");
+        $this->info("Assigned: {$assigned}; orphans: {$orphans}; skipped (already assigned): {$skipped}.");
 
         return self::SUCCESS;
     }

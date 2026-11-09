@@ -4,11 +4,11 @@
         {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' :
         ($ticket->status === 'in_progress' ? 'bg-purple-100 text-purple-800' :
         ($ticket->status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-        ($ticket->status === 'closed' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'))) }}">
+        ($ticket->status === 'ditutup' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'))) }}">
         {{ $ticket->status === 'open' ? 'Dibuka' :
         ($ticket->status === 'in_progress' ? 'Dalam Proses' :
         ($ticket->status === 'pending' ? 'Menunggu' :
-        ($ticket->status === 'closed' ? 'Ditutup' : 'Selesai'))) }}
+        ($ticket->status === 'ditutup' ? 'Ditutup' : 'Selesai'))) }}
     </span>
     <span class="px-3 py-1 text-xs leading-5 font-medium rounded-full
         {{ $ticket->priority === 'low' ? 'bg-gray-100 text-gray-800' :
@@ -44,8 +44,9 @@
     <div>
         <h3 class="text-xs font-medium text-gray-500 mb-1">Foto Tiket</h3>
         <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-40 flex items-center justify-center overflow-hidden">
-            @if($ticket->initialPhoto)
-            <img src="{{ asset('storage/' . $ticket->initialPhoto->photo_path) }}" alt="Foto Tiket"
+            @php $initialLampiran = $ticket->lampirans->where('kind', 'initial')->first(); @endphp
+            @if($initialLampiran)
+            <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto Tiket"
                 class="max-w-full max-h-full object-contain rounded">
             @else
             <p class="text-xs text-gray-500">Tidak ada foto</p>
@@ -88,13 +89,34 @@
 </div>
 
 @php
-$adminResponses = is_array($ticket->admin_responses) ? $ticket->admin_responses : (json_decode($ticket->admin_responses, true) ?? []);
-$userReplies = is_array($ticket->user_replies) ? $ticket->user_replies : (json_decode($ticket->user_replies, true) ?? []);
-$allResponses = [];
-foreach ($adminResponses as $response) { $response['type'] = 'admin'; $allResponses[] = $response; }
-foreach ($userReplies as $reply) { $reply['action'] = $reply['type'] ?? $reply['action'] ?? null; $reply['type'] = 'user'; $allResponses[] = $reply; }
-// Chat: urut kronologis (lama di atas, baru di bawah)
-usort($allResponses, fn($a, $b) => strtotime($a['timestamp']) - strtotime($b['timestamp']));
+$lampiranByPesan = $ticket->lampirans->whereNotNull('pesan_id')->groupBy('pesan_id');
+$allResponses = $ticket->pesans->map(function ($pesan) use ($lampiranByPesan) {
+    $photo = $lampiranByPesan->get($pesan->id)?->first()?->path;
+    $isAdmin = ($pesan->sender_type ?? '') === 'admin';
+    return [
+        'type' => $isAdmin ? 'admin' : 'user',
+        'notes' => $pesan->body,
+        'message' => $pesan->body,
+        'admin_name' => $pesan->sender?->name ?? ($isAdmin ? 'Admin' : null),
+        'photo' => $photo,
+        'timestamp' => $pesan->created_at?->toDateTimeString() ?? $pesan->created_at,
+        'action' => null,
+    ];
+})->sortBy('timestamp')->values()->all();
+if (count($allResponses) === 0) {
+    $allResponses = $ticket->historis->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])->map(function ($h) {
+        $isAdmin = ($h->action ?? '') === 'admin_response';
+        return [
+            'type' => $isAdmin ? 'admin' : 'user',
+            'notes' => $h->notes,
+            'message' => $h->notes,
+            'admin_name' => $h->actor?->name ?? ($isAdmin ? 'Admin' : null),
+            'photo' => null,
+            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
+            'action' => ($h->action ?? '') === 'confirmed' ? 'confirm' : null,
+        ];
+    })->sortBy('timestamp')->values()->all();
+}
 @endphp
 <div class="mt-4">
     <h3 class="text-sm font-medium text-gray-800 mb-2">Riwayat Percakapan</h3>

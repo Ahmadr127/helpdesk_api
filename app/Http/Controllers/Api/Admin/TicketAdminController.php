@@ -54,7 +54,7 @@ class TicketAdminController extends BaseApiController
                 'totalTickets' => $this->itQuery()->count(),
                 'openTickets' => $this->itQuery()->where('status', 'open')->count(),
                 'inProgressTickets' => $this->itQuery()->where('status', 'in_progress')->count(),
-                'closedTickets' => $this->itQuery()->whereIn('status', ['pending_confirmation', 'confirmed'])->count(),
+                'closedTickets' => $this->itQuery()->whereIn('status', ['ditutup', 'confirmed'])->count(),
             ],
         ]);
     }
@@ -116,7 +116,7 @@ class TicketAdminController extends BaseApiController
     public function closed(Request $request)
     {
         $perPage = (int) $request->get('per_page', 15);
-        $paginator = $this->itQuery()->with('pemohon')->where('status', 'pending_confirmation')->where('user_confirmation', false)->latest()->paginate($perPage);
+        $paginator = $this->itQuery()->with('pemohon')->where('status', 'ditutup')->where('user_confirmation', false)->latest()->paginate($perPage);
         return response()->json(['success' => true, 'message' => 'Closed tickets (pending confirmation)', 'data' => $paginator->items(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
     }
 }

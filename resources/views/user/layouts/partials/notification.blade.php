@@ -61,7 +61,7 @@
                                 <span class="px-2 py-1 rounded-full text-xs
                                     {{ ($uData['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
                                        ((($uData['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
-                                       ((($uData['ticket_status'] ?? '') === 'closed') ? 'bg-gray-100 text-gray-800' :
+                                       ((($uData['ticket_status'] ?? '') === 'ditutup') ? 'bg-gray-100 text-gray-800' :
                                        'bg-green-100 text-gray-800')) }}">
                                     {{ ucfirst($uData['ticket_status'] ?? '-') }}
                                 </span>

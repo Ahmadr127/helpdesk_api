@@ -35,7 +35,7 @@
                             {{ match($orderPerbaikan->status) {
                                 'open' => 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20',
                                 'in_progress' => 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20',
-                                'tutup' => 'bg-violet-50 text-violet-700 ring-1 ring-violet-600/20',
+                                'ditutup' => 'bg-violet-50 text-violet-700 ring-1 ring-violet-600/20',
                                 'confirmed' => 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20',
                                 'rejected' => 'bg-red-50 text-red-700 ring-1 ring-red-600/20',
                                 default => 'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20'
@@ -44,7 +44,7 @@
                                 {{ match($orderPerbaikan->status) {
                                     'open' => 'bg-blue-500',
                                     'in_progress' => 'bg-amber-500',
-                                    'tutup' => 'bg-violet-500',
+                                    'ditutup' => 'bg-violet-500',
                                     'confirmed' => 'bg-emerald-500',
                                     'rejected' => 'bg-red-500',
                                     default => 'bg-gray-500'
@@ -91,8 +91,8 @@
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->unit_penerima ?? '-' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->nama_peminta ?? '-' }}</dd>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pengguna</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->pemohon_nama ?? $orderPerbaikan->pemohon?->name ?? '-' }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -174,7 +174,7 @@
                 </div>
                 <div class="px-4 py-5 h-72 overflow-y-auto bg-[#ECE5DD]">
                     <div class="space-y-3">
-                        @forelse($orderPerbaikan->history->sortBy('created_at') as $history)
+                        @forelse($orderPerbaikan->historis->sortBy('created_at') as $history)
                         @php
                             $isPengaju = $history->created_by
                                 ? ($orderPerbaikan->created_by && $history->created_by == $orderPerbaikan->created_by)
@@ -208,7 +208,7 @@
                                     <select name="status" required
                                         class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all">
                                         <option value="in_progress" {{ in_array($orderPerbaikan->status, ['open', 'in_progress']) ? 'selected' : '' }}>In Progress{{ $orderPerbaikan->status === 'open' ? '' : ' (Buka Kembali)' }}</option>
-                                        <option value="tutup" {{ $orderPerbaikan->status === 'tutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
+                                        <option value="tutup" {{ $orderPerbaikan->status === 'ditutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
                                         <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
                                     </select>
                                 </div>

@@ -188,8 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->building?->name ?? '-' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->pemohon_nama }}</dd>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pengguna</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
-            @if($order->status === 'tutup')
+            @if($order->status === 'ditutup')
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-purple-50">
                     <h2 class="text-base font-semibold text-purple-900 flex items-center">

@@ -64,7 +64,7 @@ class AdminController extends Controller
             'open' => (clone $query)->where('status', 'open')->count(),
             'in_progress' => (clone $query)->where('status', 'in_progress')->count(),
             'confirmed' => (clone $query)->where('status', 'confirmed')->count(),
-            'closed' => (clone $query)->where('status', 'pending_confirmation')->count(),
+            'ditutup' => (clone $query)->where('status', 'ditutup')->count(),
         ];
 
         $dates = array_keys($countsByDate);

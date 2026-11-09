@@ -32,12 +32,12 @@
                                     {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : 
                                    ($ticket->status === 'in_progress' ? 'bg-purple-100 text-purple-800' : 
                                        ($ticket->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                   ($ticket->status === 'closed' ? 'bg-gray-100 text-gray-800' :
+                                   ($ticket->status === 'ditutup' ? 'bg-gray-100 text-gray-800' :
                                    'bg-green-100 text-green-800'))) }}">
                                     {{ $ticket->status === 'open' ? 'Dibuka' : 
                                        ($ticket->status === 'in_progress' ? 'Dalam Proses' : 
                                        ($ticket->status === 'pending' ? 'Menunggu' : 
-                                       ($ticket->status === 'closed' ? 'Ditutup' : 
+                                       ($ticket->status === 'ditutup' ? 'Ditutup' : 
                                        'Selesai'))) }}
                                 </span>
                                 <span class="px-2 py-0.5 text-xs leading-5 font-medium rounded-full 
@@ -84,34 +84,17 @@
                             <h3 class="text-sm font-medium text-gray-500 mb-2">Foto Tiket</h3>
                             <div
                                 class="bg-gray-50 p-3 rounded-lg border border-gray-100 h-40 flex items-center justify-center">
-                                @if($ticket->initialPhoto)
-                                @php
-                                $photoPath = $ticket->initialPhoto->photo_path;
-                                $fullPath = storage_path('app/public/' . $photoPath);
-                                $publicPath = public_path('storage/' . $photoPath);
-                                @endphp
-
-                                @if(file_exists($fullPath) || file_exists($publicPath))
-                                <a href="{{ asset('storage/' . $photoPath) }}" target="_blank" title="Klik untuk perbesar"
-                                    onclick="openTicketPhoto(event, '{{ asset('storage/' . $photoPath) }}')"
+                                @php $initialLampiran = $ticket->lampirans->where('kind', 'initial')->first(); @endphp
+                                @if($initialLampiran)
+                                <a href="{{ asset('storage/' . $initialLampiran->path) }}" target="_blank" title="Klik untuk perbesar"
+                                    onclick="openTicketPhoto(event, '{{ asset('storage/' . $initialLampiran->path) }}')"
                                     class="flex items-center justify-center h-full max-h-full max-w-full overflow-hidden cursor-zoom-in group relative">
-                                    <img src="{{ asset('storage/' . $photoPath) }}" alt="Foto Tiket - klik untuk perbesar"
+                                    <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto Tiket - klik untuk perbesar"
                                         class="max-w-full max-h-36 object-contain rounded-lg shadow-sm group-hover:opacity-90 transition"
                                         onerror="this.onerror=null; this.closest('a').outerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
                                     <span
                                         class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">Perbesar</span>
                                 </a>
-                                @else
-                                <div class="text-center p-4">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <p class="mt-2 text-sm text-gray-500">File foto tidak ditemukan</p>
-                                </div>
-                                @endif
                                 @else
                                 <div class="text-center">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
@@ -245,34 +228,39 @@
 
                 <!-- Conversation Content -->
                 @php
-                $adminResponses = is_array($ticket->admin_responses) ?
-                $ticket->admin_responses :
-                (json_decode($ticket->admin_responses, true) ?? []);
-
-                $userReplies = is_array($ticket->user_replies) ?
-                $ticket->user_replies :
-                (json_decode($ticket->user_replies, true) ?? []);
-
-                $allResponses = [];
-
-                foreach($adminResponses as $response) {
-                $response['type'] = 'admin';
-                $allResponses[] = $response;
+                $lampiranByPesan = $ticket->lampirans->whereNotNull('pesan_id')->groupBy('pesan_id');
+                $allResponses = $ticket->pesans->map(function ($pesan) use ($lampiranByPesan) {
+                    $photo = $lampiranByPesan->get($pesan->id)?->first()?->path;
+                    $isAdmin = ($pesan->sender_type ?? '') === 'admin';
+                    return [
+                        'type' => $isAdmin ? 'admin' : 'user',
+                        'notes' => $pesan->body,
+                        'message' => $pesan->body,
+                        'admin_name' => $pesan->sender?->name ?? ($isAdmin ? 'Admin' : null),
+                        'photo' => $photo,
+                        'timestamp' => $pesan->created_at?->toDateTimeString() ?? $pesan->created_at,
+                        'action' => null,
+                    ];
+                })->sortBy('timestamp')->values()->all();
+                // Fallback: histori admin_response/user_reply/confirmed yang belum jadi pesan
+                $hasPesan = count($allResponses) > 0;
+                if (! $hasPesan) {
+                    $historiResponses = $ticket->historis->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])->map(function ($h) {
+                        $isAdmin = ($h->action ?? '') === 'admin_response';
+                        $action = ($h->action ?? '') === 'confirmed' ? 'confirm' : (($h->action ?? '') === 'user_reply' ? null : null);
+                        return [
+                            'type' => $isAdmin ? 'admin' : 'user',
+                            'notes' => $h->notes,
+                            'message' => $h->notes,
+                            'admin_name' => $h->actor?->name ?? ($isAdmin ? 'Admin' : null),
+                            'photo' => null,
+                            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
+                            'action' => $action,
+                        ];
+                    })->sortBy('timestamp')->values()->all();
+                    $allResponses = $historiResponses;
                 }
-
-                foreach($userReplies as $reply) {
-                // Pertahankan aksi asli (confirm/reject) untuk badge — jangan tertimpa 'user'.
-                $reply['action'] = $reply['type'] ?? $reply['action'] ?? null;
-                $reply['type'] = 'user';
-                $allResponses[] = $reply;
-                }
-
-                // Chat: urut kronologis (lama di atas, baru di bawah)
-                usort($allResponses, function($a, $b) {
-                return strtotime($a['timestamp']) - strtotime($b['timestamp']);
-                });
-
-                $pengajuName = $ticket->user->name ?? 'Pengaju';
+                $pengajuName = $ticket->pemohon?->name ?? 'Pengaju';
                 @endphp
 
                 @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $pengajuName])

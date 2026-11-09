@@ -61,13 +61,13 @@ class PengajuanWorkflowService
 
         return DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
             $pengajuan->update([
-                'status' => 'pending_confirmation',
+                'status' => 'ditutup',
                 'closed_at' => now(),
                 'updated_by' => $actor->id,
             ]);
 
             $pengajuan->historis()->create([
-                'status' => 'pending_confirmation',
+                'status' => 'ditutup',
                 'action' => 'closed',
                 'notes' => $notes ?: 'Pengajuan ditutup dan menunggu konfirmasi.',
                 'actor_id' => $actor->id,
@@ -80,8 +80,8 @@ class PengajuanWorkflowService
 
     public function adminConfirm(User $actor, Pengajuan $pengajuan, ?string $notes = null): Pengajuan
     {
-        if ($pengajuan->status !== 'pending_confirmation') {
-            throw new \Exception('Pengajuan hanya dapat dikonfirmasi admin saat status pending_confirmation.', 422);
+        if ($pengajuan->status !== 'ditutup') {
+            throw new \Exception('Pengajuan hanya dapat dikonfirmasi admin saat status ditutup.', 422);
         }
 
         if (! $this->scopeService->canAct($actor, $pengajuan)) {
@@ -109,7 +109,7 @@ class PengajuanWorkflowService
 
     public function adminReject(User $actor, Pengajuan $pengajuan, ?string $notes = null): Pengajuan
     {
-        if (! in_array($pengajuan->status, ['open', 'in_progress', 'pending_confirmation'], true)) {
+        if (! in_array($pengajuan->status, ['open', 'in_progress', 'ditutup'], true)) {
             throw new \Exception('Pengajuan tidak dapat ditolak pada status ini.', 422);
         }
 
@@ -142,8 +142,8 @@ class PengajuanWorkflowService
             throw new \Exception('Unauthorized', 403);
         }
 
-        if ($pengajuan->status !== 'pending_confirmation') {
-            throw new \Exception('Pengajuan hanya dapat dikonfirmasi pemilik saat status pending_confirmation.', 422);
+        if ($pengajuan->status !== 'ditutup') {
+            throw new \Exception('Pengajuan hanya dapat dikonfirmasi pemilik saat status ditutup.', 422);
         }
 
         return DB::transaction(function () use ($actor, $pengajuan, $notes, $selesai, $files): Pengajuan {
@@ -206,7 +206,7 @@ class PengajuanWorkflowService
     public function autoConfirmStale(int $hours = 24): int
     {
         $stale = Pengajuan::query()
-            ->where('status', 'pending_confirmation')
+            ->where('status', 'ditutup')
             ->whereNotNull('closed_at')
             ->where('closed_at', '<=', now()->subHours($hours))
             ->get();
@@ -216,7 +216,7 @@ class PengajuanWorkflowService
 
         DB::transaction(function () use ($stale, &$confirmed, &$confirmedItems): void {
             foreach ($stale as $pengajuan) {
-                if ($pengajuan->status !== 'pending_confirmation') {
+                if ($pengajuan->status !== 'ditutup') {
                     continue;
                 }
 

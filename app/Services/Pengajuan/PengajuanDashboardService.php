@@ -42,14 +42,14 @@ class PengajuanDashboardService
                 'total' => (clone $tickets)->count(),
                 'open' => (clone $tickets)->where('status', 'open')->count(),
                 'in_progress' => (clone $tickets)->where('status', 'in_progress')->count(),
-                'closed' => (clone $tickets)->where('status', 'pending_confirmation')->count(),
+                'ditutup' => (clone $tickets)->where('status', 'ditutup')->count(),
                 'confirmed' => (clone $tickets)->where('status', 'confirmed')->count(),
             ],
             'orders' => [
                 'total' => (clone $orders)->count(),
                 'open' => (clone $orders)->where('status', 'open')->count(),
                 'in_progress' => (clone $orders)->where('status', 'in_progress')->count(),
-                'tutup' => (clone $orders)->where('status', 'pending_confirmation')->count(),
+                'ditutup' => (clone $orders)->where('status', 'ditutup')->count(),
                 'confirmed' => (clone $orders)->where('status', 'confirmed')->count(),
                 'rejected' => (clone $orders)->where('status', 'rejected')->count(),
             ],
@@ -84,7 +84,7 @@ class PengajuanDashboardService
                 'total' => $tickets->count(),
                 'open' => (clone $tickets)->where('status', 'open')->count(),
                 'in_progress' => (clone $tickets)->where('status', 'in_progress')->count(),
-                'closed' => (clone $tickets)->where('status', 'pending_confirmation')->count(),
+                'ditutup' => (clone $tickets)->where('status', 'ditutup')->count(),
                 'confirmed' => (clone $tickets)->where('status', 'confirmed')->count(),
                 'by_priority' => [
                     'high' => (clone $tickets)->where('prioritas', 'high')->count(),
@@ -96,7 +96,7 @@ class PengajuanDashboardService
                 'total' => $orders->count(),
                 'open' => (clone $orders)->where('status', 'open')->count(),
                 'in_progress' => (clone $orders)->where('status', 'in_progress')->count(),
-                'tutup' => (clone $orders)->where('status', 'pending_confirmation')->count(),
+                'ditutup' => (clone $orders)->where('status', 'ditutup')->count(),
                 'confirmed' => (clone $orders)->where('status', 'confirmed')->count(),
                 'rejected' => (clone $orders)->where('status', 'rejected')->count(),
             ],
@@ -121,7 +121,7 @@ class PengajuanDashboardService
                 'total' => $orders->count(),
                 'open' => (clone $orders)->where('status', 'open')->count(),
                 'in_progress' => (clone $orders)->where('status', 'in_progress')->count(),
-                'tutup' => (clone $orders)->where('status', 'pending_confirmation')->count(),
+                'ditutup' => (clone $orders)->where('status', 'ditutup')->count(),
                 'confirmed' => (clone $orders)->where('status', 'confirmed')->count(),
                 'rejected' => (clone $orders)->where('status', 'rejected')->count(),
                 'rendah' => (clone $orders)->where('prioritas', 'low')->count(),
@@ -141,7 +141,7 @@ class PengajuanDashboardService
             $baseQuery->where('status', $statusFilter);
         }
 
-        $totalActiveTickets = (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'pending_confirmation'])->count();
+        $totalActiveTickets = (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'ditutup'])->count();
         $completedTickets = (clone $baseQuery)->whereIn('status', ['confirmed', 'rejected'])->count();
         $totalTickets = $totalActiveTickets + $completedTickets;
         $remainingTickets = $totalActiveTickets;
@@ -176,7 +176,7 @@ class PengajuanDashboardService
             'priorityDistribution' => $priorityDistribution,
             'openTickets' => (clone $baseQuery)->where('status', 'open')->count(),
             'inProgressTickets' => (clone $baseQuery)->where('status', 'in_progress')->count(),
-            'closedAndConfirmedTickets' => (clone $baseQuery)->whereIn('status', ['pending_confirmation', 'confirmed', 'rejected'])->count(),
+            'closedAndConfirmedTickets' => (clone $baseQuery)->whereIn('status', ['ditutup', 'confirmed', 'rejected'])->count(),
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\JenisPengajuan;
 use App\Models\KategoriPengajuan;
+use App\Models\Role;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -26,38 +27,91 @@ class MigrationCategories extends Command
 
         $dry = (bool) $this->option('dry-run');
 
-        $itCount = DB::table('categories')->count();
-        $ipsrsCount = DB::table('kategori_order')->count();
+        $categories = DB::table('categories')->orderBy('id')->get();
+        $kategoriOrders = DB::table('kategori_order')->orderBy('id')->get();
+
+        $itCount = $categories->count();
+        $ipsrsCount = $kategoriOrders->count();
 
         $this->info("Legacy: {$itCount} categories (IT), {$ipsrsCount} kategori_order (IPSRS).");
 
         if ($dry) {
             $this->warn('DRY-RUN: tidak ada perubahan.');
 
+            $itActive = $kategoriOrders->filter(fn ($ko) => empty($ko->deleted_at))->count();
+            $itDeleted = $kategoriOrders->filter(fn ($ko) => ! empty($ko->deleted_at))->count();
+            $this->line("would create IT: {$itCount}; IPSRS active: {$itActive}; IPSRS soft-deleted: {$itDeleted}.");
+
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use ($jenisIt, $jenisIpsrs): void {
-            foreach (DB::table('categories')->get() as $cat) {
+        $itKategoriIds = [];
+        $ipsrsKategoriIds = [];
+
+        DB::transaction(function () use ($categories, $kategoriOrders, $jenisIt, $jenisIpsrs, &$itKategoriIds, &$ipsrsKategoriIds): void {
+            foreach ($categories as $cat) {
                 $nama = $cat->name ?? $cat->nama ?? ('Kategori '.$cat->id);
-                KategoriPengajuan::firstOrCreate(
+
+                $kategori = KategoriPengajuan::firstOrCreate(
                     ['jenis_id' => $jenisIt->id, 'name' => $nama],
-                    ['name' => $nama, 'status' => $cat->status ?? 1]
+                    [
+                        'code' => 'IT-'.$cat->id,
+                        'description' => null,
+                        'status' => (int) ($cat->status ?? 1),
+                    ]
                 );
+
+                $itKategoriIds[] = $kategori->id;
             }
 
-            foreach (DB::table('kategori_order')->get() as $ko) {
+            foreach ($kategoriOrders as $ko) {
                 $nama = $ko->nama ?? $ko->name ?? ('Kategori Order '.$ko->id);
-                KategoriPengajuan::firstOrCreate(
-                    ['jenis_id' => $jenisIpsrs->id, 'name' => $nama],
-                    ['name' => $nama, 'status' => $ko->status ?? 1]
-                );
+
+                // Cari juga yang soft-deleted agar tidak duplikat saat re-run.
+                $kategori = KategoriPengajuan::withTrashed()
+                    ->where('jenis_id', $jenisIpsrs->id)
+                    ->where('name', $nama)
+                    ->first();
+
+                if (! $kategori) {
+                    $kategori = KategoriPengajuan::create([
+                        'jenis_id' => $jenisIpsrs->id,
+                        'name' => $nama,
+                        'code' => $ko->code ?? null,
+                        'description' => null,
+                        'status' => (int) ($ko->status ?? 1),
+                    ]);
+                } else {
+                    // Selaraskan deleted_at / status dengan legacy
+                    if (! empty($ko->deleted_at) && $kategori->deleted_at === null) {
+                        $kategori->delete();
+                    } elseif (empty($ko->deleted_at) && $kategori->deleted_at !== null) {
+                        $kategori->restore();
+                        $kategori->update(['status' => (int) ($ko->status ?? 1), 'code' => $ko->code ?? $kategori->code]);
+                    }
+                }
+
+                $ipsrsKategoriIds[] = $kategori->id;
+            }
+
+            $adminRole = Role::where('slug', 'admin')->first();
+            if ($adminRole && $itKategoriIds !== []) {
+                $adminRole->kategoris()->sync($itKategoriIds);
+            }
+
+            $ipsrsRole = Role::where('slug', 'ipsrs')->first();
+            if ($ipsrsRole && $ipsrsKategoriIds !== []) {
+                $syncIds = KategoriPengajuan::whereIn('id', $ipsrsKategoriIds)->whereNull('deleted_at')->pluck('id')->all();
+                if ($syncIds !== []) {
+                    $ipsrsRole->kategoris()->sync($syncIds);
+                }
             }
         });
 
         $newIt = KategoriPengajuan::where('jenis_id', $jenisIt->id)->count();
         $newIpsrs = KategoriPengajuan::where('jenis_id', $jenisIpsrs->id)->count();
-        $this->info("Hasil: {$newIt} kategori IT, {$newIpsrs} kategori IPSRS.");
+        $newIpsrsActive = KategoriPengajuan::where('jenis_id', $jenisIpsrs->id)->whereNull('deleted_at')->count();
+        $this->info("Hasil: {$newIt} kategori IT, {$newIpsrs} kategori IPSRS (aktif: {$newIpsrsActive}).");
 
         return self::SUCCESS;
     }

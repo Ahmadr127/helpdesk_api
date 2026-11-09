@@ -107,7 +107,7 @@
                             Tanggal</th>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                            Pemohon</th>
+                            Pengguna</th>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Lokasi</th>
@@ -142,8 +142,8 @@
                             <div class="text-xs text-gray-400">{{ $order->created_at->format('H:i') }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_peminta }}
-                            <div class="text-xs text-gray-400">{{ $order->creator->email }}</div>
+                            {{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}
+                            <div class="text-xs text-gray-400">{{ $order->pemohon?->email ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->lokasi?->name ?? '-' }}</td>
@@ -161,7 +161,7 @@
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                 {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}
                                 {{ $order->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                {{ $order->status === 'tutup' ? 'bg-violet-100 text-violet-800' : '' }}
+                                {{ $order->status === 'ditutup' ? 'bg-violet-100 text-violet-800' : '' }}
                                 {{ $order->status === 'confirmed' ? 'bg-green-100 text-green-800' : '' }}
                                 {{ $order->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}">
                                 {{ ucfirst(str_replace('_', ' ', $order->status)) }}

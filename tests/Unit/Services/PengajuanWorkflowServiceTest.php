@@ -80,7 +80,7 @@ class PengajuanWorkflowServiceTest extends TestCase
 
         $result = app(PengajuanWorkflowService::class)->close($admin, $pengajuan, 'Menunggu user.');
 
-        $this->assertSame('pending_confirmation', $result->status);
+        $this->assertSame('ditutup', $result->status);
         $this->assertNotNull($result->closed_at);
         $this->assertSame('closed', $result->historis()->latest('id')->first()->action);
     }

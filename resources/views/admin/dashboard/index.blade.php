@@ -187,16 +187,16 @@
                             <td class="px-4 py-3 border-b">
                                 <span class="px-2 py-1 text-xs rounded-full 
                                 {{ $ticket->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                   ($ticket->status === 'closed' ? 'bg-red-100 text-red-800' : 
+                                   ($ticket->status === 'ditutup' ? 'bg-red-100 text-red-800' : 
                                    ($ticket->status === 'confirmed' ? 'bg-green-100 text-green-800' :
                                    ($ticket->status === 'open' ? 'bg-blue-200 text-blue-800' :
                                    'bg-purple-100 text-purple-800'))) }}">
                                     {{ $ticket->status === 'pending' ? 'Tertunda' :
-                                       ($ticket->status === 'closed' ? 'Ditutup' :
+                                       ($ticket->status === 'ditutup' ? 'Ditutup' :
                                        ($ticket->status === 'confirmed' ? 'Dikonfirmasi' :
                                        ($ticket->status === 'open' ? 'Dibuka' :
                                        ($ticket->status === 'in_progress' ? 'Dalam proses' : ucfirst($ticket->status))))) }}
-                                    {{ $ticket->status === 'closed' ? '(Menunggu konfirmasi)' : '' }}
+                                    {{ $ticket->status === 'ditutup' ? '(Menunggu konfirmasi)' : '' }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 border-b">

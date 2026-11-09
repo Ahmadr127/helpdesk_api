@@ -10,7 +10,7 @@
     $avatarBg = match($history->status) {
         'open' => 'bg-blue-500',
         'in_progress' => 'bg-amber-500',
-        'tutup' => 'bg-violet-500',
+        'ditutup' => 'bg-violet-500',
         'confirmed' => 'bg-emerald-500',
         'rejected' => 'bg-red-500',
         default => 'bg-slate-500'

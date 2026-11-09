@@ -81,7 +81,7 @@ return new class extends Migration
         DB::statement(<<<'SQL'
             ALTER TABLE pengajuan
                 ADD CONSTRAINT pengajuan_status_check
-                CHECK (status IN ('open','in_progress','pending_confirmation','confirmed','rejected'))
+                CHECK (status IN ('open','in_progress','ditutup','confirmed','rejected'))
         SQL);
 
         DB::statement(<<<'SQL'

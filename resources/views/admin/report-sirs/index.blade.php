@@ -243,7 +243,7 @@
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     Dalam Proses
                                 </span>
-                                @elseif($ticket->status === 'closed' || $ticket->status === 'confirmed')
+                                @elseif($ticket->status === 'ditutup' || $ticket->status === 'confirmed')
                                 @php
                                 $totalTime = null;
                                 if ($ticket->created_at && $ticket->closed_at) {

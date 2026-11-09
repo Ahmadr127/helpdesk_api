@@ -22,7 +22,7 @@
         {{ $status === 'all' ? 'Semua Tiket' : 
            ($status === 'open' ? 'Tiket Dibuka' : 
            ($status === 'in_progress' ? 'Tiket Diproses' : 
-           ($status === 'closed' ? 'Tiket Menunggu Konfirmasi' : 'Tiket Selesai'))) }}
+           ($status === 'ditutup' ? 'Tiket Menunggu Konfirmasi' : 'Tiket Selesai'))) }}
         </h2>
 
     <!-- Statistics Cards -->
@@ -56,7 +56,7 @@
 
         <!-- Closed Tickets -->
         <a href="{{ route('user.ticket.filter.status', 'closed') }}"
-            class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 hover:shadow-md transition-all {{ $status === 'closed' ? 'ring-2 ring-purple-500' : '' }}">
+            class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 hover:shadow-md transition-all {{ $status === 'ditutup' ? 'ring-2 ring-purple-500' : '' }}">
             <div class="flex flex-col items-center">
                 <span class="text-purple-600 font-bold text-2xl">{{ $closedTickets }}</span>
                 <span class="text-gray-700 text-sm mt-1">Menunggu Konfirmasi</span>
@@ -176,9 +176,9 @@
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}
                                 {{ $ticket->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                {{ $ticket->status === 'closed' ? 'bg-purple-100 text-purple-800' : '' }}
+                                {{ $ticket->status === 'ditutup' ? 'bg-purple-100 text-purple-800' : '' }}
                                 {{ $ticket->status === 'confirmed' ? 'bg-green-100 text-green-800' : '' }}">
-                                {{ $ticket->status === 'closed' ? 'Menunggu Konfirmasi' : 
+                                {{ $ticket->status === 'ditutup' ? 'Menunggu Konfirmasi' : 
                                    ($ticket->status === 'in_progress' ? 'Diproses' : 
                                    ($ticket->status === 'confirmed' ? 'Selesai' : 'Dibuka')) }}
                         </span>

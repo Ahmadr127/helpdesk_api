@@ -231,11 +231,11 @@ class TicketController extends Controller
         $totalTickets = $this->itQuery()->where('pemohon_id', auth()->id())->count();
         $openTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'open')->count();
         $inProgressTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'in_progress')->count();
-        $closedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'pending_confirmation')->count();
+        $closedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'ditutup')->count();
         $confirmedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->count();
 
         if ($status !== 'all') {
-            $baseQuery->where('status', $status === 'closed' ? 'pending_confirmation' : $status);
+            $baseQuery->where('status', $status === 'ditutup' ? 'ditutup' : $status);
         }
 
         if ($request->filled(['start_date', 'end_date'])) {

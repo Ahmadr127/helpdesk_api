@@ -1,0 +1,2 @@
+- For this Laravel/PHP + Blade helpdesk codebase, do not run Dart/Flutter tooling such as `dart analyze`; focus on the web/PHP code first. Confidence: 0.85
+- Prefers fast, direct edits ("cepetan langsung ubah") over lengthy verification or discussion before making changes. Confidence: 0.7

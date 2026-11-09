@@ -191,13 +191,13 @@
                                 <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full 
                                 {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : 
                                    ($ticket->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                                   ($ticket->status === 'closed' ? 'bg-red-100 text-red-800' : 
+                                   ($ticket->status === 'ditutup' ? 'bg-red-100 text-red-800' : 
                                    ($ticket->status === 'confirmed' ? 'bg-green-100 text-green-800' :
                                    ($ticket->status === 'rejected' ? 'bg-gray-100 text-gray-800' : 
                                    'bg-gray-100 text-gray-600')))) }}">
                                     {{ $ticket->status === 'open' ? 'Dibuka' : 
                                        ($ticket->status === 'in_progress' ? 'Sedang Diproses' : 
-                                       ($ticket->status === 'closed' ? 'Menunggu Konfirmasi' : 
+                                       ($ticket->status === 'ditutup' ? 'Menunggu Konfirmasi' : 
                                        ($ticket->status === 'confirmed' ? 'Selesai' : 
                                        ($ticket->status === 'rejected' ? 'Ditolak' : $ticket->status)))) }}
                                     @if(auth()->user()->notifications->where('data->ticket_id',

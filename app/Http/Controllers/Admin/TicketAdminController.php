@@ -29,8 +29,8 @@ class TicketAdminController extends Controller
         $totalTickets = $this->itQuery()->count();
         $openTickets = $this->itQuery()->where('status', 'open')->count();
         $inProgressTickets = $this->itQuery()->where('status', 'in_progress')->count();
-        $closedTickets = $this->itQuery()->whereIn('status', ['pending_confirmation', 'confirmed'])->count();
-        $pendingConfirmationTickets = $this->itQuery()->where('status', 'pending_confirmation')->where('user_confirmation', false)->count();
+        $closedTickets = $this->itQuery()->whereIn('status', ['ditutup', 'confirmed'])->count();
+        $pendingConfirmationTickets = $this->itQuery()->where('status', 'ditutup')->where('user_confirmation', false)->count();
 
         $query = $this->itQuery()->with(['pemohon', 'kategori', 'department']);
 
@@ -150,7 +150,7 @@ class TicketAdminController extends Controller
 
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
-                $query->where('status', 'pending_confirmation')->where('user_confirmation', false);
+                $query->where('status', 'ditutup')->where('user_confirmation', false);
             } else {
                 $query->where('status', $request->status);
             }
@@ -165,7 +165,7 @@ class TicketAdminController extends Controller
             if ($request->confirmation === 'confirmed') {
                 $query->where('status', 'confirmed');
             } elseif ($request->confirmation === 'pending') {
-                $query->where('status', 'pending_confirmation')->where('user_confirmation', false);
+                $query->where('status', 'ditutup')->where('user_confirmation', false);
             }
         }
 
@@ -207,7 +207,7 @@ class TicketAdminController extends Controller
 
     public function closed(Request $request)
     {
-        $query = $this->itQuery()->with('pemohon')->where('status', 'pending_confirmation')->where('user_confirmation', false);
+        $query = $this->itQuery()->with('pemohon')->where('status', 'ditutup')->where('user_confirmation', false);
         if ($request->filled('month')) {
             $query->whereMonth('created_at', $request->month)->whereYear('created_at', $request->year ?? now()->year);
         }
@@ -266,9 +266,11 @@ class TicketAdminController extends Controller
         }
 
         if ($request->boolean('modal')) {
+            $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
             return response(view('admin.tickets.myticket.component.detail-body', compact('ticket'))->render());
         }
 
+        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
         return view('admin.tickets.show', compact('ticket'));
     }
 

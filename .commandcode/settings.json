@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(git diff --stat; echo \"---\"; git diff -- app/Console/Commands/CutoverRun.php; echo \"===\"; ls -la \"app/Console/Commands/CutoverRun copy.php\" 2>/dev/null; echo \"===\"; git diff --name-only)",
+      "Shell(php artisan list --raw)",
+      "Shell(php -l app/Console/Commands/CutoverRun.php)",
+      "Shell(php -l app/Console/Commands/MigrationTickets.php)",
+      "Shell(php -l app/Console/Commands/MigrationHistori.php)",
+      "Shell(php -l app/Console/Commands/MigrationLampiran.php)",
+      "Shell(php -l app/Console/Commands/MigrationOrders.php)",
+      "Shell(php -l app/Console/Commands/MigrationPenugasan.php)",
+      "Shell(php -l app/Console/Commands/MigrationCategories.php)",
+      "Shell(php -l app/Console/Commands/MigrationValidate.php)",
+      "Shell(php artisan cutover:run --help)",
+      "Shell(php artisan cutover:run --dry-run)",
+      "Shell(php -r \"require 'vendor/autoload.php'; \\$app=require 'bootstrap/app.php'; \\$app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap(); foreach(['tickets','order_perbaikan','order_perbaikan_histories','ticket_photos','order_photos','categories','kategori_order'] as \\$t){ echo \\\"=== \\$t ===\\n\\\"; try{ \\$cols=Illuminate\\Support\\Facades\\Schema::getColumnListing(\\$t); echo implode(', ', \\$cols).\\\"\\n\\\"; echo 'rows: '.Illuminate\\Support\\Facades\\DB::table(\\$t)->count().\\\"\\n\\\";}catch(Throwable \\$e){ echo 'ERR '.\\$e->getMessage().\\\"\\n\\\";} }\")",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect2.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect3.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect4.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect5.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect6.php)",
+      "Shell(php -l app/Console/Commands/Concerns/MapsLegacyPengajuan.php)",
+      "Shell(php -l app/Console/Commands/Concerns/MigratesTicketMessages.php)",
+      "Shell(del:*)",
+      "Shell(php -l app/Console/Commands/MigrationPreflight.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect7.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect8.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect9.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect10.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect11.php)",
+      "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect12.php)",
+      "Shell(php artisan cutover:run)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

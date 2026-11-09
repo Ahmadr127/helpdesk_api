@@ -100,7 +100,7 @@
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                            Peminta
+                            Pengguna
                         </th>
 
                         <th scope="col"
@@ -123,7 +123,7 @@
                             {{ $order->tanggal->format('d/m/Y H:i') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->creator->name }}
+                            {{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}
                         </td>
 
                         <td class="px-6 py-4 whitespace-nowrap">

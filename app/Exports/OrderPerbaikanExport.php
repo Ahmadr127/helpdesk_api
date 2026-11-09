@@ -113,7 +113,7 @@ class OrderPerbaikanExport
                 'open' => 'Open',
                 'pending' => 'Pending',
                 'in_progress' => 'Dalam Proses',
-                'tutup' => 'Tutup (Menunggu Konfirmasi)',
+                'ditutup' => 'Tutup (Menunggu Konfirmasi)',
                 'completed' => 'Selesai',
                 'confirmed' => 'Dikonfirmasi',
                 'rejected' => 'Ditolak',

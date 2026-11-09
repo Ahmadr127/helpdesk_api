@@ -31,7 +31,7 @@ class OrderPerbaikanStatusUpdated extends Notification
             'pending' => 'menunggu persetujuan',
             'open' => 'telah dibuat',
             'in_progress' => 'sedang dalam proses',
-            'tutup' => 'menunggu konfirmasi selesai dari Anda',
+            'ditutup' => 'menunggu konfirmasi selesai dari Anda',
             'completed' => 'telah selesai',
             'confirmed' => 'telah dikonfirmasi',
             'rejected' => 'ditolak',

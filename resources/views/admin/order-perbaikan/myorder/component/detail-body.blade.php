@@ -37,8 +37,8 @@
                 <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->unit_penerima ?? '-' }}</dd>
             </div>
             <div>
-                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Peminta</dt>
-                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->nama_peminta }}</dd>
+                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pengguna</dt>
+                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}</dd>
             </div>
         </dl>
     </div>
@@ -95,7 +95,7 @@
     </div>
     <div class="p-4 max-h-64 overflow-y-auto">
         <ul role="list" class="-mb-6">
-            @forelse($order->history()->latest()->get() as $history)
+            @forelse($order->historis()->latest()->get() as $history)
             <li>
                 <div class="relative pb-6">
                     @if(!$loop->last)
@@ -106,7 +106,7 @@
                             <span class="h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-white {{ match($history->status) {
                                 'open' => 'bg-blue-500',
                                 'in_progress' => 'bg-amber-500',
-                                'tutup' => 'bg-purple-500',
+                                'ditutup' => 'bg-purple-500',
                                 'confirmed' => 'bg-emerald-500',
                                 'rejected' => 'bg-red-500',
                                 default => 'bg-slate-500'

@@ -145,8 +145,8 @@
                             <div class="text-xs text-gray-400">{{ $order->created_at->format('H:i') }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_peminta }}
-                            <div class="text-xs text-gray-400">{{ $order->creator->email }}</div>
+                            {{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}
+                            <div class="text-xs text-gray-400">{{ $order->pemohon?->email ?? '-' }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->lokasi?->name ?? '-' }}</td>

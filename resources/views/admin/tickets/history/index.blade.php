@@ -163,7 +163,7 @@
                                 @endphp
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <a href="{{ route('admin.tickets.history.show', $ticket) }}"
+                                <a href="{{ route('admin.tickets.show', $ticket) }}"
                                     class="text-blue-600 hover:text-blue-900 hover:underline transition-colors">Lihat</a>
                             </td>
                         </tr>

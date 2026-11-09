@@ -48,8 +48,8 @@
             <h4 class="text-sm font-semibold text-gray-900 mb-2">{{ $order->title }}</h4>
             <div class="grid grid-cols-2 gap-4 mb-3">
                 <div class="text-xs">
-                    <p class="text-gray-500 mb-1">Peminta:</p>
-                    <p class="font-medium text-gray-900">{{ $order->nama_peminta }}</p>
+                    <p class="text-gray-500 mb-1">Pengguna:</p>
+                    <p class="font-medium text-gray-900">{{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}</p>
                 </div>
                 <div class="text-xs">
                     <p class="text-gray-500 mb-1">Lokasi:</p>
