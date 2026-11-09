@@ -119,19 +119,31 @@ class PengajuanResource extends JsonResource
             })->values();
         });
 
-        $penugasan = $this->whenLoaded('penugasan', function () {
-            return $this->penugasan->map(function ($a) {
+        $aktif = $this->relationLoaded('penugasan')
+            ? $this->penugasan->filter(fn ($a) => $a->released_at === null)->values()
+            : collect();
+
+        $penugasan = $this->whenLoaded('penugasan', function () use ($aktif) {
+            return $aktif->map(function ($a) {
                 $u = $a->relationLoaded('user') ? $a->user : null;
-                return $u ? ['id' => $u->id, 'name' => $u->name] : ['id' => $a->user_id, 'name' => null];
-            })->filter(fn ($x) => $x['id'] !== null)->values();
+
+                return [
+                    'id' => $a->user_id,
+                    'user_id' => $a->user_id,
+                    'name' => $u?->name,
+                    'role_id' => $a->role_id,
+                    'assigned_by' => $a->assigned_by,
+                    'assigned_at' => $a->assigned_at?->toIso8601String(),
+                ];
+            })->values();
         });
-        $pjNames = $this->relationLoaded('penugasan')
-            ? $this->penugasan->map(fn ($a) => $a->relationLoaded('user') && $a->user ? $a->user->name : null)->filter()->values()->all()
-            : [];
-        $pjName = !empty($pjNames) ? implode(', ', $pjNames) : ($this->nama_penanggung_jawab ?? null);
-        $pjIds = $this->relationLoaded('penugasan')
-            ? $this->penugasan->pluck('user_id')->filter()->values()->all()
-            : [];
+        $pjNames = $aktif
+            ->map(fn ($a) => $a->relationLoaded('user') && $a->user ? $a->user->name : null)
+            ->filter()
+            ->values()
+            ->all();
+        $pjName = ! empty($pjNames) ? implode(', ', $pjNames) : null;
+        $pjIds = $aktif->pluck('user_id')->filter()->values()->all();
 
         $timeline = $this->whenLoaded('historis', function () {
             return $this->historis->map(function ($h) {
@@ -179,6 +191,9 @@ class PengajuanResource extends JsonResource
             'nama_penanggung_jawab' => $pjName,
             'penanggung_jawab' => $penugasan,
             'penanggung_jawab_ids' => $pjIds,
+            'can_assign' => $user
+                ? app(\App\Services\Pengajuan\PengajuanScopeService::class)->canAct($user, $this->resource)
+                : false,
             'tanggal' => $this->tanggal,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

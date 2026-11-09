@@ -1,8 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\MasterDataController as AdminMasterController;
-use App\Http\Controllers\Api\Admin\OrderPerbaikanAdminController as AdminOrderController;
-use App\Http\Controllers\Api\Admin\TicketAdminController as AdminTicketController;
 use App\Http\Controllers\Api\Admin\UserManagementController as AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
@@ -12,10 +10,11 @@ use App\Http\Controllers\Api\FirebaseNotificationController;
 use App\Http\Controllers\Api\LookupController;
 use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\NotificationInboxController;
-use App\Http\Controllers\Api\User\OrderPerbaikanController as UserOrderController;
-use App\Http\Controllers\Api\User\TicketController as UserTicketController;
+use App\Http\Controllers\Api\V1\AdminPengajuanController;
+use App\Http\Controllers\Api\V1\PengajuanController as PengajuanApiController;
 use App\Http\Middleware\Api\AdminApiMiddleware;
 use App\Http\Middleware\Api\AdministrasiUmumApiMiddleware;
+use App\Http\Middleware\Api\PengajuanAdminApiMiddleware;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -66,31 +65,48 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users', [LookupController::class, 'users'])->name('users');
     });
 
-    // User Ticket (owner only + permission myticket|ticket).
-    // Tanpa gate ini, cabut permission tidak memblokir edit (hanya owner+status yang dicek).
-    Route::prefix('tickets')->name('api.tickets.')->middleware('permission:myticket|ticket')->group(function () {
-        Route::get('/', [UserTicketController::class, 'index'])->name('index');
-        Route::post('/', [UserTicketController::class, 'store'])->name('store');
-        Route::get('/filter/{status}', [UserTicketController::class, 'filterByStatus'])->where('status', 'all|open|pending|in_progress|closed|confirmed')->name('filter');
-        Route::get('/{ticket}', [UserTicketController::class, 'show'])->name('show');
-        Route::put('/{ticket}', [UserTicketController::class, 'update'])->name('update');
-        Route::delete('/{ticket}', [UserTicketController::class, 'destroy'])->name('destroy');
-        Route::post('/{ticket}/reply', [UserTicketController::class, 'reply'])->name('reply');
-        Route::post('/{ticket}/confirm', [UserTicketController::class, 'confirm'])->name('confirm');
-    });
+    // User Pengajuan — SATU controller untuk tiket IT & order IPSRS.
+    // Jenis dititipkan lewat ->defaults('jenis', ...) sehingga prefix lama tetap kompatibel.
+    $registerUserPengajuan = function (?string $jenis, string $prefix, string $name, string $permission) {
+        Route::prefix($prefix)->name($name)->middleware($permission)->group(function () use ($jenis) {
+            $def = fn ($route) => $jenis ? $route->defaults('jenis', $jenis) : $route;
 
-    // User Order Perbaikan (owner only + permission myorder|order).
-    // Tanpa gate ini, cabut permission tidak memblokir edit (hanya owner+status yang dicek).
-    Route::prefix('order-perbaikan')->name('api.order-perbaikan.')->middleware('permission:myorder|order')->group(function () {
-        Route::get('/', [UserOrderController::class, 'index'])->name('index');
-        Route::post('/', [UserOrderController::class, 'store'])->name('store');
-        Route::get('/konfirmasi', [UserOrderController::class, 'konfirmasi'])->name('konfirmasi');
-        Route::get('/rejected', [UserOrderController::class, 'rejected'])->name('rejected');
-        Route::get('/{orderPerbaikan}', [UserOrderController::class, 'show'])->name('show');
-        Route::put('/{orderPerbaikan}', [UserOrderController::class, 'update'])->name('update');
-        Route::delete('/{orderPerbaikan}', [UserOrderController::class, 'destroy'])->name('destroy');
-        Route::post('/{orderPerbaikan}/konfirmasi-selesai', [UserOrderController::class, 'konfirmasiSelesai'])->name('konfirmasiSelesai');
-    });
+            $def(Route::get('/', [PengajuanApiController::class, 'index']))->name('index');
+            $def(Route::post('/', [PengajuanApiController::class, 'store']))->name('store');
+            $def(Route::get('/{pengajuan}', [PengajuanApiController::class, 'show']))->name('show');
+            $def(Route::put('/{pengajuan}', [PengajuanApiController::class, 'update']))->name('update');
+            $def(Route::delete('/{pengajuan}', [PengajuanApiController::class, 'destroy']))->name('destroy');
+            $def(Route::post('/{pengajuan}/reply', [PengajuanApiController::class, 'reply']))->name('reply');
+            $def(Route::post('/{pengajuan}/confirm', [PengajuanApiController::class, 'confirm']))->name('confirm');
+        });
+    };
+
+    // Alias endpoint lama yang tidak punya padanan CRUD.
+    // WAJIB didaftarkan SEBELUM wildcard {pengajuan} agar tidak tertelan route show.
+    Route::get('/tickets/filter/{status}', [PengajuanApiController::class, 'index'])
+        ->defaults('jenis', 'IT')
+        ->middleware('permission:myticket|ticket')
+        ->where('status', 'all|open|pending|in_progress|closed|confirmed|ditutup')
+        ->name('api.tickets.filter');
+    Route::get('/order-perbaikan/konfirmasi', [PengajuanApiController::class, 'index'])
+        ->defaults('jenis', 'IPSRS')->defaults('status', 'ditutup')
+        ->middleware('permission:myorder|order')
+        ->name('api.order-perbaikan.konfirmasi');
+    Route::get('/order-perbaikan/rejected', [PengajuanApiController::class, 'index'])
+        ->defaults('jenis', 'IPSRS')->defaults('status', 'rejected')
+        ->middleware('permission:myorder|order')
+        ->name('api.order-perbaikan.rejected');
+    Route::post('/order-perbaikan/{pengajuan}/konfirmasi-selesai', [PengajuanApiController::class, 'confirm'])
+        ->defaults('jenis', 'IPSRS')
+        ->middleware('permission:myorder|order')
+        ->name('api.order-perbaikan.konfirmasiSelesai');
+
+    // Unified: semua jenis pengajuan milik user (endpoint baru untuk Flutter).
+    $registerUserPengajuan(null, 'pengajuan', 'api.pengajuan.', 'permission:myticket|ticket|myorder|order');
+
+    // Backward-compat: kontrak v1 (URL tidak berubah).
+    $registerUserPengajuan('IT', 'tickets', 'api.tickets.', 'permission:myticket|ticket');
+    $registerUserPengajuan('IPSRS', 'order-perbaikan', 'api.order-perbaikan.', 'permission:myorder|order');
 
     // Feedback (dual: user create/list own, admin list all + reply)
     Route::prefix('feedback')->name('api.feedback.')->group(function () {
@@ -101,10 +117,60 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{feedback}', [FeedbackController::class, 'destroy'])->middleware(AdminApiMiddleware::class)->name('destroy');
     });
 
-    // Admin IT routes
-    Route::prefix('admin')->name('api.admin.')->middleware(AdminApiMiddleware::class)->group(function () {
+    // Admin Pengajuan — SATU controller untuk tiket IT & order IPSRS.
+    // Scope data = PengajuanScopeService (role_kategori), sama seperti web.
+    $registerAdminPengajuan = function (?string $jenis, string $prefix, string $name, string $middleware) {
+        Route::prefix($prefix)->name($name)->middleware($middleware)->group(function () use ($jenis) {
+            $def = fn ($route) => $jenis ? $route->defaults('jenis', $jenis) : $route;
 
-        // User Management
+            $def(Route::get('/', [AdminPengajuanController::class, 'index']))->name('index');
+            $def(Route::get('/all', [AdminPengajuanController::class, 'index']))->name('all');
+            $def(Route::get('/open', [AdminPengajuanController::class, 'index']))->defaults('status', 'open')->name('open');
+            $def(Route::get('/in-progress', [AdminPengajuanController::class, 'index']))->defaults('status', 'in_progress')->name('in-progress');
+            $def(Route::get('/closed', [AdminPengajuanController::class, 'index']))->defaults('status', 'ditutup')->name('closed');
+            $def(Route::get('/confirmed', [AdminPengajuanController::class, 'index']))->defaults('status', 'confirmed')->name('confirmed');
+            $def(Route::get('/rejected', [AdminPengajuanController::class, 'index']))->defaults('status', 'rejected')->name('rejected');
+
+            $def(Route::get('/history', [AdminPengajuanController::class, 'history']))->name('history');
+            $def(Route::get('/history/{pengajuan}', [AdminPengajuanController::class, 'historyShow']))->name('historyShow');
+
+            $def(Route::get('/{pengajuan}', [AdminPengajuanController::class, 'show']))->name('show');
+            $def(Route::put('/{pengajuan}', [AdminPengajuanController::class, 'update']))->name('update');
+            $def(Route::put('/{pengajuan}/priority', [AdminPengajuanController::class, 'updatePriority']))->name('priority');
+            $def(Route::put('/{pengajuan}/status', [AdminPengajuanController::class, 'updateStatus']))->name('updateStatus');
+            $def(Route::put('/{pengajuan}/submission', [AdminPengajuanController::class, 'updateSubmission']))->name('updateSubmission');
+            $def(Route::post('/{pengajuan}/respond', [AdminPengajuanController::class, 'respond']))->name('respond');
+            $def(Route::post('/{pengajuan}/confirm', [AdminPengajuanController::class, 'confirm']))->name('confirm');
+            $def(Route::post('/{pengajuan}/reject', [AdminPengajuanController::class, 'reject']))->name('reject');
+            $def(Route::post('/{pengajuan}/start', [AdminPengajuanController::class, 'start']))->name('start');
+
+            // Penugasan PJ — kandidat bersumber dari role_kategori.
+            $def(Route::get('/{pengajuan}/penugasan', [AdminPengajuanController::class, 'penugasan']))->name('penugasan');
+            $def(Route::put('/{pengajuan}/penugasan', [AdminPengajuanController::class, 'syncPenugasan']))->name('penugasan.sync');
+        });
+    };
+
+    // Unified admin (endpoint baru untuk Flutter) — bisa dipakai admin IT & IPSRS,
+    // pemisahan data tetap lewat role_kategori (PengajuanScopeService).
+    $registerAdminPengajuan(null, 'admin/pengajuan', 'api.admin.pengajuan.', PengajuanAdminApiMiddleware::class);
+
+    // Statistik IPSRS (kontrak lama) — WAJIB sebelum wildcard {pengajuan}.
+    Route::get('/administrasi-umum/order-perbaikan/statistics', [AdminPengajuanController::class, 'index'])
+        ->defaults('jenis', 'IPSRS')
+        ->middleware(AdministrasiUmumApiMiddleware::class)
+        ->name('api.administrasi-umum.order-perbaikan.statistics');
+
+    // Backward-compat: kontrak v1 (URL tidak berubah).
+    $registerAdminPengajuan('IT', 'admin/tickets', 'api.admin.tickets.', AdminApiMiddleware::class);
+    $registerAdminPengajuan('IPSRS', 'administrasi-umum/order-perbaikan', 'api.administrasi-umum.order-perbaikan.', AdministrasiUmumApiMiddleware::class);
+
+    // Dashboard stats IPSRS (kontrak lama).
+    Route::get('/administrasi-umum/stats', [DashboardController::class, 'administrasiDashboard'])
+        ->middleware(AdministrasiUmumApiMiddleware::class)
+        ->name('api.administrasi-umum.stats');
+
+    // Admin IT: User Management + Master Data
+    Route::prefix('admin')->name('api.admin.')->middleware(AdminApiMiddleware::class)->group(function () {
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::post('/', [AdminUserController::class, 'store'])->name('store');
@@ -113,50 +179,15 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
         });
 
-        // Master Data (categories, departments, buildings, locations, unit-proses, positions)
-        Route::prefix('master')->name('master.')->group(function () {
-            Route::get('/{type}', [AdminMasterController::class, 'index'])->where('type', 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('index');
-            Route::post('/{type}', [AdminMasterController::class, 'store'])->where('type', 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('store');
-            Route::get('/{type}/{id}', [AdminMasterController::class, 'show'])->where('type', 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('show');
-            Route::put('/{type}/{id}', [AdminMasterController::class, 'update'])->where('type', 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('update');
-            Route::delete('/{type}/{id}', [AdminMasterController::class, 'destroy'])->where('type', 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('destroy');
-            Route::post('/{type}/bulk-action', [AdminMasterController::class, 'bulkAction'])->where('type', 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order')->name('bulk');
+        $masterTypes = 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order';
+        Route::prefix('master')->name('master.')->group(function () use ($masterTypes) {
+            Route::get('/{type}', [AdminMasterController::class, 'index'])->where('type', $masterTypes)->name('index');
+            Route::post('/{type}', [AdminMasterController::class, 'store'])->where('type', $masterTypes)->name('store');
+            Route::get('/{type}/{id}', [AdminMasterController::class, 'show'])->where('type', $masterTypes)->name('show');
+            Route::put('/{type}/{id}', [AdminMasterController::class, 'update'])->where('type', $masterTypes)->name('update');
+            Route::delete('/{type}/{id}', [AdminMasterController::class, 'destroy'])->where('type', $masterTypes)->name('destroy');
+            Route::post('/{type}/bulk-action', [AdminMasterController::class, 'bulkAction'])->where('type', $masterTypes)->name('bulk');
         });
-
-        // Ticket Admin
-        Route::prefix('tickets')->name('tickets.')->group(function () {
-            Route::get('/', [AdminTicketController::class, 'index'])->name('index');
-            Route::get('/all', [AdminTicketController::class, 'all'])->name('all');
-            Route::get('/open', [AdminTicketController::class, 'open'])->name('open');
-            Route::get('/in-progress', [AdminTicketController::class, 'inProgress'])->name('in-progress');
-            Route::get('/closed', [AdminTicketController::class, 'closed'])->name('closed');
-            Route::get('/history', [AdminTicketController::class, 'history'])->name('history');
-            Route::get('/history/{ticket}', [AdminTicketController::class, 'historyShow'])->name('historyShow');
-            Route::get('/{ticket}', [AdminTicketController::class, 'show'])->name('show');
-            Route::put('/{ticket}/priority', [AdminTicketController::class, 'updatePriority'])->name('priority');
-            Route::put('/{ticket}/submission', [AdminTicketController::class, 'updateSubmission'])->name('updateSubmission');
-            Route::post('/{ticket}/respond', [AdminTicketController::class, 'respond'])->name('respond');
-            Route::put('/{ticket}', [AdminTicketController::class, 'update'])->name('update');
-        });
-    });
-
-    // Administrasi Umum routes
-    Route::prefix('administrasi-umum')->name('api.administrasi-umum.')->middleware(AdministrasiUmumApiMiddleware::class)->group(function () {
-        Route::prefix('order-perbaikan')->name('order-perbaikan.')->group(function () {
-            Route::get('/', [AdminOrderController::class, 'index'])->name('index');
-            Route::get('/statistics', [AdminOrderController::class, 'statistics'])->name('statistics');
-            Route::get('/in-progress', [AdminOrderController::class, 'inProgress'])->name('in-progress');
-            Route::get('/confirmed', [AdminOrderController::class, 'confirmed'])->name('confirmed');
-            Route::get('/rejected', [AdminOrderController::class, 'rejected'])->name('rejected');
-            Route::get('/{orderPerbaikan}', [AdminOrderController::class, 'show'])->name('show');
-            Route::put('/{orderPerbaikan}/priority', [AdminOrderController::class, 'updatePriority'])->name('updatePriority');
-            Route::put('/{orderPerbaikan}/status', [AdminOrderController::class, 'updateStatus'])->name('updateStatus');
-            Route::put('/{orderPerbaikan}/submission', [AdminOrderController::class, 'updateSubmission'])->name('updateSubmission');
-            Route::post('/{orderPerbaikan}/confirm', [AdminOrderController::class, 'confirm'])->name('confirm');
-            Route::post('/{orderPerbaikan}/reject', [AdminOrderController::class, 'reject'])->name('reject');
-            Route::post('/{orderPerbaikan}/start', [AdminOrderController::class, 'start'])->name('start');
-        });
-        Route::get('/stats', [DashboardController::class, 'administrasiDashboard'])->name('stats');
     });
 
     // FCM Token (for Flutter)

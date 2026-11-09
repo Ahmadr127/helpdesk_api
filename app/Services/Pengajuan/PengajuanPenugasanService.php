@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\RoleKategori;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class PengajuanPenugasanService
 {
@@ -22,10 +23,47 @@ class PengajuanPenugasanService
 
         $roleSlugs = Role::whereIn('id', $roleIds)->pluck('slug');
 
+        // Sumber tunggal: role_kategori. Kategori tanpa mapping = tanpa kandidat PJ
+        // (fail-closed), bukan "semua role pemegang dashboard jenis".
+        if ($roleSlugs->isEmpty()) {
+            return collect();
+        }
+
         return User::whereIn('role', $roleSlugs)
             ->where('status', 1)
             ->orderBy('name')
             ->get();
+    }
+
+    /**
+     * Payload kandidat PJ untuk dropdown admin/Flutter (sumber: role_kategori).
+     */
+    public function candidatePayload(Pengajuan $pengajuan): array
+    {
+        return $this->candidates($pengajuan)->map(fn (User $user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'role' => $user->role,
+            'role_name' => $user->roleModel?->name,
+            'department' => $user->department,
+            'position' => $user->position,
+        ])->values()->all();
+    }
+
+    /**
+     * Payload PJ aktif (released_at IS NULL) untuk Flutter.
+     */
+    public function activePayload(Pengajuan $pengajuan): array
+    {
+        return $this->active($pengajuan)->map(fn (PengajuanPenugasan $a) => [
+            'id' => $a->id,
+            'user_id' => $a->user_id,
+            'name' => $a->user?->name,
+            'role_id' => $a->role_id,
+            'role' => $a->role?->slug,
+            'assigned_by' => $a->assigned_by,
+            'assigned_at' => $a->assigned_at?->toIso8601String(),
+        ])->values()->all();
     }
 
     /**
@@ -160,6 +198,38 @@ class PengajuanPenugasanService
     }
 
     /**
+     * Sinkronkan PJ aktif dengan validasi ketat: user di luar kandidat
+     * role_kategori ditolak (422), bukan dibuang diam-diam.
+     * Mengembalikan daftar user yang baru ditugaskan (untuk notifikasi).
+     */
+    public function syncOrFail(Pengajuan $pengajuan, array $userIds, ?User $actor = null): array
+    {
+        $validIds = $this->candidates($pengajuan)
+            ->pluck('id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
+
+        $requested = collect($userIds)
+            ->filter(fn ($v) => $v !== null && $v !== '')
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->values();
+
+        $invalid = $requested->reject(fn ($id) => in_array($id, $validIds, true))->values();
+
+        if ($invalid->isNotEmpty()) {
+            $names = User::whereIn('id', $invalid->all())->pluck('name', 'id');
+
+            throw ValidationException::withMessages([
+                'user_ids' => 'User berikut bukan kandidat PJ untuk kategori pengajuan ini: '
+                    .$invalid->map(fn ($id) => $names[$id] ?? "#{$id}")->implode(', '),
+            ]);
+        }
+
+        return $this->sync($pengajuan, $requested->all(), $actor);
+    }
+
+    /**
      * Release (non-aktifkan) assignment user tertentu, atau semua jika userId null.
      */
     public function release(Pengajuan $pengajuan, ?int $userId = null): int
@@ -180,7 +250,7 @@ class PengajuanPenugasanService
     {
         return $pengajuan->penugasan()
             ->whereNull('released_at')
-            ->with('user')
+            ->with(['user', 'role'])
             ->get();
     }
 

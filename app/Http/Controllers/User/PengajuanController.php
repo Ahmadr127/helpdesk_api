@@ -157,14 +157,24 @@ class PengajuanController extends Controller
 
     public function assign(Request $request, Pengajuan $pengajuan)
     {
-        $this->authorize('update', $pengajuan);
+        // Bukan 'update' (owner-only): PJ/admin berhak menugaskan sesuai role_kategori.
+        $this->authorize('act', $pengajuan);
 
         $userIds = $request->input('user_ids', []);
         if (! is_array($userIds)) {
             $userIds = [$userIds];
         }
 
-        $this->service->assign(auth()->user(), $pengajuan, $userIds);
+        try {
+            $newlyAssigned = $this->service->assignStrict(auth()->user(), $pengajuan, $userIds);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        }
+
+        if (! empty($newlyAssigned)) {
+            app(\App\Services\Pengajuan\PengajuanNotificationService::class)
+                ->notifyAssigned($pengajuan->fresh(), $newlyAssigned, auth()->user());
+        }
 
         return back()->with('success', 'Penanggung jawab berhasil diperbarui.');
     }

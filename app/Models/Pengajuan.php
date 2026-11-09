@@ -117,7 +117,13 @@ class Pengajuan extends Model
 
     public function getNamaPenanggungJawabAttribute(): ?string
     {
-        return $this->penugasan->first()?->user?->name;
+        $names = $this->penugasan
+            ->filter(fn ($a) => $a->released_at === null)
+            ->map(fn ($a) => $a->user?->name)
+            ->filter()
+            ->values();
+
+        return $names->isNotEmpty() ? $names->implode(', ') : null;
     }
 
     public function createdBy(): BelongsTo
@@ -148,6 +154,15 @@ class Pengajuan extends Model
     public function penugasan(): HasMany
     {
         return $this->hasMany(PengajuanPenugasan::class, 'pengajuan_id');
+    }
+
+    /**
+     * Penugasan yang masih aktif (belum dilepas) — PJ berlaku saat ini.
+     */
+    public function penugasanAktif(): HasMany
+    {
+        return $this->hasMany(PengajuanPenugasan::class, 'pengajuan_id')
+            ->whereNull('released_at');
     }
 
     public function legacyMap(): HasOne

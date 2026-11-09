@@ -220,6 +220,33 @@ class PengajuanService
         });
     }
 
+    /**
+     * Sinkronisasi PJ ketat berbasis role_kategori (dipakai web & API admin).
+     * User di luar kandidat kategori -> ValidationException 422, bukan dibuang diam-diam.
+     * Mengembalikan daftar user yang baru ditugaskan (untuk notifikasi).
+     */
+    public function assignStrict(User $actor, Pengajuan $pengajuan, array $userIds): array
+    {
+        if (! $this->scopeService->canAct($actor, $pengajuan)) {
+            throw new \Exception('Unauthorized', 403);
+        }
+
+        return DB::transaction(function () use ($actor, $pengajuan, $userIds): array {
+            $newlyAssigned = $this->penugasanService->syncOrFail($pengajuan, $userIds, $actor);
+
+            $pengajuan->historis()->create([
+                'status' => $pengajuan->status,
+                'action' => 'assigned',
+                'notes' => 'Penugasan pengajuan diperbarui.',
+                'actor_id' => $actor->id,
+                'actor_type' => 'user',
+                'metadata' => ['user_ids' => array_values(array_map('intval', $userIds))],
+            ]);
+
+            return $newlyAssigned;
+        });
+    }
+
     protected function activeKategori(int $kategoriId): KategoriPengajuan
     {
         $kategori = KategoriPengajuan::where('id', $kategoriId)
