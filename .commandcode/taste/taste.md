@@ -1,2 +1,4 @@
 - For this Laravel/PHP + Blade helpdesk codebase, do not run Dart/Flutter tooling such as `dart analyze`; focus on the web/PHP code first. Confidence: 0.85
 - Prefers fast, direct edits ("cepetan langsung ubah") over lengthy verification or discussion before making changes. Confidence: 0.7
+- Prefers compact, concise UI layouts that fit without scrolling — smaller text/padding and inline rows/pills instead of spacious cards or large headers. Confidence: 0.75
+- Prefers detail/page width to match the existing user tables/pages (consistent container width) rather than arbitrary full-width or mismatched max-width. Confidence: 0.75

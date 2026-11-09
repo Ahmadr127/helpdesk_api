@@ -96,11 +96,6 @@
                     $jenis = $items->first()->jenis;
                 @endphp
                 <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700">{{ $jenisCode }}</span>
-                        <span class="text-sm font-medium text-gray-700">{{ $jenis?->name ?? 'Lainnya' }}</span>
-                        <span class="text-xs text-gray-400">({{ $items->count() }} kategori)</span>
-                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         @foreach($items as $kategori)
                             <label class="flex items-start gap-2.5 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors min-h-[4.25rem] {{ $selectedKategoris->contains($kategori->id) ? 'border-blue-400 bg-blue-50/60 shadow-sm' : 'border-gray-200 bg-white' }}">

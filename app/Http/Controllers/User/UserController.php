@@ -4,59 +4,44 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Feedback;
-use App\Models\Ticket;
+use App\Models\Pengajuan;
 
 class UserController extends Controller
 {
     public function dashboard()
     {
-        // Get ticket statistics for current user
         $userId = auth()->id();
 
-        // Get total tickets from all statuses
-        $totalTickets = Ticket::where('user_id', $userId)
-            ->whereIn('status', ['open', 'in_progress', 'closed', 'confirmed'])
-            ->count();
+        $itQuery = Pengajuan::where('pemohon_id', $userId)
+            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
 
-        $openTickets = Ticket::where('user_id', $userId)
-            ->where('status', 'open')
-            ->count();
-        $inProgressTickets = Ticket::where('user_id', $userId)
-            ->where('status', 'in_progress')
-            ->count();
-        $closedTickets = Ticket::where('user_id', $userId)
-            ->where('status', 'closed')
-            ->count();
-        $confirmedTickets = Ticket::where('user_id', $userId)
-            ->where('status', 'confirmed')
-            ->count();
+        $totalTickets = (clone $itQuery)->whereIn('status', ['open', 'in_progress', 'ditutup', 'confirmed'])->count();
+        $openTickets = (clone $itQuery)->where('status', 'open')->count();
+        $inProgressTickets = (clone $itQuery)->where('status', 'in_progress')->count();
+        $confirmedTickets = (clone $itQuery)->where('status', 'confirmed')->count();
+        $ditutupTickets = (clone $itQuery)->where('status', 'ditutup')->count();
 
-        // Get recent tickets
-        $recentTickets = Ticket::where('user_id', $userId)
-            ->select('id', 'ticket_number', 'description', 'status', 'priority', 'created_at')
+        $recentTickets = (clone $itQuery)
+            ->with(['kategori.jenis'])
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get();
 
-        // Get order perbaikan statistics
-        $totalOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)->count();
-        $inProgressOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)
-            ->where('status', 'in_progress')
-            ->count();
-        $confirmedOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)
-            ->where('status', 'confirmed')
-            ->count();
-        $rejectedOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)
-            ->where('status', 'rejected')
-            ->count();
+        $ipsrsQuery = Pengajuan::where('pemohon_id', $userId)
+            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'));
 
-        // Get recent orders
-        $recentOrders = \App\Models\OrderPerbaikan::where('created_by', $userId)
+        $totalOrders = (clone $ipsrsQuery)->count();
+        $inProgressOrders = (clone $ipsrsQuery)->where('status', 'in_progress')->count();
+        $confirmedOrders = (clone $ipsrsQuery)->where('status', 'confirmed')->count();
+        $rejectedOrders = (clone $ipsrsQuery)->where('status', 'rejected')->count();
+
+        $recentOrders = (clone $ipsrsQuery)
+            ->with(['kategori.jenis'])
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get();
 
-        $userFeedback = Feedback::where('user_id', auth()->id())
+        $userFeedback = Feedback::where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -64,7 +49,7 @@ class UserController extends Controller
             'totalTickets',
             'openTickets',
             'inProgressTickets',
-            'closedTickets',
+            'ditutupTickets',
             'confirmedTickets',
             'recentTickets',
             'userFeedback',

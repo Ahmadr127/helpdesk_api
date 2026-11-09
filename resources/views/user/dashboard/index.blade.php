@@ -64,6 +64,13 @@
                     <span class="text-green-600 font-bold text-2xl">{{ $confirmedTickets }}</span>
                     <span class="text-gray-700 text-sm mt-1">Selesai</span>
                 </a>
+
+                <!-- Ditutup (Menunggu Konfirmasi) Card -->
+                <a href="{{ route('user.ticket.filter.status', 'closed') }}"
+                    class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 hover:shadow-md transition-all flex flex-col items-center justify-center">
+                    <span class="text-purple-600 font-bold text-2xl">{{ $ditutupTickets ?? 0 }}</span>
+                    <span class="text-gray-700 text-sm mt-1">Menunggu Konfirmasi</span>
+                </a>
             </div>
 
             <!-- Recent Tickets -->
@@ -86,7 +93,7 @@
                                 <tr>
                                     <th
                                         class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                        No Tiket</th>
+                                        No Pengajuan</th>
                                     <th
                                         class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                                         Subjek</th>
@@ -107,10 +114,10 @@
                                     <td class="px-4 py-3 whitespace-nowrap text-xs">
                                         <a href="{{ route('user.ticket.show', $ticket) }}"
                                             class="text-blue-600 hover:text-blue-900">
-                                            {{ $ticket->ticket_number }}
+                                            {{ $ticket->nomor }}
                                         </a>
                                     </td>
-                                    <td class="px-4 py-3 text-xs">{{ Str::limit($ticket->description, 30) }}</td>
+                                    <td class="px-4 py-3 text-xs">{{ Str::limit($ticket->deskripsi, 30) }}</td>
                                     <td class="px-4 py-3">
                                         <span class="px-2 py-1 text-xs leading-4 font-semibold rounded-full 
                                 {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : 
@@ -127,11 +134,11 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <span class="px-2 py-1 text-xs leading-4 font-semibold rounded-full 
-                                        {{ $ticket->priority === 'high' ? 'bg-red-100 text-red-800' : 
-                                           ($ticket->priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
+                                        {{ $ticket->prioritas === 'high' ? 'bg-red-100 text-red-800' : 
+                                           ($ticket->prioritas === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
                                            'bg-green-100 text-green-800') }}">
-                                            {{ $ticket->priority === 'high' ? 'Tinggi' :
-                                               ($ticket->priority === 'medium' ? 'Sedang' : 'Rendah') }}
+                                            {{ $ticket->prioritas === 'high' ? 'Tinggi' :
+                                               ($ticket->prioritas === 'medium' ? 'Sedang' : 'Rendah') }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">

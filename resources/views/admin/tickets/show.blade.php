@@ -339,7 +339,7 @@
                             class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm">
                             Kirim Balasan
                         </button>
-                        <button type="submit" name="status" value="closed"
+                        <button type="submit" name="status" value="pending_confirmation"
                             class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm">
                             Tutup Tiket
                         </button>
@@ -348,7 +348,7 @@
                             class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm">
                             Tandai sebagai Dalam Proses
                         </button>
-                        <button type="submit" name="status" value="closed"
+                        <button type="submit" name="status" value="pending_confirmation"
                             class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm">
                             Tutup Tiket
                         </button>

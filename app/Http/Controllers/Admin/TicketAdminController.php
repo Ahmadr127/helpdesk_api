@@ -123,7 +123,19 @@ class TicketAdminController extends Controller
             'status' => 'required|in:in_progress,pending_confirmation,confirmed,rejected',
         ]);
         $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], []);
-        $ticket->update(['status' => $validated['status']]);
+        $status = $validated['status'] === 'pending_confirmation' ? 'ditutup' : $validated['status'];
+        if ($status === 'ditutup') {
+            try {
+                $this->workflow->close(auth()->user(), $ticket->fresh(), $validated['notes']);
+            } catch (\Exception $e) {
+                if ($e->getCode() === 422) {
+                    return back()->with('error', $e->getMessage())->withInput();
+                }
+                throw $e;
+            }
+        } else {
+            $ticket->update(['status' => $status]);
+        }
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
     }
@@ -138,7 +150,28 @@ class TicketAdminController extends Controller
             $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], []);
         }
         if (isset($validated['status'])) {
-            $ticket->update(['status' => $validated['status']]);
+            $status = $validated['status'] === 'pending_confirmation' ? 'ditutup' : $validated['status'];
+            if ($status === 'ditutup') {
+                try {
+                    $this->workflow->close(auth()->user(), $ticket, $validated['notes'] ?? null);
+                } catch (\Exception $e) {
+                    if ($e->getCode() === 422) {
+                        return back()->with('error', $e->getMessage())->withInput();
+                    }
+                    throw $e;
+                }
+            } elseif ($status === 'in_progress' && $ticket->status === 'open') {
+                try {
+                    $this->workflow->start(auth()->user(), $ticket->fresh());
+                } catch (\Exception $e) {
+                    if ($e->getCode() === 403) {
+                        return back()->with('error', $e->getMessage())->withInput();
+                    }
+                    throw $e;
+                }
+            } else {
+                $ticket->update(['status' => $status]);
+            }
         }
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Ticket berhasil diperbarui.');

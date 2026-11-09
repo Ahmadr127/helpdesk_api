@@ -106,7 +106,7 @@ class TicketController extends Controller
             abort(403);
         }
 
-        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.ticket.show', compact('ticket'));
     }

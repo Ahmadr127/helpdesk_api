@@ -78,7 +78,7 @@ class PengajuanController extends Controller
     public function show(Pengajuan $pengajuan)
     {
         $this->authorize('view', $pengajuan);
-        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         $candidates = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->candidates($pengajuan);
         $activePj = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->active($pengajuan);
