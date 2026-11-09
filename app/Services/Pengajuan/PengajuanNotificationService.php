@@ -14,6 +14,14 @@ use Illuminate\Support\Facades\Log;
 
 class PengajuanNotificationService
 {
+    /**
+     * Penerima notifikasi untuk sebuah pengajuan.
+     *
+     * Sumber tunggal: role_kategori — sama dengan PengajuanScopeService.
+     * Role yang tidak dipetakan ke kategori pengajuan ini TIDAK menerima
+     * notifikasi, walau sedang menjadi PJ aktif, agar scope notifikasi
+     * konsisten dengan scope daftar pengajuan.
+     */
     public function recipientsFor(Pengajuan $pengajuan, ?User $except = null): Collection
     {
         $roleIds = RoleKategori::where('kategori_id', $pengajuan->kategori_id)
@@ -21,22 +29,19 @@ class PengajuanNotificationService
 
         $roles = Role::whereIn('id', $roleIds)->pluck('slug');
 
-        $users = $roles->isNotEmpty()
-            ? User::whereIn('role', $roles)->where('status', 1)->get()
-            : collect();
-
-        // Sertakan PJ aktif (penugasan) agar selalu menerima notifikasi.
-        $pengajuan->loadMissing('penugasan.user');
-        $assigned = $pengajuan->penugasan
-            ->whereNull('released_at')
-            ->map(fn ($a) => $a->user)
-            ->filter(fn ($u) => $u && (int) $u->status === 1);
-
-        $merged = $users->merge($assigned)->unique('id')->values();
-        if ($except) {
-            $merged = $merged->filter(fn ($u) => (int) $u->id !== (int) $except->id)->values();
+        if ($roles->isEmpty()) {
+            return collect();
         }
-        return $merged;
+
+        $users = User::whereIn('role', $roles)
+            ->where('status', 1)
+            ->get();
+
+        if ($except) {
+            $users = $users->filter(fn (User $u) => (int) $u->id !== (int) $except->id)->values();
+        }
+
+        return $users;
     }
 
     public function notifyAssigned(Pengajuan $pengajuan, array $newUsers, ?User $actor = null): void
