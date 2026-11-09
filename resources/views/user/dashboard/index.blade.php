@@ -64,13 +64,6 @@
                     <span class="text-green-600 font-bold text-2xl">{{ $confirmedTickets }}</span>
                     <span class="text-gray-700 text-sm mt-1">Selesai</span>
                 </a>
-
-                <!-- Ditutup (Menunggu Konfirmasi) Card -->
-                <a href="{{ route('user.ticket.filter.status', 'closed') }}"
-                    class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 hover:shadow-md transition-all flex flex-col items-center justify-center">
-                    <span class="text-purple-600 font-bold text-2xl">{{ $ditutupTickets ?? 0 }}</span>
-                    <span class="text-gray-700 text-sm mt-1">Menunggu Konfirmasi</span>
-                </a>
             </div>
 
             <!-- Recent Tickets -->

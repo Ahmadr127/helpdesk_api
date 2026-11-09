@@ -11,6 +11,8 @@
     'editUrl' => route('user.pengajuan.edit', $pengajuan),
     'deleteUrl' => route('user.pengajuan.destroy', $pengajuan),
     'replyUrl' => route('user.pengajuan.message', $pengajuan),
+    'konfirmasiUrl' => route('user.pengajuan.confirm', $pengajuan),
+    'konfirmasiFields' => (($pengajuan->kategori?->jenis?->code ?? null) === 'IPSRS') ? 'order' : 'ticket',
     'candidates' => $candidates ?? collect(),
     'activePj' => $activePj ?? collect(),
     'canAssign' => true,

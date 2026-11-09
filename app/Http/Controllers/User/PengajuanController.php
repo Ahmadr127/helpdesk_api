@@ -78,7 +78,7 @@ class PengajuanController extends Controller
     public function show(Pengajuan $pengajuan)
     {
         $this->authorize('view', $pengajuan);
-        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         $candidates = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->candidates($pengajuan);
         $activePj = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->active($pengajuan);
@@ -167,6 +167,31 @@ class PengajuanController extends Controller
         $this->service->assign(auth()->user(), $pengajuan, $userIds);
 
         return back()->with('success', 'Penanggung jawab berhasil diperbarui.');
+    }
+
+    public function confirm(Request $request, Pengajuan $pengajuan)
+    {
+        $this->authorize('view', $pengajuan);
+
+        $request->validate([
+            'action' => 'required|in:confirm,reject',
+        ]);
+
+        $selesai = $request->input('action') === 'confirm';
+
+        try {
+            $this->workflow->userConfirm(auth()->user(), $pengajuan, null, $selesai, []);
+
+            return back()->with('success', $selesai
+                ? 'Terima kasih, pengajuan telah dikonfirmasi selesai.'
+                : 'Pengajuan dibuka kembali karena belum selesai.');
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Unauthorized')) {
+                abort(403);
+            }
+
+            return back()->with('error', $e->getMessage())->withInput();
+        }
     }
 
 }

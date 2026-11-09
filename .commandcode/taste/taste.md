@@ -4,3 +4,5 @@
 - Prefers detail/page width to match the existing user tables/pages (consistent container width) rather than arbitrary full-width or mismatched max-width. Confidence: 0.75
 - Prefers font sizes in detail views to match the font scale used in other user pages/files for consistency, rather than ad-hoc smaller/larger sizes. Confidence: 0.7
 - Treats the user dashboard as the canonical design reference; detail/form pages should follow its layout, colors, and styling for consistency rather than introducing a different design. Confidence: 0.75
+- Prefers simple, direct confirm/reject confirmation actions without an extra form, notes, or attachment fields. Confidence: 0.7
+- For priority badges/columns, prefers solid background colors with white text instead of pale/light backgrounds with colored text. Confidence: 0.75

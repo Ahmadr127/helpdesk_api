@@ -86,7 +86,7 @@ class OrderPerbaikanController extends BaseApiController
         if ((int) $orderPerbaikan->pemohon_id !== (int) $request->user()->id) {
             return $this->error('Unauthorized', 403);
         }
-        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans', 'orderDetail']);
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'historis', 'pesans', 'lampirans']);
         return $this->success($orderPerbaikan, 'Detail order');
     }
 

@@ -30,7 +30,21 @@
       "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect10.php)",
       "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect11.php)",
       "Shell(php C:\\Users\\Admin\\AppData\\Local\\Temp\\commandcode\\E--kerjaan-Programming-helpdesk-helpdesk-app-prod\\5702f81e-7d70-40bf-bf31-d97082438dc2\\scratchpad\\inspect12.php)",
-      "Shell(php artisan cutover:run)"
+      "Shell(php artisan cutover:run)",
+      "Shell(php artisan view:clear)",
+      "Shell(php artisan view:cache)",
+      "Shell(if:*)",
+      "Shell(Test-Path:*)",
+      "Shell({:*)",
+      "Shell(Where-Object:*)",
+      "Shell(Select-Object:*)",
+      "Shell(Get-ChildItem:*)",
+      "Shell(dir:*)",
+      "Shell(php artisan route:list --name=pengajuan.confirm 2>&1)",
+      "Shell(php artisan view:clear 2 >& 1)",
+      "Shell(php artisan route:list --name=order-perbaikan.show 2 >& 1)",
+      "Shell(php artisan storage:link 2 >& 1)",
+      "Shell(curl.exe:*)"
     ],
     "deny": [],
     "defaultMode": "default"

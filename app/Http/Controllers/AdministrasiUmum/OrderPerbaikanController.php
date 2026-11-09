@@ -53,8 +53,7 @@ class OrderPerbaikanController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
                     ->orWhere('pemohon_nama', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%")
-                    ->orWhereHas('orderDetail', fn ($d) => $d->where('nama_barang', 'like', "%{$search}%"));
+                    ->orWhere('deskripsi', 'like', "%{$search}%");
             });
         }
         if ($request->filled('date_from')) {
@@ -103,8 +102,7 @@ class OrderPerbaikanController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%")
-                    ->orWhereHas('orderDetail', fn ($d) => $d->where('nama_barang', 'like', "%{$search}%"));
+                    ->orWhere('deskripsi', 'like', "%{$search}%");
             });
         }
         if ($request->filled('status') && $request->status !== 'all') {
@@ -268,7 +266,7 @@ class OrderPerbaikanController extends Controller
 
     public function show(Pengajuan $orderPerbaikan)
     {
-        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
         return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
     }
 

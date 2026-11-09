@@ -58,6 +58,7 @@
         : 'from-blue-600 to-blue-400';
 
     $initialLampiran = $pengajuan->lampirans->where('kind', 'initial')->first();
+    $initialLampirans = $pengajuan->lampirans->where('kind', 'initial');
     $lampiranByPesan = $pengajuan->lampirans->whereNotNull('pesan_id')->groupBy('pesan_id');
     $allResponses = $pengajuan->pesans->map(function ($pesan) use ($lampiranByPesan) {
         $photo = $lampiranByPesan->get($pesan->id)?->first()?->path;
@@ -101,26 +102,24 @@
         </a>
         <div class="flex flex-wrap gap-1.5">
             @if(!empty($konfirmasiUrl) && $pengajuan->status === 'ditutup' && !$pengajuan->user_confirmation)
-                @if($konfirmasiFields === 'ticket')
-                    <form action="{{ $konfirmasiUrl }}" method="POST" class="inline-block" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="action" value="confirm">
-                        <button type="button" onclick="openConfirmationModal('confirm')"
-                            class="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors shadow-sm flex items-center text-xs">
-                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Konfirmasi Selesai
-                        </button>
-                    </form>
-                    <form action="{{ $konfirmasiUrl }}" method="POST" class="inline-block" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="action" value="reject">
-                        <button type="button" onclick="openConfirmationModal('reject')"
-                            class="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 transition-colors shadow-sm flex items-center text-xs">
-                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            Masih Ada Masalah
-                        </button>
-                    </form>
-                @endif
+                <form action="{{ $konfirmasiUrl }}" method="POST" class="inline-block">
+                    @csrf
+                    <input type="hidden" name="action" value="confirm">
+                    <button type="submit" onclick="return confirm('Konfirmasi pengajuan ini sudah selesai?');"
+                        class="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors shadow-sm flex items-center text-xs">
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Konfirmasi Selesai
+                    </button>
+                </form>
+                <form action="{{ $konfirmasiUrl }}" method="POST" class="inline-block">
+                    @csrf
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" onclick="return confirm('Tolak konfirmasi dan kembalikan ke proses?');"
+                        class="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 transition-colors shadow-sm flex items-center text-xs">
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        Masih Ada Masalah
+                    </button>
+                </form>
             @endif
             @if(!empty($editUrl) && $pengajuan->status === 'open')
             <a href="{{ $editUrl }}"
@@ -172,44 +171,33 @@
                         <div><dt class="text-gray-500 text-sm">Tanggal</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->tanggal?->format('d M Y, H:i') ?? $pengajuan->created_at?->format('d M Y, H:i') }}</dd></div>
                     </dl>
 
-                    @if($showOrderDetail && $pengajuan->orderDetail)
-                    <div class="pt-4 border-t border-gray-100 mt-4">
-                        <h3 class="text-sm font-semibold text-gray-800 mb-2">Detail Order</h3>
-                        <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                            @if(!empty($pengajuan->orderDetail->kode_inventaris))
-                            <div><dt class="text-gray-500 text-sm">Kode Inventaris</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->orderDetail->kode_inventaris }}</dd></div>
-                            @endif
-                            <div><dt class="text-gray-500 text-sm">Kategori Order</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->kategori?->name ?? '-' }}</dd></div>
-                            @if(!empty($pengajuan->orderDetail->nama_barang))
-                            <div><dt class="text-gray-500 text-sm">Nama Barang</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->orderDetail->nama_barang }}</dd></div>
-                            @endif
-                            @if(!empty($pengajuan->orderDetail->unit_penerima))
-                            <div><dt class="text-gray-500 text-sm">Unit Penerima</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->orderDetail->unit_penerima }}</dd></div>
-                            @endif
-                            @if($pengajuan->unitProses)
-                            <div><dt class="text-gray-500 text-sm">Unit Proses</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->unitProses->name ?? $pengajuan->unitProses->code ?? '-' }}</dd></div>
-                            @endif
-                        </dl>
-                    </div>
-                    @endif
-
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-100 mt-4">
                         <div class="sm:col-span-1">
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Foto</h3>
-                            <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-28 flex items-center justify-center">
-                                @if($initialLampiran)
-                                    <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto"
-                                        class="max-w-full max-h-full object-contain rounded"
-                                        onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
-                                @else
+                            @if($initialLampirans->isNotEmpty())
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 min-h-[7rem]">
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        @foreach($initialLampirans as $lampiran)
+                                            <a href="{{ asset('storage/' . $lampiran->path) }}" target="_blank" class="block">
+                                                <img src="{{ asset('storage/' . $lampiran->path) }}" alt="Foto"
+                                                    class="w-full h-14 object-cover rounded"
+                                                    loading="lazy"
+                                                    onerror="this.onerror=null; this.classList.add('error-image'); this.parentNode.innerHTML = '<div class=\'text-center p-1\'><svg class=\'mx-auto h-6 w-6 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-1 text-xs text-gray-500\'>Gagal memuat gambar</p></div>';">
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">{{ $initialLampirans->count() }} foto</p>
+                                </div>
+                            @else
+                                <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-28 flex items-center justify-center">
                                     <div class="text-center">
                                         <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                         </svg>
                                         <p class="mt-1 text-xs text-gray-500">Tidak ada foto</p>
                                     </div>
-                                @endif
-                            </div>
+                                </div>
+                            @endif
                         </div>
                         <div class="sm:col-span-3">
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Deskripsi</h3>
@@ -330,21 +318,21 @@
     </div>
     @endif
 
-    @if(!empty($konfirmasiUrl) && $pengajuan->status === 'ditutup' && $konfirmasiFields === 'order')
+    @if(!empty($konfirmasiUrl) && $pengajuan->status === 'ditutup' && !$pengajuan->user_confirmation)
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4">
         <div class="px-4 py-2.5 border-b border-gray-100 bg-purple-50">
             <h2 class="text-sm font-semibold text-purple-900">Konfirmasi Selesai</h2>
         </div>
-        <div class="p-3">
-            <form action="{{ $konfirmasiUrl }}" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row gap-2">
+        <div class="p-3 flex gap-2">
+            <form action="{{ $konfirmasiUrl }}" method="POST">
                 @csrf
-                <select name="konfirmasi" required class="rounded-lg border border-gray-200 bg-white text-sm py-2 px-2">
-                    <option value="selesai">✅ Ya, sudah selesai</option>
-                    <option value="belum">❌ Belum selesai</option>
-                </select>
-                <textarea name="catatan" rows="1" class="flex-1 rounded-lg border border-gray-200 text-sm py-2 px-2" placeholder="Catatan (opsional)..."></textarea>
-                <input type="file" name="lampiran" accept=".jpg,.jpeg,.png" class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-violet-700">
-                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">Kirim Konfirmasi</button>
+                <input type="hidden" name="action" value="confirm">
+                <button type="submit" onclick="return confirm('Konfirmasi pengajuan ini sudah selesai?');" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">✅ Ya, sudah selesai</button>
+            </form>
+            <form action="{{ $konfirmasiUrl }}" method="POST">
+                @csrf
+                <input type="hidden" name="action" value="reject">
+                <button type="submit" onclick="return confirm('Tolak konfirmasi dan kembalikan ke proses?');" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">❌ Belum selesai</button>
             </form>
         </div>
     </div>
@@ -377,22 +365,6 @@ function removeImage() {
     if (preview) preview.classList.add('hidden');
     if (placeholder) placeholder.classList.remove('hidden');
 }
-function openConfirmationModal(action) {
-    var modal = document.getElementById('confirmationModal');
-    var form = document.getElementById('confirmationForm');
-    var actionInput = document.getElementById('confirmationAction');
-    var modalTitle = document.getElementById('modalTitle');
-    var submitButton = document.getElementById('submitButton');
-    var konfirmasiUrl = @json($konfirmasiUrl ?? null);
-    if (form && konfirmasiUrl) form.action = konfirmasiUrl;
-    if (actionInput) actionInput.value = action;
-    if (modalTitle) modalTitle.textContent = action === 'confirm' ? 'Konfirmasi Penyelesaian' : 'Laporkan Masalah';
-    if (submitButton) {
-        submitButton.className = 'px-4 py-2 text-white rounded-md ' + (action === 'confirm' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700');
-        submitButton.textContent = action === 'confirm' ? 'Konfirmasi' : 'Laporkan';
-    }
-    if (modal) modal.classList.remove('hidden');
-}
 function closeConfirmationModal() {
     var modal = document.getElementById('confirmationModal');
     if (modal) modal.classList.add('hidden');
@@ -413,31 +385,3 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('load', adjustHeight);
 });
 </script>
-
-@if($konfirmasiFields === 'ticket' && !empty($konfirmasiUrl))
-<div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
-            <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4" id="modalTitle">Konfirmasi Pengajuan</h3>
-                <form id="confirmationForm" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="action" id="confirmationAction">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
-                        <textarea name="confirmation_notes" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Berikan catatan atau komentar Anda..."></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Foto (Opsional)</label>
-                        <input type="file" name="photo" accept="image/*" class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700">
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeConfirmationModal()" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Batal</button>
-                        <button type="submit" id="submitButton" class="px-4 py-2 text-white rounded-md">Kirim</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-@endif

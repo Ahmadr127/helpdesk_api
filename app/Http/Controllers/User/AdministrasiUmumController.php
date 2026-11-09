@@ -187,7 +187,7 @@ class AdministrasiUmumController extends Controller
         if ((int) $orderPerbaikan->pemohon_id !== (int) auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
-        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.administrasi-umum.order-perbaikan.show', ['order' => $orderPerbaikan]);
     }
@@ -299,30 +299,21 @@ class AdministrasiUmumController extends Controller
     public function confirmOrderPerbaikan(Request $request, Pengajuan $orderPerbaikan)
     {
         $validated = $request->validate([
-            'konfirmasi' => 'required|in:selesai,belum',
-            'catatan' => 'nullable|string|max:1000',
-            'lampiran' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'action' => 'required|in:confirm,reject',
         ]);
 
         try {
-            $lampiranPath = null;
-            if ($request->hasFile('lampiran')) {
-                $file = $request->file('lampiran');
-                $filename = 'lampiran_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-                $lampiranPath = $file->storeAs('order-lampiran', $filename, 'public');
-            }
-
             $this->workflow->userConfirm(
                 auth()->user(),
                 $orderPerbaikan,
-                $validated['catatan'] ?? null,
-                $validated['konfirmasi'] === 'selesai',
-                $lampiranPath ? [$lampiranPath] : []
+                null,
+                $validated['action'] === 'confirm',
+                []
             );
 
             return redirect()
                 ->route('user.administrasi-umum.order-perbaikan.show', $orderPerbaikan)
-                ->with('success', $validated['konfirmasi'] === 'selesai'
+                ->with('success', $validated['action'] === 'confirm'
                     ? 'Terima kasih, order telah dikonfirmasi selesai.'
                     : 'Order dibuka kembali karena belum selesai.');
         } catch (\Exception $e) {

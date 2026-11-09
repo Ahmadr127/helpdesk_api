@@ -45,7 +45,7 @@
         : ($departmentBuilding?->id ?? $userDepartment?->building_id ?? optional($userDepartment?->building)->id));
 
     $selectedKategori = old('kategori_id', $isEdit ? $pengajuan->kategori_id : null);
-    $selectedPrioritas = old('prioritas', $isEdit ? $pengajuan->prioritas : 'medium');
+    $selectedPrioritas = old('prioritas', $isEdit ? $pengajuan->prioritas : null);
 
     $departmentName = $userDepartment?->name
         ?? $userDepartment?->code
@@ -83,32 +83,7 @@
         @enderror
     </div>
 
-    {{-- Departemen (read-only) --}}
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Departemen / Unit Pengaju</label>
-        @if($defaultDepartmentId)
-            <div class="flex items-center px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-900">{{ $departmentName ?: '-' }}</p>
-                    <p class="text-xs text-gray-500">Kode: {{ $departmentCode ?: '-' }}</p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-            </div>
-        @else
-            <div class="px-4 py-2.5 rounded-lg border border-red-200 bg-red-50">
-                <p class="text-sm text-red-700">Departemen belum diisi.</p>
-                <p class="text-xs text-red-500">Lengkapi di
-                    <a href="{{ route('user.settings') }}" class="underline">pengaturan profil</a>.
-                </p>
-            </div>
-        @endif
-        @error('department_id')
-            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-        @enderror
-    </div>
+    
 
     {{-- Kategori & Prioritas --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -132,9 +107,10 @@
             </label>
             <select name="prioritas" id="prioritas" required
                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 {{ $focusClass }}">
+                <option value="" disabled @selected($selectedPrioritas === null)>— Pilih Prioritas —</option>
                 <option value="low" @selected($selectedPrioritas === 'low')>Rendah</option>
                 <option value="medium" @selected($selectedPrioritas === 'medium')>Sedang</option>
-                <option value="high" @selected($selectedPrioritas === 'high')>Tinggi</option>
+                <option value="high" @selected($selectedPrioritas === 'high')>Tinggi/Urgen</option>
             </select>
             @error('prioritas')
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -147,7 +123,7 @@
         <div>
             <label for="lokasi_id-input" class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
             <x-searchable-select name="lokasi_id" id="lokasi_id"
-                :options="$locations" :selected="$defaultLocationId"
+                :options="$locations"
                 value-field="id" label-field="name"
                 placeholder="Ketik untuk cari lokasi..." empty-label="— Pilih Lokasi (opsional) —"
                 :accent="$accent" />
@@ -159,7 +135,7 @@
         <div>
             <label for="building_id-input" class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
             <x-searchable-select name="building_id" id="building_id"
-                :options="$buildings" :selected="$defaultBuildingId"
+                :options="$buildings"
                 value-field="id" label-field="name"
                 placeholder="Ketik untuk cari gedung..." empty-label="— Pilih Gedung (opsional) —"
                 :accent="$accent" />
@@ -170,26 +146,81 @@
     </div>
 
 
-    {{-- Foto --}}
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Foto Lampiran (opsional, maks. 3 foto)</label>
-        <div class="flex items-center">
+    {{-- Foto & Departemen --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {{-- Kolom Kiri: Foto Lampiran --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Foto Lampiran (opsional, maks. 3 foto)
+            </label>
+
             <label class="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors">
                 <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
+
                 <span class="text-sm text-gray-700">Pilih Foto</span>
-                <input type="file" name="photos[]" id="pengajuan-photos" accept="image/*" multiple class="hidden">
+
+                <input type="file"
+                    name="photos[]"
+                    id="pengajuan-photos"
+                    accept="image/*"
+                    multiple
+                    class="hidden">
             </label>
+
+            <p id="pengajuan-photos-info" class="mt-2 text-xs text-gray-500">
+                Format JPG, PNG, GIF. Maksimal 3 foto, 5MB per foto.
+            </p>
+
+            @error('photos')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+
+            @error('photos.*')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
         </div>
-        <p id="pengajuan-photos-info" class="mt-1 text-xs text-gray-500">Format JPG, PNG, GIF. Maksimal 3 foto, 5MB per foto.</p>
-        @error('photos')
-            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-        @enderror
-        @error('photos.*')
-            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-        @enderror
+
+        {{-- Kolom Kanan: Departemen --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Departemen / Unit Pengaju
+            </label>
+
+            @if($defaultDepartmentId)
+                <div class="flex items-center px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">
+                            {{ $departmentName ?: '-' }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            Kode: {{ $departmentCode ?: '-' }}
+                        </p>
+                    </div>
+
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+            @else
+                <div class="px-4 py-2.5 rounded-lg border border-red-200 bg-red-50">
+                    <p class="text-sm text-red-700">Departemen belum diisi.</p>
+                    <p class="text-xs text-red-500">
+                        Lengkapi di
+                        <a href="{{ route('user.settings') }}" class="underline">pengaturan profil</a>.
+                    </p>
+                </div>
+            @endif
+
+            @error('department_id')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
     </div>
 
     {{-- Actions --}}

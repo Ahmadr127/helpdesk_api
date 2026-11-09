@@ -61,22 +61,13 @@
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->department?->name ?? $orderPerbaikan->unit_proses_name }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Proses</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">
-                                @php
-                                $unitProsesModel = $orderPerbaikan->relationLoaded('unitProses') ? $orderPerbaikan->getRelation('unitProses') : $orderPerbaikan->unitProses()->getResults();
-                                @endphp
-                                {{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}
-                            </dd>
-                        </div>
-                        <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Prioritas</dt>
                             <dd class="mt-1">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold {{ match($orderPerbaikan->prioritas) {
-                                    'RENDAH' => 'bg-green-50 text-green-700 ring-1 ring-green-600/20',
-                                    'SEDANG' => 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20',
-                                    'TINGGI/URGENT' => 'bg-red-50 text-red-700 ring-1 ring-red-600/20',
-                                    default => 'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20'
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold text-white {{ match($orderPerbaikan->prioritas) {
+                                    'low', 'RENDAH', 'rendah' => 'bg-green-600',
+                                    'medium', 'SEDANG', 'sedang' => 'bg-yellow-600',
+                                    'high', 'TINGGI/URGENT', 'TINGGI', 'tinggi' => 'bg-red-600',
+                                    default => 'bg-gray-600'
                                 } }}">
                                     {{ $orderPerbaikan->prioritas }}
                                 </span>
@@ -85,10 +76,6 @@
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->tanggal->format('d M Y, H:i') }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Penerima</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->unit_penerima ?? '-' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pengguna</dt>

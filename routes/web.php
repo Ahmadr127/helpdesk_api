@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('pengajuan/{pengajuan}/start', [\App\Http\Controllers\User\PengajuanController::class, 'start'])->name('user.pengajuan.start');
     Route::post('pengajuan/{pengajuan}/close', [\App\Http\Controllers\User\PengajuanController::class, 'close'])->name('user.pengajuan.close');
     Route::post('pengajuan/{pengajuan}/message', [\App\Http\Controllers\User\PengajuanController::class, 'message'])->name('user.pengajuan.message');
+    Route::post('pengajuan/{pengajuan}/confirm', [\App\Http\Controllers\User\PengajuanController::class, 'confirm'])->name('user.pengajuan.confirm');
     Route::post('pengajuan/{pengajuan}/assign', [\App\Http\Controllers\User\PengajuanController::class, 'assign'])->name('user.pengajuan.assign');
     Route::get('/dashboard', function () {
         $user = auth()->user();

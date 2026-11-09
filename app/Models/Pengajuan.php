@@ -76,6 +76,50 @@ class Pengajuan extends Model
         return $this->belongsTo(Building::class, 'building_id');
     }
 
+    // Legacy OrderPerbaikan accessors — kolom order detail yang dulu ada
+    // di tabel order_perbaikan, kini ditiadakan dari schema pengajuan
+    // (lihat migration 2026_11_07 unified). Return null agar view
+    // admin/order-perbaikan/show tidak error & menampilkan '-'.
+    public function unitProses()
+    {
+        return $this->belongsTo(UnitProses::class, 'unit_proses_id');
+    }
+
+    public function getUnitProsesNameAttribute(): ?string
+    {
+        return null;
+    }
+
+    public function getUnitPenerimaAttribute(): ?string
+    {
+        return null;
+    }
+
+    public function getKodeInventarisAttribute(): ?string
+    {
+        return null;
+    }
+
+    public function getNamaBarangAttribute(): ?string
+    {
+        return null;
+    }
+
+    public function getKategoriOrderAttribute(): ?string
+    {
+        return $this->kategori?->name;
+    }
+
+    public function getKeluhanAttribute(): ?string
+    {
+        return $this->deskripsi;
+    }
+
+    public function getNamaPenanggungJawabAttribute(): ?string
+    {
+        return $this->penugasan->first()?->user?->name;
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -84,23 +128,6 @@ class Pengajuan extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    public function orderDetail(): HasOne
-    {
-        return $this->hasOne(PengajuanOrderDetail::class, 'pengajuan_id');
-    }
-
-    public function unitProses(): HasOneThrough
-    {
-        return $this->hasOneThrough(
-            \App\Models\UnitProses::class,
-            PengajuanOrderDetail::class,
-            'pengajuan_id',
-            'id',
-            'id',
-            'unit_proses_id'
-        );
     }
 
     public function historis(): HasMany
@@ -192,30 +219,5 @@ class Pengajuan extends Model
     public function getPhotosAttribute()
     {
         return $this->lampirans;
-    }
-
-    public function getUnitPenerimaAttribute(): ?string
-    {
-        return $this->orderDetail?->unit_penerima;
-    }
-
-    public function getKodeInventarisAttribute(): ?string
-    {
-        return $this->orderDetail?->kode_inventaris;
-    }
-
-    public function getNamaBarangAttribute(): ?string
-    {
-        return $this->orderDetail?->nama_barang;
-    }
-
-    public function getUnitProsesIdAttribute(): ?int
-    {
-        return $this->orderDetail?->unit_proses_id;
-    }
-
-    public function getKeluhanAttribute(): ?string
-    {
-        return $this->deskripsi;
     }
 }

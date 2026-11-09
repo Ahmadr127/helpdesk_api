@@ -106,7 +106,7 @@ class TicketController extends Controller
             abort(403);
         }
 
-        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'orderDetail', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.ticket.show', compact('ticket'));
     }
@@ -185,17 +185,11 @@ class TicketController extends Controller
     public function confirm(Request $request, Pengajuan $ticket)
     {
         $validated = $request->validate([
-            'confirmation_notes' => 'required|string',
-            'photo' => 'nullable|image|max:5120',
             'action' => 'required|in:confirm,reject',
         ]);
 
         try {
-            if ($validated['action'] === 'confirm') {
-                $this->workflow->userConfirm(auth()->user(), $ticket, $validated['confirmation_notes'], true, $request->file('photo') ? [$request->file('photo')] : []);
-            } else {
-                $this->workflow->userConfirm(auth()->user(), $ticket, $validated['confirmation_notes'], false, $request->file('photo') ? [$request->file('photo')] : []);
-            }
+            $this->workflow->userConfirm(auth()->user(), $ticket, null, $validated['action'] === 'confirm', []);
             return redirect()->route('user.ticket.show', $ticket)
                 ->with('success', $validated['action'] === 'confirm' ? 'Ticket has been confirmed as completed.' : 'Ticket has been returned to in progress status.');
         } catch (\Exception $e) {

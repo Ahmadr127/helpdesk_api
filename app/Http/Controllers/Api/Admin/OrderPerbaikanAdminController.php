@@ -75,7 +75,7 @@ class OrderPerbaikanAdminController extends BaseApiController
 
     public function show(Pengajuan $orderPerbaikan)
     {
-        $orderPerbaikan->load(['pemohon', 'historis', 'pesans', 'lampirans', 'orderDetail']);
+        $orderPerbaikan->load(['pemohon', 'historis', 'pesans', 'lampirans']);
         return $this->success($orderPerbaikan, 'Detail order');
     }
 

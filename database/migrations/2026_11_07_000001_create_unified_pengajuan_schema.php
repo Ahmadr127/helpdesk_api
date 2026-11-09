@@ -96,15 +96,6 @@ return new class extends Migration
                 WHERE legacy_source IS NOT NULL
         SQL);
 
-        Schema::create('pengajuan_order_detail', function (Blueprint $table) {
-            $table->foreignId('pengajuan_id')->primary()->constrained('pengajuan')->cascadeOnDelete();
-            $table->string('unit_penerima', 255)->nullable();
-            $table->string('kode_inventaris', 255)->nullable();
-            $table->string('nama_barang', 255)->nullable();
-            $table->foreignId('unit_proses_id')->nullable()->constrained('unit_proses')->nullOnDelete();
-            $table->timestamps();
-        });
-
         Schema::create('pengajuan_histori', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pengajuan_id')->constrained('pengajuan')->cascadeOnDelete();
@@ -318,7 +309,6 @@ return new class extends Migration
         Schema::dropIfExists('pengajuan_lampiran');
         Schema::dropIfExists('pengajuan_pesan');
         Schema::dropIfExists('pengajuan_histori');
-        Schema::dropIfExists('pengajuan_order_detail');
         Schema::dropIfExists('pengajuan');
         Schema::dropIfExists('kategori_pengajuan');
         Schema::dropIfExists('jenis_pengajuan');
