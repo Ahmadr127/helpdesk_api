@@ -44,7 +44,9 @@
       "Shell(php artisan view:clear 2 >& 1)",
       "Shell(php artisan route:list --name=order-perbaikan.show 2 >& 1)",
       "Shell(php artisan storage:link 2 >& 1)",
-      "Shell(curl.exe:*)"
+      "Shell(curl.exe:*)",
+      "Shell(php artisan route:list --name=priority 2>&1)",
+      "Shell(php artisan route:list --path=administrasi-umum/order-perbaikan 2>&1)"
     ],
     "deny": [],
     "defaultMode": "default"

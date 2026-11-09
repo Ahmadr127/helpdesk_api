@@ -81,6 +81,17 @@ class TicketAdminController extends BaseApiController
         return $this->success($ticket, 'Ticket diperbarui');
     }
 
+    public function updatePriority(Request $request, Pengajuan $ticket)
+    {
+        $validated = $request->validate([
+            'prioritas' => 'required|in:low,medium,high',
+            'priority' => 'nullable|in:low,medium,high',
+        ]);
+        $prioritas = $validated['prioritas'] ?? $validated['priority'];
+        $ticket->update(['prioritas' => $prioritas]);
+        return $this->success($ticket->load(['pemohon', 'lampirans']), 'Prioritas tiket berhasil diperbarui');
+    }
+
     public function history(Request $request)
     {
         $query = $this->itQuery()->where('status', 'confirmed')->where('user_confirmation', true);

@@ -79,6 +79,21 @@ class OrderPerbaikanAdminController extends BaseApiController
         return $this->success($orderPerbaikan, 'Detail order');
     }
 
+    public function updatePriority(Request $request, Pengajuan $orderPerbaikan)
+    {
+        try {
+            $validated = $request->validate([
+                'prioritas' => 'required|in:low,medium,high',
+                'priority' => 'nullable|in:low,medium,high',
+            ]);
+            $prioritas = $validated['prioritas'] ?? $validated['priority'];
+            $orderPerbaikan->update(['prioritas' => $prioritas]);
+            return $this->success($orderPerbaikan, 'Prioritas order berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
     public function updateStatus(Request $request, Pengajuan $orderPerbaikan)
     {
         try {

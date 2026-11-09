@@ -132,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/history', [AdminTicketController::class, 'history'])->name('history');
             Route::get('/history/{ticket}', [AdminTicketController::class, 'historyShow'])->name('historyShow');
             Route::get('/{ticket}', [AdminTicketController::class, 'show'])->name('show');
+            Route::put('/{ticket}/priority', [AdminTicketController::class, 'updatePriority'])->name('priority');
             Route::post('/{ticket}/respond', [AdminTicketController::class, 'respond'])->name('respond');
             Route::put('/{ticket}', [AdminTicketController::class, 'update'])->name('update');
         });
@@ -146,6 +147,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/confirmed', [AdminOrderController::class, 'confirmed'])->name('confirmed');
             Route::get('/rejected', [AdminOrderController::class, 'rejected'])->name('rejected');
             Route::get('/{orderPerbaikan}', [AdminOrderController::class, 'show'])->name('show');
+            Route::put('/{orderPerbaikan}/priority', [AdminOrderController::class, 'updatePriority'])->name('updatePriority');
             Route::put('/{orderPerbaikan}/status', [AdminOrderController::class, 'updateStatus'])->name('updateStatus');
             Route::post('/{orderPerbaikan}/confirm', [AdminOrderController::class, 'confirm'])->name('confirm');
             Route::post('/{orderPerbaikan}/reject', [AdminOrderController::class, 'reject'])->name('reject');
