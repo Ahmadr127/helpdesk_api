@@ -44,26 +44,28 @@ class AppServiceProvider extends ServiceProvider
                 $pending = ['tickets' => [], 'orders' => [], 'total' => 0];
                 $user = auth()->user();
                 if ($user) {
-                    $tickets = Ticket::where('user_id', $user->id)
-                        ->where('status', 'closed')
+                    $tickets = \App\Models\Pengajuan::where('pemohon_id', $user->id)
+                        ->where('status', 'pending_confirmation')
+                        ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'))
                         ->latest()
                         ->limit(5)
-                        ->get(['id', 'ticket_number', 'description', 'status']);
-                    $orders = OrderPerbaikan::where('created_by', $user->id)
-                        ->where('status', 'tutup')
+                        ->get(['id', 'nomor', 'deskripsi', 'status']);
+                    $orders = \App\Models\Pengajuan::where('pemohon_id', $user->id)
+                        ->where('status', 'pending_confirmation')
+                        ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))
                         ->latest()
                         ->limit(5)
-                        ->get(['id', 'nomor', 'nama_barang', 'status']);
+                        ->get(['id', 'nomor', 'deskripsi', 'status']);
                     $pending = [
                         'tickets' => $tickets->map(fn ($t) => [
-                            'label' => $t->ticket_number ?: 'Tiket #'.$t->id,
-                            'title' => \Illuminate\Support\Str::limit($t->description ?? '-', 60),
-                            'url' => route('user.ticket.show', $t->id),
+                            'label' => $t->nomor ?: 'Tiket #'.$t->id,
+                            'title' => \Illuminate\Support\Str::limit($t->deskripsi ?? '-', 60),
+                            'url' => route('user.pengajuan.show', $t->id),
                         ])->toArray(),
                         'orders' => $orders->map(fn ($o) => [
                             'label' => $o->nomor ?: 'Order #'.$o->id,
-                            'title' => $o->nama_barang ?? '-',
-                            'url' => route('user.administrasi-umum.order-perbaikan.show', $o->id),
+                            'title' => \Illuminate\Support\Str::limit($o->deskripsi ?? '-', 60),
+                            'url' => route('user.pengajuan.show', $o->id),
                         ])->toArray(),
                         'total' => $tickets->count() + $orders->count(),
                     ];
