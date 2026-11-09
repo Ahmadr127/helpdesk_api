@@ -63,14 +63,21 @@
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Prioritas</dt>
                             <dd class="mt-1">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold text-white {{ match($orderPerbaikan->prioritas) {
-                                    'low', 'RENDAH', 'rendah' => 'bg-green-600',
-                                    'medium', 'SEDANG', 'sedang' => 'bg-yellow-600',
-                                    'high', 'TINGGI/URGENT', 'TINGGI', 'tinggi' => 'bg-red-600',
-                                    default => 'bg-gray-600'
-                                } }}">
-                                    {{ $orderPerbaikan->prioritas }}
-                                </span>
+                                <form action="{{ route('admin.order-perbaikan.priority', $orderPerbaikan) }}" method="POST" class="inline-flex items-center gap-1.5">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="prioritas" required onchange="this.form.submit()"
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold text-white border-0 cursor-pointer {{ match($orderPerbaikan->prioritas) {
+                                            'low', 'RENDAH', 'rendah' => 'bg-green-600',
+                                            'medium', 'SEDANG', 'sedang' => 'bg-yellow-600',
+                                            'high', 'TINGGI/URGENT', 'TINGGI', 'tinggi' => 'bg-red-600',
+                                            default => 'bg-gray-600'
+                                        } }}">
+                                        <option value="low" @selected(in_array($orderPerbaikan->prioritas, ['low','RENDAH','rendah'])) class="bg-green-600 text-white">Rendah</option>
+                                        <option value="medium" @selected(in_array($orderPerbaikan->prioritas, ['medium','SEDANG','sedang'])) class="bg-yellow-600 text-white">Sedang</option>
+                                        <option value="high" @selected(in_array($orderPerbaikan->prioritas, ['high','TINGGI/URGENT','TINGGI','tinggi'])) class="bg-red-600 text-white">Tinggi</option>
+                                    </select>
+                                </form>
                             </dd>
                         </div>
                         <div>

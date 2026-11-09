@@ -40,14 +40,16 @@
                                        ($ticket->status === 'ditutup' ? 'Ditutup' : 
                                        'Selesai'))) }}
                                 </span>
-                                <span class="px-2 py-0.5 text-xs leading-5 font-medium rounded-full 
-                                {{ $ticket->priority === 'low' ? 'bg-gray-100 text-gray-800' : 
-                                   ($ticket->priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                                   'bg-red-100 text-red-800') }}">
-                                    Prioritas {{ $ticket->priority === 'low' ? 'Rendah' : 
-                                               ($ticket->priority === 'medium' ? 'Sedang' : 
-                                               'Tinggi') }}
-                                </span>
+                                <form action="{{ route('admin.tickets.priority', $ticket) }}" method="POST" class="inline-block">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="prioritas" required onchange="this.form.submit()"
+                                        class="px-2 py-0.5 text-xs leading-5 font-medium rounded-full text-white border-0 cursor-pointer {{ $ticket->prioritas === 'low' ? 'bg-gray-600' : ($ticket->prioritas === 'medium' ? 'bg-yellow-600' : 'bg-red-600') }}">
+                                        <option value="low" @selected($ticket->prioritas === 'low') class="bg-gray-600 text-white">Rendah</option>
+                                        <option value="medium" @selected($ticket->prioritas === 'medium') class="bg-yellow-600 text-white">Sedang</option>
+                                        <option value="high" @selected($ticket->prioritas === 'high') class="bg-red-600 text-white">Tinggi</option>
+                                    </select>
+                                </form>
                             </div>
                             <div class="text-sm text-gray-600">
                                 {{ $ticket->created_at->format('d M Y H:i') }}

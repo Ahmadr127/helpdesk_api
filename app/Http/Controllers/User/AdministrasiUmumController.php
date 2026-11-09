@@ -329,9 +329,18 @@ class AdministrasiUmumController extends Controller
         $orders = \App\Models\Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('pemohon_id', auth()->id())->where('status', 'open')->latest()->paginate(10);
         return view('user.administrasi-umum.order-barang', compact('kategoriOrders', 'unitProses', 'inProgressOrders', 'orders'));
     }
-    public function orderBarangKonfirmasi(Request $request) { return view('user.administrasi-umum.order-barang-konfirmasi'); }
-    public function orderBarangTutup(Request $request) { return view('user.administrasi-umum.order-barang-tutup'); }
-    public function orderBarangReject(Request $request) { return view('user.administrasi-umum.order-barang-reject'); }
+    public function orderBarangKonfirmasi(Request $request) {
+        $orders = $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->latest()->paginate(10);
+        return view('user.administrasi-umum.order-barang-konfirmasi', compact('orders'));
+    }
+    public function orderBarangTutup(Request $request) {
+        $orders = $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'ditutup')->latest()->paginate(10);
+        return view('user.administrasi-umum.order-barang-tutup', compact('orders'));
+    }
+    public function orderBarangReject(Request $request) {
+        $orders = $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'rejected')->latest()->paginate(10);
+        return view('user.administrasi-umum.order-barang-reject', compact('orders'));
+    }
     public function storeOrder(Request $request) { return back(); }
     public function updateOrder(Request $request, Pengajuan $order) { return back(); }
     public function getOrder(Pengajuan $order) { return response()->json($order); }

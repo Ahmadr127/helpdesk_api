@@ -270,6 +270,15 @@ class OrderPerbaikanController extends Controller
         return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
     }
 
+    public function updatePriority(Request $request, Pengajuan $orderPerbaikan)
+    {
+        $validated = $request->validate([
+            'prioritas' => 'required|in:low,medium,high',
+        ]);
+        $orderPerbaikan->update(['prioritas' => $validated['prioritas']]);
+        return back()->with('success', 'Prioritas order berhasil diperbarui.');
+    }
+
     public function updateStatus(Request $request, Pengajuan $orderPerbaikan)
     {
         $validated = $request->validate([

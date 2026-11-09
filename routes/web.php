@@ -209,6 +209,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [TicketAdminController::class, 'index'])->name('index');
             Route::get('/{ticket}', [TicketAdminController::class, 'show'])->name('show');
             Route::put('/{ticket}', [TicketAdminController::class, 'update'])->name('update');
+            Route::put('/{ticket}/priority', [TicketAdminController::class, 'updatePriority'])->name('priority');
             Route::post('/{ticket}/respond', [TicketAdminController::class, 'respond'])->name('respond');
         });
 
@@ -289,6 +290,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/export', [OrderPerbaikanController::class, 'export'])->name('export-data');
 
             Route::get('/{orderPerbaikan}', [OrderPerbaikanController::class, 'show'])->name('show');
+            Route::put('/{orderPerbaikan}/priority', [OrderPerbaikanController::class, 'updatePriority'])->name('priority');
             Route::put('/{orderPerbaikan}/update-status', [OrderPerbaikanController::class, 'updateStatus'])->name('update-status');
             Route::post('/{orderPerbaikan}/confirm', [OrderPerbaikanController::class, 'confirm'])->name('confirm');
             Route::post('/{orderPerbaikan}/reject', [OrderPerbaikanController::class, 'reject'])->name('reject');

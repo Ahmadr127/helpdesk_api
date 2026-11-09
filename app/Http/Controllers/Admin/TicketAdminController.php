@@ -88,6 +88,15 @@ class TicketAdminController extends Controller
         return redirect()->back()->with('success', 'Status ticket berhasil diperbarui.');
     }
 
+    public function updatePriority(Request $request, Pengajuan $ticket)
+    {
+        $validated = $request->validate([
+            'prioritas' => 'required|in:low,medium,high',
+        ]);
+        $ticket->update(['prioritas' => $validated['prioritas']]);
+        return back()->with('success', 'Prioritas tiket berhasil diperbarui.');
+    }
+
     public function history()
     {
         $tickets = $this->itQuery()
