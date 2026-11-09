@@ -140,10 +140,6 @@ class AdministrasiUmumController extends Controller
             'building_id' => 'nullable|exists:buildings,id',
             'keluhan' => 'required|string',
             'prioritas' => 'required|in:RENDAH,SEDANG,TINGGI/URGENT',
-            'unit_penerima' => 'nullable|string',
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
-            'unit_proses_id' => 'nullable|exists:unit_proses,id',
             'photo' => 'nullable|image|max:5120',
         ]);
 
@@ -168,10 +164,6 @@ class AdministrasiUmumController extends Controller
             'deskripsi' => $validated['keluhan'],
             'prioritas' => $prioritasMap[$validated['prioritas']] ?? 'medium',
             'department_id' => $user->department_id,
-            'unit_penerima' => $validated['unit_penerima'] ?? null,
-            'kode_inventaris' => $validated['kode_inventaris'] ?? null,
-            'nama_barang' => $validated['nama_barang'] ?? null,
-            'unit_proses_id' => $validated['unit_proses_id'] ?? null,
         ];
 
         $files = $request->file('photo') ? [$request->file('photo')] : [];
@@ -241,8 +233,6 @@ class AdministrasiUmumController extends Controller
         }
 
         $validated = $request->validate([
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
             'kategori_id' => 'required|exists:kategori_pengajuan,id',
             'lokasi' => 'nullable|exists:locations,id',
             'keluhan' => 'required|string',
@@ -255,8 +245,6 @@ class AdministrasiUmumController extends Controller
             'deskripsi' => $validated['keluhan'],
             'prioritas' => $validated['prioritas'],
             'lokasi_id' => $validated['lokasi'] ?? $orderPerbaikan->lokasi_id,
-            'kode_inventaris' => $validated['kode_inventaris'] ?? null,
-            'nama_barang' => $validated['nama_barang'] ?? null,
         ];
 
         try {

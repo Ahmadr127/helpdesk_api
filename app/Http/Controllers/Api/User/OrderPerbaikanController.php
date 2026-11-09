@@ -63,9 +63,6 @@ class OrderPerbaikanController extends BaseApiController
             'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
             'keluhan' => 'required|string',
             'priority' => 'required|in:low,medium,high',
-            'unit_penerima' => 'nullable|string',
-            'kode_inventaris' => 'nullable|string',
-            'nama_barang' => 'nullable|string',
             'location_id' => 'nullable|exists:locations,id',
             'photo' => 'nullable|image|max:5120',
         ]);
@@ -76,9 +73,6 @@ class OrderPerbaikanController extends BaseApiController
                 'prioritas' => $validated['priority'],
                 'department_id' => $request->user()->department_id,
                 'lokasi_id' => $validated['location_id'] ?? null,
-                'unit_penerima' => $validated['unit_penerima'] ?? null,
-                'kode_inventaris' => $validated['kode_inventaris'] ?? null,
-                'nama_barang' => $validated['nama_barang'] ?? null,
             ];
             $pengajuan = $this->service->create($request->user(), $data, $request->file('photo') ? [$request->file('photo')] : []);
             return $this->success($pengajuan, 'Order perbaikan berhasil dibuat', 201);

@@ -56,19 +56,6 @@ class PengajuanService
                 'updated_by' => $actor->id,
             ]);
 
-            if ($jenisCode === 'IPSRS' && (
-                ! empty($data['unit_penerima']) || ! empty($data['kode_inventaris'])
-                || ! empty($data['nama_barang']) || ! empty($data['unit_proses_id'])
-            )) {
-                PengajuanOrderDetail::create([
-                    'pengajuan_id' => $pengajuan->id,
-                    'unit_penerima' => $data['unit_penerima'] ?? null,
-                    'kode_inventaris' => $data['kode_inventaris'] ?? null,
-                    'nama_barang' => $data['nama_barang'] ?? null,
-                    'unit_proses_id' => $data['unit_proses_id'] ?? null,
-                ]);
-            }
-
             $pengajuan->historis()->create([
                 'status' => 'open',
                 'action' => 'created',
@@ -138,20 +125,6 @@ class PengajuanService
                 'tanggal' => $data['tanggal'] ?? $pengajuan->tanggal,
                 'updated_by' => $actor->id,
             ]);
-
-            if ($pengajuan->kategori->jenis->code === 'IPSRS' && (
-                array_key_exists('unit_penerima', $data) || array_key_exists('kode_inventaris', $data)
-                || array_key_exists('nama_barang', $data) || array_key_exists('unit_proses_id', $data)
-            )) {
-                $detail = $pengajuan->orderDetail ?: new PengajuanOrderDetail(['pengajuan_id' => $pengajuan->id]);
-                $detail->fill([
-                    'unit_penerima' => array_key_exists('unit_penerima', $data) ? $data['unit_penerima'] : $detail->unit_penerima,
-                    'kode_inventaris' => array_key_exists('kode_inventaris', $data) ? $data['kode_inventaris'] : $detail->kode_inventaris,
-                    'nama_barang' => array_key_exists('nama_barang', $data) ? $data['nama_barang'] : $detail->nama_barang,
-                    'unit_proses_id' => array_key_exists('unit_proses_id', $data) ? $data['unit_proses_id'] : $detail->unit_proses_id,
-                ]);
-                $detail->save();
-            }
 
             if (! empty($files)) {
                 $pengajuan->lampirans()->where('kind', 'initial')->delete();

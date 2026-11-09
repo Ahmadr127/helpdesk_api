@@ -1,32 +1,28 @@
 <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-slate-50">
         <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Tiket</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengguna</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departemen</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Dibuat
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Proses</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal
-                Konfirmasi</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">No Tiket</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36 truncate">Pengguna</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28 truncate">Kategori</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 truncate">Departemen</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 whitespace-nowrap">Tanggal Dibuat</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Aksi</th>
         </tr>
     </thead>
     <tbody class="bg-white divide-y divide-gray-200">
         @forelse($tickets as $ticket)
         <tr class="hover:bg-slate-50 transition-all">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->user->name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->category }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $ticket->department?->name ?? '-' }}</td>
-            <td class="px-6 py-4 text-sm text-gray-500 max-w-xs">
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ $ticket->ticket_number }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 truncate" title="{{ $ticket->user->name }}">{{ $ticket->user->name }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 truncate" title="{{ $ticket->category }}">{{ $ticket->category }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 truncate" title="{{ $ticket->department?->name }}">{{ $ticket->department?->name ?? '-' }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 max-w-xs">
                 <div class="truncate tooltip w-48 md:w-64" title="{{ $ticket->description }}">{{ $ticket->description }}
                 </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap">
                 @php
                 $statusClasses = [
                 'open' => 'bg-blue-100 text-blue-800',
@@ -48,26 +44,10 @@
                     {{ $statusLabels[$ticket->status] ?? ucfirst($ticket->status) }}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                 {{ $ticket->created_at->format('d M Y H:i') }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                @if($ticket->in_progress_at)
-                {{ $ticket->in_progress_at->format('H:i') }}
-                @else
-                -
-                @endif
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                @if($ticket->user_confirmed_at)
-                {{ $ticket->user_confirmed_at->format('H:i') }}
-                @elseif($ticket->status === 'ditutup' || $ticket->status === 'pending')
-                {{ $ticket->closed_at ? $ticket->closed_at->format('H:i') : '-' }}
-                @else
-                -
-                @endif
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                 <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="text-blue-600 hover:text-blue-900">Lihat
                     Detail</a>
                 @if(!empty($myticketActions) && $ticket->user_id === auth()->id() && $ticket->status === 'open')
@@ -78,7 +58,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="10" class="px-6 py-4 text-center text-sm text-gray-500">
+            <td colspan="8" class="px-4 py-4 text-center text-sm text-gray-500">
                 Tidak ada tiket ditemukan
             </td>
         </tr>

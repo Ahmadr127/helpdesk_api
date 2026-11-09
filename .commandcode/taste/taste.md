@@ -2,3 +2,5 @@
 - Prefers fast, direct edits ("cepetan langsung ubah") over lengthy verification or discussion before making changes. Confidence: 0.7
 - Prefers compact, concise UI layouts that fit without scrolling — smaller text/padding and inline rows/pills instead of spacious cards or large headers. Confidence: 0.75
 - Prefers detail/page width to match the existing user tables/pages (consistent container width) rather than arbitrary full-width or mismatched max-width. Confidence: 0.75
+- Prefers font sizes in detail views to match the font scale used in other user pages/files for consistency, rather than ad-hoc smaller/larger sizes. Confidence: 0.7
+- Treats the user dashboard as the canonical design reference; detail/form pages should follow its layout, colors, and styling for consistency rather than introducing a different design. Confidence: 0.75

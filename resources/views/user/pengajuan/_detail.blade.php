@@ -89,9 +89,9 @@
     $pengajuName = 'Anda';
 @endphp
 
-<div class="container mx-auto px-4 py-4 max-w-8xl text-sm">
+<div class="container mx-auto px-4 py-4 max-w-8xl text-base">
     <!-- Back Button -->
-    <div class="mb-2 flex items-center justify-between">
+    <div class="mb-3 flex items-center justify-between">
         <a href="{{ $backUrl }}"
             class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,52 +149,53 @@
     </div>
 
     <!-- Status strip compact -->
-    <div class="bg-gradient-to-r {{ $headerGradient }} px-3 py-2 rounded-lg mb-2 flex flex-wrap items-center gap-2">
+    <div class="bg-gradient-to-r {{ $headerGradient }} px-4 py-3 rounded-xl mb-4 flex flex-wrap items-center gap-2">
         <span class="px-2.5 py-0.5 text-xs font-medium rounded-full {{ $statusBadge }}">{{ $statusLabel }}</span>
         <span class="px-2.5 py-0.5 text-xs font-medium rounded-full {{ $prioritasBadge }}">Prioritas {{ $prioritasLabel }}</span>
         <span class="text-xs font-medium text-white">#{{ $pengajuan->nomor }}</span>
-        <span class="text-xs text-white/90 ml-auto">{{ $pengajuan->created_at?->format('d M Y H:i') }}</span>
+        <span class="text-xs text-white ml-auto">{{ $pengajuan->created_at?->format('d M Y H:i') }}</span>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Details Column -->
-        <div class="lg:col-span-2 space-y-3">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <!-- Content -->
-                <div class="p-3">
-                    <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 text-xs">
-                        <div><dt class="text-gray-500">Kategori</dt><dd class="font-medium text-gray-900">{{ $pengajuan->kategori?->name ?? '-' }}</dd></div>
-                        <div><dt class="text-gray-500">Departemen</dt><dd class="font-medium text-gray-900">{{ $pengajuan->department?->name ?? '-' }}</dd></div>
-                        <div><dt class="text-gray-500">Gedung</dt><dd class="font-medium text-gray-900">{{ $pengajuan->building?->name ?? '-' }}</dd></div>
-                        <div><dt class="text-gray-500">Lokasi</dt><dd class="font-medium text-gray-900">{{ $pengajuan->lokasi?->name ?? '-' }}</dd></div>
-                        <div><dt class="text-gray-500">Pengguna</dt><dd class="font-medium text-gray-900">{{ $pengajuan->pemohon_nama ?? $pengajuan->pemohon?->name ?? '-' }}</dd></div>
-                        <div><dt class="text-gray-500">Tanggal</dt><dd class="font-medium text-gray-900">{{ $pengajuan->tanggal?->format('d M Y, H:i') ?? $pengajuan->created_at?->format('d M Y, H:i') }}</dd></div>
+                <div class="p-4">
+                    <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                        <div><dt class="text-gray-500 text-sm">Kategori</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->kategori?->name ?? '-' }}</dd></div>
+                        <div><dt class="text-gray-500 text-sm">Departemen</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->department?->name ?? '-' }}</dd></div>
+                        <div><dt class="text-gray-500 text-sm">Gedung</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->building?->name ?? '-' }}</dd></div>
+                        <div><dt class="text-gray-500 text-sm">Lokasi</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->lokasi?->name ?? '-' }}</dd></div>
+                        <div><dt class="text-gray-500 text-sm">Pengguna</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->pemohon_nama ?? $pengajuan->pemohon?->name ?? '-' }}</dd></div>
+                        <div><dt class="text-gray-500 text-sm">Tanggal</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->tanggal?->format('d M Y, H:i') ?? $pengajuan->created_at?->format('d M Y, H:i') }}</dd></div>
                     </dl>
 
                     @if($showOrderDetail && $pengajuan->orderDetail)
-                    <div class="pt-2 border-t border-gray-100 mt-2">
-                        <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 text-xs">
+                    <div class="pt-4 border-t border-gray-100 mt-4">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-2">Detail Order</h3>
+                        <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                             @if(!empty($pengajuan->orderDetail->kode_inventaris))
-                            <div><dt class="text-gray-500">Kode Inventaris</dt><dd class="font-medium text-gray-900">{{ $pengajuan->orderDetail->kode_inventaris }}</dd></div>
+                            <div><dt class="text-gray-500 text-sm">Kode Inventaris</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->orderDetail->kode_inventaris }}</dd></div>
                             @endif
-                            <div><dt class="text-gray-500">Kategori Order</dt><dd class="font-medium text-gray-900">{{ $pengajuan->kategori?->name ?? '-' }}</dd></div>
+                            <div><dt class="text-gray-500 text-sm">Kategori Order</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->kategori?->name ?? '-' }}</dd></div>
                             @if(!empty($pengajuan->orderDetail->nama_barang))
-                            <div><dt class="text-gray-500">Nama Barang</dt><dd class="font-medium text-gray-900">{{ $pengajuan->orderDetail->nama_barang }}</dd></div>
+                            <div><dt class="text-gray-500 text-sm">Nama Barang</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->orderDetail->nama_barang }}</dd></div>
                             @endif
                             @if(!empty($pengajuan->orderDetail->unit_penerima))
-                            <div><dt class="text-gray-500">Unit Penerima</dt><dd class="font-medium text-gray-900">{{ $pengajuan->orderDetail->unit_penerima }}</dd></div>
+                            <div><dt class="text-gray-500 text-sm">Unit Penerima</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->orderDetail->unit_penerima }}</dd></div>
                             @endif
                             @if($pengajuan->unitProses)
-                            <div><dt class="text-gray-500">Unit Proses</dt><dd class="font-medium text-gray-900">{{ $pengajuan->unitProses->name ?? $pengajuan->unitProses->code ?? '-' }}</dd></div>
+                            <div><dt class="text-gray-500 text-sm">Unit Proses</dt><dd class="font-medium text-gray-900 text-sm">{{ $pengajuan->unitProses->name ?? $pengajuan->unitProses->code ?? '-' }}</dd></div>
                             @endif
                         </dl>
                     </div>
                     @endif
 
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-100 mt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-100 mt-4">
                         <div class="sm:col-span-1">
-                            <h3 class="text-xs font-medium text-gray-500 mb-1">Foto</h3>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1">Foto</h3>
                             <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-28 flex items-center justify-center">
                                 @if($initialLampiran)
                                     <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto"
@@ -211,19 +212,19 @@
                             </div>
                         </div>
                         <div class="sm:col-span-3">
-                            <h3 class="text-xs font-medium text-gray-500 mb-1">Deskripsi</h3>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1">Deskripsi</h3>
                             <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-28 overflow-auto">
-                                <div class="text-xs text-gray-700 whitespace-pre-line">{{ $pengajuan->deskripsi }}</div>
+                                <div class="text-sm text-gray-700 whitespace-pre-line">{{ $pengajuan->deskripsi }}</div>
                             </div>
                             @if(!empty($pengajuan->follow_up))
-                            <p class="text-xs text-gray-600 mt-1"><span class="font-medium">Tindak Lanjut:</span> {{ $pengajuan->follow_up }}</p>
+                            <p class="text-sm text-gray-600 mt-1"><span class="font-medium">Tindak Lanjut:</span> {{ $pengajuan->follow_up }}</p>
                             @endif
                         </div>
                     </div>
 
                     @if($pengajuan->penugasan && $pengajuan->penugasan->isNotEmpty())
-                    <div class="pt-2 border-t border-gray-100 mt-2">
-                        <h3 class="text-xs font-medium text-gray-500 mb-1">Penanggung Jawab: <span class="text-gray-900">{{ ($activePj ?? $pengajuan->penugasan->where('released_at', null))->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ' }}</span></h3>
+                    <div class="pt-4 border-t border-gray-100 mt-4">
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Penanggung Jawab: <span class="text-gray-900">{{ ($activePj ?? $pengajuan->penugasan->where('released_at', null))->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ' }}</span></h3>
                         @if(!empty($canAssign) && !empty($assignUrl) && !empty($candidates))
                         <form method="POST" action="{{ $assignUrl }}" class="mt-1 flex gap-2">
                             @csrf
@@ -238,85 +239,112 @@
                     </div>
                     @endif
 
-                    <div class="pt-2 border-t border-gray-100">
-                        <h3 class="text-xs font-medium text-gray-500 mb-1">Riwayat Status</h3>
-                        <ol class="flex flex-wrap gap-2 text-[11px]">
-                            <li class="px-2 py-0.5 rounded-full bg-blue-50 ring-1 ring-blue-200">Dibuat · {{ $pengajuan->created_at?->format('d M H:i') }}</li>
-                            @if($pengajuan->started_at)
-                            <li class="px-2 py-0.5 rounded-full bg-purple-50 ring-1 ring-purple-200">Dalam Proses · {{ $pengajuan->started_at->format('d M H:i') }}</li>
-                            @endif
-                            @if($pengajuan->closed_at)
-                            <li class="px-2 py-0.5 rounded-full bg-yellow-50 ring-1 ring-yellow-200">Ditutup · {{ $pengajuan->closed_at->format('d M H:i') }}</li>
-                            @endif
-                            @if($pengajuan->user_confirmed_at)
-                            <li class="px-2 py-0.5 rounded-full bg-green-50 ring-1 ring-green-200">Dikonfirmasi · {{ $pengajuan->user_confirmed_at->format('d M H:i') }}</li>
-                            @endif
-                        </ol>
+                    <div class="pt-4 border-t border-gray-100">
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Riwayat Status</h3>
+                        <div class="bg-gray-50 rounded-lg border border-gray-100 p-3">
+                            <div class="flex items-center">
+                                <div class="relative flex items-center justify-between w-full">
+                                    <div class="relative flex flex-col items-center">
+                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-green-500 text-white">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                        </div>
+                                        <div class="mt-1 text-center">
+                                            <h4 class="text-xs font-medium text-gray-800">Dibuat</h4>
+                                            <p class="text-xs text-gray-500">{{ $pengajuan->created_at?->format('d M H:i') }}</p>
+                                        </div>
+                                        @if($pengajuan->started_at || $pengajuan->closed_at || $pengajuan->user_confirmed_at)<div class="absolute top-3.5 left-full w-full h-0.5 bg-gray-200"></div>@endif
+                                    </div>
+                                    @if($pengajuan->started_at)
+                                    <div class="relative flex flex-col items-center">
+                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-purple-500 text-white">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                                        </div>
+                                        <div class="mt-1 text-center">
+                                            <h4 class="text-xs font-medium text-gray-800">Dalam Proses</h4>
+                                            <p class="text-xs text-gray-500">{{ $pengajuan->started_at->format('d M H:i') }}</p>
+                                        </div>
+                                        @if($pengajuan->closed_at || $pengajuan->user_confirmed_at)<div class="absolute top-3.5 left-full w-full h-0.5 bg-gray-200"></div>@endif
+                                    </div>
+                                    @endif
+                                    @if($pengajuan->closed_at)
+                                    <div class="relative flex flex-col items-center">
+                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-yellow-500 text-white">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                                        </div>
+                                        <div class="mt-1 text-center">
+                                            <h4 class="text-xs font-medium text-gray-800">Ditutup</h4>
+                                            <p class="text-xs text-gray-500">{{ $pengajuan->closed_at->format('d M H:i') }}</p>
+                                        </div>
+                                        @if($pengajuan->user_confirmed_at)<div class="absolute top-3.5 left-full w-full h-0.5 bg-gray-200"></div>@endif
+                                    </div>
+                                    @endif
+                                    @if($pengajuan->user_confirmed_at)
+                                    <div class="relative flex flex-col items-center">
+                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-green-600 text-white">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                        </div>
+                                        <div class="mt-1 text-center">
+                                            <h4 class="text-xs font-medium text-gray-800">Dikonfirmasi</h4>
+                                            <p class="text-xs text-gray-500">{{ $pengajuan->user_confirmed_at->format('d M H:i') }}</p>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="lg:col-span-1 space-y-2">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div class="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="text-xs font-semibold text-gray-800">Riwayat Percakapan</h3>
-                    <span class="text-[11px] text-gray-500">{{ count($allResponses) }} pesan</span>
+        <div class="lg:col-span-1 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-800">Riwayat Percakapan</h3>
+                    <span class="text-sm text-gray-500">{{ count($allResponses) }} pesan</span>
                 </div>
                 @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $pengajuName])
             </div>
-            @if($pengajuan->lampirans->whereNotIn('kind', ['initial'])->isNotEmpty())
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
-                <h3 class="text-xs font-medium text-gray-800 mb-1">Lampiran</h3>
-                <div class="space-y-1 text-xs">
-                    @foreach($pengajuan->lampirans as $lampiran)
-                        <a href="{{ asset('storage/' . $lampiran->path) }}" target="_blank" class="block text-blue-600 hover:underline truncate">
-                            {{ $lampiran->original_name ?? basename($lampiran->path) }} <span class="text-gray-500">({{ $lampiran->kind }})</span>
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
         </div>
     </div>
 
     @if(!empty($replyUrl) && in_array($pengajuan->status, ['in_progress', 'pending', 'open']))
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mt-2">
-        <div class="px-3 py-2 bg-gray-50 border-b border-gray-100">
-            <h3 class="text-xs font-semibold text-gray-800">Balas Pengajuan</h3>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-4">
+        <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-800">Balas Pengajuan</h3>
         </div>
         <div class="p-3">
             <form action="{{ $replyUrl }}" method="POST" class="flex flex-col md:flex-row gap-2" enctype="multipart/form-data" id="replyForm">
                 @csrf
-                <textarea name="message" rows="2" required class="flex-1 px-2.5 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-300" placeholder="Ketik pesan Anda di sini..."></textarea>
+                <textarea name="message" rows="2" required class="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-300" placeholder="Ketik pesan Anda di sini..."></textarea>
                 <div class="flex items-center gap-2">
-                    <label class="inline-flex items-center px-3 py-2 border border-dashed border-gray-300 rounded-md cursor-pointer text-xs">
+                    <label class="inline-flex items-center px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer text-sm">
                         <input type="file" name="photo" accept="image/*" class="hidden" id="reply-photo-upload" onchange="handleImagePreview(this)">
                         <span class="text-blue-600 font-medium">Unggah Foto</span>
                     </label>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium">Kirim Balasan</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">Kirim Balasan</button>
                 </div>
             </form>
-            <div id="image-preview" class="hidden mt-1"><img src="" class="max-h-20 rounded"><button type="button" onclick="removeImage()" class="text-xs text-red-600 ml-1">Hapus</button></div>
+            <div id="image-preview" class="hidden mt-1"><img src="" class="max-h-20 rounded"><button type="button" onclick="removeImage()" class="text-sm text-red-600 ml-1">Hapus</button></div>
         </div>
     </div>
     @endif
 
     @if(!empty($konfirmasiUrl) && $pengajuan->status === 'ditutup' && $konfirmasiFields === 'order')
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-2">
-        <div class="px-3 py-2 border-b border-gray-100 bg-purple-50">
-            <h2 class="text-xs font-semibold text-purple-900">Konfirmasi Selesai</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4">
+        <div class="px-4 py-2.5 border-b border-gray-100 bg-purple-50">
+            <h2 class="text-sm font-semibold text-purple-900">Konfirmasi Selesai</h2>
         </div>
         <div class="p-3">
             <form action="{{ $konfirmasiUrl }}" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row gap-2">
                 @csrf
-                <select name="konfirmasi" required class="rounded-md border border-gray-200 bg-white text-xs py-2 px-2">
+                <select name="konfirmasi" required class="rounded-lg border border-gray-200 bg-white text-sm py-2 px-2">
                     <option value="selesai">✅ Ya, sudah selesai</option>
                     <option value="belum">❌ Belum selesai</option>
                 </select>
-                <textarea name="catatan" rows="1" class="flex-1 rounded-md border border-gray-200 text-xs py-2 px-2" placeholder="Catatan (opsional)..."></textarea>
-                <input type="file" name="lampiran" accept=".jpg,.jpeg,.png" class="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-purple-50 file:text-violet-700">
-                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-md">Kirim Konfirmasi</button>
+                <textarea name="catatan" rows="1" class="flex-1 rounded-lg border border-gray-200 text-sm py-2 px-2" placeholder="Catatan (opsional)..."></textarea>
+                <input type="file" name="lampiran" accept=".jpg,.jpeg,.png" class="text-sm file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-violet-700">
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">Kirim Konfirmasi</button>
             </form>
         </div>
     </div>

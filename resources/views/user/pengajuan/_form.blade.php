@@ -70,6 +70,19 @@
 
     <input type="hidden" name="department_id" value="{{ $defaultDepartmentId }}">
 
+    {{-- Deskripsi (paling awal) --}}
+    <div>
+        <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">
+            Deskripsi / Keluhan <span class="text-red-500">*</span>
+        </label>
+        <textarea name="deskripsi" id="deskripsi" rows="4" required
+            placeholder="Jelaskan masalah / keluhan yang Anda alami..."
+            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 {{ $focusClass }}">{{ old('deskripsi', $isEdit ? $pengajuan->deskripsi : '') }}</textarea>
+        @error('deskripsi')
+            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+        @enderror
+    </div>
+
     {{-- Departemen (read-only) --}}
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Departemen / Unit Pengaju</label>
@@ -127,19 +140,6 @@
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
             @enderror
         </div>
-    </div>
-
-    {{-- Deskripsi --}}
-    <div>
-        <label for="deskripsi" class="block text-sm font-medium text-gray-700 mb-1">
-            Deskripsi / Keluhan <span class="text-red-500">*</span>
-        </label>
-        <textarea name="deskripsi" id="deskripsi" rows="4" required
-            placeholder="Jelaskan masalah / keluhan yang Anda alami..."
-            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 {{ $focusClass }}">{{ old('deskripsi', $isEdit ? $pengajuan->deskripsi : '') }}</textarea>
-        @error('deskripsi')
-            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-        @enderror
     </div>
 
     {{-- Lokasi & Gedung --}}
