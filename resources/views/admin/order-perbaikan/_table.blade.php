@@ -10,9 +10,7 @@
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Peminta
             </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Barang
-            </th>
+
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategori
             </th>
@@ -36,9 +34,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ $order->nama_peminta }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ $order->nama_barang }}
-            </td>
+
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ $order->kategori_order ?? '-' }}
             </td>
@@ -91,7 +87,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 bg-white">
+            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 bg-white">
                 Tidak ada order untuk prioritas ini
             </td>
         </tr>

@@ -234,9 +234,7 @@
                                     <th
                                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         No Order</th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Barang</th>
+
                                     <th
                                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status</th>
@@ -254,7 +252,7 @@
                                             {{ $order->nomor }}
                                         </a>
                                     </td>
-                                    <td class="px-4 py-3 text-xs">{{ Str::limit($order->nama_barang, 30) }}</td>
+
                                     <td class="px-4 py-3">
                                         <span class="px-2 py-1 text-xs leading-4 font-semibold rounded-full 
                                         {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : 
@@ -281,7 +279,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-6 text-center text-gray-500">
+                                    <td colspan="3" class="px-4 py-6 text-center text-gray-500">
                                         <div class="flex flex-col items-center">
                                             <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">

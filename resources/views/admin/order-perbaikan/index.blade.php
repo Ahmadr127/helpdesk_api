@@ -162,10 +162,7 @@
                             class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Peminta
                         </th>
-                        <th scope="col"
-                            class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Barang
-                        </th>
+
                         <th scope="col"
                             class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Lokasi
@@ -196,9 +193,7 @@
                         <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_peminta }}
                         </td>
-                        <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_barang }}
-                        </td>
+
                         <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->lokasi?->name ?? '-' }}
                         </td>
@@ -254,7 +249,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-10 text-center text-sm text-gray-500 bg-white">
+                        <td colspan="7" class="px-6 py-10 text-center text-sm text-gray-500 bg-white">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">

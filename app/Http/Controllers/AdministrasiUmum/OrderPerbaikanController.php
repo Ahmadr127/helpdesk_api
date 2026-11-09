@@ -52,9 +52,9 @@ class OrderPerbaikanController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
                     ->orWhere('pemohon_nama', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
+                    ->orWhere('deskripsi', 'like', "%{$search}%")
+                    ->orWhereHas('orderDetail', fn ($d) => $d->where('nama_barang', 'like', "%{$search}%"));
             });
         }
         if ($request->filled('date_from')) {
@@ -103,8 +103,8 @@ class OrderPerbaikanController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('nama_barang', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
+                    ->orWhere('deskripsi', 'like', "%{$search}%")
+                    ->orWhereHas('orderDetail', fn ($d) => $d->where('nama_barang', 'like', "%{$search}%"));
             });
         }
         if ($request->filled('status') && $request->status !== 'all') {

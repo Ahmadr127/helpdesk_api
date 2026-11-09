@@ -157,10 +157,7 @@
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Penanggung Jawab
                         </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                            Barang
-                        </th>
+
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Prioritas
@@ -193,9 +190,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->nama_penanggung_jawab }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $order->nama_barang }}
-                        </td>
+
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span
                                 class="px-2 py-1 text-xs rounded-full 
@@ -220,7 +215,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="px-6 py-10 text-center text-gray-500">
+                        <td colspan="8" class="px-6 py-10 text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
@@ -304,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading state
         document.querySelector('tbody').innerHTML = `
             <tr>
-                <td colspan="9" class="px-6 py-4 text-center">
+                <td colspan="8" class="px-6 py-4 text-center">
                     <div class="flex justify-center">
                         <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -353,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 document.querySelector('tbody').innerHTML = `
                 <tr>
-                    <td colspan="9" class="px-6 py-4 text-center text-red-500">
+                    <td colspan="8" class="px-6 py-4 text-center text-red-500">
                         Terjadi kesalahan saat memuat data. Silakan coba lagi.
                     </td>
                 </tr>
