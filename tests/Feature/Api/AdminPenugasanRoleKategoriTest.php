@@ -179,11 +179,11 @@ class AdminPenugasanRoleKategoriTest extends TestCase
         $this->assertSame(1, PengajuanPenugasan::where('pengajuan_id', $pengajuan->id)->whereNotNull('released_at')->count());
     }
 
-    public function test_pic_aktif_bisa_melihat_dan_aksi_walau_kategori_di_luar_role(): void
+    public function test_pj_aktif_tetap_tunduk_pada_role_kategori(): void
     {
         $pengajuan = $this->makePengajuan($this->kategoriItB, $this->userBiasa, 'T-1109-007');
 
-        // adminLain ditugaskan sebagai PJ walau kategori B di luar role-nya
+        // adminLain ditugaskan sebagai PJ pada kategori B yang di luar role-nya.
         PengajuanPenugasan::create([
             'pengajuan_id' => $pengajuan->id,
             'user_id' => $this->adminLain->id,
@@ -191,12 +191,13 @@ class AdminPenugasanRoleKategoriTest extends TestCase
             'assigned_at' => now(),
         ]);
 
+        // Scope tetap murni role_kategori: penugasan aktual TIDAK menambah hak lihat.
         $this->withHeaders($this->authHeader($this->adminLain))
             ->getJson("/api/admin/tickets/{$pengajuan->id}")
-            ->assertStatus(200);
+            ->assertStatus(403);
 
         $list = $this->withHeaders($this->authHeader($this->adminLain))->getJson('/api/admin/tickets');
-        $this->assertSame(1, $list->json('meta.total'));
+        $this->assertSame(0, $list->json('meta.total'));
     }
 
     public function test_admin_tanpa_role_kategori_tidak_melihat_pengajuan_apa_pun(): void

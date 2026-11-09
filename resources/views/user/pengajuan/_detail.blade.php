@@ -210,10 +210,10 @@
                         </div>
                     </div>
 
-                    @if($pengajuan->penugasan && $pengajuan->penugasan->isNotEmpty())
+                    @if(($pengajuan->penugasan && $pengajuan->penugasan->isNotEmpty()) || (!empty($canAssign) && !empty($candidates) && $candidates->isNotEmpty()))
                     <div class="pt-4 border-t border-gray-100 mt-4">
                         <h3 class="text-sm font-medium text-gray-500 mb-2">Penanggung Jawab: <span class="text-gray-900">{{ ($activePj ?? $pengajuan->penugasan->where('released_at', null))->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ' }}</span></h3>
-                        @if(!empty($canAssign) && !empty($assignUrl) && !empty($candidates))
+                        @if(!empty($canAssign) && !empty($assignUrl) && !empty($candidates) && $candidates->isNotEmpty())
                         <form method="POST" action="{{ $assignUrl }}" class="mt-1 flex gap-2">
                             @csrf
                             <select name="user_ids[]" multiple class="flex-1 px-2 py-1 rounded-md border border-gray-300 text-xs">

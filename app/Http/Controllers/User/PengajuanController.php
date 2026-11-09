@@ -80,10 +80,14 @@ class PengajuanController extends Controller
         $this->authorize('view', $pengajuan);
         $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
-        $candidates = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->candidates($pengajuan);
-        $activePj = app(\App\Services\Pengajuan\PengajuanPenugasanService::class)->active($pengajuan);
+        // Hanya pemegang scope role_kategori / PJ aktif yang boleh menugaskan.
+        // Pemohon biasa hanya bisa melihat PJ, bukan mengubahnya.
+        $canAssign = auth()->user()->can('act', $pengajuan);
+        $penugasan = app(\App\Services\Pengajuan\PengajuanPenugasanService::class);
+        $candidates = $canAssign ? $penugasan->candidates($pengajuan) : collect();
+        $activePj = $penugasan->active($pengajuan);
 
-        return view('user.pengajuan.show', compact('pengajuan', 'candidates', 'activePj'));
+        return view('user.pengajuan.show', compact('pengajuan', 'candidates', 'activePj', 'canAssign'));
     }
 
     public function edit(Pengajuan $pengajuan)

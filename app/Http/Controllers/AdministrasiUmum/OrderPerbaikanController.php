@@ -46,7 +46,7 @@ class OrderPerbaikanController extends Controller
 
     public function index(Request $request)
     {
-        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori', 'department', 'lokasi']);
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori', 'department', 'lokasi', 'penugasan.user']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -96,7 +96,7 @@ class OrderPerbaikanController extends Controller
 
     public function myorder(Request $request)
     {
-        $query = $this->ipsrsQuery()->with(['pemohon', 'lokasi'])->where('pemohon_id', auth()->id());
+        $query = $this->ipsrsQuery()->with(['pemohon', 'lokasi', 'penugasan.user'])->where('pemohon_id', auth()->id());
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -267,7 +267,19 @@ class OrderPerbaikanController extends Controller
     public function show(Pengajuan $orderPerbaikan)
     {
         $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
-        return view($this->viewNamespace().'.show', ['orderPerbaikan' => $orderPerbaikan]);
+
+        // Kandidat PJ bersumber dari role_kategori (sama seperti API/web pengajuan).
+        $penugasan = app(\App\Services\Pengajuan\PengajuanPenugasanService::class);
+        $canAssign = auth()->user()->can('act', $orderPerbaikan);
+        $candidates = $canAssign ? $penugasan->candidates($orderPerbaikan) : collect();
+        $activePj = $penugasan->active($orderPerbaikan);
+
+        return view($this->viewNamespace().'.show', [
+            'orderPerbaikan' => $orderPerbaikan,
+            'candidates' => $candidates,
+            'activePj' => $activePj,
+            'canAssign' => $canAssign,
+        ]);
     }
 
     public function updatePriority(Request $request, Pengajuan $orderPerbaikan)
@@ -282,13 +294,54 @@ class OrderPerbaikanController extends Controller
     public function updateStatus(Request $request, Pengajuan $orderPerbaikan)
     {
         $validated = $request->validate([
-            'status' => 'required|in:in_progress,pending_confirmation,rejected',
+            // View mengirim 'tutup' untuk "Tutup (Konfirmasi Selesai)" — dulu
+            // tidak ada di aturan in:, sehingga submit selalu gagal validasi.
+            'status' => 'required|in:in_progress,pending_confirmation,rejected,tutup,closed,ditutup',
             'follow_up' => 'nullable|string',
+            'penanggung_jawab_ids' => 'nullable|array',
+            'penanggung_jawab_ids.*' => 'integer|exists:users,id',
         ]);
-        $orderPerbaikan->update([
-            'status' => $validated['status'],
-            'follow_up' => $validated['follow_up'] ?? $orderPerbaikan->follow_up,
-        ]);
+
+        if (! $this->scope->canAct(auth()->user(), $orderPerbaikan)) {
+            abort(403, 'Anda tidak berhak mengubah order ini.');
+        }
+
+        if (! empty($validated['follow_up'])) {
+            $orderPerbaikan->update(['follow_up' => $validated['follow_up']]);
+        }
+
+        $status = $validated['status'];
+
+        if (in_array($status, ['tutup', 'closed', 'ditutup'], true)) {
+            $this->workflow->close(
+                auth()->user(),
+                $orderPerbaikan->fresh(),
+                $validated['follow_up'] ?? 'Pengerjaan selesai, menunggu konfirmasi user.'
+            );
+        } elseif ($status === 'in_progress' && $orderPerbaikan->status === 'open') {
+            $this->workflow->start(auth()->user(), $orderPerbaikan->fresh());
+        } else {
+            $orderPerbaikan->update(['status' => $status]);
+        }
+
+        $newlyAssigned = [];
+        if (array_key_exists('penanggung_jawab_ids', $validated)) {
+            try {
+                $newlyAssigned = $this->service->assignStrict(
+                    auth()->user(),
+                    $orderPerbaikan->fresh(),
+                    $validated['penanggung_jawab_ids'] ?? []
+                );
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                return back()->withErrors($e->errors())->withInput();
+            }
+        }
+
+        if (! empty($newlyAssigned)) {
+            app(\App\Services\Pengajuan\PengajuanNotificationService::class)
+                ->notifyAssigned($orderPerbaikan->fresh(), $newlyAssigned, auth()->user());
+        }
+
         return redirect()->back()->with('success', 'Status order berhasil diperbarui.');
     }
 
@@ -319,19 +372,19 @@ class OrderPerbaikanController extends Controller
 
     public function inProgress(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi'])->where('status', 'in_progress')->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi', 'penugasan.user'])->where('status', 'in_progress')->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.in-progress', ['orders' => $orders, 'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(), 'locations' => \App\Models\Location::all()]);
     }
 
     public function confirmed(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon'])->where('status', 'confirmed')->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'penugasan.user'])->where('status', 'confirmed')->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.confirmed', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 
     public function rejected(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon'])->where('status', 'rejected')->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'penugasan.user'])->where('status', 'rejected')->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.rejected', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 
@@ -346,7 +399,7 @@ class OrderPerbaikanController extends Controller
 
     public function total(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi'])->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi', 'penugasan.user'])->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.total', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 

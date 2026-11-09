@@ -208,10 +208,19 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-800 mb-1">Penanggung Jawab</label>
-                                    <input type="text" name="nama_penanggung_jawab" required
-                                        value="{{ old('nama_penanggung_jawab', $orderPerbaikan->nama_penanggung_jawab ?? auth()->user()->name) }}"
-                                        class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all"
-                                        placeholder="Masukkan nama penanggung jawab">
+                                    @if(!empty($canAssign) && $candidates->isNotEmpty())
+                                        <select name="penanggung_jawab_ids[]" multiple size="{{ min($candidates->count(), 5) }}"
+                                            class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all">
+                                            @foreach($candidates as $candidate)
+                                                <option value="{{ $candidate->id }}" @selected(($activePj ?? collect())->pluck('user_id')->contains($candidate->id))>{{ $candidate->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <p class="mt-1 text-xs text-gray-500">Kandidat PJ mengikuti kategori role. Ctrl/Cmd untuk pilih lebih dari satu.</p>
+                                    @else
+                                        <p class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                                            {{ ($activePj ?? collect())->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ. Kategori ini belum memiliki role PJ.' }}
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                             <div>

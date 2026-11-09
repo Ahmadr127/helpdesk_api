@@ -99,31 +99,37 @@ class AdminPengajuanController extends BaseApiController
     /**
      * Transisi status lewat workflow agar started_at/closed_at/histori/notifikasi
      * konsisten dengan web.
+     *
+     * @return bool true bila workflow sudah mengirim notifikasi sendiri
+     *              (close/start), sehingga pemanggil tidak perlu mengirim lagi.
      */
-    protected function applyStatus(User $actor, Pengajuan $pengajuan, string $status, ?string $notes = null): void    {
+    protected function applyStatus(User $actor, Pengajuan $pengajuan, string $status, ?string $notes = null): bool
+    {
         $status = $this->normalizeStatus($status);
         $current = $pengajuan->status;
 
         if ($status === $current) {
-            return;
+            return false;
         }
 
         if ($status === 'ditutup') {
             if (in_array($current, ['open', 'in_progress'], true)) {
+                // close() sudah memanggil notifyStatusChanged('closed').
                 $this->workflow->close($actor, $pengajuan->fresh(), $notes);
 
-                return;
+                return true;
             }
             $pengajuan->update(['status' => 'ditutup', 'closed_at' => $pengajuan->closed_at ?: now()]);
             $this->logTransition($actor, $pengajuan, 'ditutup', $notes);
 
-            return;
+            return false;
         }
 
         if ($status === 'in_progress' && $current === 'open') {
+            // start() sudah memanggil notifyStatusChanged('started').
             $this->workflow->start($actor, $pengajuan->fresh());
 
-            return;
+            return true;
         }
 
         $extra = match ($status) {
@@ -134,6 +140,8 @@ class AdminPengajuanController extends BaseApiController
 
         $pengajuan->update(['status' => $status, ...$extra]);
         $this->logTransition($actor, $pengajuan, $status, $notes);
+
+        return false;
     }
 
     protected function logTransition(User $actor, Pengajuan $pengajuan, string $status, ?string $notes = null): void
@@ -242,7 +250,7 @@ class AdminPengajuanController extends BaseApiController
 
         try {
             $this->service->addMessage($request->user(), $pengajuan, $validated['notes'], []);
-            $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes']);
+            $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes']);
 
             $newlyAssigned = [];
             if (array_key_exists('penanggung_jawab_ids', $validated)) {
@@ -254,7 +262,9 @@ class AdminPengajuanController extends BaseApiController
             }
 
             $pengajuan->refresh()->load($this->relations());
-            $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'responded');
+            if (! $workflowNotified) {
+                $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'responded');
+            }
             if (! empty($newlyAssigned)) {
                 $this->notificationService->notifyAssigned($pengajuan, $newlyAssigned, $request->user());
             }
@@ -291,8 +301,9 @@ class AdminPengajuanController extends BaseApiController
             }
 
             $statusChanged = false;
+            $workflowNotified = false;
             if (isset($validated['status'])) {
-                $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? null);
+                $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? null);
                 $statusChanged = true;
             }
 
@@ -306,7 +317,7 @@ class AdminPengajuanController extends BaseApiController
             }
 
             $pengajuan->refresh()->load($this->relations());
-            if ($statusChanged) {
+            if ($statusChanged && ! $workflowNotified) {
                 $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'status_updated');
             }
             if (! empty($newlyAssigned)) {
@@ -346,7 +357,7 @@ class AdminPengajuanController extends BaseApiController
                 $pengajuan->update(['follow_up' => $validated['follow_up']]);
             }
 
-            $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
+            $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
 
             $newlyAssigned = [];
             if (array_key_exists('penanggung_jawab_ids', $validated)) {
@@ -358,7 +369,9 @@ class AdminPengajuanController extends BaseApiController
             }
 
             $pengajuan->refresh()->load($this->relations());
-            $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'status_updated');
+            if (! $workflowNotified) {
+                $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'status_updated');
+            }
             if (! empty($newlyAssigned)) {
                 $this->notificationService->notifyAssigned($pengajuan, $newlyAssigned, $request->user());
             }

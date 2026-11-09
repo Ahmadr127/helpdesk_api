@@ -15,7 +15,7 @@
     'konfirmasiFields' => (($pengajuan->kategori?->jenis?->code ?? null) === 'IPSRS') ? 'order' : 'ticket',
     'candidates' => $candidates ?? collect(),
     'activePj' => $activePj ?? collect(),
-    'canAssign' => true,
+    'canAssign' => $canAssign ?? false,
     'assignUrl' => route('user.pengajuan.assign', $pengajuan),
 ])
 @endsection
