@@ -34,6 +34,33 @@ class PengajuanHistori extends Model
         return $this->belongsTo(User::class, 'actor_id');
     }
 
+    /**
+     * Tentukan jenis pelaku berdasarkan role user, bukan hardcode 'user'.
+     * Dipakai saat menulis histori agar timeline menampilkan admin dengan benar.
+     */
+    public static function actorTypeFor(?User $actor): string
+    {
+        if ($actor === null) {
+            return 'system';
+        }
+
+        if ($actor->isAdminIT() || $actor->isAdminUmum()) {
+            return 'admin';
+        }
+
+        // Fallback: siapa pun yang punya permission pengelola dianggap admin,
+        // selaras dengan penentuan sender_type pada PengajuanService.
+        if (
+            $actor->hasPermission('permission')
+            || $actor->hasPermission('dashboard.it')
+            || $actor->hasPermission('dashboard.ipsrs')
+        ) {
+            return 'admin';
+        }
+
+        return 'user';
+    }
+
     public function lampirans(): HasMany
     {
         return $this->hasMany(PengajuanLampiran::class, 'histori_id');

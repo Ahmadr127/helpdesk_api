@@ -61,7 +61,7 @@ class PengajuanService
                 'action' => 'created',
                 'notes' => $data['keterangan'] ?? 'Pengajuan dibuat.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             $this->attachmentService->store(
@@ -136,10 +136,28 @@ class PengajuanService
                 'action' => 'updated',
                 'notes' => $data['keterangan'] ?? 'Pengajuan diperbarui.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
+        });
+    }
+
+    /**
+     * Ganti lampiran awal (kind 'initial') milik pengajuan.
+     * Dipakai admin saat mengubah data pengajuan lewat endpoint submission.
+     */
+    public function replaceInitialAttachments(User $actor, Pengajuan $pengajuan, array $files = []): void
+    {
+        $files = array_values(array_filter($files));
+
+        if (empty($files)) {
+            return;
+        }
+
+        DB::transaction(function () use ($actor, $pengajuan, $files): void {
+            $pengajuan->lampirans()->where('kind', 'initial')->delete();
+            $this->attachmentService->store($pengajuan, $files, 'initial', $actor);
         });
     }
 
@@ -159,7 +177,7 @@ class PengajuanService
                 'action' => 'deleted',
                 'notes' => 'Pengajuan dihapus.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             $pengajuan->delete();
@@ -214,7 +232,7 @@ class PengajuanService
                 'action' => 'assigned',
                 'notes' => 'Penugasan pengajuan diperbarui.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
                 'metadata' => ['user_ids' => array_values(array_map('intval', $userIds))],
             ]);
         });
@@ -239,7 +257,7 @@ class PengajuanService
                 'action' => 'assigned',
                 'notes' => 'Penugasan pengajuan diperbarui.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
                 'metadata' => ['user_ids' => array_values(array_map('intval', $userIds))],
             ]);
 

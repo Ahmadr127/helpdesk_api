@@ -64,7 +64,7 @@ class PengajuanController extends BaseApiController
     {
         return [
             'kategori.jenis', 'pemohon', 'department', 'lokasi', 'building',
-            'penugasan.user', 'historis', 'pesans.sender', 'lampirans',
+            'penugasan.user', 'historis.actor', 'pesans.sender', 'pesans.lampirans', 'lampirans',
         ];
     }
 

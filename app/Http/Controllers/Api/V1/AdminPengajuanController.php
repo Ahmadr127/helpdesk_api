@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\BaseApiController;
 use App\Http\Resources\Api\PengajuanResource;
 use App\Models\Pengajuan;
+use App\Models\PengajuanHistori;
 use App\Models\User;
 use App\Services\Pengajuan\PengajuanNotificationService;
 use App\Services\Pengajuan\PengajuanPenugasanService;
@@ -57,7 +58,7 @@ class AdminPengajuanController extends BaseApiController
     {
         return [
             'kategori.jenis', 'pemohon', 'department', 'lokasi', 'building',
-            'penugasan.user', 'penugasan.role', 'historis', 'pesans.sender', 'lampirans',
+            'penugasan.user', 'penugasan.role', 'historis.actor', 'pesans.sender', 'pesans.lampirans', 'lampirans',
         ];
     }
 
@@ -86,6 +87,48 @@ class AdminPengajuanController extends BaseApiController
         }
 
         return null;
+    }
+
+    /**
+     * Kumpulkan file lampiran dari request (mendukung `photo` tunggal dan
+     * `photos[]` / `lampirans[]` array). Dipakai bersama oleh endpoint admin
+     * agar lampiran dari mobile tidak lagi dibuang diam-diam.
+     *
+     * @return array<int, \Illuminate\Http\UploadedFile>
+     */
+    protected function uploadedFiles(Request $request): array
+    {
+        $files = [];
+
+        foreach (['photos', 'lampirans'] as $key) {
+            $raw = $request->file($key);
+            if (is_array($raw)) {
+                foreach ($raw as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        $files[] = $file;
+                    }
+                }
+            }
+        }
+
+        $single = $request->file('photo');
+        if ($single instanceof \Illuminate\Http\UploadedFile) {
+            $files[] = $single;
+        }
+
+        return array_values(array_filter($files));
+    }
+
+    /** Aturan validasi lampiran yang dipakai semua endpoint tulis. */
+    protected function attachmentRules(): array
+    {
+        return [
+            'photo' => 'nullable|image|max:5120',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|max:5120',
+            'lampirans' => 'nullable|array|max:3',
+            'lampirans.*' => 'image|max:5120',
+        ];
     }
 
     protected function normalizeStatus(string $status): string
@@ -151,7 +194,7 @@ class AdminPengajuanController extends BaseApiController
             'action' => 'status_updated',
             'notes' => $notes ?: 'Status pengajuan diperbarui menjadi '.$status.'.',
             'actor_id' => $actor->id,
-            'actor_type' => 'user',
+            'actor_type' => PengajuanHistori::actorTypeFor($actor),
         ]);
     }
 
@@ -246,10 +289,16 @@ class AdminPengajuanController extends BaseApiController
             'status' => 'required|in:in_progress,pending_confirmation,confirmed,rejected,ditutup,tutup,closed',
             'penanggung_jawab_ids' => 'nullable|array',
             'penanggung_jawab_ids.*' => 'integer|exists:users,id',
+            ...$this->attachmentRules(),
         ]);
 
         try {
-            $this->service->addMessage($request->user(), $pengajuan, $validated['notes'], []);
+            $this->service->addMessage(
+                $request->user(),
+                $pengajuan,
+                $validated['notes'],
+                $this->uploadedFiles($request)
+            );
             $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes']);
 
             $newlyAssigned = [];
@@ -293,11 +342,17 @@ class AdminPengajuanController extends BaseApiController
             'status' => 'nullable|in:open,in_progress,pending_confirmation,confirmed,rejected,ditutup,tutup,closed',
             'penanggung_jawab_ids' => 'nullable|array',
             'penanggung_jawab_ids.*' => 'integer|exists:users,id',
+            ...$this->attachmentRules(),
         ]);
 
         try {
             if (isset($validated['notes'])) {
-                $this->service->addMessage($request->user(), $pengajuan, $validated['notes'], []);
+                $this->service->addMessage(
+                    $request->user(),
+                    $pengajuan,
+                    $validated['notes'],
+                    $this->uploadedFiles($request)
+                );
             }
 
             $statusChanged = false;
@@ -350,11 +405,23 @@ class AdminPengajuanController extends BaseApiController
             'notes' => 'nullable|string',
             'penanggung_jawab_ids' => 'nullable|array',
             'penanggung_jawab_ids.*' => 'integer|exists:users,id',
+            ...$this->attachmentRules(),
         ]);
 
         try {
             if (! empty($validated['follow_up'])) {
                 $pengajuan->update(['follow_up' => $validated['follow_up']]);
+            }
+
+            // Lampiran pada update status disimpan sebagai pesan admin agar
+            // tidak hilang (sebelumnya file diabaikan sepenuhnya).
+            $files = $this->uploadedFiles($request);
+            $statusNote = $validated['notes'] ?? $validated['follow_up'] ?? null;
+            if (! empty($files) && ($statusNote === null || trim((string) $statusNote) === '')) {
+                $statusNote = 'Status diperbarui menjadi '.$validated['status'].'.';
+            }
+            if (! empty($files)) {
+                $this->service->addMessage($request->user(), $pengajuan, (string) $statusNote, $files);
             }
 
             $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
@@ -426,6 +493,7 @@ class AdminPengajuanController extends BaseApiController
             'prioritas' => 'nullable|in:low,medium,high',
             'penanggung_jawab_ids' => 'nullable|array',
             'penanggung_jawab_ids.*' => 'integer|exists:users,id',
+            ...$this->attachmentRules(),
         ]);
 
         try {
@@ -454,6 +522,12 @@ class AdminPengajuanController extends BaseApiController
             }
             if ($payload !== []) {
                 $pengajuan->update($payload);
+            }
+
+            // Lampiran pengganti (kind 'initial') bila admin mengunggah foto baru.
+            $files = $this->uploadedFiles($request);
+            if (! empty($files)) {
+                $this->service->replaceInitialAttachments($request->user(), $pengajuan, $files);
             }
 
             $newlyAssigned = [];

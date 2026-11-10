@@ -38,7 +38,7 @@ class PengajuanWorkflowService
                 'action' => 'started',
                 'notes' => 'Pengajuan dimulai.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             return $pengajuan->fresh(['historis']);
@@ -71,7 +71,7 @@ class PengajuanWorkflowService
                 'action' => 'closed',
                 'notes' => $notes ?: 'Pengajuan ditutup dan menunggu konfirmasi.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             return $pengajuan->fresh(['historis']);
@@ -103,7 +103,7 @@ class PengajuanWorkflowService
                 'action' => 'admin_confirmed',
                 'notes' => $notes ?: 'Pengajuan dikonfirmasi admin.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             return $pengajuan->fresh(['historis']);
@@ -135,7 +135,7 @@ class PengajuanWorkflowService
                 'action' => 'admin_rejected',
                 'notes' => $notes ?: 'Pengajuan ditolak admin.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             return $pengajuan->fresh(['historis']);
@@ -170,7 +170,7 @@ class PengajuanWorkflowService
                     'action' => 'user_confirmed',
                     'notes' => $notes ?: 'Pengajuan dikonfirmasi pemilik.',
                     'actor_id' => $actor->id,
-                    'actor_type' => 'user',
+                    'actor_type' => PengajuanHistori::actorTypeFor($actor),
                 ]);
 
                 $this->attachmentService->store(
@@ -197,7 +197,7 @@ class PengajuanWorkflowService
                 'action' => 'user_rejected_confirmation',
                 'notes' => $notes ?: 'Pengajuan belum selesai, dikembalikan ke in_progress.',
                 'actor_id' => $actor->id,
-                'actor_type' => 'user',
+                'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
             $this->attachmentService->store(

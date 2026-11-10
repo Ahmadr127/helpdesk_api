@@ -109,12 +109,33 @@ class PengajuanResource extends JsonResource
 
         $pesans = $this->whenLoaded('pesans', function () {
             return $this->pesans->map(function ($p) {
+                $lampiran = $p->relationLoaded('lampirans')
+                    ? $p->lampirans->map(function ($l) {
+                        $path = $l->path ?? null;
+
+                        return [
+                            'id' => $l->id,
+                            'path' => $path,
+                            'url' => $path ? Storage::disk('public')->url($path) : null,
+                            'kind' => $l->kind ?? null,
+                            'original_name' => $l->original_name ?? null,
+                        ];
+                    })->values()
+                    : collect();
+
+                $urls = $lampiran->pluck('url')->filter()->values()->all();
+
                 return [
                     'id' => $p->id,
                     'body' => $p->body,
                     'sender_type' => $p->sender_type ?? null,
                     'sender' => $p->relationLoaded('sender') && $p->sender ? ['id' => $p->sender->id, 'name' => $p->sender->name] : null,
                     'created_at' => $p->created_at,
+                    // Lampiran pesan (mis. foto tanggapan admin) — dipakai Flutter.
+                    'lampirans' => $lampiran,
+                    'photos' => $lampiran,
+                    'photo_urls' => $urls,
+                    'photo_url' => $urls[0] ?? null,
                 ];
             })->values();
         });
@@ -148,12 +169,16 @@ class PengajuanResource extends JsonResource
         $timeline = $this->whenLoaded('historis', function () {
             return $this->historis->map(function ($h) {
                 $isAdmin = ($h->actor_type ?? '') === 'admin';
-                $by = $h->relationLoaded('actor') && $h->actor
+                $actorLoaded = $h->relationLoaded('actor') && $h->actor;
+                $by = $actorLoaded
                     ? $h->actor->name
                     : ($isAdmin ? 'Admin' : ($this->pemohon_nama ?? 'User'));
+
                 return [
                     'at' => $h->created_at,
                     'by' => $by,
+                    'actor_id' => $h->actor_id,
+                    'actor_name' => $actorLoaded ? $h->actor->name : null,
                     'action' => $h->action ?? $h->status ?? 'updated',
                     'notes' => $h->notes,
                     'is_admin' => $isAdmin,
