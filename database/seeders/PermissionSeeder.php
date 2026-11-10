@@ -68,6 +68,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Kelola User', 'slug' => 'user', 'group' => 'User Management', 'description' => 'Lihat & kelola users'],
             // Kelola matriks permission per role
             ['name' => 'Kelola Permission', 'slug' => 'permission', 'group' => 'User Management', 'description' => 'Kelola permission per role & user'],
+            ['name' => 'Kelola Role', 'slug' => 'role', 'group' => 'User Management', 'description' => 'Kelola role dan penugasan permission per role'],
             // Reports
             ['name' => 'Laporan', 'slug' => 'report', 'group' => 'Reports', 'description' => 'Lihat & generate laporan'],
             ['name' => 'Report SIRS', 'slug' => 'report.sirs', 'group' => 'Reports', 'description' => 'Akses Report SIRS'],
@@ -128,7 +129,7 @@ class PermissionSeeder extends Seeder
                 'dashboard.it', 'layout.admin',
                 'ticket', 'order',
                 'myticket', 'myorder',
-                'master', 'user', 'permission',
+                'master', 'user', 'permission', 'role',
                 'report', 'report.sirs',
                 'feedback', 'knowledge',
                 'notification', 'fcm',

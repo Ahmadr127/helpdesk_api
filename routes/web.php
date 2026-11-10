@@ -148,7 +148,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/user/{user}', [\App\Http\Controllers\Admin\PermissionController::class, 'updateUser'])->name('user.update');
     });
 
-    Route::resource('roles', RoleController::class)->middleware('permission:permission');
+    Route::resource('roles', RoleController::class)->middleware('permission:role');
 
         // Master Data Routes - GREEN not for admin IT? Keep BLUE for IT but permission protected
         // only() : controller hanya punya index/store/update/destroy (+toggle-status positions).
