@@ -40,11 +40,13 @@
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select name="status" id="status"
                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                        <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>Semua Status</option>
-                        <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Dibuka</option>
-                        <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Dalam
-                            Proses</option>
-                        <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Ditutup</option>
+                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>Semua Status
+                        </option>
+                        @foreach(\App\Support\TicketStatus::options() as $value => $label)
+                        <option value="{{ $value }}" @selected(\App\Support\TicketStatus::normalize(request('status')) === $value)>
+                            {{ $label }}
+                        </option>
+                        @endforeach
                     </select>
                 </div>
             </div>

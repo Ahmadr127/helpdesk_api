@@ -62,12 +62,37 @@
                     </div>
                 </div>
 
+                <div class="w-full md:w-auto">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <div class="relative">
+                        <select name="status" id="status"
+                            class="w-full md:w-48 px-4 py-2.5 border border-gray-200 rounded-lg appearance-none pr-10 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors">
+                            <option value="">Semua Status</option>
+                            @foreach(\App\Support\TicketStatus::options() as $value => $label)
+                            <option value="{{ $value }}"
+                                @selected(\App\Support\TicketStatus::normalize(request('status')) === $value)>
+                                {{ $label }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="w-full md:w-auto flex items-end">
                     <button type="submit"
                         class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                         Terapkan Filter
                     </button>
-                    @if(request('category') || request('priority'))
+                    @if(request('category') || request('priority') || request('status'))
                     <a href="{{ route('user.ticket.index') }}"
                         class="ml-3 bg-gray-100 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-200 transition-colors">
                         Bersihkan Filter

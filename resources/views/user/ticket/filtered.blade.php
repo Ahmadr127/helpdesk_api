@@ -19,11 +19,8 @@
     </div>
 
     <h2 class="my-6 text-2xl font-semibold text-gray-700">
-        {{ $status === 'all' ? 'Semua Tiket' : 
-           ($status === 'open' ? 'Tiket Dibuka' : 
-           ($status === 'in_progress' ? 'Tiket Diproses' : 
-           ($status === 'ditutup' ? 'Tiket Menunggu Konfirmasi' : 'Tiket Selesai'))) }}
-        </h2>
+        {{ $status === 'all' ? 'Semua Tiket' : \App\Support\TicketStatus::label($status).' Tiket' }}
+    </h2>
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-8">
@@ -173,16 +170,10 @@
                         <td class="px-4 py-3">{{ $ticket->department?->name }}</td>
                         <td class="px-4 py-3">{{ $ticket->building?->name }}</td>
                         <td class="px-4 py-3">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}
-                                {{ $ticket->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                {{ $ticket->status === 'ditutup' ? 'bg-purple-100 text-purple-800' : '' }}
-                                {{ $ticket->status === 'confirmed' ? 'bg-green-100 text-green-800' : '' }}">
-                                {{ $ticket->status === 'ditutup' ? 'Menunggu Konfirmasi' : 
-                                   ($ticket->status === 'in_progress' ? 'Diproses' : 
-                                   ($ticket->status === 'confirmed' ? 'Selesai' : 'Dibuka')) }}
-                        </span>
-                    </td>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full {{ \App\Support\TicketStatus::badgeClass($ticket->status) }}">
+                                {{ \App\Support\TicketStatus::label($ticket->status) }}
+                            </span>
+                        </td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $ticket->priority === 'low' ? 'bg-green-100 text-green-800' : '' }}

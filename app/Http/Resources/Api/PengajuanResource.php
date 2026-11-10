@@ -7,6 +7,45 @@ use Illuminate\Support\Facades\Storage;
 
 class PengajuanResource extends JsonResource
 {
+    /**
+     * Status pengajuan pada saat pesan dibuat.
+     *
+     * `pengajuan_pesan` tidak punya kolom status, jadi status diturunkan dari
+     * histori terakhir yang terjadi sebelum/tepat pada waktu pesan dibuat.
+     * Pesan yang lebih tua dari histori pertama memakai status histori pertama
+     * (perilaku "status saat itu" tetap masuk akal). Null bila tidak ada
+     * histori sama sekali -> Flutter menyembunyikan chip.
+     */
+    protected function statusOfMessage($pesan, $historis): ?string
+    {
+        if ($historis->isEmpty()) {
+            return null;
+        }
+
+        $at = $pesan->created_at;
+        if (! $at) {
+            return null;
+        }
+
+        $before = null;
+        foreach ($historis as $h) {
+            if (! $h->created_at) {
+                continue;
+            }
+            if ($h->created_at->lessThanOrEqualTo($at)) {
+                $before = $h;
+            } else {
+                break;
+            }
+        }
+
+        // Pesan lebih tua dari histori pertama -> pakai histori pertama agar
+        // bubble paling awal tetap punya konteks status.
+        $chosen = $before ?? $historis->first();
+
+        return $chosen->status ? (string) $chosen->status : null;
+    }
+
     public function toArray($request): array
     {
         $user = $request->user();
@@ -108,7 +147,16 @@ class PengajuanResource extends JsonResource
         });
 
         $pesans = $this->whenLoaded('pesans', function () {
-            return $this->pesans->map(function ($p) {
+            // `pengajuan_pesan` tidak punya kolom status, jadi status per
+            // pesan diturunkan dari `pengajuan_histori` (punya kolom status)
+            // memakai relasi yang sudah eager-loaded — tanpa query tambahan.
+            $historis = $this->relationLoaded('historis')
+                ? $this->historis
+                    ->sortBy(fn ($h) => sprintf('%s|%010d', $h->created_at?->format('Y-m-d H:i:s') ?? '', $h->id))
+                    ->values()
+                : collect();
+
+            return $this->pesans->map(function ($p) use ($historis) {
                 $lampiran = $p->relationLoaded('lampirans')
                     ? $p->lampirans->map(function ($l) {
                         $path = $l->path ?? null;
@@ -124,6 +172,7 @@ class PengajuanResource extends JsonResource
                     : collect();
 
                 $urls = $lampiran->pluck('url')->filter()->values()->all();
+                $status = $this->statusOfMessage($p, $historis);
 
                 return [
                     'id' => $p->id,
@@ -131,6 +180,10 @@ class PengajuanResource extends JsonResource
                     'sender_type' => $p->sender_type ?? null,
                     'sender' => $p->relationLoaded('sender') && $p->sender ? ['id' => $p->sender->id, 'name' => $p->sender->name] : null,
                     'created_at' => $p->created_at,
+                    // Status pengajuan saat balasan ini dibuat — dipakai
+                    // Flutter untuk chip status di setiap bubble replies.
+                    'status' => $status,
+                    'ticket_status' => $status,
                     // Lampiran pesan (mis. foto tanggapan admin) — dipakai Flutter.
                     'lampirans' => $lampiran,
                     'photos' => $lampiran,

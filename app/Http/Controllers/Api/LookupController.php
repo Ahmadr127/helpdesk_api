@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Models\Building;
 use App\Models\Category;
 use App\Models\Department;
-use App\Models\KategoriOrder;
 use App\Models\KategoriPengajuan;
 use App\Models\Location;
 use App\Models\Position;
@@ -17,21 +16,46 @@ class LookupController extends BaseApiController
 {
     public function categories(Request $request)
     {
-        // Unified pengajuan: get all active KategoriPengajuan (all jenis), no jenis filter.
-        $query = KategoriPengajuan::with('jenis')->where('status', 1);
+        // Unified pengajuan: get all active KategoriPengajuan (all jenis) by default.
+        // Relasi yang benar adalah jenisList (pivot kategori_jenis). `jenis` hanyalah
+        // accessor BC, sehingga eager-load('jenis') akan melempar RelationNotFoundException.
+        $query = KategoriPengajuan::with('jenisList')->where('status', 1);
         if ($request->filled('search')) {
             $query->where('name', 'like', "%{$request->search}%");
+        }
+        // Filter jenis opsional, mis. ?jenis=IT / ?jenis=IPSRS.
+        if ($request->filled('jenis')) {
+            $jenisCode = strtoupper((string) $request->jenis);
+            $query->whereHas('jenisList', fn ($q) => $q->where('code', $jenisCode));
         }
         $items = $query->orderBy('name')->get();
 
         if ($items->isNotEmpty()) {
-            $mapped = $items->map(fn ($k) => [
-                'id' => $k->id,
-                'name' => $k->name,
-                'code' => $k->code ?? null,
-                'jenis_id' => $k->jenis_id,
-                'jenis' => $k->jenis ? ['id' => $k->jenis->id, 'code' => $k->jenis->code, 'name' => $k->jenis->name] : null,
-            ]);
+            $mapped = $items->map(function ($k) {
+                $jenisList = $k->jenisList;
+
+                return [
+                    'id' => $k->id,
+                    'name' => $k->name,
+                    'code' => $k->code ?? null,
+                    // BC: kategori kini bisa punya banyak jenis, field ini
+                    // mengikuti jenis pertama agar kontrak API lama tetap jalan.
+                    'jenis_id' => $k->jenis_id,
+                    'jenis' => $jenisList->isNotEmpty()
+                        ? [
+                            'id' => $jenisList->first()->id,
+                            'code' => $jenisList->first()->code,
+                            'name' => $jenisList->first()->name,
+                        ]
+                        : null,
+                    'jenis_list' => $jenisList->map(fn ($j) => [
+                        'id' => $j->id,
+                        'code' => $j->code,
+                        'name' => $j->name,
+                    ])->values()->all(),
+                    'jenis_codes' => $k->jenis_codes,
+                ];
+            });
             return $this->success($mapped, 'Categories');
         }
 
@@ -101,12 +125,44 @@ class LookupController extends BaseApiController
 
     public function kategoriOrders(Request $request)
     {
-        $query = KategoriOrder::where('status', 1);
+        // Kategori order (IPSRS/RT) WAJIB memakai scope umum() — helper yang
+        // sama dengan web (AdministrasiUmumController). Sebelumnya endpoint ini
+        // membaca tabel legacy `kategori_order` yang ID-nya bentrok dengan
+        // `kategori_pengajuan`, sehingga order bisa tersimpan dengan kategori
+        // yang salah (mis. id 2 = "Pengadaan" legacy vs "Teramedik" unified).
+        $query = KategoriPengajuan::with('jenisList')->where('status', 1)->umum();
         if ($request->filled('search')) {
             $query->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($request->search).'%']);
         }
+        if ($request->filled('jenis')) {
+            $jenisCode = strtoupper((string) $request->jenis);
+            $query->whereHas('jenisList', fn ($q) => $q->where('code', $jenisCode));
+        }
 
-        return $this->success($query->orderBy('name', 'asc')->get(), 'Kategori Order');
+        $items = $query->orderBy('name', 'asc')->get();
+
+        return $this->success(
+            $items->map(fn ($k) => [
+                'id' => $k->id,
+                'name' => $k->name,
+                'code' => $k->code ?? null,
+                'jenis_id' => $k->jenis_id,
+                'jenis' => $k->jenisList->isNotEmpty()
+                    ? [
+                        'id' => $k->jenisList->first()->id,
+                        'code' => $k->jenisList->first()->code,
+                        'name' => $k->jenisList->first()->name,
+                    ]
+                    : null,
+                'jenis_list' => $k->jenisList->map(fn ($j) => [
+                    'id' => $j->id,
+                    'code' => $j->code,
+                    'name' => $j->name,
+                ])->values()->all(),
+                'jenis_codes' => $k->jenis_codes,
+            ]),
+            'Kategori Order'
+        );
     }
 
     public function priorities()
@@ -123,9 +179,21 @@ class LookupController extends BaseApiController
 
     public function ticketStatuses()
     {
-        return $this->success([
-            'open', 'pending', 'in_progress', 'closed', 'confirmed',
-        ], 'Ticket Statuses');
+        // Pakai sumber kebenaran tunggal (App\Support\TicketStatus) supaya
+        // filter status di mobile lengkap: open, in_progress, ditutup,
+        // confirmed, rejected — termasuk label Bahasa Indonesia.
+        return $this->success(
+            collect(\App\Support\TicketStatus::canonical())
+                ->map(fn (string $status) => [
+                    'id' => $status,
+                    'value' => $status,
+                    'name' => \App\Support\TicketStatus::label($status),
+                    'label' => \App\Support\TicketStatus::label($status),
+                ])
+                ->values()
+                ->all(),
+            'Ticket Statuses'
+        );
     }
 
     public function orderStatuses()

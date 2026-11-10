@@ -472,9 +472,13 @@
 
 .conversation-container {
     min-height: 350px;
-    height: 100%;
+    /* Jangan pakai height:100% + JS yang menyamakan tinggi dengan kolom kiri:
+       itu membuat kolom kanan ikut memanjang tanpa batas sehingga area pesan
+       tidak pernah overflow. Cukup batasi tinggi maksimum. */
+    max-height: calc(100vh - 6rem);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -517,24 +521,14 @@ function removeImage() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    function adjustHeight() {
-        const ticketContainer = document.querySelector('.ticket-container');
-        const conversationContainer = document.querySelector('.conversation-container');
-
-        if (ticketContainer && conversationContainer) {
-            const ticketHeight = ticketContainer.scrollHeight;
-            conversationContainer.style.height = `${ticketHeight}px`;
-        }
+    // JANGAN menyamakan tinggi kolom percakapan dengan kolom kiri: itu memaksa
+    // container tumbuh mengikuti isi sehingga overflow-y tidak pernah aktif.
+    // Tinggi kini dibatasi lewat CSS (.conversation-messages max-height).
+    // Yang dibutuhkan hanya: mulai dari pesan terbaru (paling bawah).
+    const messages = document.querySelector('.conversation-messages');
+    if (messages) {
+        messages.scrollTop = messages.scrollHeight;
     }
-
-    // Run on page load
-    adjustHeight();
-
-    // Run on window resize
-    window.addEventListener('resize', adjustHeight);
-
-    // Run when images load
-    window.addEventListener('load', adjustHeight);
 });
 
 function openTicketPhoto(e, src) {

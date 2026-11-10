@@ -8,6 +8,7 @@ use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Support\TicketStatus;
 use Illuminate\Http\Request;
 
 class TicketAdminController extends Controller
@@ -54,7 +55,12 @@ class TicketAdminController extends Controller
             }
 
             if ($request->filled('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
+                $status = TicketStatus::normalize($request->status);
+                if ($status !== null) {
+                    // `closed`/`tutup`/`pending` adalah alias lama; DB menyimpan
+                    // `ditutup`. Tanpa normalisasi filter ini selalu 0 baris.
+                    $query->where('status', $status);
+                }
             }
 
             $tickets = $query->orderBy('created_at', 'desc')
@@ -197,10 +203,9 @@ class TicketAdminController extends Controller
         $query = $this->itQuery()->with(['pemohon', 'kategori', 'department'])->latest();
 
         if ($request->filled('status')) {
-            if ($request->status === 'pending') {
-                $query->where('status', 'ditutup')->where('user_confirmation', false);
-            } else {
-                $query->where('status', $request->status);
+            $status = TicketStatus::normalize($request->status);
+            if ($status !== null) {
+                $query->where('status', $status);
             }
         }
         if ($request->filled('start_date')) {
@@ -209,11 +214,15 @@ class TicketAdminController extends Controller
         if ($request->filled('end_date')) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }
+        // Filter konfirmasi pengguna — INDEPENDEN dari filter status.
+        // Sebelumnya filter ini ikut memaksa `status = confirmed` / `status =
+        // ditutup`, sehingga bila dikombinasikan dengan filter Status bisa
+        // saling bertentangan dan hasilnya selalu 0 baris.
         if ($request->filled('confirmation')) {
             if ($request->confirmation === 'confirmed') {
-                $query->where('status', 'confirmed');
+                $query->where('user_confirmation', true);
             } elseif ($request->confirmation === 'pending') {
-                $query->where('status', 'ditutup')->where('user_confirmation', false);
+                $query->where('user_confirmation', false);
             }
         }
 
@@ -286,7 +295,12 @@ class TicketAdminController extends Controller
             });
         }
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $status = TicketStatus::normalize($request->status);
+            if ($status !== null) {
+                // `closed`/`tutup`/`pending` adalah alias lama; DB menyimpan
+                // `ditutup`. Tanpa normalisasi filter ini selalu 0 baris.
+                $query->where('status', $status);
+            }
         }
 
         $tickets = $query->latest()->paginate(10)->withQueryString();

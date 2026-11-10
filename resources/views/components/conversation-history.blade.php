@@ -14,26 +14,46 @@
 @endphp
 @once
 <style>
-    .conversation-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; background-color: #f9fafb; }
+    /* Riwayat percakapan: tinggi DIBATASI agar isi yang panjang bisa
+       di-scroll, bukan memanjangkan halaman.
+
+       Sebelumnya `.conversation-messages` hanya `flex: 1` + `overflow-y: auto`
+       tanpa batas tinggi, sehingga tidak pernah benar-benar overflow dan
+       seluruh halaman jadi panjang. Ditambah media query desktop yang
+       men-set `max-height: none`, area pesan bisa tumbuh tanpa henti. */
+    .conversation-content {
+        flex: 1 1 auto;
+        /* Kunci: tanpa min-height:0, flex item menolak menyusut lebih kecil
+           dari kontennya sehingga overflow-y tidak pernah aktif. */
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background-color: #f9fafb;
+    }
     .conversation-messages {
-        flex: 1;
+        flex: 1 1 auto;
+        min-height: 0;              /* wajib agar bisa menyusut di dalam flex */
+        max-height: 24rem;          /* batas atas area pesan */
         overflow-y: auto;
+        overscroll-behavior: contain; /* scroll tidak merambat ke halaman */
+        scrollbar-width: thin;        /* Firefox */
+        scrollbar-color: #cbd5e0 #f1f1f1;
         padding: 1rem;
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        min-height: 350px;
     }
-    .conversation-messages::-webkit-scrollbar { width: 4px; }
-    .conversation-messages::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 2px; }
-    .conversation-messages::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 2px; }
+    .conversation-messages::-webkit-scrollbar { width: 6px; }
+    .conversation-messages::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    .conversation-messages::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
     .conversation-messages::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
     .conversation-empty {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 100%;
+        min-height: 12rem;
         padding: 1.5rem;
         text-align: center;
         color: #6b7280;
@@ -41,8 +61,13 @@
     .conversation-empty svg { width: 3.5rem; height: 3.5rem; margin-bottom: 0.75rem; color: #d1d5db; }
     .conversation-empty__title { font-size: 1rem; font-weight: 500; }
     .conversation-empty__subtitle { margin-top: 0.25rem; font-size: 0.875rem; }
+
+    /* Desktop: tetap dibatasi, hanya boleh lebih tinggi sedikit bila viewport
+       memang tinggi. Jangan pernah `max-height: none`. */
     @media (min-width: 1024px) {
-        .conversation-messages { height: calc(100vh - 180px); max-height: none; }
+        .conversation-messages {
+            max-height: min(32rem, calc(100vh - 16rem));
+        }
     }
 </style>
 @endonce

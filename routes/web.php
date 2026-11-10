@@ -110,9 +110,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
         Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('edit')->middleware('permission:ticket|myticket');
         Route::put('/{ticket}', [TicketController::class, 'update'])->name('update')->middleware('permission:ticket|myticket');
+        // Daftar ini harus memuat SEMUA status kanonik (open, in_progress,
+        // ditutup, confirmed, rejected) plus alias lama (closed, tutup,
+        // pending, pending_confirmation) supaya URL/bookmark lama tetap jalan.
+        // Sebelumnya `ditutup` dan `rejected` tidak ada di sini sehingga
+        // /ticket/status/ditutup ditolak route (302) meski controller siap.
         Route::get('/status/{status}', [TicketController::class, 'filterByStatus'])
             ->name('filter.status')
-            ->where('status', 'all|open|pending|in_progress|closed|confirmed');
+            ->where('status', 'all|open|pending|pending_confirmation|in_progress|closed|tutup|ditutup|confirmed|rejected');
         Route::post('/{ticket}/confirm', [TicketController::class, 'confirm'])->name('confirm');
         Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
     });

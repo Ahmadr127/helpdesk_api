@@ -23,25 +23,9 @@
                 </div>
             </td>
             <td class="px-4 py-3 whitespace-nowrap">
-                @php
-                $statusClasses = [
-                'open' => 'bg-blue-100 text-blue-800',
-                'in_progress' => 'bg-yellow-100 text-yellow-800',
-                'pending' => 'bg-red-100 text-red-800',
-                'ditutup' => 'bg-red-100 text-red-800',
-                'confirmed' => 'bg-green-100 text-green-800'
-                ];
-                $statusLabels = [
-                'open' => 'Dibuka',
-                'in_progress' => 'Dalam Proses',
-                'pending' => 'Menunggu Konfirmasi',
-                'ditutup' => 'Menunggu Konfirmasi',
-                'confirmed' => 'Dikonfirmasi'
-                ];
-                @endphp
                 <span
-                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses[$ticket->status] ?? 'bg-gray-100 text-gray-800' }}">
-                    {{ $statusLabels[$ticket->status] ?? ucfirst($ticket->status) }}
+                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ \App\Support\TicketStatus::badgeClass($ticket->status) }}">
+                    {{ \App\Support\TicketStatus::label($ticket->status) }}
                 </span>
             </td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">

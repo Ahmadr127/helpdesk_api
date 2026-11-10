@@ -31,13 +31,11 @@
                     <select name="status" id="status"
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                         <option value="">Semua Status</option>
-                        <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Dibuka</option>
-                        <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Dalam
-                            Proses</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu
-                            Konfirmasi</option>
-                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Dikonfirmasi
+                        @foreach(\App\Support\TicketStatus::options() as $value => $label)
+                        <option value="{{ $value }}" @selected(\App\Support\TicketStatus::normalize(request('status')) === $value)>
+                            {{ $label }}
                         </option>
+                        @endforeach
                     </select>
                 </div>
 

@@ -51,7 +51,12 @@ class AdminController extends Controller
         $this->applyTimeFilter($query, $timeFilter);
 
         if ($statusFilter !== 'all') {
-            $query->where('status', $statusFilter);
+            // Normalisasi alias lama (`closed`/`pending`) ke status kanonik
+            // yang benar-benar tersimpan (`ditutup`).
+            $normalized = \App\Support\TicketStatus::normalize($statusFilter);
+            if ($normalized !== null) {
+                $query->where('status', $normalized);
+            }
         }
 
         $countsByDate = (clone $query)

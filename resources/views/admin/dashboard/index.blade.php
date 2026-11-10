@@ -67,11 +67,9 @@
             <select id="statusFilter"
                 class="text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                 <option value="all">Semua Status</option>
-                <option value="open">Dibuka</option>
-                <option value="in_progress">Dalam proses</option>
-                <option value="pending">Tertunda</option>
-                <option value="closed">Ditutup</option>
-                <option value="confirmed">Dikonfirmasi</option>
+                @foreach(\App\Support\TicketStatus::options() as $value => $label)
+                <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
             </select>
         </div>
     </div>
@@ -185,18 +183,8 @@
                             <td class="px-4 py-3 border-b">{{ $ticket->ticket_number }}</td>
                             <td class="px-4 py-3 border-b">{{ $ticket->user->name }}</td>
                             <td class="px-4 py-3 border-b">
-                                <span class="px-2 py-1 text-xs rounded-full 
-                                {{ $ticket->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                   ($ticket->status === 'ditutup' ? 'bg-red-100 text-red-800' : 
-                                   ($ticket->status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                   ($ticket->status === 'open' ? 'bg-blue-200 text-blue-800' :
-                                   'bg-purple-100 text-purple-800'))) }}">
-                                    {{ $ticket->status === 'pending' ? 'Tertunda' :
-                                       ($ticket->status === 'ditutup' ? 'Ditutup' :
-                                       ($ticket->status === 'confirmed' ? 'Dikonfirmasi' :
-                                       ($ticket->status === 'open' ? 'Dibuka' :
-                                       ($ticket->status === 'in_progress' ? 'Dalam proses' : ucfirst($ticket->status))))) }}
-                                    {{ $ticket->status === 'ditutup' ? '(Menunggu konfirmasi)' : '' }}
+                                <span class="px-2 py-1 text-xs rounded-full {{ \App\Support\TicketStatus::badgeClass($ticket->status) }}">
+                                    {{ \App\Support\TicketStatus::label($ticket->status) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 border-b">

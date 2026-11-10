@@ -149,7 +149,10 @@ class OrderPerbaikanController extends Controller
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
         $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
-        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+        // `jenis` hanyalah accessor BC (bukan relasi Eloquent), sehingga
+        // whereHas('jenis') melempar RelationNotFoundException. Pakai scope
+        // umum() — sumber kebenaran yang sama dengan halaman web lain.
+        $kategoriOrders = KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
 
         $user = auth()->user();
         $department = $this->resolveDepartment($user);
@@ -206,7 +209,8 @@ class OrderPerbaikanController extends Controller
         }
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
-        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+        // Sama seperti createMyorder(): pakai scope umum(), bukan whereHas('jenis').
+        $kategoriOrders = KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
         $department = $this->resolveDepartment(auth()->user());
         $departmentId = $department?->id;
         $departmentLocation = $department?->location;

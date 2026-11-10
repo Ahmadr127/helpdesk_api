@@ -8,6 +8,7 @@ use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Support\TicketStatus;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
@@ -23,13 +24,21 @@ class TicketController extends Controller
         return Pengajuan::sirs();
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = $this->itQuery()
+        $query = $this->itQuery()
             ->where('pemohon_id', auth()->id())
-            ->with(['kategori.jenisList'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->with(['kategori.jenisList']);
+
+        // Filter status: sebelumnya halaman ini tidak punya filter status sama
+        // sekali. Nilai dinormalisasi agar `closed` (URL lama) tetap mengenai
+        // baris `ditutup` yang benar-benar ada di DB.
+        $status = TicketStatus::normalize($request->query('status'));
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        $tickets = $query->orderBy('created_at', 'desc')->get();
 
         $categories = KategoriPengajuan::where('status', 1)->sirs()->get();
 
@@ -218,6 +227,10 @@ class TicketController extends Controller
 
     public function filterByStatus($status, Request $request)
     {
+        // Normalisasi: URL lama memakai `closed`, DB menyimpan `ditutup`.
+        // Tanpa ini, /ticket/status/closed selalu kosong.
+        $normalized = TicketStatus::normalize($status) ?? 'all';
+
         $baseQuery = $this->itQuery()->where('pemohon_id', auth()->id());
 
         $totalTickets = $this->itQuery()->where('pemohon_id', auth()->id())->count();
@@ -226,8 +239,8 @@ class TicketController extends Controller
         $closedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'ditutup')->count();
         $confirmedTickets = $this->itQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->count();
 
-        if ($status !== 'all') {
-            $baseQuery->where('status', $status === 'ditutup' ? 'ditutup' : $status);
+        if ($normalized !== 'all') {
+            $baseQuery->where('status', $normalized);
         }
 
         if ($request->filled(['start_date', 'end_date'])) {
@@ -250,9 +263,30 @@ class TicketController extends Controller
             ->pluck('name');
         $priorities = ['low', 'medium', 'high'];
 
-        return view('user.ticket.filtered', compact(
-            'tickets', 'status', 'totalTickets', 'openTickets', 'inProgressTickets',
-            'closedTickets', 'confirmedTickets', 'categories', 'priorities'
-        ));
+        // View memakai $departments untuk dropdown; sebelumnya tidak dikirim
+        // sehingga halaman ini error 500 (Undefined variable $departments).
+        $departments = $this->itQuery()
+            ->where('pemohon_id', auth()->id())
+            ->whereNotNull('department_id')
+            ->with('department:id,name')
+            ->get()
+            ->pluck('department.name')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('user.ticket.filtered', [
+            'tickets' => $tickets,
+            'status' => $normalized,
+            'totalTickets' => $totalTickets,
+            'openTickets' => $openTickets,
+            'inProgressTickets' => $inProgressTickets,
+            'closedTickets' => $closedTickets,
+            'confirmedTickets' => $confirmedTickets,
+            'categories' => $categories,
+            'priorities' => $priorities,
+            'departments' => $departments,
+        ]);
     }
 }

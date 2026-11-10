@@ -303,45 +303,76 @@
                                 default => 'check',
                             };
                         @endphp
-                        <div class="space-y-2">
-                            @forelse($timeline as $step)
-                                <div class="flex items-start gap-3 bg-gray-50 rounded-lg border border-gray-100 p-2.5">
-                                    <div class="mt-0.5 flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full {{ $historyDot($step->action, $step->status) }} text-white">
-                                        @switch($historyIcon($step->action, $step->status))
-                                            @case('clock')
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                @break
-                                            @case('close')
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                @break
-                                            @case('x')
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                @break
-                                            @default
-                                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                        @endswitch
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center flex-wrap gap-2">
-                                            <h4 class="text-xs font-semibold text-gray-800">{{ $historyLabel($step->action, $step->status) }}</h4>
-                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-{{ match($step->status) { 'in_progress' => 'purple', 'ditutup' => 'yellow', 'confirmed' => 'green', 'rejected' => 'red', default => 'gray' } }}-100 text-{{ match($step->status) { 'in_progress' => 'purple', 'ditutup' => 'yellow', 'confirmed' => 'green', 'rejected' => 'red', default => 'gray' } }}-800">
-                                                {{ ucfirst(str_replace('_', ' ', (string) $step->status)) }}
-                                            </span>
-                                        </div>
-                                        <p class="text-[11px] text-gray-500 mt-0.5">
-                                            <span class="font-medium">{{ $step->created_at?->format('d M Y, H:i') }}</span>
-                                            · {{ $step->actor?->name ?? 'Sistem' }}
-                                        </p>
-                                        @if($step->notes)
-                                            <p class="text-xs text-gray-600 mt-1 whitespace-pre-line break-words">{{ $step->notes }}</p>
-                                        @endif
+                        {{-- Riwayat status HORIZONTAL — mengikuti desain detail tiket
+                             admin (`admin/tickets/show.blade.php`): lingkaran status
+                             berjajar dengan satu garis penghubung tipis di belakang,
+                             jarak antar langkah dibagi rata (justify-between) sehingga
+                             stepper selalu memenuhi lebar kartu.
+                             `min-width` + overflow-x-auto menjaga langkah tetap terbaca
+                             di layar sempit (bisa digeser ke samping). --}}
+                        <div class="bg-gray-50 rounded-lg border border-gray-100 p-3">
+                            @php $stepCount = $timeline->count(); @endphp
+                            <div class="overflow-x-auto">
+                                <div class="relative" style="min-width: {{ max(480, 72 * $stepCount) }}px;">
+                                    {{-- Satu garis penghubung di belakang semua lingkaran,
+                                         membentang dari pusat langkah pertama sampai pusat
+                                         langkah terakhir. Karena tiap langkah lebarnya sama
+                                         (flex-1), pusatnya tepat di 1/(2n) lebar container. --}}
+                                    @if($stepCount > 1)
+                                        <div class="absolute top-3 h-0.5 bg-gray-200"
+                                             style="left: {{ round(100 / (2 * $stepCount), 4) }}%; right: {{ round(100 / (2 * $stepCount), 4) }}%;"></div>
+                                    @endif
+                                    <div class="relative flex items-start justify-between w-full">
+                                        @forelse($timeline as $step)
+                                            <div class="flex flex-1 min-w-0 flex-col items-center">
+                                                <div class="w-6 h-6 flex items-center justify-center rounded-full {{ $historyDot($step->action, $step->status) }} text-white flex-shrink-0">
+                                                    @switch($historyIcon($step->action, $step->status))
+                                                        @case('clock')
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                            @break
+                                                        @case('close')
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                            @break
+                                                        @case('x')
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                            @break
+                                                        @default
+                                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                                    @endswitch
+                                                </div>
+                                                <div class="mt-1 text-center px-1 w-full">
+                                                    <h4 class="text-xs font-medium text-gray-800 leading-tight">{{ $historyLabel($step->action, $step->status) }}</h4>
+                                                    {{-- Tanggal & jam dibuat lebih kecil agar stepper tetap
+                                                         ringkas dan tidak bersaing dengan label status. --}}
+                                                    <p class="text-[9px] text-gray-500 leading-tight mt-0.5">{{ $step->created_at?->format('d M Y') }}</p>
+                                                    <p class="text-[9px] text-gray-500 leading-tight">{{ $step->created_at?->format('H:i') }}</p>
+                                                    <p class="text-[9px] text-gray-400 truncate" title="{{ $step->actor?->name ?? 'Sistem' }}">{{ $step->actor?->name ?? 'Sistem' }}</p>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="text-xs text-gray-500 text-center w-full py-2">
+                                                Tidak ada riwayat status.
+                                            </div>
+                                        @endforelse
                                     </div>
                                 </div>
-                            @empty
-                                <div class="bg-gray-50 rounded-lg border border-gray-100 p-3 text-xs text-gray-500 text-center">
-                                    Tidak ada riwayat status.
-                                </div>
-                            @endforelse
+                            </div>
+
+                            {{-- Catatan tiap langkah ditampilkan di bawah stepper agar
+                                 teks panjang tidak merusak garis horizontal. --}}
+                            @php
+                                $notedSteps = $timeline->filter(fn ($s) => trim((string) ($s->notes ?? '')) !== '');
+                            @endphp
+                            @if($notedSteps->isNotEmpty())
+                                <ul class="mt-3 pt-2 border-t border-gray-200 space-y-1">
+                                    @foreach($notedSteps as $step)
+                                        <li class="text-[11px] text-gray-600 flex gap-1.5">
+                                            <span class="font-semibold text-gray-700 flex-shrink-0">{{ $historyLabel($step->action, $step->status) }}:</span>
+                                            <span class="whitespace-pre-line break-words">{{ $step->notes }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -436,15 +467,13 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { closeConfirmationModal(); }
 });
 document.addEventListener('DOMContentLoaded', function() {
-    function adjustHeight() {
-        var ticketContainer = document.querySelector('.ticket-container');
-        var conversationContainer = document.querySelector('.conversation-container');
-        if (ticketContainer && conversationContainer) {
-            conversationContainer.style.height = ticketContainer.scrollHeight + 'px';
-        }
+    // Tinggi kolom percakapan dibatasi lewat CSS (komponen conversation-history),
+    // bukan disamakan dengan kolom kiri — kalau disamakan, container ikut
+    // memanjang mengikuti isi dan area pesan tidak pernah overflow.
+    // Yang diperlukan hanya: mulai dari pesan terbaru.
+    var messages = document.querySelector('.conversation-messages');
+    if (messages) {
+        messages.scrollTop = messages.scrollHeight;
     }
-    adjustHeight();
-    window.addEventListener('resize', adjustHeight);
-    window.addEventListener('load', adjustHeight);
 });
 </script>
