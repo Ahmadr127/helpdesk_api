@@ -8,13 +8,13 @@ use App\Http\Controllers\Admin\FcmMonitoringController;
 use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\Admin\KategoriOrderController;
 use App\Http\Controllers\Admin\KategoriPengajuanController;
+use App\Http\Controllers\Admin\PengajuanController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\ReportSirsController;
 use App\Http\Controllers\Admin\TicketAdminController;
 use App\Http\Controllers\Admin\UnitProsesController;
 use App\Http\Controllers\Admin\UserManagementController;
@@ -215,19 +215,21 @@ Route::middleware(['auth'])->group(function () {
 
         // (grup legacy admin/ticket/* dihapus — admin memakai tickets.* di atas)
 
-        // Reports routes - permission protected
+        // Report (berbasis model baru) - permission protected
         Route::prefix('reports')->name('reports.')->middleware('permission:report')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
-            Route::get('/{report}/screenshot', [ReportController::class, 'viewScreenshot'])->name('view-screenshot');
-            Route::get('/{report}/download', [ReportController::class, 'download'])->name('download');
-            Route::post('/generate', [ReportController::class, 'generate'])->name('generate')->middleware('permission:dashboard.it');
-            Route::delete('/{report}', [ReportController::class, 'destroy'])->name('destroy')->middleware('permission:dashboard.it');
+            Route::post('/export', [ReportController::class, 'export'])->name('export');
         });
 
-        // Report SIRS routes - BLUE theme
+        // Report SIRS (Tiket IT / SIRS) - berbasis model Pengajuan
         Route::prefix('report-sirs')->name('report-sirs.')->middleware('permission:report.sirs')->group(function () {
-            Route::get('/', [ReportSirsController::class, 'index'])->name('index');
-            Route::post('/export', [ReportSirsController::class, 'export'])->name('export');
+            Route::get('/', [ReportController::class, 'sirs'])->name('index');
+            Route::post('/export', [ReportController::class, 'exportSirs'])->name('export');
+        });
+
+        // Detail pengajuan (unified: Tiket IT & Order IPSRS) - dipakai report & halaman admin lain
+        Route::prefix('pengajuan')->name('pengajuan.')->middleware('permission:report')->group(function () {
+            Route::get('/{pengajuan}', [PengajuanController::class, 'show'])->name('show');
         });
 
         // Feedback routes - permission protected

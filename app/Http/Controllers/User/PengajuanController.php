@@ -9,6 +9,7 @@ use App\Services\Pengajuan\LegacyPengajuanResolver;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Services\Report\ReportService;
 use Illuminate\Http\Request;
 
 class PengajuanController extends Controller
@@ -18,21 +19,40 @@ class PengajuanController extends Controller
         protected PengajuanWorkflowService $workflow,
         protected PengajuanScopeService $scope,
         protected LegacyPengajuanResolver $resolver,
+        protected ReportService $reportService,
     ) {}
 
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = $this->scope->visibleTo($user);
 
-        if ($request->filled('jenis')) {
-            $query->whereHas('kategori.jenis', fn ($q) => $q->where('code', $request->jenis));
+        // Default filter: bulan berjalan (berlaku saat pertama dibuka; submit form = kontrol penuh).
+        if (! $request->filled('_filter')) {
+            $request->merge([
+                'date_from' => now()->startOfMonth()->toDateString(),
+                'date_to' => now()->endOfMonth()->toDateString(),
+            ]);
         }
 
-        $pengajuans = $query->with(['kategori.jenis', 'pemohon'])->latest()->paginate(20);
-        $kategoris = KategoriPengajuan::where('status', 1)->get();
+        // Query dasar tetap dibatasi scope yang boleh dilihat user (fail-closed).
+        $base = $this->reportService->applyFilters($this->scope->visibleTo($user), $request);
 
-        return view('user.pengajuan.index', compact('pengajuans', 'kategoris'));
+        $summary = $this->reportService->summary($base);
+        $pengajuans = $this->reportService->paginate(clone $base, $request);
+
+        // Partial resources/views/reports/_report.blade.php dipakai bersama shell admin.
+        return view('user.pengajuan.index', array_merge([
+            'pengajuans' => $pengajuans,
+            'summary' => $summary,
+            'route' => route('user.pengajuan.index'),
+            'detailRoute' => 'user.pengajuan.show',
+            'exportUrl' => null,
+            'showJenis' => true,
+            'showDepartment' => false,
+            'showYear' => false,
+            'selectable' => false,
+            'columns' => ['nomor', 'tanggal', 'jenis', 'kategori', 'prioritas', 'status', 'pj', 'aksi'],
+        ], $this->reportService->options()));
     }
 
     public function create(Request $request)

@@ -2,120 +2,209 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\ReportsExport;
 use App\Http\Controllers\Controller;
-use App\Models\Report;
+use App\Models\Pengajuan;
+use App\Services\Report\ReportService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * Satu-satunya controller report admin (berbasis model Pengajuan).
+ * /reports → default jenis IPSRS, /report-sirs → default jenis IT; keduanya kolom & tampilan sama.
+ */
 class ReportController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        protected ReportService $report,
+    ) {}
+
+    /** /reports — report berbasis Pengajuan, default jenis IPSRS. */
+    public function index(Request $request): View
     {
-        $query = Report::with('user')->latest();
-
-        // Filter by type if provided
-        if ($request->has('type') && $request->type !== 'all') {
-            $query->where('type', $request->type);
-        }
-
-        // Filter by time period
-        if ($request->has('period') && $request->period !== 'all') {
-            if ($request->period === 'custom' && $request->has(['start_date', 'end_date'])) {
-                $query->whereBetween('created_at', [
-                    $request->start_date.' 00:00:00',
-                    $request->end_date.' 23:59:59',
-                ]);
-            } else {
-                $days = (int) $request->period;
-                $query->where('created_at', '>=', now()->subDays($days));
-            }
-        }
-
-        $reports = $query->paginate(10);
-
-        // Get summary statistics
-        $totalReports = Report::count();
-        $bugReports = Report::where('type', 'bug')->count();
-        $featureRequests = Report::where('type', 'feature')->count();
-
-        return view('admin.reports.index', compact('reports', 'totalReports', 'bugReports', 'featureRequests'));
+        return $this->render($request, 'IPSRS', 'admin.reports.index', 'admin.reports.export');
     }
 
-    public function generate(Request $request)
+    /** /report-sirs — report berbasis Pengajuan, default jenis IT (Tiket IT / SIRS). */
+    public function sirs(Request $request): View
     {
-        $request->validate([
-            'period' => 'required|in:7,30,90,custom',
-        ]);
+        return $this->render($request, 'IT', 'admin.report-sirs.index', 'admin.report-sirs.export');
+    }
 
-        $query = Report::query();
+    /** Export CSV report default (/reports): default jenis IPSRS. */
+    public function export(Request $request)
+    {
+        return $this->streamCsvSelected($request, 'IPSRS');
+    }
 
-        // Filter berdasarkan periode
-        switch ($request->period) {
-            case '7':
-                $query->where('created_at', '>=', now()->subDays(7));
-                break;
-            case '30':
-                $query->where('created_at', '>=', now()->subDays(30));
-                break;
-            case '90':
-                $query->where('created_at', '>=', now()->subDays(90));
-                break;
-            case 'custom':
-                // Untuk custom range, idealnya menambahkan input date range di form
-                break;
+    /** Export CSV report SIRS (/report-sirs): default jenis IT. */
+    public function exportSirs(Request $request)
+    {
+        return $this->streamCsvSelected($request, 'IT');
+    }
+
+    /**
+     * Render halaman report — satu implementasi untuk /reports & /report-sirs.
+     * Bedanya hanya: default jenis, view, dan route export.
+     */
+    protected function render(Request $request, string $defaultJenis, string $view, string $exportRoute): View
+    {
+        // _filter=1 menandakan form di-submit; tanpa itu, pakai default jenis halaman.
+        // Tidak ada checkbox jenis yang dicentang = semua jenis.
+        if (! $request->filled('_filter')) {
+            // Default filter: bulan berjalan + jenis default halaman.
+            $request->merge([
+                'jenis' => [$defaultJenis],
+                'date_from' => now()->startOfMonth()->toDateString(),
+                'date_to' => now()->endOfMonth()->toDateString(),
+            ]);
         }
 
-        $reports = $query->with('user')->latest()->get();
+        $reqJenis = (array) $request->input('jenis', [$defaultJenis]);
+        $reqJenis = array_values(array_filter(array_map('strval', array_map('trim', $reqJenis))));
 
-        // Bisa ditambahkan logika untuk export ke Excel/PDF
-        return Excel::download(new ReportsExport($reports), 'reports.xlsx');
+        $query = $this->report->query($request);
+        $summary = $this->report->summary($query);
+        $performance = $this->report->performance($query);
+        $pengajuans = $this->report->paginate(clone $query, $request);
 
-        // Atau kembali ke halaman dengan data yang sudah difilter
-        // return back()->with('reports', $reports);
+        $years = Pengajuan::query()
+            ->when($reqJenis !== [], fn (Builder $q) => $q->whereHas('kategori.jenis', fn (Builder $j) => $j->whereIn('code', $reqJenis)))
+            ->selectRaw('DISTINCT EXTRACT(YEAR FROM COALESCE(tanggal, created_at)) AS year')
+            ->orderBy('year', 'desc')
+            ->pluck('year');
+
+        return view($view, array_merge([
+            'pengajuans' => $pengajuans,
+            'years' => $years,
+            'summaryCards' => [
+                [
+                    'label' => 'Total Pengajuan',
+                    'value' => number_format($summary['total'], 0, ',', '.'),
+                    'sub' => $summary['active'].' aktif',
+                    'color' => 'blue',
+                ],
+                [
+                    'label' => 'Response ≤ 60 Menit',
+                    'value' => number_format($performance['under_60'], 0, ',', '.'),
+                    'sub' => $performance['responded'].' tiket sudah direspon',
+                    'color' => 'green',
+                ],
+                [
+                    'label' => 'Persentase Response',
+                    'value' => $performance['percentage'].'%',
+                    'sub' => 'Target ≤ '.ReportService::RESPONSE_SLA_MINUTES.' menit',
+                    'color' => 'yellow',
+                ],
+                [
+                    'label' => 'Rata-rata Response Time',
+                    'value' => $performance['avg_minutes'].' Menit',
+                    'color' => 'purple',
+                ],
+            ],
+            'columns' => ['nomor', 'pemohon', 'kategori', 'created_at', 'response_time', 'closed_at', 'kinerja'],
+            'route' => route($view),
+            'exportRoute' => $exportRoute,
+            'exportAction' => 'exportReport',
+            'showJenis' => true,
+            'showDepartment' => false,
+            'showYear' => true,
+            'selectable' => true,
+            'defaultJenis' => $defaultJenis,
+            'detailRoute' => 'admin.pengajuan.show',
+        ], $this->report->options()));
     }
 
-    public function download(Report $report)
+    /** Export CSV mengikuti filter aktif (+ baris terpilih). */
+    protected function streamCsvSelected(Request $request, string $defaultJenis)
     {
-        // Logika download report
-        // Contoh: return response()->download($report->file_path);
-    }
-
-    public function destroy(Report $report)
-    {
-        $report->delete();
-
-        return redirect()->route('admin.reports.index')
-            ->with('success', 'Report deleted successfully');
-    }
-
-    public function updateStatus(Request $request, Report $report)
-    {
-        $request->validate([
-            'status' => 'required|in:pending,in_progress,resolved',
-        ]);
-
-        $report->update(['status' => $request->status]);
-
-        return redirect()->route('admin.reports.index')
-            ->with('success', 'Report status updated successfully');
-    }
-
-    public function viewScreenshot(Report $report)
-    {
-        if (! $report->screenshot) {
-            abort(404, 'No screenshot found in database');
+        if (! $request->filled('_filter')) {
+            // Default filter: bulan berjalan + jenis default halaman.
+            $request->merge([
+                'jenis' => [$defaultJenis],
+                'date_from' => now()->startOfMonth()->toDateString(),
+                'date_to' => now()->endOfMonth()->toDateString(),
+            ]);
         }
 
-        $path = storage_path('app/public/'.$report->screenshot);
+        $ids = collect($request->input('selected_ids', []))
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        \Log::info('Screenshot path: '.$path);
-        \Log::info('File exists: '.(file_exists($path) ? 'Yes' : 'No'));
+        $query = $this->report->exportQuery($request, $ids);
 
-        if (! file_exists($path)) {
-            abort(404, 'File not found in storage');
-        }
+        $slug = implode('-', array_values(array_filter(array_map(
+            fn ($jenis) => strtolower(preg_replace('/[^a-z0-9]/i', '', (string) $jenis)),
+            (array) $request->input('jenis', [])
+        ))));
 
-        return response()->file($path);
+        $slug = $slug !== '' ? $slug : 'semua';
+
+        return $this->streamCsv($query, "report-{$slug}-".now()->format('Ymd-His').'.csv');
+    }
+
+    protected function streamCsv(Builder $query, string $fileName)
+    {
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+
+            // BOM agar Excel membaca UTF-8 dengan benar.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            // Kolom: persis seperti tabel web, lalu kolom tambahan di luar web.
+            fputcsv($out, [
+                'Nomor',
+                'Pemohon',
+                'Kategori',
+                'Tanggal Dibuat',
+                'Response Time',
+                'Waktu Selesai',
+                'Status Kinerja',
+                // Tambahan:
+                'Jenis',
+                'Tanggal',
+                'Response (Menit)',
+                'Departemen',
+                'Gedung',
+                'Lokasi',
+                'Prioritas',
+                'Status',
+                'Penanggung Jawab',
+                'Tindak Lanjut',
+                'Deskripsi',
+            ]);
+
+            $query->chunk(500, function ($rows) use ($out) {
+                foreach ($rows as $pengajuan) {
+                    $responseMinutes = ($pengajuan->created_at && $pengajuan->started_at)
+                        ? (int) $pengajuan->created_at->diffInMinutes($pengajuan->started_at)
+                        : null;
+
+                    fputcsv($out, [
+                        $pengajuan->nomor,
+                        $pengajuan->pemohon_nama ?? $pengajuan->pemohon?->name,
+                        $pengajuan->kategori?->name,
+                        optional($pengajuan->created_at)->format('d/m/Y H:i'),
+                        $this->report->durationLabel($pengajuan->created_at, $pengajuan->started_at),
+                        $pengajuan->closed_at?->format('d/m/Y H:i') ?? '-',
+                        $this->report->kinerjaLabel($pengajuan),
+                        $pengajuan->kategori?->jenis?->name,
+                        optional($pengajuan->tanggal ?? $pengajuan->created_at)->format('d/m/Y H:i'),
+                        $responseMinutes !== null ? $responseMinutes : '',
+                        $pengajuan->department?->name,
+                        $pengajuan->building?->name,
+                        $pengajuan->lokasi?->name,
+                        ReportService::PRIORITAS[$pengajuan->prioritas] ?? $pengajuan->prioritas,
+                        ReportService::STATUSES[$pengajuan->status] ?? $pengajuan->status,
+                        $pengajuan->nama_penanggung_jawab,
+                        $pengajuan->follow_up,
+                        $pengajuan->deskripsi,
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $fileName, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }
