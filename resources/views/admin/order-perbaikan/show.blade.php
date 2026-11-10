@@ -215,6 +215,7 @@
                                                 'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
                                                 'placeholder' => 'Pilih penanggung jawab…',
                                                 'searchPlaceholder' => 'Cari nama…',
+                                                'compact' => true,
                                             ])
                                             <p class="mt-1 text-xs text-gray-500">Kandidat PJ mengikuti kategori role.</p>
                                     @else

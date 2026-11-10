@@ -78,7 +78,13 @@ class TicketAdminController extends Controller
     public function show(Pengajuan $ticket)
     {
         $ticket->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
-        return view('admin.tickets.show', compact('ticket'));
+
+        $penugasan = app(\App\Services\Pengajuan\PengajuanPenugasanService::class);
+        $canAssign = auth()->user()->can('act', $ticket);
+        $candidates = $canAssign ? $penugasan->candidates($ticket) : collect();
+        $activePj = $penugasan->active($ticket);
+
+        return view('admin.tickets.show', compact('ticket', 'candidates', 'activePj', 'canAssign'));
     }
 
     public function updateStatus(Request $request, Pengajuan $ticket)

@@ -228,21 +228,39 @@
                     </div>
 
                     @if(($pengajuan->penugasan && $pengajuan->penugasan->isNotEmpty()) || (!empty($canAssign) && !empty($candidates) && $candidates->isNotEmpty()))
-                    <div class="pt-4 border-t border-gray-100 mt-4">
-                        <h3 class="text-sm font-medium text-gray-500 mb-2">Penanggung Jawab: <span class="text-gray-900">{{ ($activePj ?? $pengajuan->penugasan->where('released_at', null))->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ' }}</span></h3>
-                        @if(!empty($canAssign) && !empty($assignUrl) && !empty($candidates) && $candidates->isNotEmpty())
-                        <form method="POST" action="{{ $assignUrl }}" class="mt-1 flex gap-2 items-start">
-                            @csrf
-                            @include('components.searchable-multiselect', [
-                                'name' => 'user_ids[]',
-                                'options' => $candidates,
-                                'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
-                                'placeholder' => 'Pilih penanggung jawab…',
-                                'searchPlaceholder' => 'Cari nama…',
-                            ])
-                            <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs whitespace-nowrap">Simpan PJ</button>
-                        </form>
-                        @endif
+                    @php $pjNames = ($activePj ?? $pengajuan->penugasan->where('released_at', null))->pluck('user.name')->filter()->join(', '); @endphp
+                    <div class="pt-3 mt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <span class="text-xs font-medium text-gray-500 flex-shrink-0">Penanggung Jawab:</span>
+                                <span class="text-xs text-gray-800 truncate" title="{{ $pjNames }}">{{ $pjNames ?: 'Belum ada PJ' }}</span>
+                            </div>
+                            @if(!empty($canAssign) && !empty($assignUrl) && !empty($candidates) && $candidates->isNotEmpty())
+                            <details class="group flex-shrink-0">
+                                <summary class="list-none cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap">
+                                    Ubah PJ
+                                    <svg class="w-3 h-3 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </summary>
+                                <form method="POST" action="{{ $assignUrl }}" class="mt-1.5 flex gap-1.5 items-start">
+                                    @csrf
+                                    @include('components.searchable-multiselect', [
+                                        'name' => 'user_ids[]',
+                                        'options' => $candidates,
+                                        'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
+                                        'placeholder' => 'Pilih penanggung jawab…',
+                                        'searchPlaceholder' => 'Cari nama…',
+                                        'compact' => true,
+                                    ])
+                                    <button type="submit" class="px-2.5 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-[11px] font-semibold whitespace-nowrap">Simpan</button>
+                                </form>
+                            </details>
+                            @endif
+                        </div>
                     </div>
                     @endif
 

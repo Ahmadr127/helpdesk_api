@@ -1,4 +1,4 @@
-<table class="min-w-full divide-y divide-gray-200">
+<table class="w-full min-w-[1050px] divide-y divide-gray-200">
     <thead class="bg-slate-50">
         <tr>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">No Tiket</th>

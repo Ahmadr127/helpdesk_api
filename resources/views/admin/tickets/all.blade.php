@@ -84,7 +84,7 @@
     </div>
 
     <!-- Tickets Table -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+    <div class="bg-white rounded-lg shadow-md overflow-x-auto border border-gray-100">
         @if($tickets->count() > 0)
         @include('admin.tickets.partials.ticket-table', ['tickets' => $tickets])
         @else

@@ -173,8 +173,24 @@ class PengajuanController extends Controller
 
     public function message(Request $request, Pengajuan $pengajuan)
     {
-        $request->validate(['body' => ['required', 'string']]);
-        $this->service->addMessage(auth()->user(), $pengajuan, $request->input('body'), $request->file('photos', []));
+        $validated = $request->validate([
+            'message' => ['required_without:body', 'string', 'nullable'],
+            'body' => ['required_without:message', 'string', 'nullable'],
+            'photo' => ['nullable', 'image', 'max:5120'],
+            'photos' => ['nullable', 'array'],
+            'photos.*' => ['image', 'max:5120'],
+        ]);
+
+        $body = $validated['message'] ?? $validated['body'];
+
+        $files = [];
+        if ($request->hasFile('photo')) {
+            $files[] = $request->file('photo');
+        } elseif ($request->hasFile('photos')) {
+            $files = $request->file('photos');
+        }
+
+        $this->service->addMessage(auth()->user(), $pengajuan, $body, $files);
 
         return back()->with('success', 'Pesan terkirim.');
     }

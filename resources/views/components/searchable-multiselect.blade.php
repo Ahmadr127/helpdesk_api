@@ -10,16 +10,19 @@
      - $width             (opsional) class lebar tombol (default w-full) --}}
 @php
     $selected = collect($selected ?? [])->map(fn ($v) => (int) $v)->all();
-    $id = 'sms-' . uniqid();
+    $compact = (bool) ($compact ?? false);
     $options = collect($options ?? []);
+    $toggleClass = $compact
+        ? 'sms-toggle w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border border-gray-300 bg-white text-xs text-left focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[2.25rem]'
+        : 'sms-toggle w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[2.5rem]';
 @endphp
 
 <div class="sms-root relative {{ $width ?? 'w-full' }}" data-sms-root>
     <button type="button"
-            class="sms-toggle w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[2.5rem]"
+            class="{{ $toggleClass }}"
             data-sms-toggle aria-haspopup="listbox" aria-expanded="false">
         <span class="sms-chips flex flex-wrap gap-1 min-w-0" data-sms-chips></span>
-        <span class="sms-placeholder text-gray-400 {{ count($selected) ? 'hidden' : '' }}" data-sms-placeholder>{{ $placeholder ?? 'Pilih penanggung jawab…' }}</span>
+        <span class="sms-placeholder text-gray-400 {{ count($selected) ? 'hidden' : '' }} {{ $compact ? 'text-xs' : '' }}" data-sms-placeholder>{{ $placeholder ?? 'Pilih penanggung jawab…' }}</span>
         <svg class="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" data-sms-chevron fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
@@ -62,43 +65,7 @@
 (function () {
     'use strict';
 
-    function renderChips(root) {
-        var chips = root.querySelector('[data-sms-chips]');
-        var placeholder = root.querySelector('[data-sms-placeholder]');
-        var checked = root.querySelectorAll('[data-sms-checkbox]:checked');
-        chips.innerHTML = '';
-
-        checked.forEach(function (input) {
-            var name = input.closest('[data-sms-option]').querySelector('span:last-child').textContent.trim();
-            var chip = document.createElement('span');
-            chip.className = 'sms-chip';
-            chip.textContent = name;
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.innerHTML = '&times;';
-            btn.setAttribute('aria-label', 'Hapus ' + name);
-            btn.addEventListener('click', function () {
-                input.checked = false;
-                renderChips(root);
-            });
-            chip.appendChild(btn);
-            chips.appendChild(chip);
-        });
-
-        placeholder.classList.toggle('hidden', checked.length > 0);
-    }
-
-    function closeAll(except) {
-        document.querySelectorAll('[data-sms-root]').forEach(function (root) {
-            if (root !== except) {
-                root.querySelector('[data-sms-panel]').classList.add('hidden');
-                root.querySelector('[data-sms-chevron]').style.transform = '';
-                root.querySelector('[data-sms-toggle]').setAttribute('aria-expanded', 'false');
-            }
-        });
-    }
-
-    document.querySelectorAll('[data-sms-root]').forEach(function (root) {
+    function initRoot(root) {
         var toggle = root.querySelector('[data-sms-toggle]');
         var panel = root.querySelector('[data-sms-panel]');
         var search = root.querySelector('[data-sms-search]');
@@ -137,7 +104,53 @@
         root.querySelectorAll('[data-sms-checkbox]').forEach(function (input) {
             input.addEventListener('change', function () { renderChips(root); });
         });
-    });
+    }
+
+    function initAll() {
+        document.querySelectorAll('[data-sms-root]').forEach(initRoot);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
+
+    function renderChips(root) {
+        var chips = root.querySelector('[data-sms-chips]');
+        var placeholder = root.querySelector('[data-sms-placeholder]');
+        var checked = root.querySelectorAll('[data-sms-checkbox]:checked');
+        chips.innerHTML = '';
+
+        checked.forEach(function (input) {
+            var name = input.closest('[data-sms-option]').querySelector('span:last-child').textContent.trim();
+            var chip = document.createElement('span');
+            chip.className = 'sms-chip';
+            chip.textContent = name;
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = '&times;';
+            btn.setAttribute('aria-label', 'Hapus ' + name);
+            btn.addEventListener('click', function () {
+                input.checked = false;
+                renderChips(root);
+            });
+            chip.appendChild(btn);
+            chips.appendChild(chip);
+        });
+
+        placeholder.classList.toggle('hidden', checked.length > 0);
+    }
+
+    function closeAll(except) {
+        document.querySelectorAll('[data-sms-root]').forEach(function (root) {
+            if (root !== except) {
+                root.querySelector('[data-sms-panel]').classList.add('hidden');
+                root.querySelector('[data-sms-chevron]').style.transform = '';
+                root.querySelector('[data-sms-toggle]').setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 
     document.addEventListener('click', function () { closeAll(null); });
     document.addEventListener('keydown', function (event) {

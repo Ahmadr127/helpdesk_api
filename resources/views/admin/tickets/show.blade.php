@@ -5,7 +5,7 @@
 @section('content')
 <div class="w-full">
     <!-- Back Button -->
-    <div class="mb-3">
+    {{-- <div class="mb-3">
         <a href="{{ route('admin.tickets.index') }}"
             class="inline-flex items-center text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg transition-all duration-200 text-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +14,7 @@
             </svg>
             Kembali ke Daftar Tiket
         </a>
-    </div>
+    </div> --}}
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
@@ -119,6 +119,44 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Penanggung Jawab -->
+                    @if(($ticket->penugasan && $ticket->penugasan->isNotEmpty()) || (!empty($canAssign) && !empty($candidates) && $candidates->isNotEmpty()))
+                    @php $pjNames = ($activePj ?? collect())->pluck('user.name')->filter()->join(', '); @endphp
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <span class="text-xs font-medium text-gray-500 flex-shrink-0">Penanggung Jawab:</span>
+                                <span class="text-xs text-gray-800 truncate" title="{{ $pjNames }}">{{ $pjNames ?: 'Belum ada PJ' }}</span>
+                            </div>
+                            @if(!empty($canAssign) && !empty($candidates) && $candidates->isNotEmpty())
+                            <details class="group flex-shrink-0">
+                                <summary class="list-none cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap">
+                                    Ubah PJ
+                                    <svg class="w-3 h-3 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </summary>
+                                <form method="POST" action="{{ route('user.pengajuan.assign', $ticket) }}" class="mt-1.5 flex gap-1.5 items-start">
+                                    @csrf
+                                    @include('components.searchable-multiselect', [
+                                        'name' => 'user_ids[]',
+                                        'options' => $candidates,
+                                        'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
+                                        'placeholder' => 'Pilih penanggung jawab…',
+                                        'searchPlaceholder' => 'Cari nama…',
+                                        'compact' => true,
+                                    ])
+                                    <button type="submit" class="px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-semibold whitespace-nowrap hover:bg-blue-700">Simpan</button>
+                                </form>
+                            </details>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
 
                     <!-- Ticket Timeline -->
                     <div class="mt-2">
@@ -280,6 +318,52 @@
                 }
                 $pengajuName = $ticket->pemohon?->name ?? 'Pengaju';
                 @endphp
+
+                @php
+                    $debugPercakapan = ($ticket->id === 15 || request()->boolean('debug_percakapan')) ? [
+                        'pesans' => $ticket->pesans->map(fn ($p) => [
+                            'id' => $p->id,
+                            'sender_id' => $p->sender_id,
+                            'sender_type' => $p->sender_type,
+                            'sender_name' => $p->sender?->name,
+                            'body' => $p->body,
+                            'created_at' => $p->created_at?->toDateTimeString(),
+                        ])->values()->all(),
+                        'historis' => $ticket->historis->map(fn ($h) => [
+                            'id' => $h->id,
+                            'action' => $h->action,
+                            'status' => $h->status,
+                            'actor_id' => $h->actor_id,
+                            'actor_type' => $h->actor_type,
+                            'actor_name' => $h->actor?->name,
+                            'notes' => $h->notes,
+                            'created_at' => $h->created_at?->toDateTimeString(),
+                        ])->values()->all(),
+                        'lampirans' => $ticket->lampirans->map(fn ($l) => [
+                            'id' => $l->id,
+                            'pesan_id' => $l->pesan_id,
+                            'histori_id' => $l->histori_id,
+                            'kind' => $l->kind,
+                            'path' => $l->path,
+                        ])->values()->all(),
+                        'allResponses' => $allResponses,
+                        'pengajuName' => $pengajuName,
+                    ] : null;
+                @endphp
+                @if($debugPercakapan)
+                <script>
+                    (function () {
+                        const debug = @json($debugPercakapan);
+                        console.group('[Debug Riwayat Percakapan] /tickets/{{ $ticket->id }} ({{ $ticket->nomor }})');
+                        console.log('pesans (raw)', debug.pesans);
+                        console.log('historis (raw)', debug.historis);
+                        console.log('lampirans', debug.lampirans);
+                        console.log('allResponses (final render)', debug.allResponses);
+                        console.log('pengajuName', debug.pengajuName);
+                        console.groupEnd();
+                    })();
+                </script>
+                @endif
 
                 @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $pengajuName])
             </div>

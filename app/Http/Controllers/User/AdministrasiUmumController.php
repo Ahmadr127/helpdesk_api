@@ -189,7 +189,17 @@ class AdministrasiUmumController extends Controller
         }
         $orderPerbaikan->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
-        return view('user.administrasi-umum.order-perbaikan.show', ['order' => $orderPerbaikan]);
+        $penugasan = app(\App\Services\Pengajuan\PengajuanPenugasanService::class);
+        $canAssign = auth()->user()->can('act', $orderPerbaikan);
+        $candidates = $canAssign ? $penugasan->candidates($orderPerbaikan) : collect();
+        $activePj = $penugasan->active($orderPerbaikan);
+
+        return view('user.administrasi-umum.order-perbaikan.show', [
+            'order' => $orderPerbaikan,
+            'candidates' => $candidates,
+            'activePj' => $activePj,
+            'canAssign' => $canAssign,
+        ]);
     }
 
     public function editOrderPerbaikan(Pengajuan $orderPerbaikan)

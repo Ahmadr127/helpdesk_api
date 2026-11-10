@@ -16,5 +16,9 @@
     'konfirmasiUrl' => route('user.administrasi-umum.order-perbaikan.konfirmasi-selesai', $order),
     'konfirmasiFields' => 'order',
     'showOrderDetail' => true,
+    'candidates' => $candidates ?? collect(),
+    'activePj' => $activePj ?? collect(),
+    'canAssign' => $canAssign ?? false,
+    'assignUrl' => route('user.pengajuan.assign', $order),
 ])
 @endsection
