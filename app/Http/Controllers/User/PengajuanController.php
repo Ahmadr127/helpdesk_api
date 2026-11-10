@@ -58,7 +58,9 @@ class PengajuanController extends Controller
     public function create(Request $request)
     {
         $user = auth()->user();
-        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        // Form Tiket hanya boleh menampilkan kategori flavour SIRS — padanan
+        // scope sirs() yang sudah dipakai TicketController.
+        $kategoris = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
 
@@ -114,7 +116,8 @@ class PengajuanController extends Controller
     {
         $this->authorize('update', $pengajuan);
         $user = auth()->user();
-        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        // Sama seperti create(): hanya kategori flavour SIRS.
+        $kategoris = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
 

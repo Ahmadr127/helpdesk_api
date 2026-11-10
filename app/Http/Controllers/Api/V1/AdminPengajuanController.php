@@ -25,6 +25,9 @@ use Illuminate\Validation\ValidationException;
  */
 class AdminPengajuanController extends BaseApiController
 {
+    /** Sentinel route `jenis` untuk flavour umum (semua jenis selain SIRS). */
+    protected const JENIS_UMUM = 'UMUM';
+
     public function __construct(
         protected PengajuanService $service,
         protected PengajuanWorkflowService $workflow,
@@ -40,6 +43,19 @@ class AdminPengajuanController extends BaseApiController
         return $jenis ? strtoupper((string) $jenis) : null;
     }
 
+    /** Terapkan filter flavour: `UMUM` = bukan SIRS, selain itu kode persis. */
+    protected function applyJenis(Builder $query, string $jenis): Builder
+    {
+        if ($jenis === self::JENIS_UMUM) {
+            return $query->umum();
+        }
+
+        return $query->whereHas(
+            'kategori.jenisList',
+            fn (Builder $q) => $q->where('code', $jenis)
+        );
+    }
+
     /**
      * Query dasar admin: scope role-kategori (sumber kebenaran tunggal) + filter jenis.
      */
@@ -48,8 +64,7 @@ class AdminPengajuanController extends BaseApiController
         $query = $this->scope->visibleTo($request->user());
 
         if ($jenis = $this->jenis($request)) {
-            $jenisCode = strtoupper($jenis);
-            $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->where('code', $jenisCode));
+            $this->applyJenis($query, $jenis);
         }
 
         return $query;
@@ -73,8 +88,14 @@ class AdminPengajuanController extends BaseApiController
         $jenis = $this->jenis($request);
         if ($jenis !== null) {
             $pengajuan->loadMissing('kategori.jenisList');
+            $codes = collect($pengajuan->kategori?->jenisCodes ?? []);
 
-            if (! collect($pengajuan->kategori?->jenisCodes ?? [])->contains(strtoupper((string) $jenis))) {
+            // Sentinel UMUM = flavour umum (punya minimal satu jenis non-SIRS).
+            if ($jenis === self::JENIS_UMUM) {
+                if (! $codes->contains(fn ($code) => strtoupper((string) $code) !== 'IT')) {
+                    return $this->error('Pengajuan bukan jenis umum', 403);
+                }
+            } elseif (! $codes->contains($jenis)) {
                 return $this->error('Pengajuan bukan jenis '.$jenis, 403);
             }
         }

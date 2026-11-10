@@ -89,15 +89,15 @@ Route::middleware('auth:sanctum')->group(function () {
         ->where('status', 'all|open|pending|in_progress|closed|confirmed|ditutup')
         ->name('api.tickets.filter');
     Route::get('/order-perbaikan/konfirmasi', [PengajuanApiController::class, 'index'])
-        ->defaults('jenis', 'IPSRS')->defaults('status', 'ditutup')
+        ->defaults('jenis', 'UMUM')->defaults('status', 'ditutup')
         ->middleware('permission:myorder|order')
         ->name('api.order-perbaikan.konfirmasi');
     Route::get('/order-perbaikan/rejected', [PengajuanApiController::class, 'index'])
-        ->defaults('jenis', 'IPSRS')->defaults('status', 'rejected')
+        ->defaults('jenis', 'UMUM')->defaults('status', 'rejected')
         ->middleware('permission:myorder|order')
         ->name('api.order-perbaikan.rejected');
     Route::post('/order-perbaikan/{pengajuan}/konfirmasi-selesai', [PengajuanApiController::class, 'confirm'])
-        ->defaults('jenis', 'IPSRS')
+        ->defaults('jenis', 'UMUM')
         ->middleware('permission:myorder|order')
         ->name('api.order-perbaikan.konfirmasiSelesai');
 
@@ -106,7 +106,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Backward-compat: kontrak v1 (URL tidak berubah).
     $registerUserPengajuan('IT', 'tickets', 'api.tickets.', 'permission:myticket|ticket');
-    $registerUserPengajuan('IPSRS', 'order-perbaikan', 'api.order-perbaikan.', 'permission:myorder|order');
+    // `UMUM` (bukan `IPSRS`) karena form order & web memakai scope umum():
+    // semua jenis selain SIRS, termasuk RT. Dengan kode `IPSRS` persis, order
+    // berkategori RT bisa dibuat tapi tidak pernah muncul di list.
+    $registerUserPengajuan('UMUM', 'order-perbaikan', 'api.order-perbaikan.', 'permission:myorder|order');
 
     // Feedback (dual: user create/list own, admin list all + reply)
     Route::prefix('feedback')->name('api.feedback.')->group(function () {
@@ -156,13 +159,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Statistik IPSRS (kontrak lama) — WAJIB sebelum wildcard {pengajuan}.
     Route::get('/administrasi-umum/order-perbaikan/statistics', [AdminPengajuanController::class, 'index'])
-        ->defaults('jenis', 'IPSRS')
+        ->defaults('jenis', 'UMUM')
         ->middleware(AdministrasiUmumApiMiddleware::class)
         ->name('api.administrasi-umum.order-perbaikan.statistics');
 
     // Backward-compat: kontrak v1 (URL tidak berubah).
     $registerAdminPengajuan('IT', 'admin/tickets', 'api.admin.tickets.', AdminApiMiddleware::class);
-    $registerAdminPengajuan('IPSRS', 'administrasi-umum/order-perbaikan', 'api.administrasi-umum.order-perbaikan.', AdministrasiUmumApiMiddleware::class);
+    // `UMUM` agar sama dengan web (AdministrasiUmum\OrderPerbaikanController::umum()).
+    $registerAdminPengajuan('UMUM', 'administrasi-umum/order-perbaikan', 'api.administrasi-umum.order-perbaikan.', AdministrasiUmumApiMiddleware::class);
 
     // Dashboard stats IPSRS (kontrak lama).
     Route::get('/administrasi-umum/stats', [DashboardController::class, 'administrasiDashboard'])

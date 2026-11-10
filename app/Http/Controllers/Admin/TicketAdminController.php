@@ -343,7 +343,7 @@ class TicketAdminController extends Controller
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $categories = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $user = auth()->user();
@@ -401,7 +401,7 @@ class TicketAdminController extends Controller
                 ->with('error', 'Tiket hanya bisa diubah saat status open.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $categories = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
 

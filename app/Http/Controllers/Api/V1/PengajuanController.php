@@ -14,18 +14,46 @@ use Illuminate\Http\Request;
 
 class PengajuanController extends BaseApiController
 {
+    /**
+     * Sentinel route `jenis` untuk flavour umum (semua jenis selain SIRS).
+     * Lihat [jenis()] dan [applyJenis()].
+     */
+    protected const JENIS_UMUM = 'UMUM';
+
     public function __construct(
         protected PengajuanService $service,
         protected PengajuanWorkflowService $workflow,
         protected PengajuanScopeService $scope,
     ) {}
 
-    /** Jenis pengajuan yang dititipkan route (null = semua jenis). */
+    /**
+     * Jenis pengajuan yang dititipkan route (null = semua jenis).
+     *
+     * Selain kode jenis konkret (`IT`, `IPSRS`, `RT`), route boleh menitipkan
+     * sentinel `UMUM` yang berarti "flavour umum" — semua jenis SELAIN SIRS.
+     * Sentinel ini perlu karena prefix `/order-perbaikan` dulu memakai `IPSRS`
+     * (kode persis), padahal form order dan web memakai scope `umum()` yang
+     * juga mencakup RT. Akibatnya order berkategori RT bisa dibuat tapi tidak
+     * pernah muncul di list.
+     */
     protected function jenis(Request $request): ?string
     {
         $jenis = $request->route('jenis');
 
         return $jenis ? strtoupper((string) $jenis) : null;
+    }
+
+    /** Terapkan filter flavour: `UMUM` = bukan SIRS, selain itu kode persis. */
+    protected function applyJenis(Builder $query, string $jenis): Builder
+    {
+        if ($jenis === self::JENIS_UMUM) {
+            return $query->umum();
+        }
+
+        return $query->whereHas(
+            'kategori.jenisList',
+            fn (Builder $q) => $q->where('code', $jenis)
+        );
     }
 
     /** Query dasar: selalu milik user yang login, opsional difilter jenis. */
@@ -34,8 +62,7 @@ class PengajuanController extends BaseApiController
         $query = Pengajuan::query()->where('pemohon_id', $request->user()->id);
 
         if ($jenis = $this->jenis($request)) {
-            $jenisCode = strtoupper($jenis);
-            $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->where('code', $jenisCode));
+            $this->applyJenis($query, $jenis);
         }
 
         return $query;
@@ -51,8 +78,14 @@ class PengajuanController extends BaseApiController
         }
 
         $pengajuan->loadMissing('kategori.jenisList');
+        $codes = collect($pengajuan->kategori?->jenisCodes ?? []);
 
-        return collect($pengajuan->kategori?->jenisCodes ?? [])->contains(strtoupper((string) $jenis));
+        // Sentinel UMUM = flavour umum, yaitu punya minimal satu jenis non-SIRS.
+        if ($jenis === self::JENIS_UMUM) {
+            return $codes->contains(fn ($code) => strtoupper((string) $code) !== 'IT');
+        }
+
+        return $codes->contains($jenis);
     }
 
     /** Tolak akses bila pengajuan bukan milik user. */
@@ -122,9 +155,12 @@ class PengajuanController extends BaseApiController
     {
         $validated = $request->validate([
             'kategori_id' => ['required', 'exists:kategori_pengajuan,id'],
-            'description' => 'required_without:deskripsi|nullable|string',
-            'deskripsi' => 'required_without:description|nullable|string',
-            'keluhan' => 'nullable|string',
+            // Mobile & web mengirim `keluhan`; service memakainya sebagai
+            // fallback deskripsi. Semua tiga nama field harus saling
+            // menggantikan — bukan hanya description/deskripsi.
+            'description' => 'required_without_all:deskripsi,keluhan|nullable|string',
+            'deskripsi' => 'required_without_all:description,keluhan|nullable|string',
+            'keluhan' => 'required_without_all:description,deskripsi|nullable|string',
             'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
             'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
             'location_id' => 'nullable|exists:locations,id',
@@ -172,9 +208,13 @@ class PengajuanController extends BaseApiController
 
         try {
             $validated = $request->validate([
-                'description' => 'required_without:deskripsi|nullable|string',
-                'deskripsi' => 'required_without:description|nullable|string',
-                'keluhan' => 'nullable|string',
+                // `keluhan` adalah nama field yang dipakai mobile & web, dan
+                // service memakainya sebagai fallback deskripsi. Karena itu ia
+                // WAJIB dihitung sebagai sumber teks — sebelumnya `nullable`
+                // membuat request mobile (hanya kirim `keluhan`) ditolak 422.
+                'description' => 'required_without_all:deskripsi,keluhan|nullable|string',
+                'deskripsi' => 'required_without_all:description,keluhan|nullable|string',
+                'keluhan' => 'required_without_all:description,deskripsi|nullable|string',
                 'priority' => 'required_without:prioritas|nullable|in:low,medium,high',
                 'prioritas' => 'required_without:priority|nullable|in:low,medium,high',
                 'location_id' => 'nullable|exists:locations,id',
