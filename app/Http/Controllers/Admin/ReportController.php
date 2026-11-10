@@ -25,22 +25,19 @@ class ReportController extends Controller
         return $this->render($request, 'IPSRS', 'admin.reports.index', 'admin.reports.export');
     }
 
-    /** /report-sirs — report berbasis Pengajuan, default jenis IT (Tiket IT / SIRS). */
     public function sirs(Request $request): View
     {
         return $this->render($request, 'IT', 'admin.report-sirs.index', 'admin.report-sirs.export');
     }
 
-    /** Export CSV report default (/reports): default jenis IPSRS. */
     public function export(Request $request)
     {
-        return $this->streamCsvSelected($request, 'IPSRS');
+        return $this->streamCsvSelected($request, 'IPSRS', 'full');
     }
 
-    /** Export CSV report SIRS (/report-sirs): default jenis IT. */
     public function exportSirs(Request $request)
     {
-        return $this->streamCsvSelected($request, 'IT');
+        return $this->streamCsvSelected($request, 'IT', 'full');
     }
 
     /**
@@ -163,8 +160,6 @@ class ReportController extends Controller
                 'Status Kinerja',
                 // Tambahan:
                 'Jenis',
-                'Tanggal',
-                'Response (Menit)',
                 'Departemen',
                 'Gedung',
                 'Lokasi',
@@ -177,10 +172,6 @@ class ReportController extends Controller
 
             $query->chunk(500, function ($rows) use ($out) {
                 foreach ($rows as $pengajuan) {
-                    $responseMinutes = ($pengajuan->created_at && $pengajuan->started_at)
-                        ? (int) $pengajuan->created_at->diffInMinutes($pengajuan->started_at)
-                        : null;
-
                     fputcsv($out, [
                         $pengajuan->nomor,
                         $pengajuan->pemohon_nama ?? $pengajuan->pemohon?->name,
@@ -190,8 +181,6 @@ class ReportController extends Controller
                         $pengajuan->closed_at?->format('d/m/Y H:i') ?? '-',
                         $this->report->kinerjaLabel($pengajuan),
                         $pengajuan->kategori?->jenis?->name,
-                        optional($pengajuan->tanggal ?? $pengajuan->created_at)->format('d/m/Y H:i'),
-                        $responseMinutes !== null ? $responseMinutes : '',
                         $pengajuan->department?->name,
                         $pengajuan->building?->name,
                         $pengajuan->lokasi?->name,
