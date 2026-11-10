@@ -91,7 +91,7 @@
     {{-- Tab: Kategori --}}
     <div x-show="tab === 'kategori'" x-cloak>
         <div class="space-y-5">
-            @foreach($kategoris->groupBy(fn ($kategori) => $kategori->jenis->code ?? 'Lainnya') as $jenisCode => $items)
+            @foreach($kategoris->groupBy(fn ($kategori) => $kategori->jenisNames) as $jenisNamesGroup => $items)
                 @php
                     $jenis = $items->first()->jenis;
                 @endphp
@@ -104,7 +104,7 @@
                                     class="mt-0.5 shrink-0 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
                                 <span class="text-sm min-w-0">
                                     <span class="font-medium text-gray-800 block leading-tight">{{ $kategori->name }}</span>
-                                    <span class="text-xs text-gray-400 block">{{ $jenisCode }}</span>
+                                    <span class="text-xs text-gray-400 block">{{ $jenisNamesGroup }}</span>
                                 </span>
                             </label>
                         @endforeach

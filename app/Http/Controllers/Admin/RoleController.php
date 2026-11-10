@@ -23,7 +23,7 @@ class RoleController extends Controller
         return view('admin.roles.index', [
             'roles' => $this->roles->all(),
             'permissions' => $this->permissions->grouped(),
-            'kategoris' => KategoriPengajuan::with('jenis')->orderBy('name')->get(),
+            'kategoris' => KategoriPengajuan::with('jenisList')->orderBy('name')->get(),
         ]);
     }
 
@@ -31,7 +31,7 @@ class RoleController extends Controller
     {
         return view('admin.roles.create', [
             'permissions' => $this->permissions->grouped(),
-            'kategoris' => KategoriPengajuan::with('jenis')->orderBy('name')->get(),
+            'kategoris' => KategoriPengajuan::with('jenisList')->orderBy('name')->get(),
         ]);
     }
 
@@ -50,7 +50,7 @@ class RoleController extends Controller
         return view('admin.roles.edit', [
             'role' => $role,
             'permissions' => $this->permissions->grouped(),
-            'kategoris' => KategoriPengajuan::with('jenis')->orderBy('name')->get(),
+            'kategoris' => KategoriPengajuan::with('jenisList')->orderBy('name')->get(),
         ]);
     }
 

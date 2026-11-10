@@ -47,7 +47,7 @@ class AdminController extends Controller
         $statusFilter = $request->input('status', 'all');
 
         $query = $this->scope->visibleTo(auth()->user())
-            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+            ->sirs();
         $this->applyTimeFilter($query, $timeFilter);
 
         if ($statusFilter !== 'all') {

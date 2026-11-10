@@ -20,7 +20,7 @@ use Illuminate\Validation\ValidationException;
  * Satu controller admin untuk semua pengajuan (tiket IT & order IPSRS).
  *
  * Scope data memakai PengajuanScopeService (role_kategori) — sama seperti web,
- * bukan sekadar whereHas('kategori.jenis'). Jenis pengajuan dititipkan route
+ * bukan sekadar whereHas('kategori.jenisList'). Jenis pengajuan dititipkan route
  * lewat ->defaults('jenis', 'IT'|'IPSRS') agar prefix lama tetap kompatibel.
  */
 class AdminPengajuanController extends BaseApiController
@@ -48,7 +48,8 @@ class AdminPengajuanController extends BaseApiController
         $query = $this->scope->visibleTo($request->user());
 
         if ($jenis = $this->jenis($request)) {
-            $query->whereHas('kategori.jenis', fn (Builder $q) => $q->where('code', $jenis));
+            $jenisCode = strtoupper($jenis);
+            $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->where('code', $jenisCode));
         }
 
         return $query;
@@ -57,7 +58,7 @@ class AdminPengajuanController extends BaseApiController
     protected function relations(): array
     {
         return [
-            'kategori.jenis', 'pemohon', 'department', 'lokasi', 'building',
+            'kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building',
             'penugasan.user', 'penugasan.role', 'historis.actor', 'pesans.sender', 'pesans.lampirans', 'lampirans',
         ];
     }
@@ -71,8 +72,9 @@ class AdminPengajuanController extends BaseApiController
 
         $jenis = $this->jenis($request);
         if ($jenis !== null) {
-            $pengajuan->loadMissing('kategori.jenis');
-            if (strtoupper((string) $pengajuan->kategori?->jenis?->code) !== $jenis) {
+            $pengajuan->loadMissing('kategori.jenisList');
+
+            if (! collect($pengajuan->kategori?->jenisCodes ?? [])->contains(strtoupper((string) $jenis))) {
                 return $this->error('Pengajuan bukan jenis '.$jenis, 403);
             }
         }
@@ -201,7 +203,7 @@ class AdminPengajuanController extends BaseApiController
     public function index(Request $request)
     {
         $query = $this->baseQuery($request)->with([
-            'kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user',
+            'kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user',
         ]);
 
         // Status bisa datang dari query string atau dari default route (open/in-progress/...).
@@ -611,7 +613,7 @@ class AdminPengajuanController extends BaseApiController
     public function history(Request $request)
     {
         $query = $this->baseQuery($request)
-            ->with(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user'])
+            ->with(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user'])
             ->where('status', 'confirmed')
             ->where('user_confirmation', true);
 
@@ -663,7 +665,7 @@ class AdminPengajuanController extends BaseApiController
             return $deny;
         }
 
-        $pengajuan->loadMissing(['kategori.jenis', 'penugasan.user', 'penugasan.role']);
+        $pengajuan->loadMissing(['kategori.jenisList', 'penugasan.user', 'penugasan.role']);
 
         return $this->success($this->penugasanPayload($request, $pengajuan), 'Data penugasan pengajuan');
     }

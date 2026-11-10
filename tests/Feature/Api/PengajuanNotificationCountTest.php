@@ -37,9 +37,8 @@ class PengajuanNotificationCountTest extends TestCase
         $this->seedRolePermissions();
 
         $jenis = JenisPengajuan::where('code', 'IT')->firstOrFail();
-        $this->kategori = KategoriPengajuan::create([
-            'jenis_id' => $jenis->id, 'name' => 'Hardware', 'status' => 1,
-        ]);
+        $this->kategori = KategoriPengajuan::create(['name' => 'Hardware', 'status' => 1]);
+        $this->kategori->syncJenis([$jenis->id]);
 
         $adminRole = Role::where('slug', 'admin')->firstOrFail();
         $adminRole->kategoris()->sync([$this->kategori->id]);

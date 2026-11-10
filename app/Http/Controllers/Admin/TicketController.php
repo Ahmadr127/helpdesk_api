@@ -17,7 +17,7 @@ class TicketController extends Controller
 
     private function itQuery()
     {
-        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+        return Pengajuan::sirs();
     }
 
     public function update(Request $request, Pengajuan $ticket)

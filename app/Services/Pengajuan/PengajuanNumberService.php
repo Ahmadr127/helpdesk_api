@@ -15,6 +15,8 @@ class PengajuanNumberService
         $date ??= now();
         $jenis = JenisPengajuan::where('code', $jenisCode)->firstOrFail();
 
+        // Period length follows current data layout: short prefix (P, UMUM) == 'dm', long prefix (e.g. OP/RTG/MTC) == 'Ymd'.
+        // A new jenis can override by renaming itself accordingly; for most prefixes 'dm' is fine too.
         $period = $jenisCode === 'IT'
             ? $date->format('dm')
             : $date->format('Ymd');
@@ -31,14 +33,24 @@ class PengajuanNumberService
                         $sequence = DocumentSequence::create([
                             'jenis_id' => $jenis->id,
                             'period' => $period,
-                            'last_value' => $this->legacyMaxSequence($jenisCode, $period),
+                            'last_value' => $this->legacyMaxSequence($jenis, $period),
                         ]);
+                    }
+
+                    // Self-heal: data legacy / out-of-sync dapat menyebabkan
+                    // sequence tertinggal dari max nomor existing. Naikkan
+                    // jika perlu sebelum increment, agar nomor baru tidak
+                    // bertabrakan.
+                    $existingMax = $this->legacyMaxSequence($jenis, $period);
+                    if ((int) $sequence->last_value < $existingMax) {
+                        $sequence->last_value = $existingMax;
+                        $sequence->save();
                     }
 
                     $sequence->increment('last_value');
                     $sequence->refresh();
 
-                    return $this->format($jenisCode, $jenis->prefix, $period, (int) $sequence->last_value);
+                    return $this->format($jenis, $period, (int) $sequence->last_value);
                 });
             } catch (QueryException $e) {
                 if ($attempt === 2 || ! $this->isUniqueViolation($e)) {
@@ -50,17 +62,24 @@ class PengajuanNumberService
         throw new \RuntimeException('Gagal membuat nomor pengajuan.');
     }
 
-    protected function legacyMaxSequence(string $jenisCode, string $period): int
+    /**
+     * Cari nomor terakhir dari data legacy agar sequence tidak tabrakan.
+     * Pola dicocokkan terhadap prefix jenis dari DB.
+     *
+     * @return int
+     */
+    protected function legacyMaxSequence(JenisPengajuan $jenis, string $period): int
     {
         $max = 0;
+        $prefix = $jenis->prefix ?? 'T';
 
-        if ($jenisCode === 'IT') {
-            $pattern = '/^T-(\d{4})-(\d{3})$/';
+        if ($jenis->code === 'IPSRS') {
+            $pattern = '/^' . preg_quote($prefix, '/') . '-(\d{8})(\d{3})$/';
         } else {
-            $pattern = '/^OP\/RTG\/MTC-(\d{8})(\d{3})$/';
+            $pattern = '/^' . preg_quote($prefix, '/') . '-(\d{4})-(\d{3})$/';
         }
 
-        Pengajuan::where('nomor', 'like', $this->prefixFor($jenisCode) . '%')
+        Pengajuan::where('nomor', 'like', $prefix . '%')
             ->pluck('nomor')
             ->each(function (string $nomor) use (&$max, $pattern, $period): void {
                 if (! preg_match($pattern, $nomor, $matches)) {
@@ -77,18 +96,18 @@ class PengajuanNumberService
         return $max;
     }
 
-    protected function prefixFor(string $jenisCode): string
+    /** Format nomor pengajuan dari prefix jenis. */
+    protected function format(JenisPengajuan $jenis, string $period, int $sequence): string
     {
-        return $jenisCode === 'IT' ? 'T' : 'OP/RTG/MTC';
-    }
+        $prefix = $jenis->prefix ?? 'T';
 
-    protected function format(string $jenisCode, string $prefix, string $period, int $sequence): string
-    {
-        if ($jenisCode === 'IT') {
-            return sprintf('T-%s-%03d', $period, $sequence);
+        if ($jenis->code === 'IPSRS') {
+            // Pola legacy: OP/RTG/MTC-YYYYMMDD003
+            return sprintf('%s-%s%03d', $prefix, $period, $sequence);
         }
 
-        return sprintf('OP/RTG/MTC-%s%03d', $period, $sequence);
+        // Pola umum: PREFIX-DDMM-001
+        return sprintf('%s-%s-%03d', $prefix, $period, $sequence);
     }
 
     protected function isUniqueViolation(QueryException $e): bool

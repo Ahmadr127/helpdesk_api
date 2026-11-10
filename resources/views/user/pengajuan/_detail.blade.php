@@ -3,7 +3,7 @@
     Kandidat: user.pengajuan._detail
 
     Parameter (@include):
-    - $pengajuan   (wajib) model App\Models\Pengajuan (sudah di-load relasi: kategori.jenis, pemohon, department, lokasi, building, orderDetail, historis.actor, pesans.sender, lampirans, penugasan.user)
+    - $pengajuan   (wajib) model App\Models\Pengajuan (sudah di-load relasi: kategori.jenisList, pemohon, department, lokasi, building, historis.actor, pesans.sender, lampirans, penugasan.user)
     - $accent      (opsional) 'blue' | 'green', default 'blue'
     - $backUrl     (opsional) URL tombol kembali, default route('user.pengajuan.index')
     - $backLabel   (opsional) label tombol kembali, default 'Kembali ke Daftar Pengajuan'
@@ -73,6 +73,23 @@
             'action' => null,
         ];
     })->sortBy('timestamp')->values()->all();
+    if (count($allResponses) > 0) {
+        // Balasan konfirmasi ("user_reply" type=confirm) hanya jadi histori action=confirmed
+        // dan tidak pernah ada di pengajuan_pesan — gabungkan agar bubble pengaju tampil.
+        $confirmBubbles = $pengajuan->historis
+            ->where('action', 'confirmed')
+            ->filter(fn ($h) => ($h->actor_type ?? '') === 'user' && trim((string) ($h->notes ?? '')) !== '' && $h->notes !== 'Pengajuan dikonfirmasi.')
+            ->map(fn ($h) => [
+                'type' => 'user',
+                'notes' => $h->notes,
+                'message' => $h->notes,
+                'admin_name' => null,
+                'photo' => null,
+                'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
+                'action' => 'confirm',
+            ])->values()->all();
+        $allResponses = collect($allResponses)->concat($confirmBubbles)->sortBy('timestamp')->values()->all();
+    }
     if (count($allResponses) === 0) {
         $allResponses = $pengajuan->historis->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])->map(function ($h) {
             $isAdmin = ($h->action ?? '') === 'admin_response';
@@ -214,14 +231,16 @@
                     <div class="pt-4 border-t border-gray-100 mt-4">
                         <h3 class="text-sm font-medium text-gray-500 mb-2">Penanggung Jawab: <span class="text-gray-900">{{ ($activePj ?? $pengajuan->penugasan->where('released_at', null))->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ' }}</span></h3>
                         @if(!empty($canAssign) && !empty($assignUrl) && !empty($candidates) && $candidates->isNotEmpty())
-                        <form method="POST" action="{{ $assignUrl }}" class="mt-1 flex gap-2">
+                        <form method="POST" action="{{ $assignUrl }}" class="mt-1 flex gap-2 items-start">
                             @csrf
-                            <select name="user_ids[]" multiple class="flex-1 px-2 py-1 rounded-md border border-gray-300 text-xs">
-                                @foreach($candidates as $candidate)
-                                    <option value="{{ $candidate->id }}" @selected((($activePj ?? collect())->pluck('user_id')->contains($candidate->id)))>{{ $candidate->name }}</option>
-                                @endforeach
-                            </select>
-                            <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs">Simpan PJ</button>
+                            @include('components.searchable-multiselect', [
+                                'name' => 'user_ids[]',
+                                'options' => $candidates,
+                                'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
+                                'placeholder' => 'Pilih penanggung jawab…',
+                                'searchPlaceholder' => 'Cari nama…',
+                            ])
+                            <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs whitespace-nowrap">Simpan PJ</button>
                         </form>
                         @endif
                     </div>
@@ -229,56 +248,82 @@
 
                     <div class="pt-4 border-t border-gray-100">
                         <h3 class="text-sm font-medium text-gray-500 mb-2">Riwayat Status</h3>
-                        <div class="bg-gray-50 rounded-lg border border-gray-100 p-3">
-                            <div class="flex items-center">
-                                <div class="relative flex items-center justify-between w-full">
-                                    <div class="relative flex flex-col items-center">
-                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-green-500 text-white">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                        </div>
-                                        <div class="mt-1 text-center">
-                                            <h4 class="text-xs font-medium text-gray-800">Dibuat</h4>
-                                            <p class="text-xs text-gray-500">{{ $pengajuan->created_at?->format('d M H:i') }}</p>
-                                        </div>
-                                        @if($pengajuan->started_at || $pengajuan->closed_at || $pengajuan->user_confirmed_at)<div class="absolute top-3.5 left-full w-full h-0.5 bg-gray-200"></div>@endif
+                        @php
+                            $statusActions = ['created', 'started', 'closed', 'confirmed', 'rejected', 'migrated_history'];
+                            $timeline = $pengajuan->historis
+                                ->filter(fn ($h) => in_array($h->action, $statusActions, true))
+                                ->sortBy(fn ($h) => $h->created_at?->timestamp ?? 0)
+                                ->values();
+                            $historyLabel = fn ($action, $status) => match ($action) {
+                                'created', 'migrated' => 'Dibuat',
+                                'started' => 'Dalam Proses',
+                                'closed' => 'Ditutup',
+                                'confirmed' => 'Dikonfirmasi',
+                                'rejected' => 'Ditolak',
+                                'migrated_history' => match ($status) {
+                                    'open' => 'Dibuat',
+                                    'in_progress' => 'Dalam Proses',
+                                    'ditutup' => 'Ditutup',
+                                    'confirmed' => 'Dikonfirmasi',
+                                    'rejected' => 'Ditolak',
+                                    default => ucfirst(str_replace('_', ' ', (string) $status)),
+                                },
+                                default => ucfirst(str_replace('_', ' ', (string) $action)),
+                            };
+                            $historyDot = fn ($action, $status) => match (true) {
+                                $action === 'created' || $action === 'migrated' || ($action === 'migrated_history' && $status === 'open') => 'bg-green-500',
+                                $action === 'started' || ($action === 'migrated_history' && $status === 'in_progress') => 'bg-purple-500',
+                                $action === 'closed' || ($action === 'migrated_history' && $status === 'ditutup') => 'bg-yellow-500',
+                                $action === 'confirmed' || ($action === 'migrated_history' && $status === 'confirmed') => 'bg-green-600',
+                                $action === 'rejected' || ($action === 'migrated_history' && $status === 'rejected') => 'bg-red-500',
+                                default => 'bg-gray-400',
+                            };
+                            $historyIcon = fn ($action, $status) => match (true) {
+                                $action === 'started' || ($action === 'migrated_history' && $status === 'in_progress') => 'clock',
+                                $action === 'closed' || ($action === 'migrated_history' && $status === 'ditutup') => 'close',
+                                $action === 'rejected' || ($action === 'migrated_history' && $status === 'rejected') => 'x',
+                                default => 'check',
+                            };
+                        @endphp
+                        <div class="space-y-2">
+                            @forelse($timeline as $step)
+                                <div class="flex items-start gap-3 bg-gray-50 rounded-lg border border-gray-100 p-2.5">
+                                    <div class="mt-0.5 flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full {{ $historyDot($step->action, $step->status) }} text-white">
+                                        @switch($historyIcon($step->action, $step->status))
+                                            @case('clock')
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                @break
+                                            @case('close')
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                @break
+                                            @case('x')
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                @break
+                                            @default
+                                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                        @endswitch
                                     </div>
-                                    @if($pengajuan->started_at)
-                                    <div class="relative flex flex-col items-center">
-                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-purple-500 text-white">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center flex-wrap gap-2">
+                                            <h4 class="text-xs font-semibold text-gray-800">{{ $historyLabel($step->action, $step->status) }}</h4>
+                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-{{ match($step->status) { 'in_progress' => 'purple', 'ditutup' => 'yellow', 'confirmed' => 'green', 'rejected' => 'red', default => 'gray' } }}-100 text-{{ match($step->status) { 'in_progress' => 'purple', 'ditutup' => 'yellow', 'confirmed' => 'green', 'rejected' => 'red', default => 'gray' } }}-800">
+                                                {{ ucfirst(str_replace('_', ' ', (string) $step->status)) }}
+                                            </span>
                                         </div>
-                                        <div class="mt-1 text-center">
-                                            <h4 class="text-xs font-medium text-gray-800">Dalam Proses</h4>
-                                            <p class="text-xs text-gray-500">{{ $pengajuan->started_at->format('d M H:i') }}</p>
-                                        </div>
-                                        @if($pengajuan->closed_at || $pengajuan->user_confirmed_at)<div class="absolute top-3.5 left-full w-full h-0.5 bg-gray-200"></div>@endif
+                                        <p class="text-[11px] text-gray-500 mt-0.5">
+                                            <span class="font-medium">{{ $step->created_at?->format('d M Y, H:i') }}</span>
+                                            · {{ $step->actor?->name ?? 'Sistem' }}
+                                        </p>
+                                        @if($step->notes)
+                                            <p class="text-xs text-gray-600 mt-1 whitespace-pre-line break-words">{{ $step->notes }}</p>
+                                        @endif
                                     </div>
-                                    @endif
-                                    @if($pengajuan->closed_at)
-                                    <div class="relative flex flex-col items-center">
-                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-yellow-500 text-white">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-                                        </div>
-                                        <div class="mt-1 text-center">
-                                            <h4 class="text-xs font-medium text-gray-800">Ditutup</h4>
-                                            <p class="text-xs text-gray-500">{{ $pengajuan->closed_at->format('d M H:i') }}</p>
-                                        </div>
-                                        @if($pengajuan->user_confirmed_at)<div class="absolute top-3.5 left-full w-full h-0.5 bg-gray-200"></div>@endif
-                                    </div>
-                                    @endif
-                                    @if($pengajuan->user_confirmed_at)
-                                    <div class="relative flex flex-col items-center">
-                                        <div class="w-7 h-7 flex items-center justify-center rounded-full bg-green-600 text-white">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                        </div>
-                                        <div class="mt-1 text-center">
-                                            <h4 class="text-xs font-medium text-gray-800">Dikonfirmasi</h4>
-                                            <p class="text-xs text-gray-500">{{ $pengajuan->user_confirmed_at->format('d M H:i') }}</p>
-                                        </div>
-                                    </div>
-                                    @endif
                                 </div>
-                            </div>
+                            @empty
+                                <div class="bg-gray-50 rounded-lg border border-gray-100 p-3 text-xs text-gray-500 text-center">
+                                    Tidak ada riwayat status.
+                                </div>
+                            @endforelse
                         </div>
                     </div>
                 </div>

@@ -14,7 +14,7 @@ class PengajuanController extends Controller
     public function show(Pengajuan $pengajuan)
     {
         $pengajuan->load([
-            'kategori.jenis',
+            'kategori.jenisList',
             'pemohon',
             'department',
             'lokasi',

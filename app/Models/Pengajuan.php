@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -195,6 +196,11 @@ class Pengajuan extends Model
     }
 
     // Backward-compat accessors for legacy views
+    public function getInProgressAtAttribute(): ?\Carbon\CarbonInterface
+    {
+        return $this->started_at;
+    }
+
     public function getTicketNumberAttribute(): string
     {
         return (string) $this->nomor;
@@ -234,5 +240,20 @@ class Pengajuan extends Model
     public function getPhotosAttribute()
     {
         return $this->lampirans;
+    }
+
+    /** Pengajuan kategori flavour SIRS (jenis dengan kode IT). */
+    public function scopeSirs(Builder $query): Builder
+    {
+        return $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->where('code', 'IT'));
+    }
+
+    /**
+     * Pengajuan kategori flavour UMUM (selain SIRS — apa pun jenis non-SIRS).
+     * Kategori multi-flavour (mis. SIRS + IPSRS) muncul di keduanya.
+     */
+    public function scopeUmum(Builder $query): Builder
+    {
+        return $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->where('code', '!=', 'IT'));
     }
 }

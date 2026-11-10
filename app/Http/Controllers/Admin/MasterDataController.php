@@ -27,7 +27,8 @@ class MasterDataController extends Controller
         $unitProses = UnitProses::latest()->limit($limit)->get();
         $positions = Position::latest()->limit($limit)->get();
         $kategoriOrders = KategoriOrder::latest()->limit($limit)->get();
-        $kategoriPengajuan = KategoriPengajuan::with('jenis')->latest()->limit($limit)->get();
+        $kategoriPengajuan = KategoriPengajuan::with('jenisList')->latest()->limit($limit)->get();
+        $jenisList = \App\Models\JenisPengajuan::latest()->limit($limit)->get();
 
         return view('admin.master.index', compact(
             'categories',
@@ -37,7 +38,8 @@ class MasterDataController extends Controller
             'unitProses',
             'positions',
             'kategoriOrders',
-            'kategoriPengajuan'
+            'kategoriPengajuan',
+            'jenisList'
         ));
     }
 

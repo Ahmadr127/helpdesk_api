@@ -175,12 +175,12 @@
                         @forelse($notifications as $notification)
                         @php
                             $data = $notification->data;
-                            $isOrder = isset($data['order_id']);
-                            $targetUrl = $isOrder
-                                ? route('user.administrasi-umum.order-perbaikan.show', ['orderPerbaikan' => $data['order_id']])
-                                : (isset($data['ticket_id'])
-                                    ? route('user.ticket.show', ['ticket' => $data['ticket_id']])
-                                    : route('user.notifications.index'));
+                            $pengajuanId = $data['pengajuan_id'] ?? null;
+                            $targetUrl = $pengajuanId
+                                ? route('user.pengajuan.show', ['pengajuan' => $pengajuanId])
+                                : route('user.notifications.index');
+                            $nomor = $data['nomor'] ?? $data['ticket_number'] ?? null;
+                            $nStatus = $data['status'] ?? $data['order_status'] ?? $data['ticket_status'] ?? null;
                         @endphp
                         <div
                             class="p-5 {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }} hover:bg-gray-50 transition-all">
@@ -211,45 +211,32 @@
                                             {{ $data['message'] ?? '' }}
                                         </p>
                                         <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                                            @if($isOrder)
+                                            @if($nomor)
                                             <div class="bg-gray-100 px-3 py-1 rounded-full">
-                                                <span class="text-gray-500">Order #:</span>
-                                                <span
-                                                    class="font-medium">{{ $data['nomor'] ?? '-' }}</span>
+                                                <span class="text-gray-500">Nomor:</span>
+                                                <span class="font-medium">{{ $nomor }}</span>
                                             </div>
+                                            @endif
+                                            @if($nStatus)
                                             <div>
                                                 <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full
-                                                    {{ ($data['status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
-                                                       ((($data['status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
-                                                       'bg-green-100 text-green-800') }}">
-                                                    {{ ucfirst(str_replace('_', ' ', $data['status'] ?? '-')) }}
-                                                </span>
-                                            </div>
-                                            @else
-                                            <div class="bg-gray-100 px-3 py-1 rounded-full">
-                                                <span class="text-gray-500">Tiket #:</span>
-                                                <span
-                                                    class="font-medium">{{ $data['ticket_number'] ?? '-' }}</span>
-                                            </div>
-                                            <div>
-                                                <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full
-                                                    {{ ($data['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
-                                                       ((($data['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
-                                                       ((($data['ticket_status'] ?? '') === 'ditutup') ? 'bg-gray-100 text-gray-800' :
-                                                       'bg-green-100 text-green-800')) }}">
-                                                    {{ ucfirst(str_replace('_', ' ', $data['ticket_status'] ?? '-')) }}
-                                                </span>
-                                            </div>
-                                            @if(isset($data['ticket_priority']))
-                                            <div>
-                                                <span class="px-2.5 py-1 text-xs rounded-full
-                                                    {{ $data['ticket_priority'] === 'low' ? 'bg-gray-100 text-gray-800' :
-                                                       ($data['ticket_priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                       'bg-red-100 text-red-800') }}">
-                                                    Prioritas: {{ ucfirst($data['ticket_priority']) }}
+                                                    {{ $nStatus === 'open' ? 'bg-blue-100 text-blue-800' :
+                                                       ($nStatus === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                                       ($nStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                       'bg-gray-100 text-gray-800')) }}">
+                                                    {{ ucfirst(str_replace('_', ' ', $nStatus)) }}
                                                 </span>
                                             </div>
                                             @endif
+                                            @if(!empty($data['prioritas']))
+                                            <div>
+                                                <span class="px-2.5 py-1 text-xs rounded-full
+                                                    {{ $data['prioritas'] === 'low' ? 'bg-gray-100 text-gray-800' :
+                                                       ($data['prioritas'] === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                       'bg-red-100 text-red-800') }}">
+                                                    Prioritas: {{ ucfirst($data['prioritas']) }}
+                                                </span>
+                                            </div>
                                             @endif
                                         </div>
                                         @if(isset($data['responder_name']))

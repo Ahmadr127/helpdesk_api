@@ -112,8 +112,9 @@
         'prioritas' => 'Prioritas',
         'status' => 'Status',
         'pj' => 'Penanggung Jawab',
-        'response_time' => 'Response Time',
-        'closed_at' => 'Waktu Selesai',
+        'response_time' => 'Waktu Respond',
+        'waktu_proses' => 'Waktu Proses',
+        'closed_at' => 'Tanggal Selesai',
         'kinerja' => 'Status Kinerja',
         'aksi' => 'Aksi',
     ];

@@ -110,7 +110,7 @@ class MigrationTickets extends Command
 
         foreach (DB::table('categories')->get() as $c) {
             $nama = $c->name ?? $c->nama ?? ('Kategori '.$c->id);
-            $kp = KategoriPengajuan::where('jenis_id', $jenisIt->id)->where('name', $nama)->first();
+            $kp = KategoriPengajuan::whereHas('jenisList', fn ($q) => $q->where('code', 'IT'))->where('name', $nama)->first();
             if ($kp) {
                 $catMap[$c->id] = $kp->id;
                 $catMap[(string) $nama] = $kp->id;
@@ -132,7 +132,7 @@ class MigrationTickets extends Command
             }
         }
 
-        return KategoriPengajuan::where('jenis_id', $jenisIt?->id)->first()?->id;
+        return KategoriPengajuan::whereHas('jenisList', fn ($q) => $q->where('code', 'IT'))->first()?->id;
     }
 
     protected function previewPengajuan(object $t, array $catMap, $jenisIt, ?int $pemohonId): Pengajuan
@@ -266,6 +266,19 @@ class MigrationTickets extends Command
         $expectedStatus = $this->statusForRepair($pengajuan, $t);
         if ((string) $pengajuan->status !== $expectedStatus) {
             $updates['status'] = $expectedStatus;
+        }
+
+        foreach ([
+            'started_at' => $t->in_progress_at ?? null,
+            'closed_at' => $t->closed_at ?? null,
+            'confirmed_at' => $t->confirmed_at ?? null,
+            'rejected_at' => $t->last_rejection_at ?? null,
+        ] as $field => $legacyRaw) {
+            $expected = $legacyRaw ? (string) $this->parseDate($legacyRaw) : null;
+            $current = $pengajuan->{$field} ? (string) $this->parseDate($pengajuan->{$field}) : null;
+            if ($current !== $expected) {
+                $updates[$field] = $expected;
+            }
         }
 
         if ($updates !== [] && ! $dry) {

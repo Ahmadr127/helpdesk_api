@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JenisPengajuan extends Model
@@ -14,9 +15,11 @@ class JenisPengajuan extends Model
         'is_active' => 'boolean',
     ];
 
-    public function kategoris(): HasMany
+    /** Kategori-kategori yang terhubung ke jenis ini (banyak-banyak). */
+    public function kategoris(): BelongsToMany
     {
-        return $this->hasMany(KategoriPengajuan::class, 'jenis_id');
+        return $this->belongsToMany(KategoriPengajuan::class, 'kategori_jenis', 'jenis_id', 'kategori_id')
+            ->withTimestamps();
     }
 
     public function documentSequences(): HasMany

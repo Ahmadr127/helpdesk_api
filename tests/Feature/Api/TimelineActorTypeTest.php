@@ -40,9 +40,8 @@ class TimelineActorTypeTest extends TestCase
         $location = Location::create(['name' => 'UGD', 'status' => 1]);
 
         $jenis = JenisPengajuan::where('code', 'IT')->firstOrFail();
-        $kategori = KategoriPengajuan::create([
-            'jenis_id' => $jenis->id, 'name' => 'Jaringan', 'code' => 'JRG', 'status' => 1,
-        ]);
+        $kategori = KategoriPengajuan::create(['name' => 'Jaringan', 'code' => 'JRG', 'status' => 1]);
+        $kategori->syncJenis([$jenis->id]);
         Role::where('slug', 'admin')->firstOrFail()->kategoris()->sync([$kategori->id]);
 
         $this->admin = User::create([

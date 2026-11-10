@@ -20,7 +20,7 @@ class AdministrasiUmumController extends Controller
 
     private function ipsrsQuery()
     {
-        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'));
+        return Pengajuan::umum();
     }
 
     public function indexOrderPerbaikan(Request $request)
@@ -59,7 +59,7 @@ class AdministrasiUmumController extends Controller
 
         $locations = \App\Models\Location::all();
         $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
-        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
+        $kategoriOrders = \App\Models\KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
 
         $stats = [
             'total' => $this->ipsrsQuery()->where('pemohon_id', auth()->id())->count(),
@@ -89,8 +89,8 @@ class AdministrasiUmumController extends Controller
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
-        $kategoriOrders = KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
-        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $kategoriOrders = KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
+        $kategoris = KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
 
         $department = null;
         if (! empty($user->department_id)) {
@@ -147,12 +147,12 @@ class AdministrasiUmumController extends Controller
         $kategoriId = $validated['kategori_id'] ?? null;
         if (! $kategoriId && ! empty($validated['kategori_order'])) {
             $kp = \App\Models\KategoriPengajuan::where('name', $validated['kategori_order'])
-                ->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))
+                
                 ->first();
             $kategoriId = $kp?->id;
         }
         if (! $kategoriId) {
-            $kategoriId = \App\Models\KategoriPengajuan::whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->first()?->id;
+            $kategoriId = \App\Models\KategoriPengajuan::umum()->first()?->id;
         }
 
         $prioritasMap = ['RENDAH' => 'low', 'SEDANG' => 'medium', 'TINGGI/URGENT' => 'high'];
@@ -187,7 +187,7 @@ class AdministrasiUmumController extends Controller
         if ((int) $orderPerbaikan->pemohon_id !== (int) auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
-        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $orderPerbaikan->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.administrasi-umum.order-perbaikan.show', ['order' => $orderPerbaikan]);
     }
@@ -204,7 +204,7 @@ class AdministrasiUmumController extends Controller
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
-        $kategoris = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $kategoris = KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
 
         $userDepartment = null;
         if (! empty($orderPerbaikan->department_id)) {
@@ -324,9 +324,9 @@ class AdministrasiUmumController extends Controller
     // stubs for other methods
     public function orderBarang(Request $request) {
         $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
-        $kategoriOrders = \App\Models\KategoriPengajuan::where('status', 1)->whereHas('jenis', fn ($q) => $q->where('code', 'IPSRS'))->orderBy('name')->get();
-        $inProgressOrders = \App\Models\Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('pemohon_id', auth()->id())->where('status', 'in_progress')->get();
-        $orders = \App\Models\Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))->where('pemohon_id', auth()->id())->where('status', 'open')->latest()->paginate(10);
+        $kategoriOrders = \App\Models\KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
+        $inProgressOrders = \App\Models\Pengajuan::umum()->where('pemohon_id', auth()->id())->where('status', 'in_progress')->get();
+        $orders = \App\Models\Pengajuan::umum()->where('pemohon_id', auth()->id())->where('status', 'open')->latest()->paginate(10);
         return view('user.administrasi-umum.order-barang', compact('kategoriOrders', 'unitProses', 'inProgressOrders', 'orders'));
     }
     public function orderBarangKonfirmasi(Request $request) {

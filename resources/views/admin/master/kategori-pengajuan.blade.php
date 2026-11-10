@@ -29,6 +29,7 @@
             <div class="flex items-end space-x-2">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Filter</button>
                 <a href="{{ route('admin.master.kategori-pengajuan.index') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm">Reset</a>
+                <a href="{{ route('admin.master.jenis-pengajuan.index') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-all shadow-sm">Kelola Jenis</a>
                 <button type="button" onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">Tambah Kategori</button>
             </div>
         </form>
@@ -50,12 +51,21 @@
                 <tr class="hover:bg-slate-50 transition-all">
                     <td class="px-6 py-4 text-sm text-gray-900">{{ $k->name }}</td>
                     <td class="px-6 py-4 text-sm text-gray-500">{{ $k->code ?? '-' }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-500">{{ $k->jenis?->code }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ $k->jenisNames ?? '-' }}</td>
                     <td class="px-6 py-4 text-sm">
                         <span class="px-2 py-1 text-xs rounded-full {{ $k->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">{{ $k->status ? 'Aktif' : 'Nonaktif' }}</span>
                     </td>
                     <td class="px-6 py-4 text-sm">
-                        <button type="button" onclick='editKategori(@json($k))' class="text-blue-600 hover:text-blue-900 text-sm mr-2">Edit</button>
+                        @php
+                            $editPayload = [
+                                'id' => $k->id,
+                                'name' => $k->name,
+                                'code' => $k->code ?? '',
+                                'status' => (int) $k->status,
+                                'jenis_ids' => $k->jenisList->pluck('id')->values()->all(),
+                            ];
+                        @endphp
+                        <button type="button" onclick='editKategori(@json($editPayload, 15, 512))' class="text-blue-600 hover:text-blue-900 text-sm mr-2">Edit</button>
                         <form action="{{ route('admin.master.kategori-pengajuan.destroy', $k) }}" method="POST" class="inline" onsubmit="return confirm('Hapus kategori?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-900 text-sm">Hapus</button>
@@ -83,12 +93,16 @@
                 @csrf
                 <div id="methodField"></div>
                 <div class="mb-4">
-                    <label for="jenis_id" class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
-                    <select name="jenis_id" id="jenis_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jenis <span class="text-xs text-gray-400 font-normal">(bisa lebih dari satu)</span></label>
+                    <div class="max-h-44 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-1">
                         @foreach($jenisList as $j)
-                            <option value="{{ $j->id }}">{{ $j->code }} - {{ $j->name }}</option>
+                            <label class="flex items-center gap-2 px-1 py-1 rounded hover:bg-gray-50 cursor-pointer text-sm text-gray-700 select-none">
+                                <input type="checkbox" name="jenis_ids[]" value="{{ $j->id }}" class="jenis-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span>{{ $j->code }} &mdash; {{ $j->name }}</span>
+                            </label>
                         @endforeach
-                    </select>
+                    </div>
+                    <p id="jenis_ids_error" class="text-xs text-red-600 mt-1 hidden">Pilih minimal satu jenis.</p>
                 </div>
                 <div class="mb-4">
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
@@ -122,9 +136,12 @@
         const methodField = document.getElementById('methodField');
         const modalTitle = document.getElementById('modalTitle');
         if (kategori) {
-            form.action = '{{ url('admin/master/kategori-pengajuan') }}/' + kategori.id;
+            form.action = "{{ url('master/kategori-pengajuan') }}/" + kategori.id;
             methodField.innerHTML = '@method("PUT")';
-            document.getElementById('jenis_id').value = kategori.jenis_id;
+            const ids = Array.isArray(kategori.jenisList_ids) ? kategori.jenisList_ids.map(id => parseInt(id)) : [];
+            document.querySelectorAll('.jenis-checkbox').forEach(function (cb) {
+                cb.checked = ids.includes(parseInt(cb.value));
+            });
             document.getElementById('name').value = kategori.name;
             document.getElementById('code').value = kategori.code || '';
             document.getElementById('status').value = kategori.status;
@@ -133,10 +150,21 @@
             form.action = "{{ route('admin.master.kategori-pengajuan.store') }}";
             methodField.innerHTML = '';
             form.reset();
+            document.getElementById('jenis_ids_error').classList.add('hidden');
             modalTitle.textContent = 'Tambah Kategori Pengajuan';
         }
         modal.classList.remove('hidden');
     }
+    document.getElementById('kategoriForm').addEventListener('submit', function (e) {
+        const checked = document.querySelectorAll('.jenis-checkbox:checked');
+        const errorEl = document.getElementById('jenis_ids_error');
+        if (checked.length === 0) {
+            e.preventDefault();
+            errorEl.classList.remove('hidden');
+        } else {
+            errorEl.classList.add('hidden');
+        }
+    });
     function closeModal() {
         document.getElementById('formModal').classList.add('hidden');
     }
@@ -148,7 +176,7 @@
         if (confirm('Apakah Anda yakin ingin menghapus kategori ini?')) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ url('admin/master/kategori-pengajuan') }}/' + id;
+            form.action = "{{ url('master/kategori-pengajuan') }}/" + id;
             form.innerHTML = '@csrf @method("DELETE")';
             document.body.appendChild(form);
             form.submit();

@@ -244,6 +244,22 @@
                         'action' => null,
                     ];
                 })->sortBy('timestamp')->values()->all();
+                // Balasan konfirmasi hanya jadi histori confirmed — gabungkan sebagai bubble pengaju.
+                if (count($allResponses) > 0) {
+                    $confirmBubbles = $ticket->historis
+                        ->where('action', 'confirmed')
+                        ->filter(fn ($h) => ($h->actor_type ?? '') === 'user' && trim((string) ($h->notes ?? '')) !== '' && $h->notes !== 'Pengajuan dikonfirmasi.')
+                        ->map(fn ($h) => [
+                            'type' => 'user',
+                            'notes' => $h->notes,
+                            'message' => $h->notes,
+                            'admin_name' => null,
+                            'photo' => null,
+                            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
+                            'action' => 'confirm',
+                        ])->values()->all();
+                    $allResponses = collect($allResponses)->concat($confirmBubbles)->sortBy('timestamp')->values()->all();
+                }
                 // Fallback: histori admin_response/user_reply/confirmed yang belum jadi pesan
                 $hasPesan = count($allResponses) > 0;
                 if (! $hasPesan) {

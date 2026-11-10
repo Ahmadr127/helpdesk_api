@@ -65,8 +65,12 @@ class ReportController extends Controller
         $performance = $this->report->performance($query);
         $pengajuans = $this->report->paginate(clone $query, $request);
 
+        // years filter juga pakai pivot jenisList agar joint kategori (dua jenis) terhitung di tahunnya.
+        $reqJenisIds = \App\Models\KategoriPengajuan::whereHas('jenisList', fn (Builder $k) => $k->whereIn('code', $reqJenis))
+            ->pluck('id');
+
         $years = Pengajuan::query()
-            ->when($reqJenis !== [], fn (Builder $q) => $q->whereHas('kategori.jenis', fn (Builder $j) => $j->whereIn('code', $reqJenis)))
+            ->when($reqJenisIds->isNotEmpty(), fn (Builder $q) => $q->whereIn('kategori_id', $reqJenisIds))
             ->selectRaw('DISTINCT EXTRACT(YEAR FROM COALESCE(tanggal, created_at)) AS year')
             ->orderBy('year', 'desc')
             ->pluck('year');
@@ -82,24 +86,25 @@ class ReportController extends Controller
                     'color' => 'blue',
                 ],
                 [
-                    'label' => 'Response ≤ 60 Menit',
-                    'value' => number_format($performance['under_60'], 0, ',', '.'),
+                    'label' => 'Waktu Respond ≤ 60 Menit',
+                    'value' => number_format($performance['under_60_response'], 0, ',', '.'),
                     'sub' => $performance['responded'].' tiket sudah direspon',
                     'color' => 'green',
                 ],
                 [
-                    'label' => 'Persentase Response',
-                    'value' => $performance['percentage'].'%',
-                    'sub' => 'Target ≤ '.ReportService::RESPONSE_SLA_MINUTES.' menit',
+                    'label' => 'Waktu Proses ≤ 60 Menit',
+                    'value' => number_format($performance['under_60_process'], 0, ',', '.'),
+                    'sub' => $performance['processed'].' tiket sudah diproses',
                     'color' => 'yellow',
                 ],
                 [
-                    'label' => 'Rata-rata Response Time',
-                    'value' => $performance['avg_minutes'].' Menit',
+                    'label' => 'Tingkat Penyelesaian',
+                    'value' => round($summary['completion_rate'], 1).'%',
+                    'sub' => $summary['done'].' selesai dari '.$summary['total'],
                     'color' => 'purple',
                 ],
             ],
-            'columns' => ['nomor', 'pemohon', 'kategori', 'created_at', 'response_time', 'closed_at', 'kinerja'],
+            'columns' => ['nomor', 'pemohon', 'kategori', 'created_at', 'response_time', 'waktu_proses', 'closed_at', 'kinerja', 'pj'],
             'route' => route($view),
             'exportRoute' => $exportRoute,
             'exportAction' => 'exportReport',
@@ -155,8 +160,9 @@ class ReportController extends Controller
                 'Pemohon',
                 'Kategori',
                 'Tanggal Dibuat',
-                'Response Time',
-                'Waktu Selesai',
+                'Waktu Respond',
+                'Waktu Proses',
+                'Tanggal Selesai',
                 'Status Kinerja',
                 // Tambahan:
                 'Jenis',
@@ -178,9 +184,10 @@ class ReportController extends Controller
                         $pengajuan->kategori?->name,
                         optional($pengajuan->created_at)->format('d/m/Y H:i'),
                         $this->report->durationLabel($pengajuan->created_at, $pengajuan->started_at),
+                        $this->report->durationLabel($pengajuan->started_at, $pengajuan->closed_at),
                         $pengajuan->closed_at?->format('d/m/Y H:i') ?? '-',
                         $this->report->kinerjaLabel($pengajuan),
-                        $pengajuan->kategori?->jenis?->name,
+                        $pengajuan->kategori?->jenisNames,
                         $pengajuan->department?->name,
                         $pengajuan->building?->name,
                         $pengajuan->lokasi?->name,

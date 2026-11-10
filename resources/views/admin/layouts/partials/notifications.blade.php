@@ -31,16 +31,14 @@
             </div>
             @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
             @php
-                // Notifikasi bisa bertipe tiket, order, atau lainnya — jangan
-                // asumsi key ticket_* selalu ada (sumber 500 Undefined array key).
+                // Payload unified pengajuan (konsisten dengan FCM web+mobile)
                 $nData = $notification->data;
-                $nIsTicket = isset($nData['ticket_id']);
-                $nIsOrder = isset($nData['order_id']);
-                $nUrl = $nIsTicket
-                    ? route('admin.tickets.show', ['ticket' => $nData['ticket_id']])
-                    : ($nIsOrder
-                        ? route('admin.order-perbaikan.show', ['orderPerbaikan' => $nData['order_id']])
-                        : route('admin.notifications.index'));
+                $nomor = $nData['nomor'] ?? $nData['ticket_number'] ?? null;
+                $pid = $nData['pengajuan_id'] ?? null;
+                $nStatus = $nData['status'] ?? $nData['order_status'] ?? $nData['ticket_status'] ?? null;
+                $nUrl = $pid
+                    ? route('admin.pengajuan.show', ['pengajuan' => $pid])
+                    : route('admin.notifications.index');
             @endphp
             <div class="block px-4 py-3 hover:bg-gray-50 transition duration-150 ease-in-out {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}"
                 x-data="{ markAndNavigate: function() { markAsRead('{{ $notification->id }}', '{{ $nUrl }}') } }"
@@ -63,37 +61,30 @@
                         <p class="text-sm text-gray-600 line-clamp-2 mb-2">
                             {{ $nData['message'] ?? '' }}
                         </p>
-                        @if($nIsTicket)
                         <div class="flex flex-wrap gap-2 text-xs">
+                            @if($nomor)
                             <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-800 rounded-md">
-                                <span class="font-medium">Ticket #{{ $nData['ticket_number'] ?? '-' }}</span>
+                                <span class="font-medium">{{ $nomor }}</span>
                             </div>
+                            @endif
+                            @if($nStatus)
                             <div class="inline-flex items-center px-2 py-1 rounded-md
-                                {{ ($nData['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
-                                   ((($nData['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
-                                   'bg-gray-100 text-gray-800') }}">
-                                {{ ucfirst(str_replace('_', ' ', $nData['ticket_status'] ?? '-')) }}
+                                {{ $nStatus === 'open' ? 'bg-blue-100 text-blue-800' :
+                                   ($nStatus === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                   ($nStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                   'bg-gray-100 text-gray-800')) }}">
+                                {{ ucfirst(str_replace('_', ' ', $nStatus)) }}
                             </div>
+                            @endif
+                            @if(!empty($nData['prioritas']))
                             <div class="inline-flex items-center px-2 py-1 rounded-md
-                                {{ ($nData['ticket_priority'] ?? '') === 'low' ? 'bg-gray-100 text-gray-800' :
-                                   ((($nData['ticket_priority'] ?? '') === 'medium') ? 'bg-yellow-100 text-yellow-800' :
+                                {{ ($nData['prioritas'] ?? '') === 'low' ? 'bg-gray-100 text-gray-800' :
+                                   ((($nData['prioritas'] ?? '') === 'medium') ? 'bg-yellow-100 text-yellow-800' :
                                    'bg-red-100 text-red-800') }}">
-                                {{ ucfirst($nData['ticket_priority'] ?? '-') }} Priority
-                            </div>
-                        </div>
-                        @elseif($nIsOrder)
-                        @php($nOrderStatus = $nData['order_status'] ?? $nData['status'] ?? null)
-                        <div class="flex flex-wrap gap-2 text-xs">
-                            <div class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-800 rounded-md">
-                                <span class="font-medium">Order #{{ $nData['order_number'] ?? $nData['nomor'] ?? '-' }}</span>
-                            </div>
-                            @if(!empty($nOrderStatus))
-                            <div class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-800">
-                                {{ ucfirst(str_replace('_', ' ', $nOrderStatus)) }}
+                                {{ ucfirst($nData['prioritas']) }}
                             </div>
                             @endif
                         </div>
-                        @endif
                         @if(!empty($nData['responder_name']))
                         <div class="mt-2 text-xs text-gray-500">
                             By: {{ $nData['responder_name'] }}

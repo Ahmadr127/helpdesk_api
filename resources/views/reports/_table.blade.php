@@ -24,7 +24,7 @@
                     </th>
                 @endif
                 @foreach($visibleColumns as $column)
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         @if(in_array($column, $sortable, true))
                             <a href="{{ $sortUrl($column) }}" class="inline-flex items-center hover:text-blue-600">
                                 {{ $labels[$column] ?? $column }}
@@ -34,6 +34,13 @@
                             </a>
                         @else
                             {{ $labels[$column] ?? $column }}
+                        @endif
+                        @if($column === 'response_time')
+                            <div class="text-[10px] font-normal text-gray-400 normal-case tracking-normal">started_at − created_at</div>
+                        @elseif($column === 'waktu_proses')
+                            <div class="text-[10px] font-normal text-gray-400 normal-case tracking-normal">closed_at − started_at</div>
+                        @elseif($column === 'kinerja')
+                            <div class="text-[10px] font-normal text-gray-400 normal-case tracking-normal">response ≤ 1 jam sejak created_at</div>
                         @endif
                     </th>
                 @endforeach
@@ -66,13 +73,19 @@
                                 @break
 
                             @case('tanggal')
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"
+                                    @if(($d = $pengajuan->tanggal ?? $pengajuan->created_at))
+                                        title="{{ $d->format('l, d F Y H:i:s') }} · {{ $d->diffForHumans() }}"
+                                    @endif>
                                     {{ ($pengajuan->tanggal ?? $pengajuan->created_at)?->format('d/m/Y H:i') ?? '-' }}
                                 </td>
                                 @break
 
                             @case('created_at')
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"
+                                    @if($pengajuan->created_at)
+                                        title="{{ $pengajuan->created_at->format('l, d F Y H:i:s') }} · {{ $pengajuan->created_at->diffForHumans() }}"
+                                    @endif>
                                     {{ $pengajuan->created_at?->format('d/m/Y H:i') ?? '-' }}
                                 </td>
                                 @break
@@ -85,9 +98,9 @@
                                 @break
 
                             @case('jenis')
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 max-w-[12rem] truncate"
-                                    title="{{ $pengajuan->kategori?->jenis?->name ?? '-' }}">
-                                    {{ $pengajuan->kategori?->jenis?->name ?? '-' }}
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 max-w-[16rem] truncate"
+                                    title="{{ $pengajuan->kategori?->jenisNames ?? '-' }}">
+                                    {{ $pengajuan->kategori?->jenisNames ?? '-' }}
                                 </td>
                                 @break
 
@@ -121,7 +134,15 @@
                                 @break
 
                             @case('status')
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-4 py-3 whitespace-nowrap"
+                                    @if($pengajuan->status || $pengajuan->closed_at || $pengajuan->started_at || $pengajuan->user_confirmed_at)
+                                        title="{{ implode(' · ', array_filter([
+                                            'Status: '.($pengajuan->status ?? '-'),
+                                            $pengajuan->started_at ? 'Diproses: '.$pengajuan->started_at->format('d/m/Y H:i') : null,
+                                            $pengajuan->closed_at ? 'Selesai: '.$pengajuan->closed_at->format('d/m/Y H:i') : null,
+                                            $pengajuan->user_confirmed_at ? 'Konfirmasi: '.$pengajuan->user_confirmed_at->format('d/m/Y H:i') : null,
+                                        ])) }}"
+                                    @endif>
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $statusBadge($pengajuan->status) }}">
                                         {{ $statuses[$pengajuan->status] ?? ($pengajuan->status ?: '-') }}
                                     </span>
@@ -136,7 +157,12 @@
                                 @break
 
                             @case('response_time')
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"
+                                    @if($pengajuan->created_at && $pengajuan->started_at)
+                                        title="created_at {{ $pengajuan->created_at->format('d/m/Y H:i') }} → started_at {{ $pengajuan->started_at->format('d/m/Y H:i') }} · Δ {{ $formatDuration($pengajuan->created_at, $pengajuan->started_at) }}"
+                                    @elseif($pengajuan->created_at)
+                                        title="Belum ada respon sejak {{ $pengajuan->created_at->format('d/m/Y H:i') }}"
+                                    @endif>
                                     @if($pengajuan->created_at && $pengajuan->started_at)
                                         {{ $formatDuration($pengajuan->created_at, $pengajuan->started_at) }}
                                     @elseif($pengajuan->created_at)
@@ -147,14 +173,39 @@
                                 </td>
                                 @break
 
+                            @case('waktu_proses')
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"
+                                    @if($pengajuan->started_at && $pengajuan->closed_at)
+                                        title="started_at {{ $pengajuan->started_at->format('d/m/Y H:i') }} → closed_at {{ $pengajuan->closed_at->format('d/m/Y H:i') }} · Δ {{ $formatDuration($pengajuan->started_at, $pengajuan->closed_at) }}"
+                                    @elseif($pengajuan->started_at)
+                                        title="Sedang diproses sejak {{ $pengajuan->started_at->format('d/m/Y H:i') }}"
+                                    @endif>
+                                    @if($pengajuan->started_at && $pengajuan->closed_at)
+                                        {{ $formatDuration($pengajuan->started_at, $pengajuan->closed_at) }}
+                                    @elseif($pengajuan->started_at)
+                                        <span class="text-gray-400">Belum selesai</span>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                @break
+
                             @case('closed_at')
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"
+                                    @if($pengajuan->closed_at)
+                                        title="{{ $pengajuan->closed_at->format('l, d F Y H:i:s') }} · {{ $pengajuan->closed_at->diffForHumans() }}"
+                                    @endif>
                                     {{ $pengajuan->closed_at?->format('d/m/Y H:i') ?? '-' }}
                                 </td>
                                 @break
 
                             @case('kinerja')
-                                <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm"
+                                    @if($pengajuan->created_at && $pengajuan->started_at)
+                                        title="created_at {{ $pengajuan->created_at->format('d/m/Y H:i') }} → started_at {{ $pengajuan->started_at->format('d/m/Y H:i') }} · Δ {{ $formatDuration($pengajuan->created_at, $pengajuan->started_at) }} (batas 1 jam)"
+                                    @elseif($pengajuan->created_at)
+                                        title="created_at {{ $pengajuan->created_at->format('d/m/Y H:i') }} · belum direspon"
+                                    @endif>
                                     @if($pengajuan->created_at && $pengajuan->started_at)
                                         @if($pengajuan->created_at->diffInMinutes($pengajuan->started_at) <= \App\Services\Report\ReportService::RESPONSE_SLA_MINUTES)
                                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Response ≤ 60 Menit</span>

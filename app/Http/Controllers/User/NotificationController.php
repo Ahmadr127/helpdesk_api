@@ -78,6 +78,9 @@ class NotificationController extends Controller
 
             // Redirect to ticket / order detail page
             $data = $notification->data;
+            if (isset($data['pengajuan_id'])) {
+                return redirect()->route('user.pengajuan.show', ['pengajuan' => $data['pengajuan_id']]);
+            }
             if (isset($data['order_id'])) {
                 return redirect()->route('user.administrasi-umum.order-perbaikan.show', ['orderPerbaikan' => $data['order_id']]);
             }

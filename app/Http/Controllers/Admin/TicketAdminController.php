@@ -21,7 +21,7 @@ class TicketAdminController extends Controller
     private function itQuery()
     {
         return $this->scope->visibleTo(auth()->user())
-            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+            ->sirs();
     }
 
     public function index(Request $request)
@@ -77,7 +77,7 @@ class TicketAdminController extends Controller
 
     public function show(Pengajuan $ticket)
     {
-        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $ticket->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
         return view('admin.tickets.show', compact('ticket'));
     }
 
@@ -308,11 +308,11 @@ class TicketAdminController extends Controller
         }
 
         if ($request->boolean('modal')) {
-            $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+            $ticket->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
             return response(view('admin.tickets.myticket.component.detail-body', compact('ticket'))->render());
         }
 
-        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $ticket->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
         return view('admin.tickets.show', compact('ticket'));
     }
 

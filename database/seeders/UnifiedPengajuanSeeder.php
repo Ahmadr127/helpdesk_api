@@ -15,13 +15,19 @@ class UnifiedPengajuanSeeder extends Seeder
     {
         $jenisIt = JenisPengajuan::firstOrCreate(
             ['code' => 'IT'],
-            ['name' => 'Tiket IT / SIRS', 'prefix' => 'T', 'is_active' => true]
+            ['name' => 'SIRS', 'prefix' => 'T', 'is_active' => true]
         );
+
+        // Pastikan label sinkron dengan nama flavour baru (SIRS / UMUM).
+        // Code dipertahankan agar data lama tidak perlu migrasi.
+        JenisPengajuan::where('code', 'IT')->update(['name' => 'SIRS']);
 
         $jenisIpsrs = JenisPengajuan::firstOrCreate(
             ['code' => 'IPSRS'],
-            ['name' => 'Order Perbaikan / IPSRS', 'prefix' => 'OP/RTG/MTC', 'is_active' => true]
+            ['name' => 'UMUM', 'prefix' => 'OP/RTG/MTC', 'is_active' => true]
         );
+
+        JenisPengajuan::where('code', 'IPSRS')->update(['name' => 'UMUM']);
 
         $itKategoris = [];
         foreach (Category::with('unitProses')->where('status', 1)->get() as $category) {
@@ -29,20 +35,50 @@ class UnifiedPengajuanSeeder extends Seeder
                 continue;
             }
 
-            $kategori = KategoriPengajuan::firstOrCreate(
-                ['jenis_id' => $jenisIt->id, 'name' => $category->name],
-                ['code' => null, 'description' => null, 'status' => (int) $category->status]
-            );
+            $kategori = KategoriPengajuan::withTrashed()
+                ->whereHas('jenisList', fn ($q) => $q->where('code', 'IT'))
+                ->where('name', $category->name)
+                ->first();
+
+            if (! $kategori) {
+                $kategori = KategoriPengajuan::create([
+                    'name' => $category->name,
+                    'code' => null,
+                    'description' => null,
+                    'status' => (int) $category->status,
+                ]);
+                $kategori->syncJenis([$jenisIt->id]);
+            } else {
+                $kategori->syncJenis(array_unique(array_merge(
+                    $kategori->jenisList()->pluck('jenis_pengajuan.id')->all(),
+                    [$jenisIt->id]
+                )));
+            }
 
             $itKategoris[] = $kategori->id;
         }
 
         $ipsrsKategoris = [];
         foreach (KategoriOrder::where('status', 1)->get() as $kategoriOrder) {
-            $kategori = KategoriPengajuan::firstOrCreate(
-                ['jenis_id' => $jenisIpsrs->id, 'name' => $kategoriOrder->name],
-                ['code' => $kategoriOrder->code, 'description' => null, 'status' => (int) $kategoriOrder->status]
-            );
+            $kategori = KategoriPengajuan::withTrashed()
+                ->whereHas('jenisList', fn ($q) => $q->where('code', 'IPSRS'))
+                ->where('name', $kategoriOrder->name)
+                ->first();
+
+            if (! $kategori) {
+                $kategori = KategoriPengajuan::create([
+                    'name' => $kategoriOrder->name,
+                    'code' => $kategoriOrder->code,
+                    'description' => null,
+                    'status' => (int) $kategoriOrder->status,
+                ]);
+                $kategori->syncJenis([$jenisIpsrs->id]);
+            } else {
+                $kategori->syncJenis(array_unique(array_merge(
+                    $kategori->jenisList()->pluck('jenis_pengajuan.id')->all(),
+                    [$jenisIpsrs->id]
+                )));
+            }
 
             $ipsrsKategoris[] = $kategori->id;
         }

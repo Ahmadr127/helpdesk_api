@@ -39,12 +39,11 @@ class AdminPenugasanRoleKategoriTest extends TestCase
 
         $jenisIt = JenisPengajuan::where('code', 'IT')->firstOrFail();
 
-        $this->kategoriItA = KategoriPengajuan::create([
-            'jenis_id' => $jenisIt->id, 'name' => 'Hardware', 'status' => 1,
-        ]);
-        $this->kategoriItB = KategoriPengajuan::create([
-            'jenis_id' => $jenisIt->id, 'name' => 'Jaringan', 'status' => 1,
-        ]);
+        $this->kategoriItA = KategoriPengajuan::create(['name' => 'Hardware', 'status' => 1]);
+        $this->kategoriItA->syncJenis([$jenisIt->id]);
+
+        $this->kategoriItB = KategoriPengajuan::create(['name' => 'Jaringan', 'status' => 1]);
+        $this->kategoriItB->syncJenis([$jenisIt->id]);
 
         // Role admin hanya dipetakan ke kategori A.
         $adminRole = Role::where('slug', 'admin')->firstOrFail();

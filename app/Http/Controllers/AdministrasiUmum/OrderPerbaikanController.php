@@ -20,8 +20,7 @@ class OrderPerbaikanController extends Controller
 
     private function ipsrsQuery()
     {
-        return $this->scope->visibleTo(auth()->user())
-            ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'));
+        return $this->scope->visibleTo(auth()->user())->umum();
     }
 
     private function viewNamespace(?Request $request = null): string
@@ -46,7 +45,7 @@ class OrderPerbaikanController extends Controller
 
     public function index(Request $request)
     {
-        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori', 'department', 'lokasi', 'penugasan.user']);
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'department', 'lokasi', 'penugasan.user']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -96,7 +95,7 @@ class OrderPerbaikanController extends Controller
 
     public function myorder(Request $request)
     {
-        $query = $this->ipsrsQuery()->with(['pemohon', 'lokasi', 'penugasan.user'])->where('pemohon_id', auth()->id());
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'lokasi', 'penugasan.user'])->where('pemohon_id', auth()->id());
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -266,7 +265,7 @@ class OrderPerbaikanController extends Controller
 
     public function show(Pengajuan $orderPerbaikan)
     {
-        $orderPerbaikan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $orderPerbaikan->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         // Kandidat PJ bersumber dari role_kategori (sama seperti API/web pengajuan).
         $penugasan = app(\App\Services\Pengajuan\PengajuanPenugasanService::class);
@@ -372,19 +371,19 @@ class OrderPerbaikanController extends Controller
 
     public function inProgress(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi', 'penugasan.user'])->where('status', 'in_progress')->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'lokasi', 'penugasan.user'])->where('status', 'in_progress')->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.in-progress', ['orders' => $orders, 'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(), 'locations' => \App\Models\Location::all()]);
     }
 
     public function confirmed(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'penugasan.user'])->where('status', 'confirmed')->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'penugasan.user'])->where('status', 'confirmed')->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.confirmed', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 
     public function rejected(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'penugasan.user'])->where('status', 'rejected')->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'penugasan.user'])->where('status', 'rejected')->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.rejected', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 
@@ -399,7 +398,7 @@ class OrderPerbaikanController extends Controller
 
     public function total(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'lokasi', 'penugasan.user'])->latest()->paginate(10)->withQueryString();
+        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'lokasi', 'penugasan.user'])->latest()->paginate(10)->withQueryString();
         return view($this->viewNamespace().'.total', array_merge(['orders' => $orders], $this->getStatistics()));
     }
 

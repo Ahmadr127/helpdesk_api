@@ -7,7 +7,6 @@ use App\Models\JenisPengajuan;
 use App\Models\KategoriPengajuan;
 use App\Models\LegacyMap;
 use App\Models\Pengajuan;
-use App\Models\PengajuanOrderDetail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -65,7 +64,8 @@ class MigrationOrders extends Command
                 $kategoriId = $this->resolveKategori($o, $catMap, $jenisIpsrs);
                 $pemohonId = $o->created_by && DB::table('users')->where('id', $o->created_by)->exists() ? (int) $o->created_by : $firstUserId;
 
-                $status = $this->mapStatus($o->status ?? 'open');
+                $transitions = $this->orderTransitions($o);
+                $status = $transitions['status'];
 
                 $pengajuan = new Pengajuan([
                     'nomor' => $o->nomor ?? ('OP-'.$o->id),
@@ -80,10 +80,10 @@ class MigrationOrders extends Command
                     'status' => $status,
                     'follow_up' => $o->follow_up ?? null,
                     'tanggal' => $o->tanggal ?? $o->created_at ?? now(),
-                    'started_at' => $status === 'in_progress' ? ($o->updated_at ?? $o->created_at ?? now()) : null,
-                    'closed_at' => $status === 'ditutup' ? ($o->updated_at ?? $o->created_at ?? now()) : null,
-                    'confirmed_at' => $status === 'confirmed' ? ($o->updated_at ?? $o->created_at ?? now()) : null,
-                    'rejected_at' => $status === 'rejected' ? ($o->updated_at ?? $o->created_at ?? now()) : null,
+                    'started_at' => $transitions['started_at'],
+                    'closed_at' => $transitions['closed_at'],
+                    'confirmed_at' => $transitions['confirmed_at'],
+                    'rejected_at' => null,
                     'created_by' => $pemohonId,
                     'updated_by' => $o->updated_by,
                     'legacy_source' => 'order',
@@ -99,15 +99,6 @@ class MigrationOrders extends Command
                     'source_id' => $o->id,
                 ], [
                     'pengajuan_id' => $pengajuan->id,
-                ]);
-
-                PengajuanOrderDetail::firstOrCreate([
-                    'pengajuan_id' => $pengajuan->id,
-                ], [
-                    'unit_penerima' => $o->unit_penerima ?? null,
-                    'kode_inventaris' => $o->kode_inventaris ?? null,
-                    'nama_barang' => $o->nama_barang ?? null,
-                    'unit_proses_id' => $o->unit_proses_id ?? null,
                 ]);
 
                 if (! $this->historiExists($pengajuan->id, 'migrated', 'Migrasi dari order #'.$o->id, $pengajuan->created_at)) {
@@ -140,7 +131,7 @@ class MigrationOrders extends Command
 
         foreach (DB::table('kategori_order')->get() as $ko) {
             $nama = $ko->nama ?? $ko->name ?? ('Kategori Order '.$ko->id);
-            $kp = KategoriPengajuan::where('jenis_id', $jenisIpsrs->id)->where('name', $nama)->first();
+            $kp = KategoriPengajuan::whereHas('jenisList', fn ($q) => $q->where('code', 'IPSRS'))->where('name', $nama)->first();
             if ($kp) {
                 $catMap[$ko->id] = $kp->id;
                 $catMap[(string) $nama] = $kp->id;
@@ -162,12 +153,34 @@ class MigrationOrders extends Command
             return $catMap[(int) $key];
         }
 
-        return KategoriPengajuan::where('jenis_id', $jenisIpsrs?->id)->first()?->id;
+        return KategoriPengajuan::whereHas('jenisList', fn ($q) => $q->where('code', 'IPSRS'))->first()?->id;
     }
 
     protected function countRepair(Pengajuan $pengajuan, object $o, array $catMap): int
     {
         return count($this->expectedUpdates($pengajuan, $o, $catMap));
+    }
+
+    protected function orderTransitions(object $o): array
+    {
+        $history = DB::table('order_perbaikan_histories')
+            ->where('order_perbaikan_id', $o->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        $firstInProgress = $history->first(fn ($h) => $this->mapStatus($h->status ?? null) === 'in_progress');
+        $lastTutup = $history->last(fn ($h) => $this->mapStatus($h->status ?? null) === 'ditutup');
+        $lastConfirmed = $history->last(fn ($h) => $this->mapStatus($h->status ?? null) === 'confirmed');
+
+        $status = $this->mapStatus($o->status ?? 'open');
+
+        return [
+            'status' => $status,
+            'started_at' => $firstInProgress && $firstInProgress->created_at ? $firstInProgress->created_at : null,
+            'closed_at' => $status === 'ditutup' && $lastTutup && $lastTutup->created_at ? $lastTutup->created_at : null,
+            'confirmed_at' => $lastConfirmed && $lastConfirmed->created_at ? $lastConfirmed->created_at : null,
+        ];
     }
 
     protected function expectedUpdates(Pengajuan $pengajuan, object $o, array $catMap): array
@@ -188,6 +201,15 @@ class MigrationOrders extends Command
         $expectedStatus = $this->statusForRepair($pengajuan, $o);
         if ((string) $pengajuan->status !== $expectedStatus) {
             $updates['status'] = $expectedStatus;
+        }
+
+        $transitions = $this->orderTransitions($o);
+        foreach (['started_at', 'closed_at', 'confirmed_at'] as $field) {
+            $expected = $transitions[$field] ? (string) $this->parseDate($transitions[$field]) : null;
+            $current = $pengajuan->{$field} ? (string) $this->parseDate($pengajuan->{$field}) : null;
+            if ($current !== $expected) {
+                $updates[$field] = $expected;
+            }
         }
 
         return $updates;

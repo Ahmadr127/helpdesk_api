@@ -6,7 +6,6 @@ use App\Models\Department;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
 use App\Models\PengajuanHistori;
-use App\Models\PengajuanOrderDetail;
 use App\Models\PengajuanPesan;
 use App\Models\Role;
 use App\Models\User;
@@ -71,7 +70,7 @@ class PengajuanService
                 $actor
             );
 
-            return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
+            return $pengajuan->fresh(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
         });
 
         $this->notificationService->notifyCreated($pengajuan, $actor);
@@ -139,7 +138,7 @@ class PengajuanService
                 'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);
 
-            return $pengajuan->fresh(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
+            return $pengajuan->fresh(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis', 'lampirans']);
         });
     }
 

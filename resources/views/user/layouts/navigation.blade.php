@@ -81,14 +81,15 @@
                         </div>
                         @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
                         @php
+                            // Payload unified pengajuan (konsisten dengan FCM web+mobile):
+                            //  pengajuan_id, nomor, status, prioritas, type, title, message.
                             $nData = $notification->data;
-                            $isTicket = isset($nData['ticket_id']);
-                            $isOrder = isset($nData['order_id']);
-                            $nUrl = $isTicket
-                                ? route('user.ticket.show', ['ticket' => $nData['ticket_id']])
-                                : ($isOrder
-                                    ? route('user.administrasi-umum.order-perbaikan.show', $nData['order_id'])
-                                    : '#');
+                            $nomor = $nData['nomor'] ?? $nData['ticket_number'] ?? null;
+                            $pengajuanId = $nData['pengajuan_id'] ?? null;
+                            $nUrl = $pengajuanId
+                                ? route('user.pengajuan.show', ['pengajuan' => $pengajuanId])
+                                : ($nData['url'] ?? route('user.notifications.index'));
+                            $nStatus = $nData['status'] ?? $nData['order_status'] ?? $nData['ticket_status'] ?? null;
                         @endphp
                         <a href="{{ $nUrl }}"
                             onclick="event.preventDefault(); markNotificationAsRead('{{ $notification->id }}', this)"
@@ -102,28 +103,35 @@
                                 <div class="ml-3 flex-1">
                                     <div class="flex justify-between">
                                         <h4 class="text-sm font-medium text-gray-900">
-                                            {{ $notification->data['title'] }}
+                                            {{ $nData['title'] ?? 'Notifikasi' }}
                                         </h4>
                                         <p class="text-xs text-gray-500">
                                             {{ $notification->created_at->diffForHumans() }}
                                         </p>
                                     </div>
                                     <p class="mt-1 text-sm text-gray-600">
-                                        {{ $notification->data['message'] }}
+                                        {{ $nData['message'] ?? '' }}
                                     </p>
-                                    @if(isset($notification->data['ticket_number']))
+                                    @if($nomor)
                                     <div class="mt-1 text-xs text-gray-500">
-                                        Ticket #{{ $notification->data['ticket_number'] }}
-                                    </div>
-                                    @elseif(isset($notification->data['order_number']))
-                                    <div class="mt-1 text-xs text-gray-500">
-                                        Order #{{ $notification->data['order_number'] }}
+                                        {{ $nomor }}
                                     </div>
                                     @endif
-                                    @if(isset($notification->data['responder_name']))
+                                    @if($nStatus)
+                                    <div class="mt-1 text-xs">
+                                        <span class="px-2 py-0.5 rounded-full text-xs
+                                            {{ $nStatus === 'open' ? 'bg-blue-100 text-blue-800' :
+                                               ($nStatus === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                               ($nStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                               'bg-gray-100 text-gray-800')) }}">
+                                            {{ ucfirst(str_replace('_', ' ', $nStatus)) }}
+                                        </span>
+                                    </div>
+                                    @endif
+                                    @if(isset($nData['responder_name']))
                                     <div class="mt-1 text-xs text-gray-500">
-                                        Oleh: {{ $notification->data['responder_name'] }}
-                                        ({{ $notification->data['responder_role'] }})
+                                        Oleh: {{ $nData['responder_name'] }}
+                                        ({{ $nData['responder_role'] }})
                                     </div>
                                     @endif
                                 </div>

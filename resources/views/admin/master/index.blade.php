@@ -362,6 +362,51 @@
             </div>
         </div>
 
+        <!-- Jenis Pengajuan Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
+            <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7.5L12 3m-9 4.5v5.75m0 0v5.75m0-5.75h18m-18 0l12 6m3.5-2.5a2 2 0 100 4 2 2 0 000-4z" />
+                    </svg>
+                    Jenis Pengajuan
+                </h2>
+                <a href="{{ route('admin.master.jenis-pengajuan.index') }}" title="Kelola Jenis Pengajuan" class="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200 shadow-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h15" />
+                    </svg>
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prefix</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @forelse($jenisList as $jenis)
+                        <tr class="hover:bg-slate-50 transition-all">
+                            <td class="px-6 py-4">{{ $jenis->name }}</td>
+                            <td class="px-6 py-4 text-sm">{{ $jenis->code }}</td>
+                            <td class="px-6 py-4 text-sm">{{ $jenis->prefix ?? '-' }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $jenis->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $jenis->is_active ? 'Aktif' : 'Nonaktif' }}
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Tidak ada data.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Kategori Pengajuan Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
@@ -390,7 +435,7 @@
                         @forelse($kategoriPengajuan as $kp)
                         <tr class="hover:bg-slate-50 transition-all">
                             <td class="px-6 py-4">{{ $kp->name }}</td>
-                            <td class="px-6 py-4">{{ $kp->jenis?->code }}</td>
+                            <td class="px-6 py-4">{{ $kp->jenisNames ?? '-' }}</td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 text-xs rounded-full {{ $kp->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $kp->status ? 'Active' : 'Inactive' }}

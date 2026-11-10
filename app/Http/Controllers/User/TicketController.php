@@ -20,20 +20,18 @@ class TicketController extends Controller
 
     private function itQuery()
     {
-        return Pengajuan::whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'));
+        return Pengajuan::sirs();
     }
 
     public function index()
     {
         $tickets = $this->itQuery()
             ->where('pemohon_id', auth()->id())
-            ->with(['kategori.jenis'])
+            ->with(['kategori.jenisList'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $categories = KategoriPengajuan::where('status', 1)
-            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
-            ->get();
+        $categories = KategoriPengajuan::where('status', 1)->sirs()->get();
 
         return view('user.ticket.index', compact('tickets', 'categories'));
     }
@@ -46,7 +44,7 @@ class TicketController extends Controller
                 ->with('error', 'Mohon lengkapi data departemen Anda terlebih dahulu di pengaturan profil untuk dapat membuat tiket.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $categories = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
@@ -106,7 +104,7 @@ class TicketController extends Controller
             abort(403);
         }
 
-        $ticket->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $ticket->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         return view('user.ticket.show', compact('ticket'));
     }
@@ -121,7 +119,7 @@ class TicketController extends Controller
                 ->with('error', 'Ticket can only be edited when in open status.');
         }
 
-        $categories = KategoriPengajuan::where('status', 1)->orderBy('name')->get();
+        $categories = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $locations = \App\Models\Location::where('status', 1)->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
 
@@ -248,7 +246,7 @@ class TicketController extends Controller
         $tickets = $baseQuery->latest()->paginate(10);
 
         $categories = KategoriPengajuan::where('status', 1)
-            ->whereHas('jenis', fn ($q) => $q->where('code', 'IT'))
+            ->sirs()
             ->pluck('name');
         $priorities = ['low', 'medium', 'high'];
 

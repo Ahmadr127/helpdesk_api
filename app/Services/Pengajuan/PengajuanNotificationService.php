@@ -55,7 +55,13 @@ class PengajuanNotificationService
         }
         $title = "Penugasan {$pengajuan->nomor}";
         $body = 'Anda ditugaskan sebagai penanggung jawab oleh '.($actor?->name ?? 'Admin').'.';
-        $this->dispatch($recipients, $title, $body, $this->payload($pengajuan, 'assigned'));
+
+        $payload = array_merge($this->payload($pengajuan, 'assigned'), [
+            'title' => $title,
+            'message' => $body,
+        ]);
+
+        $this->dispatch($recipients, $title, $body, $payload);
     }
 
     public function notifyCreated(Pengajuan $pengajuan, User $actor): void
@@ -69,7 +75,12 @@ class PengajuanNotificationService
             : "Tiket Baru {$pengajuan->nomor}";
         $body = $actor->name.': '.mb_strimwidth((string) $pengajuan->deskripsi, 0, 80, '...');
 
-        $this->dispatch($recipients, $title, $body, $this->payload($pengajuan, $type));
+        $payload = array_merge($this->payload($pengajuan, $type), [
+            'title' => $title,
+            'message' => $body,
+        ]);
+
+        $this->dispatch($recipients, $title, $body, $payload);
     }
 
     public function notifyStatusChanged(Pengajuan $pengajuan, ?User $actor, string $event): void
@@ -86,7 +97,12 @@ class PengajuanNotificationService
         $title = "Update Pengajuan {$pengajuan->nomor}";
         $body = 'Status: '.$pengajuan->status.' oleh '.($actor?->name ?? 'Sistem');
 
-        $this->dispatch($recipients, $title, $body, $this->payload($pengajuan, $event));
+        $payload = array_merge($this->payload($pengajuan, $event), [
+            'title' => $title,
+            'message' => $body,
+        ]);
+
+        $this->dispatch($recipients, $title, $body, $payload);
     }
 
     public function notifyMessage(Pengajuan $pengajuan, User $actor, PengajuanPesan $pesan): void
@@ -107,7 +123,12 @@ class PengajuanNotificationService
             $body = "Pesan baru dari {$actor->name}";
         }
 
-        $this->dispatch($recipients, $title, $body, $this->payload($pengajuan, 'message'));
+        $payload = array_merge($this->payload($pengajuan, 'message'), [
+            'title' => $title,
+            'message' => $body,
+        ]);
+
+        $this->dispatch($recipients, $title, $body, $payload);
     }
 
     protected function dispatch(Collection $recipients, string $title, string $body, array $data): void
@@ -132,6 +153,17 @@ class PengajuanNotificationService
             FirebaseNotification::queueToTokens($tokens, $dto);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Pengajuan notification dispatch failed: '.$e->getMessage());
+        }
+
+        // In-app Laravel notifications — payload sama dengan FCM, agar /notifications konsisten:
+        // recipient, order-of-events, dan field identik untuk web dan mobile.
+        try {
+            \Illuminate\Support\Facades\Notification::send(
+                $recipients,
+                new \App\Notifications\PengajuanNotification($data)
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Pengajuan database notification failed: '.$e->getMessage());
         }
     }
 

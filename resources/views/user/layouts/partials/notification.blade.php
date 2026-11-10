@@ -24,12 +24,16 @@
         x-transition:leave-end="transform opacity-0 scale-95"
         class="absolute right-0 mt-2 w-96 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
         <div class="py-1" role="menu">
-            @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
+            @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
             @php
-                // Defensif: tidak semua notifikasi bertipe tiket.
+                // Payload unified pengajuan (konsisten dengan FCM web+mobile)
                 $uData = $notification->data;
                 $uUrl = $uData['url'] ?? '#';
-                $uIsTicket = isset($uData['ticket_number']) || isset($uData['ticket_id']);
+                $nomor = $uData['nomor'] ?? null;
+                $uStatus = $uData['status'] ?? null;
+                if (isset($uData['pengajuan_id'])) {
+                    $uUrl = route('user.pengajuan.show', ['pengajuan' => $uData['pengajuan_id']]);
+                }
             @endphp
             <a href="{{ $uUrl }}"
                 class="block px-4 py-3 hover:bg-gray-100 {{ $notification->read_at ? 'opacity-75' : '' }}"
@@ -50,30 +54,21 @@
                         <p class="mt-1 text-sm text-gray-600">
                             {{ $uData['message'] ?? '' }}
                         </p>
-                        @if($uIsTicket)
-                        <div class="mt-2 flex items-center space-x-4 text-xs">
-                            <div>
-                                <span class="text-gray-500">Ticket #:</span>
-                                <span class="font-medium">{{ $uData['ticket_number'] ?? '-' }}</span>
-                            </div>
-                            <div>
-                                <span class="text-gray-500">Status:</span>
-                                <span class="px-2 py-1 rounded-full text-xs
-                                    {{ ($uData['ticket_status'] ?? '') === 'open' ? 'bg-blue-100 text-blue-800' :
-                                       ((($uData['ticket_status'] ?? '') === 'in_progress') ? 'bg-yellow-100 text-yellow-800' :
-                                       ((($uData['ticket_status'] ?? '') === 'ditutup') ? 'bg-gray-100 text-gray-800' :
-                                       'bg-green-100 text-gray-800')) }}">
-                                    {{ ucfirst($uData['ticket_status'] ?? '-') }}
-                                </span>
-                            </div>
+                        @if($nomor)
+                        <div class="mt-2 flex items-center text-xs text-gray-500">
+                            {{ $nomor }}
                         </div>
-                        @elseif(isset($uData['order_number']))
-                        <div class="mt-2 flex items-center space-x-4 text-xs">
-                            <div>
-                                <span class="text-gray-500">Order #:</span>
-                                <span class="font-medium">{{ $uData['order_number'] }}</span>
-                            </div>
+                        @if($uStatus)
+                        <div class="mt-1 text-xs">
+                            <span class="px-2 py-0.5 rounded-full
+                                {{ $uStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                   ($uStatus === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                   ($uStatus === 'open' ? 'bg-blue-100 text-blue-800' :
+                                   'bg-gray-100 text-gray-800')) }}">
+                                {{ ucfirst(str_replace('_', ' ', $uStatus)) }}
+                            </span>
                         </div>
+                        @endif
                         @endif
                         @if(isset($uData['responder_name']))
                         <div class="mt-2 text-xs text-gray-500">

@@ -29,9 +29,9 @@ class PengajuanServiceTest extends TestCase
         );
 
         KategoriPengajuan::firstOrCreate(
-            ['jenis_id' => $jenisIt->id, 'name' => 'Printer'],
+            ['name' => 'Printer'],
             ['status' => 1]
-        );
+        )->syncJenis([$jenisIt->id]);
 
         $jenisIpsrs = JenisPengajuan::firstOrCreate(
             ['code' => 'IPSRS'],
@@ -39,9 +39,9 @@ class PengajuanServiceTest extends TestCase
         );
 
         KategoriPengajuan::firstOrCreate(
-            ['jenis_id' => $jenisIpsrs->id, 'name' => 'Perbaikan'],
+            ['name' => 'Perbaikan'],
             ['status' => 1]
-        );
+        )->syncJenis([$jenisIpsrs->id]);
     }
 
     public function test_creates_it_pengajuan_with_history(): void
@@ -61,10 +61,9 @@ class PengajuanServiceTest extends TestCase
         $this->assertSame($user->id, $pengajuan->pemohon_id);
         $this->assertSame($user->name, $pengajuan->pemohon_nama);
         $this->assertSame(1, $pengajuan->historis()->count());
-        $this->assertNull($pengajuan->orderDetail);
     }
 
-    public function test_creates_ipsrs_pengajuan_with_order_detail(): void
+    public function test_creates_ipsrs_pengajuan_without_order_detail(): void
     {
         $user = $this->makeUser();
         $kategori = KategoriPengajuan::where('name', 'Perbaikan')->firstOrFail();
@@ -73,16 +72,10 @@ class PengajuanServiceTest extends TestCase
             'kategori_id' => $kategori->id,
             'deskripsi' => 'AC tidak dingin',
             'prioritas' => 'medium',
-            'unit_penerima' => 'Ruang Rawat Inap',
-            'kode_inventaris' => 'INV-001',
-            'nama_barang' => 'AC Split',
         ]);
 
         $this->assertSame('IPSRS', $pengajuan->kategori->jenis->code);
-        $this->assertNotNull($pengajuan->orderDetail);
-        $this->assertSame('Ruang Rawat Inap', $pengajuan->orderDetail->unit_penerima);
-        $this->assertSame('INV-001', $pengajuan->orderDetail->kode_inventaris);
-        $this->assertSame('AC Split', $pengajuan->orderDetail->nama_barang);
+        $this->assertSame('open', $pengajuan->status);
     }
 
     public function test_owner_can_update_open_pengajuan(): void

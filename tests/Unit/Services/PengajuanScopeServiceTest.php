@@ -27,14 +27,16 @@ class PengajuanScopeServiceTest extends TestCase
         );
 
         $allowedCategory = KategoriPengajuan::firstOrCreate(
-            ['jenis_id' => $jenis->id, 'name' => 'Printer'],
+            ['name' => 'Printer'],
             ['status' => 1]
         );
+        $allowedCategory->syncJenis([$jenis->id]);
 
         $otherCategory = KategoriPengajuan::firstOrCreate(
-            ['jenis_id' => $jenis->id, 'name' => 'CCTV'],
+            ['name' => 'CCTV'],
             ['status' => 1]
         );
+        $otherCategory->syncJenis([$jenis->id]);
 
         $role = Role::firstOrCreate(
             ['slug' => 'scope_admin'],
@@ -130,9 +132,10 @@ class PengajuanScopeServiceTest extends TestCase
         );
 
         $category = KategoriPengajuan::firstOrCreate(
-            ['jenis_id' => $jenis->id, 'name' => 'Printer'],
+            ['name' => 'Printer'],
             ['status' => 1]
         );
+        $category->syncJenis([$jenis->id]);
 
         $user = User::firstOrCreate(
             ['email' => 'user@example.com'],

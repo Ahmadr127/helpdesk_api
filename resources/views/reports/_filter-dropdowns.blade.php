@@ -57,9 +57,9 @@
             </summary>
             <div class="absolute z-30 mt-1 min-w-[16rem] overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
                 <div class="max-h-80 overflow-y-auto p-2">
-                    @foreach($kategoris->groupBy(fn ($kategori) => $kategori->jenis?->code ?? 'LAIN') as $group => $items)
+                    @foreach($kategoris->groupBy(fn ($kategori) => $kategori->jenis?->name ?? 'Lainnya') as $group => $items)
                         <div class="px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                            {{ $group === 'LAIN' ? 'Lainnya' : $group }}
+                            {{ $group }}
                         </div>
                         @foreach($items as $kategori)
                             <label class="flex cursor-pointer select-none items-center gap-2 rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50">

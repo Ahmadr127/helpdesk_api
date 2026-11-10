@@ -52,14 +52,27 @@ class MigrationCategories extends Command
             foreach ($categories as $cat) {
                 $nama = $cat->name ?? $cat->nama ?? ('Kategori '.$cat->id);
 
-                $kategori = KategoriPengajuan::firstOrCreate(
-                    ['jenis_id' => $jenisIt->id, 'name' => $nama],
-                    [
+                // Cari juga lewat pivot (kategori bisa multi-jenis, mis. IT+IPSRS).
+                $kategori = KategoriPengajuan::withTrashed()
+                    ->whereHas('jenisList', fn ($q) => $q->where('code', 'IT'))
+                    ->where('name', $nama)
+                    ->first();
+
+                if (! $kategori) {
+                    $kategori = KategoriPengajuan::create([
+                        'name' => $nama,
                         'code' => 'IT-'.$cat->id,
                         'description' => null,
                         'status' => (int) ($cat->status ?? 1),
-                    ]
-                );
+                    ]);
+                    $kategori->syncJenis([$jenisIt->id]);
+                } else {
+                    // Pastikan pivot lengkap (kategori lama dari pre-pivot seed).
+                    $kategori->syncJenis(array_unique(array_merge(
+                        $kategori->jenisList()->pluck('jenis_pengajuan.id')->all(),
+                        [$jenisIt->id]
+                    )));
+                }
 
                 $itKategoriIds[] = $kategori->id;
             }
@@ -68,20 +81,26 @@ class MigrationCategories extends Command
                 $nama = $ko->nama ?? $ko->name ?? ('Kategori Order '.$ko->id);
 
                 // Cari juga yang soft-deleted agar tidak duplikat saat re-run.
+                // Cari lewat pivot (kategori bisa multi-jenis).
                 $kategori = KategoriPengajuan::withTrashed()
-                    ->where('jenis_id', $jenisIpsrs->id)
+                    ->whereHas('jenisList', fn ($q) => $q->where('code', 'IPSRS'))
                     ->where('name', $nama)
                     ->first();
 
                 if (! $kategori) {
                     $kategori = KategoriPengajuan::create([
-                        'jenis_id' => $jenisIpsrs->id,
                         'name' => $nama,
                         'code' => $ko->code ?? null,
                         'description' => null,
                         'status' => (int) ($ko->status ?? 1),
                     ]);
+                    $kategori->syncJenis([$jenisIpsrs->id]);
                 } else {
+                    // Pastikan pivot lengkap (kategori lama dari pre-pivot seed).
+                    $kategori->syncJenis(array_unique(array_merge(
+                        $kategori->jenisList()->pluck('jenis_pengajuan.id')->all(),
+                        [$jenisIpsrs->id]
+                    )));
                     // Selaraskan deleted_at / status dengan legacy
                     if (! empty($ko->deleted_at) && $kategori->deleted_at === null) {
                         $kategori->delete();
@@ -108,9 +127,9 @@ class MigrationCategories extends Command
             }
         });
 
-        $newIt = KategoriPengajuan::where('jenis_id', $jenisIt->id)->count();
-        $newIpsrs = KategoriPengajuan::where('jenis_id', $jenisIpsrs->id)->count();
-        $newIpsrsActive = KategoriPengajuan::where('jenis_id', $jenisIpsrs->id)->whereNull('deleted_at')->count();
+        $newIt = KategoriPengajuan::withTrashed()->whereHas('jenisList', fn ($q) => $q->where('code', 'IT'))->count();
+        $newIpsrs = KategoriPengajuan::withTrashed()->whereHas('jenisList', fn ($q) => $q->where('code', 'IPSRS'))->count();
+        $newIpsrsActive = KategoriPengajuan::whereNull('deleted_at')->whereHas('jenisList', fn ($q) => $q->where('code', 'IPSRS'))->count();
         $this->info("Hasil: {$newIt} kategori IT, {$newIpsrs} kategori IPSRS (aktif: {$newIpsrsActive}).");
 
         return self::SUCCESS;

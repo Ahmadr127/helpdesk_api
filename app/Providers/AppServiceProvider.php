@@ -44,15 +44,15 @@ class AppServiceProvider extends ServiceProvider
                 $pending = ['tickets' => [], 'orders' => [], 'total' => 0];
                 $user = auth()->user();
                 if ($user) {
-                    $tickets = \App\Models\Pengajuan::where('pemohon_id', $user->id)
+                    $tickets = \App\Models\Pengajuan::sirs()
+                        ->where('pemohon_id', $user->id)
                         ->where('status', 'ditutup')
-                        ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IT'))
                         ->latest()
                         ->limit(5)
                         ->get(['id', 'nomor', 'deskripsi', 'status']);
-                    $orders = \App\Models\Pengajuan::where('pemohon_id', $user->id)
+                    $orders = \App\Models\Pengajuan::umum()
+                        ->where('pemohon_id', $user->id)
                         ->where('status', 'ditutup')
-                        ->whereHas('kategori.jenis', fn ($q) => $q->where('code', 'IPSRS'))
                         ->latest()
                         ->limit(5)
                         ->get(['id', 'nomor', 'deskripsi', 'status']);

@@ -68,9 +68,10 @@ class PengajuanNumberServiceTest extends TestCase
         );
 
         $kategori = KategoriPengajuan::firstOrCreate(
-            ['jenis_id' => $jenis->id, 'name' => 'Printer'],
+            ['name' => 'Printer'],
             ['status' => 1]
         );
+        $kategori->syncJenis([$jenis->id]);
 
         $user = User::firstOrCreate(
             ['email' => 'user@example.com'],

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\FcmMonitoringController;
 use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\Admin\KategoriOrderController;
 use App\Http\Controllers\Admin\KategoriPengajuanController;
+use App\Http\Controllers\Admin\JenisPengajuanController;
 use App\Http\Controllers\Admin\PengajuanController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\LocationController;
@@ -53,6 +54,8 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 // Middleware auth group untuk semua user yang sudah login
 Route::middleware(['auth'])->group(function () {
     Route::resource('pengajuan', \App\Http\Controllers\User\PengajuanController::class)->names('user.pengajuan');
+    // Route::resource skip method `show` di projek ini → daftarkan eksplisit.
+    Route::get('pengajuan/{pengajuan}', [\App\Http\Controllers\User\PengajuanController::class, 'show'])->name('user.pengajuan.show');
     Route::post('pengajuan/{pengajuan}/start', [\App\Http\Controllers\User\PengajuanController::class, 'start'])->name('user.pengajuan.start');
     Route::post('pengajuan/{pengajuan}/close', [\App\Http\Controllers\User\PengajuanController::class, 'close'])->name('user.pengajuan.close');
     Route::post('pengajuan/{pengajuan}/message', [\App\Http\Controllers\User\PengajuanController::class, 'message'])->name('user.pengajuan.message');
@@ -160,6 +163,7 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('unit-proses', UnitProsesController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('kategori-order', KategoriOrderController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('kategori-pengajuan', KategoriPengajuanController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
+            Route::resource('jenis-pengajuan', JenisPengajuanController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('positions', PositionController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::patch('positions/{position}/toggle-status', [PositionController::class, 'toggleStatus'])->name('positions.toggle-status')->middleware('permission:master');
 
@@ -228,7 +232,8 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Detail pengajuan (unified: Tiket IT & Order IPSRS) - dipakai report & halaman admin lain
-        Route::prefix('pengajuan')->name('pengajuan.')->middleware('permission:report')->group(function () {
+        // URI admin/* supaya tidak bentrok dengan route `pengajuan/{pengajuan}` milik user.
+        Route::prefix('admin/pengajuan')->name('pengajuan.')->middleware('permission:report')->group(function () {
             Route::get('/{pengajuan}', [PengajuanController::class, 'show'])->name('show');
         });
 

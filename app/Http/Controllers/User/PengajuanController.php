@@ -98,7 +98,7 @@ class PengajuanController extends Controller
     public function show(Pengajuan $pengajuan)
     {
         $this->authorize('view', $pengajuan);
-        $pengajuan->load(['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
+        $pengajuan->load(['kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'historis.actor', 'pesans.sender', 'lampirans', 'penugasan.user']);
 
         // Hanya pemegang scope role_kategori / PJ aktif yang boleh menugaskan.
         // Pemohon biasa hanya bisa melihat PJ, bukan mengubahnya.

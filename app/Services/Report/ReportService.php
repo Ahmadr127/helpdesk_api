@@ -81,12 +81,13 @@ class ReportService
         $query->when($request->filled('prioritas'), fn (Builder $q) => $q->where('prioritas', $request->input('prioritas')));
         $query->when($request->filled('department_id'), fn (Builder $q) => $q->where('department_id', (int) $request->input('department_id')));
 
-        // Jenis (checkbox): bisa multi-select; string tetap didukung untuk kompatibilitas.
+        // Jenis (checkbox): gunakan pivot kategori_jenis. Jika kategori punya dua jenis
+        // (mis. TV = IPSRS + IT), pengajuannya tampil di KEDUA report.
         $rawJenis = $request->input('jenis');
         $jenis = is_array($rawJenis) ? $rawJenis : ($rawJenis !== null && $rawJenis !== '' ? [$rawJenis] : []);
         $jenis = array_values(array_filter(array_map('strval', $jenis)));
         if ($jenis !== []) {
-            $query->whereHas('kategori.jenis', fn (Builder $j) => $j->whereIn('code', $jenis));
+            $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->whereIn('code', $jenis));
         }
 
         if ($request->filled('year')) {
@@ -171,30 +172,49 @@ class ReportService
     }
 
     /**
-     * Metrik kinerja SIRS berbasis response time:
-     * durasi dari created_at → started_at (tiket pertama kali direspon/diproses).
-     * Tiket yang belum direspon (started_at kosong) tidak masuk hitungan.
+     * Metrik SIRS (respon & proses):
+     * - respond: durasi dari created_at → started_at (tiket pertama kali direspon).
+     * - proses : durasi dari started_at → closed_at (tiket diselesaikan).
+     * Tiket tanpa timestamp acuan tidak ikut hitungan.
      *
-     * @return array{responded:int,under_60:int,percentage:float,avg_minutes:int}
+     * @return array{responded:int,processed:int,under_60_response:int,under_60_process:int,response_pct:float,process_pct:float,avg_response_minutes:int,avg_process_minutes:int,under_60:int,percentage:float,avg_minutes:int}
      */
     public function performance(Builder $query): array
     {
-        $rows = (clone $query)->reorder()->get(['id', 'status', 'created_at', 'started_at']);
+        $rows = (clone $query)->reorder()->get(['id', 'status', 'created_at', 'started_at', 'closed_at']);
 
-        $durations = $rows
+        $respDurations = $rows
             ->filter(fn (Pengajuan $pengajuan) => $pengajuan->created_at && $pengajuan->started_at)
             ->map(fn (Pengajuan $pengajuan) => (int) $pengajuan->created_at->diffInMinutes($pengajuan->started_at))
             ->values();
 
-        $responded = $durations->count();
-        $under60 = $durations->filter(fn (int $minutes) => $minutes <= self::RESPONSE_SLA_MINUTES)->count();
+        $procDurations = $rows
+            ->filter(fn (Pengajuan $pengajuan) => $pengajuan->started_at && $pengajuan->closed_at)
+            ->map(fn (Pengajuan $pengajuan) => (int) $pengajuan->started_at->diffInMinutes($pengajuan->closed_at))
+            ->values();
 
-        return [
+        $responded = $respDurations->count();
+        $processed = $procDurations->count();
+        $under60Response = $respDurations->filter(fn (int $m) => $m <= self::RESPONSE_SLA_MINUTES)->count();
+        $under60Process = $procDurations->filter(fn (int $m) => $m <= self::RESPONSE_SLA_MINUTES)->count();
+
+        $result = [
             'responded' => $responded,
-            'under_60' => $under60,
-            'percentage' => $responded > 0 ? round(($under60 / $responded) * 100, 2) : 0.0,
-            'avg_minutes' => $responded > 0 ? (int) round($durations->avg()) : 0,
+            'processed' => $processed,
+            'under_60_response' => $under60Response,
+            'under_60_process' => $under60Process,
+            'response_pct' => $responded > 0 ? round(($under60Response / $responded) * 100, 2) : 0.0,
+            'process_pct' => $processed > 0 ? round(($under60Process / $processed) * 100, 2) : 0.0,
+            'avg_response_minutes' => $responded > 0 ? (int) round($respDurations->avg()) : 0,
+            'avg_process_minutes' => $processed > 0 ? (int) round($procDurations->avg()) : 0,
         ];
+
+        // Key lama dipertahankan untuk kompatibilitas tempat lain.
+        $result['under_60'] = $under60Response;
+        $result['percentage'] = $result['response_pct'];
+        $result['avg_minutes'] = $result['avg_response_minutes'];
+
+        return $result;
     }
 
     /** Format durasi "x hari y jam z menit" (fallback "0 menit"). */
@@ -239,20 +259,16 @@ class ReportService
         return in_array($perPage, self::PER_PAGE_OPTIONS, true) ? $perPage : 10;
     }
 
-    /**
-     * Opsi dropdown filter. Jika $jenis diisi, kategori dibatasi jenis tersebut.
-     */
+    /** Kategori multi-jenis aktif untuk dropdown filter. */
     public function options(?string $jenis = null): array
     {
-        $kategoris = KategoriPengajuan::with('jenis')
-            ->where('status', 1)
-            ->when($jenis, fn (Builder $q) => $q->whereHas('jenis', fn (Builder $j) => $j->where('code', $jenis)))
-            ->orderBy('name')
-            ->get();
-
         return [
-            'kategoris' => $kategoris,
-            'jenisList' => JenisPengajuan::orderBy('name')->get(),
+            'kategoris' => KategoriPengajuan::with('jenis')
+                ->where('status', 1)
+                ->when($jenis, fn (Builder $q) => $q->whereHas('jenis', fn (Builder $j) => $j->where('code', $jenis)))
+                ->orderBy('name')
+                ->get(),
+            'jenisList' => JenisPengajuan::orderBy('code')->get(),
             'departments' => Department::orderBy('name')->get(),
         ];
     }
@@ -278,6 +294,6 @@ class ReportService
     /** Relasi wajib agar tabel & export tidak N+1. */
     public function relations(): array
     {
-        return ['kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user'];
+        return ['kategori.jenisList', 'kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user'];
     }
 }

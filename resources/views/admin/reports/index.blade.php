@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Report Pengajuan')
+@section('title', 'Report Umum')
 
 @section('content')
 <div class="w-full mx-auto">

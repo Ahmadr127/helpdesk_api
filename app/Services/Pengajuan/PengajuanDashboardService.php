@@ -10,12 +10,18 @@ use Illuminate\Support\Facades\DB;
 
 class PengajuanDashboardService
 {
-    public function baseQuery(?string $jenisCode = null): Builder
+    /**
+     * Query dasar pengajuan. Flavour yang diterima: 'sirs' atau 'umum'.
+     * Di luar keduanya, query tidak difilter apa pun.
+     */
+    public function baseQuery(?string $flavour = null): Builder
     {
         $query = Pengajuan::query();
 
-        if ($jenisCode !== null) {
-            $query->whereHas('kategori.jenis', fn (Builder $q) => $q->where('code', $jenisCode));
+        if ($flavour === 'sirs') {
+            $query->sirs();
+        } elseif ($flavour === 'umum') {
+            $query->umum();
         }
 
         return $query;
@@ -34,8 +40,8 @@ class PengajuanDashboardService
 
     public function userStats(User $user): array
     {
-        $tickets = $this->baseQuery('IT')->where('pemohon_id', $user->id);
-        $orders = $this->baseQuery('IPSRS')->where('pemohon_id', $user->id);
+        $tickets = $this->baseQuery('sirs')->where('pemohon_id', $user->id);
+        $orders = $this->baseQuery('umum')->where('pemohon_id', $user->id);
 
         return [
             'tickets' => [
@@ -59,8 +65,8 @@ class PengajuanDashboardService
 
     public function adminStats(?User $user = null): array
     {
-        $tickets = $this->baseQuery('IT');
-        $orders = $this->baseQuery('IPSRS');
+        $tickets = $this->baseQuery('sirs');
+        $orders = $this->baseQuery('umum');
 
         $categoryIds = $this->categoryIdsForUser($user);
         if (is_array($categoryIds)) {
@@ -105,7 +111,7 @@ class PengajuanDashboardService
 
     public function administrasiStats(?User $user = null): array
     {
-        $orders = $this->baseQuery('IPSRS');
+        $orders = $this->baseQuery('umum');
 
         $categoryIds = $this->categoryIdsForUser($user);
         if (is_array($categoryIds)) {
@@ -133,7 +139,7 @@ class PengajuanDashboardService
 
     public function itDashboardData(string $timeFilter = 'all', string $statusFilter = 'all', ?User $user = null): array
     {
-        $baseQuery = $this->baseQuery('IT');
+        $baseQuery = $this->baseQuery('sirs');
         $this->applyCategoryFilter($baseQuery, $user);
         $this->applyTimeFilter($baseQuery, $timeFilter);
 
@@ -148,7 +154,7 @@ class PengajuanDashboardService
         $processingPercentage = $totalTickets > 0 ? round(($completedTickets / $totalTickets) * 100, 1) : 0;
         $ticketProgress = $processingPercentage;
 
-        $recentBase = $this->baseQuery('IT');
+        $recentBase = $this->baseQuery('sirs');
         $this->applyCategoryFilter($recentBase, $user);
 
         $recentTickets = (clone $recentBase)
@@ -188,7 +194,7 @@ class PengajuanDashboardService
             return \Illuminate\Support\Facades\Cache::get($cacheKey);
         }
 
-        $baseQuery = $this->baseQuery('IPSRS');
+        $baseQuery = $this->baseQuery('umum');
         $this->applyTimeFilter($baseQuery, $timeFilter);
 
         if ($statusFilter !== 'all') {
@@ -197,8 +203,12 @@ class PengajuanDashboardService
 
         $statistics = DB::table('pengajuan')
             ->join('kategori_pengajuan', 'kategori_pengajuan.id', '=', 'pengajuan.kategori_id')
-            ->join('jenis_pengajuan', 'jenis_pengajuan.id', '=', 'kategori_pengajuan.jenis_id')
-            ->where('jenis_pengajuan.code', 'IPSRS')
+            ->whereExists(fn ($sub) => $sub
+                ->select(DB::raw(1))
+                ->from('kategori_jenis')
+                ->join('jenis_pengajuan', 'jenis_pengajuan.id', '=', 'kategori_jenis.jenis_id')
+                ->whereColumn('kategori_jenis.kategori_id', '=', 'kategori_pengajuan.id')
+                ->where('jenis_pengajuan.code', '!=', 'IT'))
             ->when(true, function ($q) use ($user) {
                 $categoryIds = $this->categoryIdsForUser($user);
                 if (is_array($categoryIds)) {
@@ -231,7 +241,7 @@ class PengajuanDashboardService
             ? round(((int) $statistics->confirmed_orders / (int) $statistics->total_orders) * 100, 1)
             : 0;
 
-        $recentBase = $this->baseQuery('IPSRS');
+        $recentBase = $this->baseQuery('umum');
         $this->applyCategoryFilter($recentBase, $user);
 
         $recentOrders = (clone $recentBase)
@@ -273,7 +283,7 @@ class PengajuanDashboardService
 
     protected function ipsrsOrderTrends(string $timeFilter, string $statusFilter)
     {
-        $query = $this->baseQuery('IPSRS');
+        $query = $this->baseQuery('umum');
 
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);

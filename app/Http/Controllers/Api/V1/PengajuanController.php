@@ -34,7 +34,8 @@ class PengajuanController extends BaseApiController
         $query = Pengajuan::query()->where('pemohon_id', $request->user()->id);
 
         if ($jenis = $this->jenis($request)) {
-            $query->whereHas('kategori.jenis', fn (Builder $q) => $q->where('code', $jenis));
+            $jenisCode = strtoupper($jenis);
+            $query->whereHas('kategori.jenisList', fn (Builder $q) => $q->where('code', $jenisCode));
         }
 
         return $query;
@@ -49,9 +50,9 @@ class PengajuanController extends BaseApiController
             return true;
         }
 
-        $pengajuan->loadMissing('kategori.jenis');
+        $pengajuan->loadMissing('kategori.jenisList');
 
-        return strtoupper((string) $pengajuan->kategori?->jenis?->code) === $jenis;
+        return collect($pengajuan->kategori?->jenisCodes ?? [])->contains(strtoupper((string) $jenis));
     }
 
     /** Tolak akses bila pengajuan bukan milik user. */
@@ -63,7 +64,7 @@ class PengajuanController extends BaseApiController
     protected function relations(): array
     {
         return [
-            'kategori.jenis', 'pemohon', 'department', 'lokasi', 'building',
+            'kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building',
             'penugasan.user', 'historis.actor', 'pesans.sender', 'pesans.lampirans', 'lampirans',
         ];
     }
@@ -71,7 +72,7 @@ class PengajuanController extends BaseApiController
     public function index(Request $request)
     {
         $query = $this->baseQuery($request)->with([
-            'kategori.jenis', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user',
+            'kategori.jenisList', 'pemohon', 'department', 'lokasi', 'building', 'penugasan.user',
         ]);
 
         // Status bisa datang dari path (filter/{status}) atau query string.

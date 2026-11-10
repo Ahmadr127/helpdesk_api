@@ -113,6 +113,9 @@
                             Tanggal</th>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            Kategori</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Pemohon</th>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
@@ -143,6 +146,9 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->created_at->format('d/m/Y') }}
                             <div class="text-xs text-gray-400">{{ $order->created_at->format('H:i') }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $order->kategori?->name ?? '-' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $order->pemohon_nama ?? $order->pemohon?->name ?? '-' }}

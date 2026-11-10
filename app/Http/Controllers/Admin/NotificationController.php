@@ -74,6 +74,9 @@ class NotificationController extends Controller
             }
 
             $data = $notification->data;
+            if (isset($data['pengajuan_id'])) {
+                return redirect()->route('admin.pengajuan.show', ['pengajuan' => $data['pengajuan_id']]);
+            }
             if (isset($data['order_id'])) {
                 return redirect()->route('admin.order-perbaikan.show', ['orderPerbaikan' => $data['order_id']]);
             }
