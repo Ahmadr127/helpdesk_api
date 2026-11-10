@@ -318,9 +318,9 @@
     </div>
 
     <!-- Kategori Order & Kategori Pengajuan side by side -->
-    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 20px; margin-top: 24px;">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <!-- Kategori Order Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,7 +363,7 @@
         </div>
 
         <!-- Jenis Pengajuan Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,7 +408,7 @@
         </div>
 
         <!-- Kategori Pengajuan Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200" style="width: 100%; min-width: 0;">
+        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
                 <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

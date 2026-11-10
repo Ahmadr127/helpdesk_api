@@ -233,7 +233,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Detail pengajuan (unified: Tiket IT & Order IPSRS) - dipakai report & halaman admin lain
         // URI admin/* supaya tidak bentrok dengan route `pengajuan/{pengajuan}` milik user.
-        Route::prefix('admin/pengajuan')->name('pengajuan.')->middleware('permission:report')->group(function () {
+        Route::prefix('admin/pengajuan')->name('pengajuan.')->middleware('permission:report|report.sirs')->group(function () {
             Route::get('/{pengajuan}', [PengajuanController::class, 'show'])->name('show');
         });
 

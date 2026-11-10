@@ -263,9 +263,9 @@ class ReportService
     public function options(?string $jenis = null): array
     {
         return [
-            'kategoris' => KategoriPengajuan::with('jenis')
+            'kategoris' => KategoriPengajuan::with('jenisList')
                 ->where('status', 1)
-                ->when($jenis, fn (Builder $q) => $q->whereHas('jenis', fn (Builder $j) => $j->where('code', $jenis)))
+                ->when($jenis, fn (Builder $q) => $q->whereHas('jenisList', fn (Builder $j) => $j->where('code', $jenis)))
                 ->orderBy('name')
                 ->get(),
             'jenisList' => JenisPengajuan::orderBy('code')->get(),

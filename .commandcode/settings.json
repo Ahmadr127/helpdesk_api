@@ -61,7 +61,19 @@
       "Shell(php artisan tinker --execute=\"$p=\\App\\Models\\Pengajuan::where('nomor','like','%43%')->orWhere('legacy_id',43)->get(['id','nomor','legacy_source','legacy_id','status','pemohon_id']); foreach($p as $x){echo json_encode($x->toArray(), JSON_UNESCAPED_UNICODE).PHP_EOL;} echo '---legacy_map---'.PHP_EOL; foreach(\\DB::table('legacy_map')->where('source_id',43)->orWhere('pengajuan_id',43)->get() as $r){echo json_encode((array)$r, JSON_UNESCAPED_UNICODE).PHP_EOL;}\")",
       "Shell(php _tmp_find_user_reply.php)",
       "Shell(php _tmp_find_erlan.php)",
-      "Shell(php _tmp_find_sirs_user_reply.php)"
+      "Shell(php _tmp_find_sirs_user_reply.php)",
+      "Shell(php artisan tinker --execute=\"$k=\\App\\Models\\KategoriPengajuan::first(); if($k){var_dump(method_exists($k,'jenis')); var_dump(method_exists($k,'jenisList')); echo json_encode($k->toArray(), JSON_UNESCAPED_UNICODE);}\")",
+      "Shell(php artisan route:list --path=admin/pengajuan --except-vendor 2 >& 1)",
+      "Shell(php artisan tinker --execute==\\App\\Models\\Pengajuan::with('kategori.jenisList')->find(19); if(){echo json_encode(['id'=>->id,'nomor'=>->nomor,'status'=>->status,'kategori'=>->kategori?->name,'jenis'=>->kategori?->jenisList?->pluck('code')->values()->all()], JSON_UNESCAPED_UNICODE);} else {echo 'NOT_FOUND';})",
+      "Shell(php artisan tinker --execute=echo json_encode(\\App\\Models\\Permission::where('slug','like','%report%')->orWhere('slug','like','%pengajuan%')->get(['id','slug','name'])->toArray(), JSON_UNESCAPED_UNICODE);)",
+      "Shell(php artisan route:list --path=admin/pengajuan --except-vendor -v 2 >& 1)",
+      "Shell(php artisan tinker --execute==\\App\\Models\\User::where('email','like','%admin%')->orWhere('role','admin')->orWhere('role','ipsrs')->limit(10)->get(['id','name','email','role']); echo json_encode(->toArray(), JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);)",
+      "Shell(php artisan tinker --execute==\\App\\Models\\User::with('permissions')->get(['id','name','email','role']); foreach( as ){=->effectivePermissionSlugs(); =in_array('layout.admin',,true); =in_array('report',,true); =in_array('report.sirs',,true); =->permissions->pluck('slug')->values()->all(); if( ||  ||  || ->role==='admin' || ->role==='ipsrs' || !empty()){echo json_encode(['id'=>->id,'name'=>->name,'email'=>->email,'role'=>->role,'can_layout_admin'=>,'can_report'=>,'can_report_sirs'=>,'effective'=>,'direct'=>], JSON_UNESCAPED_UNICODE).PHP_EOL;}})",
+      "Shell(php _tmp_check_admin_perms.php)",
+      "Shell(php artisan tinker --execute==\\App\\Models\\Role::where('slug','admin')->first(); =\\App\\Models\\Permission::pluck('id','slug'); echo json_encode(['admin_role'=>?->only(['id','slug','name']),'all_permissions'=>->toArray()], JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);)",
+      "Shell(php artisan tinker --execute=echo json_encode(DB::select(\"select column_name,data_type,is_nullable from information_schema.columns where table_name='role_permissions' order by ordinal_position\"), JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);)",
+      "Shell(php artisan tinker --execute==DB::table('role_permissions')->where('role_id',2)->pluck('permission_id')->toArray(); echo json_encode(['role_id'=>2,'existing_permission_ids'=>,'count'=>count()], JSON_UNESCAPED_UNICODE);)",
+      "Shell(php artisan tinker --execute==2; ='admin'; =DB::table('permissions')->pluck('id')->all(); =DB::table('role_permissions')->where('role_id',)->pluck('permission_id')->all(); =array_values(array_diff(,)); =now(); foreach( as ){DB::table('role_permissions')->insert(['role'=>,'permission_id'=>,'role_id'=>,'created_at'=>,'updated_at'=>]);} echo json_encode(['added_permission_ids'=>,'added_count'=>count()], JSON_UNESCAPED_UNICODE);)"
     ],
     "deny": [],
     "defaultMode": "default"
