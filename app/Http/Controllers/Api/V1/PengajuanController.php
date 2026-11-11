@@ -109,8 +109,22 @@ class PengajuanController extends BaseApiController
         ]);
 
         // Status bisa datang dari path (filter/{status}) atau query string.
+        // Nilai bisa berupa array (`status[]=open&status[]=in_progress`) untuk
+        // filter gabungan, jadi ditangani keduanya.
         $status = $request->route('status') ?? $request->input('status');
-        if ($status && $status !== 'all') {
+
+        if (is_array($status)) {
+            $statuses = collect($status)
+                ->filter(fn ($s) => is_string($s) && $s !== '' && $s !== 'all')
+                ->map(fn ($s) => $this->normalizeStatus($s))
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($statuses !== []) {
+                $query->whereIn('status', $statuses);
+            }
+        } elseif (is_string($status) && $status !== '' && $status !== 'all') {
             $query->where('status', $this->normalizeStatus($status));
         }
 

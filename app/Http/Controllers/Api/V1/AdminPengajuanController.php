@@ -228,8 +228,22 @@ class AdminPengajuanController extends BaseApiController
         ]);
 
         // Status bisa datang dari query string atau dari default route (open/in-progress/...).
+        // Flutter mengirim `status[]=open&status[]=in_progress` untuk filter
+        // gabungan (mis. "Aktif"), sehingga nilai bisa berupa array.
         $status = $request->input('status') ?? $request->route('status');
-        if ($status && $status !== 'all') {
+
+        if (is_array($status)) {
+            $statuses = collect($status)
+                ->filter(fn ($s) => is_string($s) && $s !== '' && $s !== 'all')
+                ->map(fn ($s) => $this->normalizeStatus($s))
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($statuses !== []) {
+                $query->whereIn('status', $statuses);
+            }
+        } elseif (is_string($status) && $status !== '' && $status !== 'all') {
             $normalized = $this->normalizeStatus($status);
             $query->where('status', $normalized);
 

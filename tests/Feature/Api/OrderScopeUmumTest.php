@@ -173,6 +173,63 @@ class OrderScopeUmumTest extends TestCase
         $this->assertSame(2, $resp->json('meta.total'));
     }
 
+    /**
+     * Regresi: filter "Aktif" di list order admin mengirim `status[]` (array),
+     * bukan string. Sebelumnya normalizeStatus() dipanggil dengan array sehingga
+     * melempar TypeError -> HTTP 500.
+     */
+    public function test_admin_order_list_menerima_status_array(): void
+    {
+        $this->makePengajuan($this->kategoriIpsrs, 'O-001', 'open');
+        $this->makePengajuan($this->kategoriIpsrs, 'O-002', 'in_progress');
+        $this->makePengajuan($this->kategoriIpsrs, 'O-003', 'confirmed');
+
+        $resp = $this->withHeaders($this->authHeader($this->adminIpsrs))
+            ->getJson('/api/administrasi-umum/order-perbaikan?status[]=open&status[]=in_progress');
+
+        $resp->assertStatus(200);
+        $this->assertSame(2, $resp->json('meta.total'));
+        $nomors = collect($resp->json('data'))->pluck('nomor')->all();
+        $this->assertContains('O-001', $nomors);
+        $this->assertContains('O-002', $nomors);
+        $this->assertNotContains('O-003', $nomors);
+    }
+
+    public function test_status_array_dinormalisasi_ke_ditutup(): void
+    {
+        $this->makePengajuan($this->kategoriIpsrs, 'O-001', 'ditutup');
+
+        // `tutup` adalah alias lama -> harus tetap menemukan status `ditutup`.
+        $resp = $this->withHeaders($this->authHeader($this->adminIpsrs))
+            ->getJson('/api/administrasi-umum/order-perbaikan?status[]=tutup');
+
+        $resp->assertStatus(200);
+        $this->assertSame(1, $resp->json('meta.total'));
+    }
+
+    public function test_user_list_menerima_status_array(): void
+    {
+        $this->makePengajuan($this->kategoriIpsrs, 'O-001', 'open');
+        $this->makePengajuan($this->kategoriIpsrs, 'O-002', 'confirmed');
+
+        $resp = $this->withHeaders($this->authHeader($this->pemohon))
+            ->getJson('/api/order-perbaikan?status[]=open&status[]=confirmed');
+
+        $resp->assertStatus(200);
+        $this->assertSame(2, $resp->json('meta.total'));
+    }
+
+    public function test_status_string_tunggal_tetap_jalan(): void
+    {
+        $this->makePengajuan($this->kategoriIpsrs, 'O-001', 'open');
+        $this->makePengajuan($this->kategoriIpsrs, 'O-002', 'confirmed');
+
+        $this->withHeaders($this->authHeader($this->adminIpsrs))
+            ->getJson('/api/administrasi-umum/order-perbaikan?status=open')
+            ->assertStatus(200)
+            ->assertJsonPath('meta.total', 1);
+    }
+
     public function test_order_konfirmasi_dan_rejected_memakai_scope_umum(): void
     {
         $this->makePengajuan($this->kategoriRt, 'O-001', 'ditutup');
