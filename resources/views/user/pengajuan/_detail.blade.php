@@ -107,7 +107,7 @@
     $pengajuName = 'Anda';
 @endphp
 
-<div class="container mx-auto px-4 py-4 max-w-8xl text-base">
+<div class="container mx-auto px-4 py-4 max-w-8xl text-sm">
     <!-- Back Button -->
     <div class="mb-3 flex items-center justify-between">
         <a href="{{ $backUrl }}"
@@ -341,7 +341,7 @@
                                                     @endswitch
                                                 </div>
                                                 <div class="mt-1 text-center px-1 w-full">
-                                                    <h4 class="text-xs font-medium text-gray-800 leading-tight">{{ $historyLabel($step->action, $step->status) }}</h4>
+                                                    <h4 class="text-[11px] font-medium text-gray-800 leading-tight">{{ $historyLabel($step->action, $step->status) }}</h4>
                                                     {{-- Tanggal & jam dibuat lebih kecil agar stepper tetap
                                                          ringkas dan tidak bersaing dengan label status. --}}
                                                     <p class="text-[9px] text-gray-500 leading-tight mt-0.5">{{ $step->created_at?->format('d M Y') }}</p>
@@ -366,9 +366,9 @@
                             @if($notedSteps->isNotEmpty())
                                 <ul class="mt-3 pt-2 border-t border-gray-200 space-y-1">
                                     @foreach($notedSteps as $step)
-                                        <li class="text-[11px] text-gray-600 flex gap-1.5">
-                                            <span class="font-semibold text-gray-700 flex-shrink-0">{{ $historyLabel($step->action, $step->status) }}:</span>
-                                            <span class="whitespace-pre-line break-words">{{ $step->notes }}</span>
+                                        <li class="text-[9px] text-gray-600 flex gap-1.5">
+                                            <span class="text-[9px] font-semibold text-gray-700 flex-shrink-0">{{ $historyLabel($step->action, $step->status) }}:</span>
+                                            <span class="text-[9px] whitespace-pre-line break-words">{{ $step->notes }}</span>
                                         </li>
                                     @endforeach
                                 </ul>

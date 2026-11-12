@@ -1,3 +1,4 @@
+
 @extends('admin.layouts.app')
 
 @section('title', 'Detail Order')
@@ -53,6 +54,7 @@
                         </span>
                     </div>
                     <p class="text-sm font-bold text-gray-900 mt-2">Order #{{ $orderPerbaikan->nomor }}</p>
+                <p class="text-sm text-gray-600 mt-1">Nama Pengaju: <span class="font-semibold text-gray-900">{{ $orderPerbaikan->pemohon_nama ?? $orderPerbaikan->pemohon?->name ?? '-' }}</span></p>
                 </div>
                 <div class="p-6">
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
@@ -84,10 +86,7 @@
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->tanggal->format('d M Y, H:i') }}</dd>
                         </div>
-                        <div>
-                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pengguna</dt>
-                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->pemohon_nama ?? $orderPerbaikan->pemohon?->name ?? '-' }}</dd>
-                        </div>
+                        {{-- Nama Pengaju sudah ditampilkan di atas --}}
                     </dl>
                 </div>
             </div>
@@ -125,6 +124,14 @@
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Lokasi</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->lokasi?->name ?? '-' }}</dd>
                         </div>
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Gedung</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->building?->name ?? '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Penanggung Jawab</dt>
+                            <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->penugasan->where('released_at', null)->pluck('user.name')->filter()->join(', ') ?: '-' }}</dd>
+                        </div>
                         <div class="sm:col-span-2">
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Keluhan</dt>
                             <dd class="mt-1 text-sm text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-100">{{ $orderPerbaikan->keluhan }}</dd>
@@ -148,10 +155,24 @@
                         </div>
                     </div>
                     @endif
+                    @if($orderPerbaikan->lampirans && $orderPerbaikan->lampirans->isNotEmpty())
+                    <div class="mt-4">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Lampiran</p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($orderPerbaikan->lampirans as $lamp)
+                                @if($lamp->path)
+                                    <a href="{{ Storage::url($lamp->path) }}" target="_blank" class="inline-block">
+                                        <img src="{{ Storage::url($lamp->path) }}" alt="Lampiran" class="w-24 h-24 object-cover rounded-lg border border-gray-200">
+                                    </a>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     </div>
                 </div>
             </div>
-
+            
         </div>
 
         <!-- Right Column: Status Update Form + Timeline -->
@@ -293,5 +314,6 @@ document.addEventListener('keydown', function(e) {
         closeImageModal();
     }
 });
+</script>
 </script>
 @endsection

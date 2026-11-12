@@ -135,13 +135,22 @@ class PengajuanResource extends JsonResource
                     'id' => $h->id,
                     'status' => $h->status,
                     'action' => $h->action,
-                    'notes' => $h->notes,
-                    'keterangan' => $h->notes,
-                    'follow_up' => $h->notes,
+                    'notes' => $h->notes ?? $h->keterangan ?? $h->follow_up ?? null,
+                    'keterangan' => $h->keterangan ?? $h->notes ?? $h->follow_up ?? null,
+                    'follow_up' => $h->follow_up ?? $h->notes ?? $h->keterangan ?? null,
                     'actor_id' => $h->actor_id,
                     'actor_type' => $h->actor_type,
                     'actor' => $h->relationLoaded('actor') && $h->actor ? ['id' => $h->actor->id, 'name' => $h->actor->name] : null,
                     'created_at' => $h->created_at,
+                    'lampiran' => $h->lampiran,
+                    'lampiran_url' => $h->lampiran ? \Illuminate\Support\Facades\Storage::disk('public')->url($h->lampiran) : null,
+                    'lampirans' => $h->relationLoaded('lampirans')
+                        ? $h->lampirans->map(fn ($l) => [
+                            'id' => $l->id,
+                            'path' => $l->path,
+                            'url' => $l->path ? \Illuminate\Support\Facades\Storage::disk('public')->url($l->path) : null,
+                        ])->values()->all()
+                        : [],
                 ];
             })->values();
         });

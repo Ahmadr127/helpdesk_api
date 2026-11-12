@@ -16,7 +16,7 @@ class PengajuanWorkflowService
     ) {
     }
 
-    public function start(User $actor, Pengajuan $pengajuan): Pengajuan
+    public function start(User $actor, Pengajuan $pengajuan, ?string $notes = null): Pengajuan
     {
         if ($pengajuan->status !== 'open') {
             throw new \Exception('Pengajuan hanya dapat dimulai saat status open.', 422);
@@ -26,7 +26,7 @@ class PengajuanWorkflowService
             throw new \Exception('Unauthorized', 403);
         }
 
-        $pengajuan = DB::transaction(function () use ($actor, $pengajuan): Pengajuan {
+        $pengajuan = DB::transaction(function () use ($actor, $pengajuan, $notes): Pengajuan {
             $pengajuan->update([
                 'status' => 'in_progress',
                 'started_at' => $pengajuan->started_at ?: now(),
@@ -36,7 +36,7 @@ class PengajuanWorkflowService
             $pengajuan->historis()->create([
                 'status' => 'in_progress',
                 'action' => 'started',
-                'notes' => 'Pengajuan dimulai.',
+                'notes' => $notes ?: 'Pengajuan dimulai.',
                 'actor_id' => $actor->id,
                 'actor_type' => PengajuanHistori::actorTypeFor($actor),
             ]);

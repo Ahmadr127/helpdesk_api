@@ -231,7 +231,7 @@
                 Batal
             </a>
         @endif
-        <button type="submit"
+        <button type="submit" id="pengajuan-submit-btn"
             class="px-6 py-2 text-white rounded-md focus:ring-2 focus:ring-offset-2 transition-colors {{ $buttonClass }}">
             {{ $submitLabel }}
         </button>
@@ -241,6 +241,17 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Cegah submit ganda (double click)
+    var form = document.querySelector('form[action="{{ $action }}"]');
+    var btn = document.getElementById('pengajuan-submit-btn');
+    if (form && btn) {
+        form.addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            btn.textContent = 'Mengirim...';
+        });
+    }
+
     var input = document.getElementById('pengajuan-photos');
     var info = document.getElementById('pengajuan-photos-info');
     if (!input || !info) return;

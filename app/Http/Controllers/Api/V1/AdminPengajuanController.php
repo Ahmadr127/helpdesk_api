@@ -450,18 +450,27 @@ class AdminPengajuanController extends BaseApiController
                 $pengajuan->update(['follow_up' => $validated['follow_up']]);
             }
 
-            // Lampiran pada update status disimpan sebagai pesan admin agar
-            // tidak hilang (sebelumnya file diabaikan sepenuhnya).
+            // Lampiran pada update status menempel pada entri riwayat status
+            // (bukan pesan terpisah) agar tidak muncul dua kali.
             $files = $this->uploadedFiles($request);
-            $statusNote = $validated['notes'] ?? $validated['follow_up'] ?? null;
-            if (! empty($files) && ($statusNote === null || trim((string) $statusNote) === '')) {
-                $statusNote = 'Status diperbarui menjadi '.$validated['status'].'.';
-            }
-            if (! empty($files)) {
-                $this->service->addMessage($request->user(), $pengajuan, (string) $statusNote, $files);
-            }
 
             $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
+
+            // Simpan lampiran juga pada entri riwayat status agar muncul di
+            // bubble "Riwayat Status" (selain di percakapan).
+            if (! empty($files)) {
+                $latestHistori = $pengajuan->fresh()->historis()->latest()->first();
+                if ($latestHistori) {
+                    app(\App\Services\Pengajuan\PengajuanAttachmentService::class)->store(
+                        $pengajuan->fresh(),
+                        $files,
+                        'admin_response',
+                        $request->user(),
+                        $latestHistori,
+                        null
+                    );
+                }
+            }
 
             $newlyAssigned = [];
             if (array_key_exists('penanggung_jawab_ids', $validated)) {

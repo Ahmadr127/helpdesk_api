@@ -28,6 +28,7 @@
                             <div class="flex items-center space-x-3">
                                 <span class="text-sm font-medium text-gray-800">Tiket
                                     #{{ $ticket->ticket_number }}</span>
+                                <span class="text-sm text-gray-600">Pengaju: <span class="font-semibold text-gray-900">{{ $ticket->pemohon?->name ?? '-' }}</span></span>
                                 <span class="px-3 py-1 text-sm leading-5 font-medium rounded-full 
                                     {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-800' : 
                                    ($ticket->status === 'in_progress' ? 'bg-purple-100 text-purple-800' : 
@@ -111,6 +112,7 @@
                             </div>
                         </div>
 
+                        
                         <!-- Deskripsi Tiket -->
                         <div>
                             <h3 class="text-sm font-medium text-gray-500 mb-2">Deskripsi</h3>
@@ -579,5 +581,6 @@ document.addEventListener('keydown', function(e) {
         </div>
     </div>
 </div>
+
 
 @endsection

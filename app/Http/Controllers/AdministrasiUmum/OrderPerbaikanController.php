@@ -8,6 +8,7 @@ use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Services\Pengajuan\PengajuanAttachmentService;
 use Illuminate\Http\Request;
 
 class OrderPerbaikanController extends Controller
@@ -313,20 +314,41 @@ class OrderPerbaikanController extends Controller
             $orderPerbaikan->update(['follow_up' => $validated['follow_up']]);
         }
 
+        // Catatan & lampiran menempel pada entri riwayat status (bukan pesan
+        // terpisah) agar tidak muncul dua kali.
+        $lampiranFile = $request->file('lampiran');
         $status = $validated['status'];
 
         if (in_array($status, ['tutup', 'closed', 'ditutup'], true)) {
-            $this->workflow->close(
-                auth()->user(),
-                $orderPerbaikan->fresh(),
-                $validated['follow_up'] ?? 'Pengerjaan selesai, menunggu konfirmasi user.'
-            );
+            if (! in_array($orderPerbaikan->status, ['open', 'in_progress'], true)) {
+                // Sudah ditutup/confirmed/rejected — tidak perlu close lagi.
+            } else {
+                $this->workflow->close(
+                    auth()->user(),
+                    $orderPerbaikan->fresh(),
+                    $validated['follow_up'] ?? 'Pengerjaan selesai, menunggu konfirmasi user.'
+                );
+            }
         } elseif ($status === 'in_progress' && $orderPerbaikan->status === 'open') {
-            $this->workflow->start(auth()->user(), $orderPerbaikan->fresh());
+            $this->workflow->start(auth()->user(), $orderPerbaikan->fresh(), $validated['follow_up'] ?? $validated['notes'] ?? null);
         } else {
             $orderPerbaikan->update(['status' => $status]);
         }
 
+        // Simpan lampiran pada histori terakhir agar muncul di bubble Riwayat Status.
+        if (isset($lampiranFile) && $lampiranFile instanceof \Illuminate\Http\UploadedFile) {
+            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
+            if ($latestHistori) {
+                app(PengajuanAttachmentService::class)->store(
+                    $orderPerbaikan->fresh(),
+                    [$lampiranFile],
+                    'admin_response',
+                    auth()->user(),
+                    $latestHistori,
+                    null
+                );
+            }
+        }
         $newlyAssigned = [];
         if (array_key_exists('penanggung_jawab_ids', $validated)) {
             try {
@@ -348,15 +370,63 @@ class OrderPerbaikanController extends Controller
         return redirect()->back()->with('success', 'Status order berhasil diperbarui.');
     }
 
-    public function start(Pengajuan $orderPerbaikan)
+    public function start(Request $request, Pengajuan $orderPerbaikan)
     {
-        $this->workflow->start(auth()->user(), $orderPerbaikan);
+        $validated = $request->validate([
+            'follow_up' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'lampiran' => 'nullable|file|max:5120',
+        ]);
+
+        $notes = $validated['follow_up'] ?? $validated['notes'] ?? null;
+
+        $this->workflow->start(auth()->user(), $orderPerbaikan, $notes);
+
+        $lampiranFile = $request->file('lampiran');
+        if ($lampiranFile instanceof \Illuminate\Http\UploadedFile) {
+            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
+            if ($latestHistori) {
+                app(PengajuanAttachmentService::class)->store(
+                    $orderPerbaikan->fresh(),
+                    [$lampiranFile],
+                    'admin_response',
+                    auth()->user(),
+                    $latestHistori,
+                    null
+                );
+            }
+        }
+
         return redirect()->back()->with('success', 'Order berhasil dimulai.');
     }
 
     public function complete(Request $request, Pengajuan $orderPerbaikan)
     {
-        $this->workflow->close(auth()->user(), $orderPerbaikan, $request->follow_up ?? 'Pengerjaan selesai, menunggu konfirmasi user.');
+        $validated = $request->validate([
+            'follow_up' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'lampiran' => 'nullable|file|max:5120',
+        ]);
+
+        $notes = $validated['follow_up'] ?? $validated['notes'] ?? 'Pengerjaan selesai, menunggu konfirmasi user.';
+
+        $this->workflow->close(auth()->user(), $orderPerbaikan, $notes);
+
+        $lampiranFile = $request->file('lampiran');
+        if ($lampiranFile instanceof \Illuminate\Http\UploadedFile) {
+            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
+            if ($latestHistori) {
+                app(PengajuanAttachmentService::class)->store(
+                    $orderPerbaikan->fresh(),
+                    [$lampiranFile],
+                    'admin_response',
+                    auth()->user(),
+                    $latestHistori,
+                    null
+                );
+            }
+        }
+
         return redirect()->route('admin.order-perbaikan.show', $orderPerbaikan)
             ->with('success', 'Order ditutup dan menunggu konfirmasi selesai dari user.');
     }
