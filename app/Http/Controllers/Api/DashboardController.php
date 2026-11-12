@@ -27,4 +27,16 @@ class DashboardController extends BaseApiController
     {
         return $this->success($this->dashboard->administrasiStats($request->user()), 'Administrasi dashboard');
     }
+
+    /**
+     * Ringkasan dashboard untuk mobile — semua logika dihitung di server.
+     * Flutter hanya menampilkan angka yang sudah jadi (tanpa menghitung sendiri).
+     */
+    public function summary(Request $request)
+    {
+        return $this->success(
+            $this->dashboard->mobileSummary($request->user()),
+            'Dashboard summary'
+        );
+    }
 }

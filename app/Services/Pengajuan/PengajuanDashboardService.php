@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class PengajuanDashboardService
 {
+    public function __construct(protected PengajuanScopeService $scopeService) {}
+
     /**
      * Query dasar pengajuan. Flavour yang diterima: 'sirs' atau 'umum'.
      * Di luar keduanya, query tidak difilter apa pun.
@@ -25,6 +27,104 @@ class PengajuanDashboardService
         }
 
         return $query;
+    }
+
+    /**
+     * Ringkasan dashboard untuk mobile — SELURUH logika dihitung di server.
+     *
+     * Kontrak:
+     * - `own`   = pengajuan milik user yang sedang login (scope list user).
+     * - `admin` = pengajuan yang terlihat oleh admin sesuai scope list admin
+     *             (role-kategori + milik sendiri), TANPA filter jenis lain
+     *             supaya angkanya sama persis dengan jumlah baris di list.
+     * - Section admin hanya diisi bila user memang boleh membuka list itu
+     *   (permission dashboard + permission fiturnya), sehingga Flutter tidak
+     *   perlu deciding sendiri.
+     *
+     * Definisi status (penting agar konsisten antar kartu):
+     * - `active`   = open + in_progress (sedang berjalan)
+     * - `pending`  = ditutup (menunggu konfirmasi user)
+     * - `done`     = confirmed + rejected (sudah selesai)
+     */
+    public function mobileSummary(User $user): array
+    {
+        return [
+            'own' => [
+                'tickets' => $this->countByStatus($this->ownQuery($user, 'sirs')),
+                'orders' => $this->countByStatus($this->ownQuery($user, 'umum')),
+            ],
+            'admin' => [
+                'tickets' => $this->canSeeAdminTickets($user)
+                    ? $this->countByStatus($this->adminQuery($user, 'sirs'))
+                    : null,
+                'orders' => $this->canSeeAdminOrders($user)
+                    ? $this->countByStatus($this->adminQuery($user, 'umum'))
+                    : null,
+            ],
+        ];
+    }
+
+    /** Scope "milik sendiri" — sama dengan endpoint list user. */
+    protected function ownQuery(User $user, string $flavour): Builder
+    {
+        $query = Pengajuan::query()->where('pemohon_id', $user->id);
+
+        return $flavour === 'sirs' ? $query->sirs() : $query->umum();
+    }
+
+    /** Scope admin — sama dengan endpoint list admin (role-kategori + milik sendiri). */
+    protected function adminQuery(User $user, string $flavour): Builder
+    {
+        $query = $this->scopeService->visibleTo($user);
+
+        return $flavour === 'sirs' ? $query->sirs() : $query->umum();
+    }
+
+    protected function canSeeAdminTickets(User $user): bool
+    {
+        return $user->hasPermission('dashboard.it') && $user->hasPermission('ticket');
+    }
+
+    protected function canSeeAdminOrders(User $user): bool
+    {
+        return $user->hasPermission('dashboard.ipsrs') && $user->hasPermission('order');
+    }
+
+    /**
+     * Hitung jumlah per status + turunan (active/pending/done) dalam satu query.
+     *
+     * @return array{total:int,open:int,in_progress:int,ditutup:int,confirmed:int,rejected:int,active:int,pending:int,done:int}
+     */
+    protected function countByStatus(Builder $query): array
+    {
+        $row = (clone $query)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as c_open,
+                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as c_in_progress,
+                SUM(CASE WHEN status = 'ditutup' THEN 1 ELSE 0 END) as c_ditutup,
+                SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as c_confirmed,
+                SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as c_rejected
+            ")
+            ->first();
+
+        $open = (int) ($row->c_open ?? 0);
+        $inProgress = (int) ($row->c_in_progress ?? 0);
+        $ditutup = (int) ($row->c_ditutup ?? 0);
+        $confirmed = (int) ($row->c_confirmed ?? 0);
+        $rejected = (int) ($row->c_rejected ?? 0);
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'open' => $open,
+            'in_progress' => $inProgress,
+            'ditutup' => $ditutup,
+            'confirmed' => $confirmed,
+            'rejected' => $rejected,
+            'active' => $open + $inProgress,
+            'pending' => $ditutup,
+            'done' => $confirmed + $rejected,
+        ];
     }
 
     public function applyTimeFilter(Builder $query, string $timeFilter): Builder

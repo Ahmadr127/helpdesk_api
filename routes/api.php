@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Dashboard
     Route::get('/dashboard/user', [DashboardController::class, 'userDashboard'])->name('api.dashboard.user');
+    // Ringkasan dashboard (mobile) — logic penuh di backend.
+    Route::get('/dashboard/summary', [DashboardController::class, 'summary'])->name('api.dashboard.summary');
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->middleware(AdminApiMiddleware::class)->name('api.dashboard.admin');
     Route::get('/dashboard/administrasi', [DashboardController::class, 'administrasiDashboard'])->middleware(AdministrasiUmumApiMiddleware::class)->name('api.dashboard.administrasi');
 
