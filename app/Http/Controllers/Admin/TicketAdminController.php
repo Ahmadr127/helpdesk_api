@@ -129,8 +129,10 @@ class TicketAdminController extends Controller
         $validated = $request->validate([
             'notes' => 'required|string',
             'status' => 'required|in:in_progress,pending_confirmation,confirmed,rejected',
+            'photo' => 'nullable|image|max:5120',
         ]);
-        $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], []);
+        $files = $request->file('photo') ? [$request->file('photo')] : [];
+        $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], $files);
         $status = $validated['status'] === 'pending_confirmation' ? 'ditutup' : $validated['status'];
         if ($status === 'ditutup') {
             try {
@@ -175,9 +177,12 @@ class TicketAdminController extends Controller
         $validated = $request->validate([
             'notes' => 'nullable|string',
             'status' => 'nullable|in:open,in_progress,pending_confirmation,confirmed,rejected',
+            'photo' => 'nullable|image|max:5120',
         ]);
-        if (isset($validated['notes'])) {
-            $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], []);
+        if (!empty($validated['notes']) || $request->hasFile('photo')) {
+            $files = $request->file('photo') ? [$request->file('photo')] : [];
+            $body = trim((string) ($validated['notes'] ?? '')) !== '' ? $validated['notes'] : '(lampiran)';
+            $this->service->addMessage(auth()->user(), $ticket, $body, $files);
         }
         if (isset($validated['status'])) {
             $status = $validated['status'] === 'pending_confirmation' ? 'ditutup' : $validated['status'];

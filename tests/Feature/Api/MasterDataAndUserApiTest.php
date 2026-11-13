@@ -3,12 +3,9 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Building;
-use App\Models\Category;
 use App\Models\Department;
-use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\Position;
-use App\Models\UnitProses;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -30,7 +27,6 @@ class MasterDataAndUserApiTest extends TestCase
         Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
         Position::create(['name' => 'IT', 'code' => 'IT', 'status' => true]);
         Position::create(['name' => 'User', 'code' => 'user', 'status' => true]);
-        UnitProses::create(['name' => 'SIRS', 'code' => 'SIRS', 'status' => 1]);
         $this->admin = User::create(['name' => 'Admin IT', 'email' => 'admin', 'password' => Hash::make('123'), 'phone' => '0811', 'position' => 'IT', 'role' => 'admin', 'department' => 'IT', 'status' => 1]);
         $this->user = User::create(['name' => 'Regular', 'email' => 'user@example.com', 'password' => Hash::make('123'), 'phone' => '0812', 'position' => 'user', 'role' => 'user', 'department' => 'IT', 'status' => 1]);
     }
@@ -38,38 +34,6 @@ class MasterDataAndUserApiTest extends TestCase
     protected function authHeader(User $u)
     {
         return ['Authorization' => 'Bearer '.$u->createToken('test')->plainTextToken];
-    }
-
-    public function test_admin_can_crud_categories()
-    {
-        $headers = $this->authHeader($this->admin);
-        $up = UnitProses::where('code', 'SIRS')->first();
-
-        // create
-        $create = $this->withHeaders($headers)->postJson('/api/admin/master/categories', [
-            'name' => 'Software', 'status' => true, 'unit_proses_id' => $up->id,
-        ]);
-        $create->assertStatus(201)->assertJsonPath('success', true);
-        $id = $create->json('data.id');
-
-        // list
-        $list = $this->withHeaders($headers)->getJson('/api/admin/master/categories');
-        $list->assertStatus(200)->assertJsonCount(1, 'data');
-
-        // show
-        $show = $this->withHeaders($headers)->getJson("/api/admin/master/categories/{$id}");
-        $show->assertStatus(200);
-
-        // update
-        $upd = $this->withHeaders($headers)->putJson("/api/admin/master/categories/{$id}", [
-            'name' => 'Software Updated', 'status' => true, 'unit_proses_id' => $up->id,
-        ]);
-        $upd->assertStatus(200)->assertJsonPath('data.name', 'Software Updated');
-
-        // delete
-        $del = $this->withHeaders($headers)->deleteJson("/api/admin/master/categories/{$id}");
-        $del->assertStatus(200);
-        $this->assertDatabaseMissing('categories', ['id' => $id]);
     }
 
     public function test_admin_can_crud_departments()
@@ -85,6 +49,10 @@ class MasterDataAndUserApiTest extends TestCase
         ]);
         $upd->assertStatus(200);
         $this->assertDatabaseHas('departments', ['id' => $id, 'status' => false]);
+
+        $del = $this->withHeaders($headers)->deleteJson("/api/admin/master/departments/{$id}");
+        $del->assertStatus(200);
+        $this->assertDatabaseMissing('departments', ['id' => $id]);
     }
 
     public function test_admin_can_crud_buildings_and_locations()
@@ -109,45 +77,40 @@ class MasterDataAndUserApiTest extends TestCase
         $active->assertStatus(200)->assertJsonMissing(['id' => $lid]);
     }
 
-    public function test_admin_can_crud_positions_and_unit_proses()
+    public function test_admin_can_crud_positions()
     {
         $h = $this->authHeader($this->admin);
         $pos = $this->withHeaders($h)->postJson('/api/admin/master/positions', ['name' => 'Dokter', 'code' => 'DR', 'status' => true]);
-        $pos->assertStatus(201);
-        $up = $this->withHeaders($h)->postJson('/api/admin/master/unit-proses', ['name' => 'IPSRS Baru', 'code' => 'IPSRS', 'status' => true]);
-        $up->assertStatus(201);
+        $pos->assertStatus(201)->assertJsonPath('success', true);
+        $id = $pos->json('data.id');
+
+        $list = $this->withHeaders($h)->getJson('/api/admin/master/positions');
+        $list->assertStatus(200)->assertJsonPath('success', true);
+
+        $show = $this->withHeaders($h)->getJson("/api/admin/master/positions/{$id}");
+        $show->assertStatus(200)->assertJsonPath('data.code', 'DR');
+
+        $upd = $this->withHeaders($h)->putJson("/api/admin/master/positions/{$id}", ['name' => 'Dokter Umum', 'code' => 'DR', 'status' => true]);
+        $upd->assertStatus(200)->assertJsonPath('data.name', 'Dokter Umum');
+
+        $del = $this->withHeaders($h)->deleteJson("/api/admin/master/positions/{$id}");
+        $del->assertStatus(200);
+        $this->assertDatabaseMissing('positions', ['id' => $id]);
     }
 
-    public function test_admin_can_crud_kategori_order()
+    public function test_removed_master_types_are_rejected()
     {
         $h = $this->authHeader($this->admin);
-
-        $create = $this->withHeaders($h)->postJson('/api/admin/master/kategori_order', [
-            'name' => 'Pengadaan', 'code' => 'PDA', 'status' => true,
-        ]);
-        $create->assertStatus(201)->assertJsonPath('data.name', 'Pengadaan');
-        $id = $create->json('data.id');
-
-        $list = $this->withHeaders($h)->getJson('/api/admin/master/kategori_order');
-        $list->assertStatus(200)->assertJsonCount(1, 'data');
-
-        $show = $this->withHeaders($h)->getJson("/api/admin/master/kategori_order/{$id}");
-        $show->assertStatus(200)->assertJsonPath('data.code', 'PDA');
-
-        $upd = $this->withHeaders($h)->putJson("/api/admin/master/kategori_order/{$id}", [
-            'name' => 'Pengadaan Baru', 'code' => 'PDA', 'status' => false,
-        ]);
-        $upd->assertStatus(200)->assertJsonPath('data.name', 'Pengadaan Baru');
-
-        $del = $this->withHeaders($h)->deleteJson("/api/admin/master/kategori_order/{$id}");
-        $del->assertStatus(200);
-        $this->assertSoftDeleted('kategori_order', ['id' => $id]);
+        foreach (['categories', 'unit-proses', 'kategori-order'] as $type) {
+            $this->withHeaders($h)->getJson("/api/admin/master/{$type}")
+                ->assertStatus(404);
+        }
     }
 
     public function test_user_cannot_access_admin_master()
     {
         $h = $this->authHeader($this->user);
-        $resp = $this->withHeaders($h)->getJson('/api/admin/master/categories');
+        $resp = $this->withHeaders($h)->getJson('/api/admin/master/departments');
         $resp->assertStatus(403);
     }
 
@@ -155,18 +118,14 @@ class MasterDataAndUserApiTest extends TestCase
     {
         $hUser = $this->authHeader($this->user);
         $hAdmin = $this->authHeader($this->admin);
-        // create some data
-        $up = UnitProses::where('code', 'SIRS')->first();
-        Category::create(['name' => 'Hardware', 'status' => 1, 'unit_proses_id' => $up->id]);
-        $b = Building::create(['name' => 'Gedung A', 'code' => 'A', 'status' => 1]);
+        Building::create(['name' => 'Gedung A', 'code' => 'A', 'status' => 1]);
         Location::create(['name' => 'UGD', 'status' => 1]);
-        KategoriOrder::create(['name' => 'Perbaikan', 'code' => 'PRB', 'status' => 1]);
 
-        foreach (['/api/lookup/categories', '/api/lookup/buildings', '/api/lookup/locations', '/api/lookup/departments', '/api/lookup/unit-proses', '/api/lookup/positions', '/api/lookup/kategori-order'] as $url) {
+        foreach (['/api/lookup/buildings', '/api/lookup/locations', '/api/lookup/departments', '/api/lookup/positions'] as $url) {
             $r = $this->getJson($url, $hUser);
             $r->assertStatus(200)->assertJsonPath('success', true);
         }
-        $r2 = $this->getJson('/api/lookup/categories', $hAdmin);
+        $r2 = $this->getJson('/api/lookup/departments', $hAdmin);
         $r2->assertStatus(200);
     }
 

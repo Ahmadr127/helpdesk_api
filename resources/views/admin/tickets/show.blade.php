@@ -270,54 +270,7 @@
 
                 <!-- Conversation Content -->
                 @php
-                $lampiranByPesan = $ticket->lampirans->whereNotNull('pesan_id')->groupBy('pesan_id');
-                $allResponses = $ticket->pesans->map(function ($pesan) use ($lampiranByPesan) {
-                    $photo = $lampiranByPesan->get($pesan->id)?->first()?->path;
-                    $isAdmin = ($pesan->sender_type ?? '') === 'admin';
-                    return [
-                        'type' => $isAdmin ? 'admin' : 'user',
-                        'notes' => $pesan->body,
-                        'message' => $pesan->body,
-                        'admin_name' => $pesan->sender?->name ?? ($isAdmin ? 'Admin' : null),
-                        'photo' => $photo,
-                        'timestamp' => $pesan->created_at?->toDateTimeString() ?? $pesan->created_at,
-                        'action' => null,
-                    ];
-                })->sortBy('timestamp')->values()->all();
-                // Balasan konfirmasi hanya jadi histori confirmed — gabungkan sebagai bubble pengaju.
-                if (count($allResponses) > 0) {
-                    $confirmBubbles = $ticket->historis
-                        ->where('action', 'confirmed')
-                        ->filter(fn ($h) => ($h->actor_type ?? '') === 'user' && trim((string) ($h->notes ?? '')) !== '' && $h->notes !== 'Pengajuan dikonfirmasi.')
-                        ->map(fn ($h) => [
-                            'type' => 'user',
-                            'notes' => $h->notes,
-                            'message' => $h->notes,
-                            'admin_name' => null,
-                            'photo' => null,
-                            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
-                            'action' => 'confirm',
-                        ])->values()->all();
-                    $allResponses = collect($allResponses)->concat($confirmBubbles)->sortBy('timestamp')->values()->all();
-                }
-                // Fallback: histori admin_response/user_reply/confirmed yang belum jadi pesan
-                $hasPesan = count($allResponses) > 0;
-                if (! $hasPesan) {
-                    $historiResponses = $ticket->historis->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])->map(function ($h) {
-                        $isAdmin = ($h->action ?? '') === 'admin_response';
-                        $action = ($h->action ?? '') === 'confirmed' ? 'confirm' : (($h->action ?? '') === 'user_reply' ? null : null);
-                        return [
-                            'type' => $isAdmin ? 'admin' : 'user',
-                            'notes' => $h->notes,
-                            'message' => $h->notes,
-                            'admin_name' => $h->actor?->name ?? ($isAdmin ? 'Admin' : null),
-                            'photo' => null,
-                            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
-                            'action' => $action,
-                        ];
-                    })->sortBy('timestamp')->values()->all();
-                    $allResponses = $historiResponses;
-                }
+                $allResponses = \App\Support\Conversation::responses($ticket);
                 $pengajuName = $ticket->pemohon?->name ?? 'Pengaju';
                 @endphp
 

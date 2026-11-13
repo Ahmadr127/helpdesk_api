@@ -13,6 +13,6 @@ return [
     */
 
     'models' => [
-        // Daftarkan model yang ingin diaudit di sini. Kosong = tidak ada yang dicatat.
+        App\Models\Pengajuan::class,
     ],
 ];

@@ -57,53 +57,9 @@
         ? 'from-green-600 to-green-500'
         : 'from-blue-600 to-blue-400';
 
-    $initialLampiran = $pengajuan->lampirans->where('kind', 'initial')->first();
-    $initialLampirans = $pengajuan->lampirans->where('kind', 'initial');
-    $lampiranByPesan = $pengajuan->lampirans->whereNotNull('pesan_id')->groupBy('pesan_id');
-    $allResponses = $pengajuan->pesans->map(function ($pesan) use ($lampiranByPesan) {
-        $photo = $lampiranByPesan->get($pesan->id)?->first()?->path;
-        $isAdmin = ($pesan->sender_type ?? '') === 'admin';
-        return [
-            'type' => $isAdmin ? 'admin' : 'user',
-            'notes' => $pesan->body,
-            'message' => $pesan->body,
-            'admin_name' => $pesan->sender?->name ?? ($isAdmin ? 'Admin' : null),
-            'photo' => $photo,
-            'timestamp' => $pesan->created_at?->toDateTimeString() ?? $pesan->created_at,
-            'action' => null,
-        ];
-    })->sortBy('timestamp')->values()->all();
-    if (count($allResponses) > 0) {
-        // Balasan konfirmasi ("user_reply" type=confirm) hanya jadi histori action=confirmed
-        // dan tidak pernah ada di pengajuan_pesan — gabungkan agar bubble pengaju tampil.
-        $confirmBubbles = $pengajuan->historis
-            ->where('action', 'confirmed')
-            ->filter(fn ($h) => ($h->actor_type ?? '') === 'user' && trim((string) ($h->notes ?? '')) !== '' && $h->notes !== 'Pengajuan dikonfirmasi.')
-            ->map(fn ($h) => [
-                'type' => 'user',
-                'notes' => $h->notes,
-                'message' => $h->notes,
-                'admin_name' => null,
-                'photo' => null,
-                'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
-                'action' => 'confirm',
-            ])->values()->all();
-        $allResponses = collect($allResponses)->concat($confirmBubbles)->sortBy('timestamp')->values()->all();
-    }
-    if (count($allResponses) === 0) {
-        $allResponses = $pengajuan->historis->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])->map(function ($h) {
-            $isAdmin = ($h->action ?? '') === 'admin_response';
-            return [
-                'type' => $isAdmin ? 'admin' : 'user',
-                'notes' => $h->notes,
-                'message' => $h->notes,
-                'admin_name' => $h->actor?->name ?? ($isAdmin ? 'Admin' : null),
-                'photo' => null,
-                'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
-                'action' => ($h->action ?? '') === 'confirmed' ? 'confirm' : null,
-            ];
-        })->sortBy('timestamp')->values()->all();
-    }
+    $initialLampirans = \App\Support\Conversation::initialLampirans($pengajuan);
+    $initialLampiran = $initialLampirans->first();
+    $allResponses = \App\Support\Conversation::responses($pengajuan);
     $pengajuName = 'Anda';
 @endphp
 

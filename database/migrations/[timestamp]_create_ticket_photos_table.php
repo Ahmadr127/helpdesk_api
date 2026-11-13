@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('tickets')) {
+        // Legacy migration: tabel `tickets` di-drop oleh 2026_11_13_000002_drop_unused_master_tables.
+        if (! Schema::hasTable('tickets')) {
             return;
         }
 
