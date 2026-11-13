@@ -383,12 +383,18 @@ class AdminPengajuanController extends BaseApiController
         ]);
 
         try {
-            if (isset($validated['notes'])) {
+            $files = $this->uploadedFiles($request);
+
+            // Admin response = pesan + lampiran pesan_id (seragam dengan alur web).
+            // Jangan simpan foto tanpa pesan — sebelumnya hilang diam-diam bila
+            // admin hanya mengunggah foto tanpa notes.
+            if (! empty($files) || array_key_exists('notes', $validated)) {
+                $notes = $validated['notes'] ?? '';
                 $this->service->addMessage(
                     $request->user(),
                     $pengajuan,
-                    $validated['notes'],
-                    $this->uploadedFiles($request)
+                    trim((string) $notes) !== '' ? $notes : '(lampiran)',
+                    $files
                 );
             }
 
@@ -450,27 +456,23 @@ class AdminPengajuanController extends BaseApiController
                 $pengajuan->update(['follow_up' => $validated['follow_up']]);
             }
 
-            // Lampiran pada update status menempel pada entri riwayat status
-            // (bukan pesan terpisah) agar tidak muncul dua kali.
+            // Lampiran update status = pesan chat + lampiran pesan_id
+            // (seragam dengan alur admin tiket & web order).
+            // Histori hanya mencatat perubahan status; foto tidak menempel
+            // ke histori agar tidak muncul dua kali.
             $files = $this->uploadedFiles($request);
+            $notes = trim((string) ($validated['notes'] ?? $validated['follow_up'] ?? ''));
 
-            $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
-
-            // Simpan lampiran juga pada entri riwayat status agar muncul di
-            // bubble "Riwayat Status" (selain di percakapan).
-            if (! empty($files)) {
-                $latestHistori = $pengajuan->fresh()->historis()->latest()->first();
-                if ($latestHistori) {
-                    app(\App\Services\Pengajuan\PengajuanAttachmentService::class)->store(
-                        $pengajuan->fresh(),
-                        $files,
-                        'admin_response',
-                        $request->user(),
-                        $latestHistori,
-                        null
-                    );
-                }
+            if ($notes !== '' || ! empty($files)) {
+                $this->service->addMessage(
+                    $request->user(),
+                    $pengajuan,
+                    $notes !== '' ? $notes : '(lampiran)',
+                    $files
+                );
             }
+
+            $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $notes !== '' ? $notes : null);
 
             $newlyAssigned = [];
             if (array_key_exists('penanggung_jawab_ids', $validated)) {

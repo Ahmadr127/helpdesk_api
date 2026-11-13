@@ -88,6 +88,8 @@ class PengajuanController extends Controller
             'department_id' => ['nullable', 'exists:departments,id'],
             'lokasi_id' => ['nullable', 'exists:locations,id'],
             'building_id' => ['nullable', 'exists:buildings,id'],
+            'photos' => ['nullable', 'array', 'max:3'],
+            'photos.*' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $files = $request->file('photos', []);
@@ -142,6 +144,8 @@ class PengajuanController extends Controller
             'department_id' => ['nullable', 'exists:departments,id'],
             'lokasi_id' => ['nullable', 'exists:locations,id'],
             'building_id' => ['nullable', 'exists:buildings,id'],
+            'photos' => ['nullable', 'array', 'max:3'],
+            'photos.*' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $files = $request->file('photos', []);
