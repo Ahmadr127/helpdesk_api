@@ -25,7 +25,7 @@
 @section('content')
 <div class="w-full">
     <div class="w-full">
-        <div class="flex justify-between items-center mb-6">
+        {{-- <div class="flex justify-between items-center mb-6">
             <a href="{{ route('admin.tickets.index') }}"
                 class="inline-flex items-center px-4 py-2 bg-slate-500 text-white rounded-lg shadow hover:bg-slate-600 transition-all">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@
                 </svg>
                 Back
             </a>
-        </div>
+        </div> --}}
 
         <div class="mb-6 rounded-xl shadow-md p-5 bg-white border border-gray-100 overflow-hidden">
             <div class="card-header -mx-5 -mt-5 px-5 py-4 mb-5 bg-slate-50 border-b border-gray-200 flex justify-between items-center">
