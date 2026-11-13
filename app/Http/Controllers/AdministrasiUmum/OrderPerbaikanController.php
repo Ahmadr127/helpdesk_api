@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\AdministrasiUmum;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanListFilter;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
-use App\Services\Pengajuan\PengajuanAttachmentService;
 use Illuminate\Http\Request;
 
 class OrderPerbaikanController extends Controller
@@ -17,6 +18,7 @@ class OrderPerbaikanController extends Controller
         protected PengajuanService $service,
         protected PengajuanWorkflowService $workflow,
         protected PengajuanScopeService $scope,
+        protected PengajuanListFilter $filter,
     ) {}
 
     private function ipsrsQuery()
@@ -44,36 +46,33 @@ class OrderPerbaikanController extends Controller
         ];
     }
 
+    private function filterOptions(): array
+    {
+        return [
+            'kategoris' => KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get(),
+            'departments' => Department::orderBy('name')->get(),
+            'locations' => \App\Models\Location::orderBy('name')->get(),
+        ];
+    }
+
     public function index(Request $request)
     {
         $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'department', 'lokasi', 'penugasan.user']);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('pemohon_nama', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
-            });
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('tanggal', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('tanggal', '<=', $request->date_to);
-        }
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status === 'ditutup' ? 'ditutup' : $request->status);
-        }
-        if ($request->filled('prioritas')) {
-            $query->where('prioritas', $request->prioritas);
+        $this->filter->apply($query, $request);
+
+        if ($request->filled('location_id')) {
+            $query->where('lokasi_id', $request->location_id);
         }
 
         $orders = $query->latest()->paginate(10)->withQueryString();
-        $locations = \App\Models\Location::all();
 
         return view($this->viewNamespace().'.index', array_merge(
-            ['orders' => $orders, 'locations' => $locations],
+            [
+                'orders' => $orders,
+                'filter' => $this->filter,
+            ],
+            $this->filterOptions(),
             $this->getStatistics()
         ));
     }
@@ -98,19 +97,21 @@ class OrderPerbaikanController extends Controller
     {
         $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'lokasi', 'penugasan.user'])->where('pemohon_id', auth()->id());
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
-            });
-        }
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+        $this->filter->apply($query, $request);
+
+        if ($request->filled('location_id')) {
+            $query->where('lokasi_id', $request->location_id);
         }
 
         $orders = $query->latest()->paginate(10)->withQueryString();
-        return view('admin.order-perbaikan.myorder.index', compact('orders'));
+
+        return view('admin.order-perbaikan.myorder.index', array_merge(
+            [
+                'orders' => $orders,
+                'filter' => $this->filter,
+            ],
+            $this->filterOptions()
+        ));
     }
 
     public function showMyorder(Request $request, Pengajuan $orderPerbaikan)
@@ -313,8 +314,8 @@ class OrderPerbaikanController extends Controller
             $orderPerbaikan->update(['follow_up' => $validated['follow_up']]);
         }
 
-        // Catatan & lampiran menempel pada entri riwayat status (bukan pesan
-        // terpisah) agar tidak muncul dua kali.
+        // Admin response (catatan + foto) = pengajuan_pesan + lampiran (pesan_id),
+        // seragam dengan alur admin tiket. Histori hanya mencatat perubahan status.
         $lampiranFile = $request->file('lampiran');
         $status = $validated['status'];
 
@@ -334,19 +335,12 @@ class OrderPerbaikanController extends Controller
             $orderPerbaikan->update(['status' => $status]);
         }
 
-        // Simpan lampiran pada histori terakhir agar muncul di bubble Riwayat Status.
-        if (isset($lampiranFile) && $lampiranFile instanceof \Illuminate\Http\UploadedFile) {
-            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
-            if ($latestHistori) {
-                app(PengajuanAttachmentService::class)->store(
-                    $orderPerbaikan->fresh(),
-                    [$lampiranFile],
-                    'admin_response',
-                    auth()->user(),
-                    $latestHistori,
-                    null
-                );
-            }
+        // Simpan respons admin sebagai Pesan (chat bubble) + lampiran pesan_id —
+        // seragam dengan admin tiket; Riwayat Status hanya timeline perubahan status.
+        $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
+        if (! empty($validated['follow_up']) || ! empty($files)) {
+            $pesanBody = trim((string) ($validated['follow_up'] ?? '')) !== '' ? $validated['follow_up'] : '(lampiran)';
+            $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
         }
         $newlyAssigned = [];
         if (array_key_exists('penanggung_jawab_ids', $validated)) {
@@ -382,18 +376,10 @@ class OrderPerbaikanController extends Controller
         $this->workflow->start(auth()->user(), $orderPerbaikan, $notes);
 
         $lampiranFile = $request->file('lampiran');
-        if ($lampiranFile instanceof \Illuminate\Http\UploadedFile) {
-            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
-            if ($latestHistori) {
-                app(PengajuanAttachmentService::class)->store(
-                    $orderPerbaikan->fresh(),
-                    [$lampiranFile],
-                    'admin_response',
-                    auth()->user(),
-                    $latestHistori,
-                    null
-                );
-            }
+        $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
+        if (! empty($notes) || ! empty($files)) {
+            $pesanBody = trim((string) $notes) !== '' ? $notes : '(lampiran)';
+            $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
         }
 
         return redirect()->back()->with('success', 'Order berhasil dimulai.');
@@ -412,19 +398,9 @@ class OrderPerbaikanController extends Controller
         $this->workflow->close(auth()->user(), $orderPerbaikan, $notes);
 
         $lampiranFile = $request->file('lampiran');
-        if ($lampiranFile instanceof \Illuminate\Http\UploadedFile) {
-            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
-            if ($latestHistori) {
-                app(PengajuanAttachmentService::class)->store(
-                    $orderPerbaikan->fresh(),
-                    [$lampiranFile],
-                    'admin_response',
-                    auth()->user(),
-                    $latestHistori,
-                    null
-                );
-            }
-        }
+        $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
+        $pesanBody = trim((string) $notes) !== '' ? $notes : '(lampiran)';
+        $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
 
         return redirect()->route('admin.order-perbaikan.show', $orderPerbaikan)
             ->with('success', 'Order ditutup dan menunggu konfirmasi selesai dari user.');
@@ -444,20 +420,75 @@ class OrderPerbaikanController extends Controller
 
     public function inProgress(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'lokasi', 'penugasan.user'])->where('status', 'in_progress')->latest()->paginate(10)->withQueryString();
-        return view($this->viewNamespace().'.in-progress', ['orders' => $orders, 'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(), 'locations' => \App\Models\Location::all()]);
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'department', 'lokasi', 'penugasan.user'])
+            ->where('status', 'in_progress');
+
+        $this->filter->apply($query, $request, 'in_progress');
+
+        if ($request->filled('location_id')) {
+            $query->where('lokasi_id', $request->location_id);
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
+
+        return view($this->viewNamespace().'.in-progress', array_merge(
+            [
+                'orders' => $orders,
+                'filter' => $this->filter,
+                'lockedStatus' => 'in_progress',
+                'inProgressOrders' => $this->ipsrsQuery()->where('status', 'in_progress')->count(),
+            ],
+            $this->filterOptions(),
+            $this->getStatistics()
+        ));
     }
 
     public function confirmed(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'penugasan.user'])->where('status', 'confirmed')->latest()->paginate(10)->withQueryString();
-        return view($this->viewNamespace().'.confirmed', array_merge(['orders' => $orders], $this->getStatistics()));
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'department', 'lokasi', 'penugasan.user'])
+            ->where('status', 'confirmed');
+
+        $this->filter->apply($query, $request, 'confirmed');
+
+        if ($request->filled('location_id')) {
+            $query->where('lokasi_id', $request->location_id);
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
+
+        return view($this->viewNamespace().'.confirmed', array_merge(
+            [
+                'orders' => $orders,
+                'filter' => $this->filter,
+                'lockedStatus' => 'confirmed',
+            ],
+            $this->filterOptions(),
+            $this->getStatistics()
+        ));
     }
 
     public function rejected(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'penugasan.user'])->where('status', 'rejected')->latest()->paginate(10)->withQueryString();
-        return view($this->viewNamespace().'.rejected', array_merge(['orders' => $orders], $this->getStatistics()));
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'department', 'lokasi', 'penugasan.user'])
+            ->where('status', 'rejected');
+
+        $this->filter->apply($query, $request, 'rejected');
+
+        if ($request->filled('location_id')) {
+            $query->where('lokasi_id', $request->location_id);
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
+
+        return view($this->viewNamespace().'.rejected', array_merge(
+            [
+                'orders' => $orders,
+                'filter' => $this->filter,
+                'lockedStatus' => 'rejected',
+            ],
+            $this->filterOptions(),
+            $this->getStatistics()
+        ));
     }
 
     public function filterOrders($type, $value)
@@ -471,8 +502,24 @@ class OrderPerbaikanController extends Controller
 
     public function total(Request $request)
     {
-        $orders = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'lokasi', 'penugasan.user'])->latest()->paginate(10)->withQueryString();
-        return view($this->viewNamespace().'.total', array_merge(['orders' => $orders], $this->getStatistics()));
+        $query = $this->ipsrsQuery()->with(['pemohon', 'kategori.jenisList', 'department', 'lokasi', 'penugasan.user']);
+
+        $this->filter->apply($query, $request);
+
+        if ($request->filled('location_id')) {
+            $query->where('lokasi_id', $request->location_id);
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
+
+        return view($this->viewNamespace().'.total', array_merge(
+            [
+                'orders' => $orders,
+                'filter' => $this->filter,
+            ],
+            $this->filterOptions(),
+            $this->getStatistics()
+        ));
     }
 
     public function export(Request $request)

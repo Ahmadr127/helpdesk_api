@@ -83,6 +83,8 @@
                         'message' => $response['notes'] ?? '',
                         'photo' => $response['photo'] ?? null,
                         'timestamp' => $response['timestamp'] ?? null,
+                        'status' => $response['status_label'] ?? null,
+                        'statusKey' => $response['status'] ?? null,
                     ])
                 @else
                     @include('components.chat-bubble', [
@@ -93,6 +95,8 @@
                         'photo' => $response['photo'] ?? null,
                         'timestamp' => $response['timestamp'] ?? null,
                         'action' => $response['action'] ?? null,
+                        'status' => $response['status_label'] ?? null,
+                        'statusKey' => $response['status'] ?? null,
                     ])
                 @endif
             @endforeach

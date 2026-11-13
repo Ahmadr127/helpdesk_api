@@ -319,6 +319,36 @@
     });
     </script>
 
+    <!-- Proteksi double-submit: kunci semua tombol submit pada form saat disubmit -->
+    <script>
+    (function () {
+        'use strict';
+        document.addEventListener('submit', function (event) {
+            // Hanya intersepsi submit yang berasal dari klik/Enter user — bukan script
+            // yang memanggil form.submit() (mis. alur kompresi foto).
+            if (event.isTrusted === false) return;
+            var form = event.target;
+            if (!form || form.nodeName !== 'FORM') return;
+            if (form.hasAttribute('data-no-double-submit-guard')) return;
+
+            var submitted = form.dataset.doubleSubmitGuarded === '1';
+            if (submitted) {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            form.dataset.doubleSubmitGuarded = '1';
+
+            var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+            buttons.forEach(function (btn) {
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            });
+        }, true);
+    })();
+    </script>
+
     @stack('scripts')
     @livewireScripts
 
@@ -328,7 +358,7 @@
     <script>
     Swal.fire({
         title: 'Berhasil!',
-        text: "{{ session('success') }}",
+        text: @js(session('success')),
         icon: 'success',
         confirmButtonText: 'Tutup',
         confirmButtonColor: '#10b981',
@@ -351,7 +381,7 @@
     <script>
     Swal.fire({
         title: 'Gagal!',
-        text: "{{ session('error') }}",
+        text: @js(session('error')),
         icon: 'error',
         confirmButtonText: 'Tutup',
         confirmButtonColor: '#ef4444',

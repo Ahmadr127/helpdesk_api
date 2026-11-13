@@ -165,7 +165,7 @@
                     <tr
                         class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase border-b bg-gray-50">
                         <th class="px-4 py-3">Nomor Order</th>
-                        <th class="px-4 py-3">Nama Barang</th>
+                        <th class="px-4 py-3">Deskripsi</th>
                         <th class="px-4 py-3">Kategori</th>
                         <th class="px-4 py-3">Departemen</th>
                         <th class="px-4 py-3">Status</th>
@@ -178,9 +178,9 @@
                     @forelse($orders as $order)
                     <tr class="text-gray-700">
                         <td class="px-4 py-3">{{ $order->nomor }}</td>
-                        <td class="px-4 py-3">{{ $order->nama_barang }}</td>
+                        <td class="px-4 py-3">{{ \Illuminate\Support\Str::limit($order->keluhan, 60) }}</td>
                         <td class="px-4 py-3">{{ $order->kategori_order ?? '-' }}</td>
-                        <td class="px-4 py-3">{{ $order->unit_proses_name }}</td>
+                        <td class="px-4 py-3">{{ $order->department?->name ?? $order->pemohon_nama }}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $order->status === 'open' ? 'bg-blue-100 text-blue-800' : '' }}

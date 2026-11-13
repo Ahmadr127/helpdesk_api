@@ -93,17 +93,21 @@
 
             <!-- Item Details -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                {{-- <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-base font-semibold text-gray-900 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
                         Detail Barang
                     </h2>
-                </div>
+                </div> --}}
                 <div class="p-6">
+                    @php
+                        $initialLampirans = \App\Support\Conversation::initialLampirans($orderPerbaikan);
+                        $initialLampiran = $initialLampirans->first();
+                    @endphp
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 content-start {{ $orderPerbaikan->foto ? '' : 'md:col-span-2' }}">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 content-start {{ $initialLampiran ? '' : 'md:col-span-2' }}">
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Kategori Order</dt>
                             <dd class="mt-1 text-sm font-medium text-gray-900">{{ $orderPerbaikan->kategori_order ?? '-' }}</dd>
@@ -137,29 +141,27 @@
                             <dd class="mt-1 text-sm text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-100">{{ $orderPerbaikan->keluhan }}</dd>
                         </div>
                     </dl>
-                    @if($orderPerbaikan->foto)
+                    @if($initialLampirans->isNotEmpty())
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Foto Barang</p>
-                        <div class="relative rounded-lg overflow-hidden bg-gray-100">
-                            <img src="{{ Storage::url($orderPerbaikan->foto) }}" alt="Foto Order"
-                                class="w-full h-64 object-cover">
-                            <div class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                                <a href="{{ Storage::url($orderPerbaikan->foto) }}" target="_blank"
-                                    class="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
-                                    </svg>
-                                    Lihat Full Size
-                                </a>
-                            </div>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($initialLampirans as $lampiran)
+                                @if($lampiran->path)
+                                    <a href="{{ Storage::url($lampiran->path) }}" target="_blank" class="inline-block">
+                                        <img src="{{ Storage::url($lampiran->path) }}" alt="Foto Order {{ $loop->iteration }}"
+                                            class="w-32 h-32 object-cover rounded-lg border border-gray-200 bg-gray-100">
+                                    </a>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
                     @endif
-                    @if($orderPerbaikan->lampirans && $orderPerbaikan->lampirans->isNotEmpty())
+                    @php $historiLampirans = $orderPerbaikan->lampirans->whereNotNull('histori_id')->values(); @endphp
+                    @if($historiLampirans->isNotEmpty())
                     <div class="mt-4">
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Lampiran</p>
                         <div class="flex flex-wrap gap-2">
-                            @foreach($orderPerbaikan->lampirans as $lamp)
+                            @foreach($historiLampirans as $lamp)
                                 @if($lamp->path)
                                     <a href="{{ Storage::url($lamp->path) }}" target="_blank" class="inline-block">
                                         <img src="{{ Storage::url($lamp->path) }}" alt="Lampiran" class="w-24 h-24 object-cover rounded-lg border border-gray-200">
@@ -176,7 +178,7 @@
         </div>
 
         <!-- Right Column: Status Update Form + Timeline -->
-        <div class="lg:col-span-1 space-y-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto lg:pr-1">
+        {{-- <div class="lg:col-span-1 space-y-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto lg:pr-1">
             <!-- Riwayat Status (bubble chat: pengaju kanan, admin kiri) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -201,77 +203,95 @@
                         @endforelse
                     </div>
                 </div>
-            </div>
+            </div> --}}
+            <!-- Riwayat Percakapan (bubble chat: pengaju kiri, admin kanan) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-base font-semibold text-gray-900 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Update Status
-                    </h2>
+                <div class="px-6 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-gray-900">Riwayat Percakapan</h2>
                 </div>
-                <div class="p-6">
-                    <form action="{{ route('admin.order-perbaikan.update-status', $orderPerbaikan) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Status</label>
-                                    <select name="status" required
-                                        class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all">
-                                        <option value="in_progress" {{ in_array($orderPerbaikan->status, ['open', 'in_progress']) ? 'selected' : '' }}>In Progress{{ $orderPerbaikan->status === 'open' ? '' : ' (Buka Kembali)' }}</option>
-                                        <option value="tutup" {{ $orderPerbaikan->status === 'ditutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
-                                        <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Penanggung Jawab</label>
-                                    @if(!empty($canAssign) && $candidates->isNotEmpty())
-                                            @include('components.searchable-multiselect', [
-                                                'name' => 'penanggung_jawab_ids[]',
-                                                'options' => $candidates,
-                                                'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
-                                                'placeholder' => 'Pilih penanggung jawab…',
-                                                'searchPlaceholder' => 'Cari nama…',
-                                                'compact' => true,
-                                            ])
-                                            <p class="mt-1 text-xs text-gray-500">Kandidat PJ mengikuti kategori role.</p>
-                                    @else
-                                        <p class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                                            {{ ($activePj ?? collect())->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ. Kategori ini belum memiliki role PJ.' }}
-                                        </p>
-                                    @endif
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-800 mb-1">Tindak Lanjut</label>
-                                <textarea name="follow_up" required rows="2"
-                                    class="w-full rounded-lg border border-black bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all resize-none"
-                                    placeholder="Masukkan tindak lanjut yang dilakukan...">{{ old('follow_up', $orderPerbaikan->follow_up) }}</textarea>
-                            </div>
-                            <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
-                                <div class="flex-1 min-w-0">
-                                    <label class="block text-sm font-semibold text-gray-800 mb-1">Lampiran <span class="text-gray-400 font-normal">(opsional, JPG/PNG 5MB)</span></label>
-                                    <input type="file" name="lampiran" accept=".jpg,.jpeg,.png"
-                                        class="w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all">
-                                </div>
-                                <button type="submit" name="action" value="update"
-                                    class="sm:w-auto w-full inline-flex justify-center items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                    </svg>
-                                    Update Status
-                                </button>
-                            </div>
-                        </div>
-
-                    </form>
-                </div>
+                @php
+                    $allResponses = \App\Support\Conversation::responses($orderPerbaikan);
+                    $pengajuName = $orderPerbaikan->pemohon?->name ?? 'Pengaju';
+                @endphp
+                @include('components.conversation-history', ['responses' => $allResponses, 'pengajuName' => $pengajuName])
             </div>
 
+        </div>
+    </div>
+
+    <!-- Update Status Form (full-width, sama seperti form admin tiket) -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 mt-0">
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-gray-900">Update Status</h2>
+        </div>
+        <div class="p-4">
+            <form action="{{ route('admin.order-perbaikan.update-status', $orderPerbaikan) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Left: status + PJ -->
+                    <div class="lg:col-span-1 space-y-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-800 mb-1">Status</label>
+                            <select name="status" required
+                                class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all">
+                                <option value="in_progress" {{ in_array($orderPerbaikan->status, ['open', 'in_progress']) ? 'selected' : '' }}>In Progress{{ $orderPerbaikan->status === 'open' ? '' : ' (Buka Kembali)' }}</option>
+                                <option value="tutup" {{ $orderPerbaikan->status === 'ditutup' ? 'selected' : '' }}>Tutup (Konfirmasi Selesai)</option>
+                                <option value="rejected" {{ $orderPerbaikan->status === 'rejected' ? 'selected' : '' }}>Tolak</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-800 mb-1">Penanggung Jawab</label>
+                            @if(!empty($canAssign) && $candidates->isNotEmpty())
+                                    @include('components.searchable-multiselect', [
+                                        'name' => 'penanggung_jawab_ids[]',
+                                        'options' => $candidates,
+                                        'selected' => ($activePj ?? collect())->pluck('user_id')->all(),
+                                        'placeholder' => 'Pilih penanggung jawab…',
+                                        'searchPlaceholder' => 'Cari nama…',
+                                        'compact' => true,
+                                    ])
+                                    <p class="mt-1 text-xs text-gray-500">Kandidat PJ mengikuti kategori role.</p>
+                            @else
+                                <p class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                                    {{ ($activePj ?? collect())->pluck('user.name')->filter()->join(', ') ?: 'Belum ada PJ. Kategori ini belum memiliki role PJ.' }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Middle: catatan -->
+                    <div class="lg:col-span-1">
+                        <label class="block text-sm font-semibold text-gray-800 mb-1">Catatan</label>
+                        <textarea name="follow_up" required rows="5"
+                            class="w-full rounded-lg border border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm py-2 px-3 transition-all resize-none h-full"
+                            placeholder="Masukkan catatan...">{{ old('follow_up', $orderPerbaikan->follow_up) }}</textarea>
+                    </div>
+
+                    <!-- Right: lampiran + tombol -->
+                    <div class="lg:col-span-1 flex flex-col justify-between gap-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-800 mb-1">Lampiran <span class="text-gray-400 font-normal">(opsional, JPG/PNG 5MB)</span></label>
+                            <label class="block border border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
+                                <input type="file" name="lampiran" accept=".jpg,.jpeg,.png" class="sr-only" onchange="const n=document.getElementById('lampiran-name'); n.textContent = this.files && this.files.length ? this.files[0].name : 'Belum ada file dipilih'">
+                                <svg class="w-9 h-9 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="mt-1 block text-sm font-medium text-blue-600 hover:text-blue-700">Unggah Foto</span>
+                                <span id="lampiran-name" class="mt-1 block text-xs text-gray-500">Belum ada file dipilih · JPG/PNG maks 5MB</span>
+                            </label>
+                        </div>
+                        <button type="submit" name="action" value="update"
+                            class="inline-flex justify-center items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Update Status
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -2,28 +2,56 @@
 
 namespace Tests\Feature;
 
-use App\Models\Building;
-use App\Models\Category;
 use App\Models\Department;
-use App\Models\Location;
-use App\Models\OrderPerbaikan;
+use App\Models\JenisPengajuan;
+use App\Models\KategoriPengajuan;
+use App\Models\Pengajuan;
+use App\Models\Permission;
+use App\Models\Position;
 use App\Models\Role;
-use App\Models\Ticket;
-use App\Models\UnitProses;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\Concerns\SeedsAccessControl;
 use Tests\TestCase;
 
+/**
+ * Halaman "Tiket Saya" / "Order Saya" di shell admin — hanya menampilkan
+ * pengajuan milik user yang login, dengan penentuan jenis flavour lewat
+ * kategori (SIRS = jenis IT, UMUM = jenis IPSRS).
+ */
 class AdminMyticketTest extends TestCase
 {
     use RefreshDatabase, SeedsAccessControl;
 
+    protected Department $departemenIt;
+    protected KategoriPengajuan $kategoriPrinter;
+    protected KategoriPengajuan $kategoriPerbaikan;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seedRolePermissions();
+
+        Position::firstOrCreate(['name' => 'User', 'code' => 'user'], ['name' => 'User', 'code' => 'user', 'status' => true]);
+        $this->departemenIt = Department::firstOrCreate(
+            ['name' => 'IT', 'code' => 'IT'],
+            ['name' => 'IT', 'code' => 'IT', 'status' => 1]
+        );
+
+        $jenisIt = JenisPengajuan::where('code', 'IT')->firstOrFail();
+        $jenisIpsrs = JenisPengajuan::where('code', 'IPSRS')->firstOrFail();
+
+        $this->kategoriPrinter = KategoriPengajuan::create(['name' => 'Printer', 'code' => 'PRN', 'status' => 1]);
+        $this->kategoriPrinter->syncJenis([$jenisIt->id]);
+
+        $this->kategoriPerbaikan = KategoriPengajuan::create(['name' => 'Perbaikan', 'code' => 'PRB', 'status' => 1]);
+        $this->kategoriPerbaikan->syncJenis([$jenisIpsrs->id]);
+    }
+
     private function makeUser(string $role, string $email): User
     {
-        Role::firstOrCreate(['slug' => $role], ['slug' => $role, 'name' => $role]);
-
         return User::create([
             'name' => 'Test '.$role,
             'email' => $email,
@@ -32,31 +60,41 @@ class AdminMyticketTest extends TestCase
             'role' => $role,
             'position' => null,
             'department' => 'IT',
+            'department_id' => $this->departemenIt->id,
             'status' => 1,
+        ]);
+    }
+
+    private function makePengajuan(
+        string $nomor,
+        string $status,
+        string $deskripsi,
+        KategoriPengajuan $kategori,
+        User $pemohon,
+        ?string $prioritas = 'low',
+    ): Pengajuan {
+        return Pengajuan::create([
+            'nomor' => $nomor,
+            'kategori_id' => $kategori->id,
+            'department_id' => $this->departemenIt->id,
+            'pemohon_id' => $pemohon->id,
+            'pemohon_nama' => $pemohon->name,
+            'deskripsi' => $deskripsi,
+            'prioritas' => $prioritas,
+            'status' => $status,
+            'tanggal' => now(),
+            'created_by' => $pemohon->id,
+            'updated_by' => $pemohon->id,
         ]);
     }
 
     public function test_admin_sees_only_own_tickets_on_myticket(): void
     {
-        $this->seedRolePermissions();
         $admin = $this->makeUser('admin', 'admin@example.com');
         $user = $this->makeUser('user', 'user@example.com');
-        $upSirs = UnitProses::create(['name' => 'SIRS', 'code' => 'SIRS', 'status' => 1]);
-        $category = Category::create(['name' => 'Hardware', 'status' => 1, 'unit_proses_id' => $upSirs->id]);
-        $department = Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
 
-        Ticket::create([
-            'user_id' => $admin->id, 'ticket_number' => 'T-0101-001',
-            'category_id' => $category->id, 'category' => $category->name,
-            'department_id' => $department->id, 'department' => 'IT',
-            'description' => 'Tiket milik admin', 'priority' => 'low', 'status' => 'open',
-        ]);
-        Ticket::create([
-            'user_id' => $user->id, 'ticket_number' => 'T-0101-002',
-            'category_id' => $category->id, 'category' => $category->name,
-            'department_id' => $department->id, 'department' => 'IT',
-            'description' => 'Tiket milik user', 'priority' => 'low', 'status' => 'open',
-        ]);
+        $this->makePengajuan('T-0101-001', 'open', 'Tiket milik admin', $this->kategoriPrinter, $admin);
+        $this->makePengajuan('T-0101-002', 'open', 'Tiket milik user', $this->kategoriPrinter, $user);
 
         $resp = $this->actingAs($admin)->get(route('admin.tickets.myticket'));
         $resp->assertStatus(200);
@@ -69,29 +107,15 @@ class AdminMyticketTest extends TestCase
 
     public function test_myticket_detail_needs_no_manage_permission(): void
     {
-        $this->seedRolePermissions();
         $admin = $this->makeUser('admin', 'admin@example.com');
         $user = $this->makeUser('user', 'user@example.com');
-        $upSirs = UnitProses::create(['name' => 'SIRS', 'code' => 'SIRS', 'status' => 1]);
-        $category = Category::create(['name' => 'Hardware', 'status' => 1, 'unit_proses_id' => $upSirs->id]);
-        $department = Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
 
-        $own = Ticket::create([
-            'user_id' => $admin->id, 'ticket_number' => 'T-0101-010',
-            'category_id' => $category->id, 'category' => $category->name,
-            'department_id' => $department->id, 'department' => 'IT',
-            'description' => 'Own', 'priority' => 'low', 'status' => 'open',
-        ]);
-        $other = Ticket::create([
-            'user_id' => $user->id, 'ticket_number' => 'T-0101-011',
-            'category_id' => $category->id, 'category' => $category->name,
-            'department_id' => $department->id, 'department' => 'IT',
-            'description' => 'Other', 'priority' => 'low', 'status' => 'open',
-        ]);
+        $own = $this->makePengajuan('T-0101-010', 'open', 'Own', $this->kategoriPrinter, $admin);
+        $other = $this->makePengajuan('T-0101-011', 'open', 'Other', $this->kategoriPrinter, $user);
 
         // Cabut permission ticket: detail milik sendiri tetap 200 via myticket.show.
-        $ticketPerm = \App\Models\Permission::where('slug', 'ticket')->firstOrFail();
-        \Illuminate\Support\Facades\DB::table('role_permissions')
+        $ticketPerm = Permission::where('slug', 'ticket')->firstOrFail();
+        DB::table('role_permissions')
             ->where('role', 'admin')->where('permission_id', $ticketPerm->id)->delete();
 
         $this->actingAs($admin)->get(route('admin.tickets.myticket.show', $own))->assertStatus(200);
@@ -114,27 +138,15 @@ class AdminMyticketTest extends TestCase
 
     public function test_myorder_detail_needs_no_manage_permission(): void
     {
-        $this->seedRolePermissions();
-        Location::create(['name' => 'UGD', 'status' => 1]);
-        UnitProses::create(['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1]);
         $admin = $this->makeUser('admin', 'admin@example.com');
         $user = $this->makeUser('user', 'user@example.com');
 
-        $base = [
-            'tanggal' => now(), 'unit_proses' => 'SRNS', 'unit_penerima' => 'MTC',
-            'jenis_barang' => 'Umum', 'kode_inventaris' => 'INV-1', 'nama_barang' => 'AC',
-            'keluhan' => 'Rusak', 'prioritas' => 'RENDAH', 'status' => 'open',
-        ];
-        $own = OrderPerbaikan::create($base + [
-            'nomor' => 'OP-OWN-001', 'nama_peminta' => $admin->name, 'created_by' => $admin->id,
-        ]);
-        $other = OrderPerbaikan::create($base + [
-            'nomor' => 'OP-OTHER-001', 'nama_peminta' => $user->name, 'created_by' => $user->id,
-        ]);
+        $own = $this->makePengajuan('OP-OWN-001', 'open', 'Own', $this->kategoriPerbaikan, $admin, 'low');
+        $other = $this->makePengajuan('OP-OTHER-001', 'open', 'Other', $this->kategoriPerbaikan, $user, 'low');
 
         // Cabut permission order: detail milik sendiri tetap 200 via myorder.show.
-        $orderPerm = \App\Models\Permission::where('slug', 'order')->firstOrFail();
-        \Illuminate\Support\Facades\DB::table('role_permissions')
+        $orderPerm = Permission::where('slug', 'order')->firstOrFail();
+        DB::table('role_permissions')
             ->where('role', 'admin')->where('permission_id', $orderPerm->id)->delete();
 
         $this->actingAs($admin)->get(route('admin.order-perbaikan.myorder.show', $own))->assertStatus(200);
@@ -156,25 +168,11 @@ class AdminMyticketTest extends TestCase
 
     public function test_admin_sees_only_own_orders_on_myticket(): void
     {
-        $this->seedRolePermissions();
-        $building = Building::create(['name' => 'Gedung A', 'code' => 'A', 'status' => 1]);
-        $location = Location::create(['name' => 'UGD', 'status' => 1]);
-        UnitProses::create(['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1]);
         $admin = $this->makeUser('admin', 'admin@example.com');
         $user = $this->makeUser('user', 'user@example.com');
 
-        $base = [
-            'tanggal' => now(), 'unit_proses' => 'SRNS', 'unit_proses_name' => 'Sarana',
-            'unit_penerima' => 'MTC', 'jenis_barang' => 'Umum', 'kode_inventaris' => 'INV-1',
-            'nama_barang' => 'AC', 'lokasi' => $location->id, 'keluhan' => 'Rusak',
-            'prioritas' => 'RENDAH', 'status' => 'open',
-        ];
-        OrderPerbaikan::create($base + [
-            'nomor' => 'OP-ADMIN-001', 'nama_peminta' => $admin->name, 'created_by' => $admin->id,
-        ]);
-        OrderPerbaikan::create($base + [
-            'nomor' => 'OP-USER-001', 'nama_peminta' => $user->name, 'created_by' => $user->id,
-        ]);
+        $this->makePengajuan('OP-ADMIN-001', 'open', 'Order milik admin', $this->kategoriPerbaikan, $admin, 'low');
+        $this->makePengajuan('OP-USER-001', 'open', 'Order milik user', $this->kategoriPerbaikan, $user, 'low');
 
         $resp = $this->actingAs($admin)->get(route('admin.order-perbaikan.myorder'));
         $resp->assertStatus(200);
@@ -186,96 +184,81 @@ class AdminMyticketTest extends TestCase
 
     public function test_admin_can_crud_own_ticket_via_myticket(): void
     {
-        $this->seedRolePermissions();
         $admin = $this->makeUser('admin', 'admin@example.com');
         $user = $this->makeUser('user', 'user@example.com');
-        $upSirs = UnitProses::create(['name' => 'SIRS', 'code' => 'SIRS', 'status' => 1]);
-        $category = Category::create(['name' => 'Hardware', 'status' => 1, 'unit_proses_id' => $upSirs->id]);
-        $department = Department::create(['name' => 'IT', 'code' => 'IT', 'status' => 1]);
 
         // Create
         $this->actingAs($admin)->get(route('admin.tickets.myticket.create'))->assertStatus(200);
         $this->actingAs($admin)->post(route('admin.tickets.myticket.store'), [
-            'category_id' => $category->id,
-            'department_id' => $department->id,
+            'kategori_id' => $this->kategoriPrinter->id,
             'description' => 'Tiket admin baru',
             'priority' => 'high',
         ])->assertRedirect(route('admin.tickets.myticket'));
-        $ticket = Ticket::where('description', 'Tiket admin baru')->firstOrFail();
-        $this->assertEquals($admin->id, $ticket->user_id);
+        $ticket = Pengajuan::where('deskripsi', 'Tiket admin baru')->firstOrFail();
+        $this->assertEquals($admin->id, $ticket->pemohon_id);
 
         // Edit own open ticket
         $this->actingAs($admin)->get(route('admin.tickets.myticket.edit', $ticket))->assertStatus(200);
         $this->actingAs($admin)->put(route('admin.tickets.myticket.update', $ticket), [
-            'category_id' => $category->id,
-            'department_id' => $department->id,
+            'kategori_id' => $this->kategoriPrinter->id,
             'description' => 'Tiket admin diubah',
             'priority' => 'low',
-        ])->assertRedirect(route('admin.tickets.myticket.show', $ticket));
-        $this->assertEquals('Tiket admin diubah', $ticket->fresh()->description);
+        ])->assertRedirect(route('admin.tickets.myticket'));
+        $this->assertEquals('Tiket admin diubah', $ticket->fresh()->deskripsi);
 
         // Cannot edit other's ticket
-        $other = Ticket::create([
-            'user_id' => $user->id, 'ticket_number' => 'T-0101-099',
-            'category_id' => $category->id, 'category' => $category->name,
-            'department_id' => $department->id, 'department' => 'IT',
-            'description' => 'Other', 'priority' => 'low', 'status' => 'open',
-        ]);
+        $other = $this->makePengajuan('T-0101-099', 'open', 'Other', $this->kategoriPrinter, $user);
         $this->actingAs($admin)->get(route('admin.tickets.myticket.edit', $other))->assertForbidden();
 
         // Delete own open ticket
         $this->actingAs($admin)->delete(route('admin.tickets.myticket.destroy', $ticket))
             ->assertRedirect(route('admin.tickets.myticket'));
-        $this->assertDatabaseMissing('tickets', ['id' => $ticket->id]);
+        $this->assertSoftDeleted('pengajuan', ['id' => $ticket->id]);
     }
 
     public function test_admin_can_crud_own_order_via_myticket(): void
     {
-        $this->seedRolePermissions();
-        Location::create(['name' => 'UGD', 'status' => 1]);
-        UnitProses::create(['name' => 'Sarana (IPSRS)', 'code' => 'SRNS', 'status' => 1]);
-        $admin = $this->makeUser('admin', 'admin@example.com');
+        $ipsrs = $this->makeUser('ipsrs', 'ipsrs@example.com');
         $user = $this->makeUser('user', 'user@example.com');
+        $admin = $this->makeUser('admin', 'admin@example.com');
 
         // Admin IT memegang permission order (seed silang) → bisa buat order sendiri
         $this->actingAs($admin)->get(route('admin.order-perbaikan.myorder.create'))->assertStatus(200);
         $this->actingAs($admin)->post(route('admin.order-perbaikan.myorder.store'), [
+            'kategori_id' => $this->kategoriPerbaikan->id,
             'keluhan' => 'AC admin rusak',
-            'prioritas' => 'RENDAH',
+            'prioritas' => 'low',
             'tanggal' => now()->format('Y-m-d H:i:s'),
         ])->assertRedirect(route('admin.order-perbaikan.myorder'));
-        $adminOrder = OrderPerbaikan::where('keluhan', 'AC admin rusak')->firstOrFail();
-        $this->assertEquals($admin->id, $adminOrder->created_by);
+        $adminOrder = Pengajuan::where('deskripsi', 'AC admin rusak')->firstOrFail();
+        $this->assertEquals($admin->id, $adminOrder->pemohon_id);
 
-        $ipsrs = $this->makeUser('ipsrs', 'ipsrs@example.com');
         $this->actingAs($ipsrs)->get(route('admin.order-perbaikan.myorder.create'))->assertStatus(200);
         $this->actingAs($ipsrs)->post(route('admin.order-perbaikan.myorder.store'), [
+            'kategori_id' => $this->kategoriPerbaikan->id,
             'keluhan' => 'AC rusak',
-            'prioritas' => 'RENDAH',
+            'prioritas' => 'low',
             'tanggal' => now()->format('Y-m-d H:i:s'),
         ])->assertRedirect(route('admin.order-perbaikan.myorder'));
-        $order = OrderPerbaikan::where('keluhan', 'AC rusak')->firstOrFail();
-        $this->assertEquals($ipsrs->id, $order->created_by);
+        $order = Pengajuan::where('deskripsi', 'AC rusak')->firstOrFail();
+        $this->assertEquals($ipsrs->id, $order->pemohon_id);
 
         // Edit own open order
         $this->actingAs($ipsrs)->get(route('admin.order-perbaikan.myorder.edit', $order))->assertStatus(200);
         $this->actingAs($ipsrs)->put(route('admin.order-perbaikan.myorder.update', $order), [
+            'kategori_id' => $this->kategoriPerbaikan->id,
             'keluhan' => 'AC rusak parah',
-            'prioritas' => 'RENDAH',
+            'prioritas' => 'low',
         ])->assertRedirect(route('admin.order-perbaikan.myorder.show', $order));
-        $this->assertEquals('AC rusak parah', $order->fresh()->keluhan);
+        $this->assertEquals('AC rusak parah', $order->fresh()->deskripsi);
 
         // Cannot edit other's order
-        $other = OrderPerbaikan::create([
-            'nomor' => 'OP-USER-099', 'tanggal' => now(),
-            'unit_proses' => 'SRNS', 'unit_penerima' => 'MTC', 'nama_peminta' => $user->name,
-            'keluhan' => 'Other', 'prioritas' => 'RENDAH', 'status' => 'open',
-            'created_by' => $user->id,
-        ]);
+        $other = $this->makePengajuan('OP-USER-099', 'open', 'Other', $this->kategoriPerbaikan, $user, 'low');
         $this->actingAs($ipsrs)->get(route('admin.order-perbaikan.myorder.edit', $other))->assertForbidden();
 
         // Delete own open order
         $this->actingAs($ipsrs)->delete(route('admin.order-perbaikan.myorder.destroy', $order))
             ->assertRedirect(route('admin.order-perbaikan.myorder'));
+        $this->assertSoftDeleted('pengajuan', ['id' => $order->id]);
     }
 }

@@ -17,12 +17,11 @@
         @endif
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-gray-900">{{ $order->unitProses?->name ?? '-' }}</div>
-        <div class="text-xs text-gray-500">{{ $order->unitProses?->code ?? '-' }}</div>
+        <div class="text-sm text-gray-900">{{ $order->department?->name ?? '-' }}</div>
+        <div class="text-xs text-gray-500">{{ $order->department?->code ?? '-' }}</div>
     </td>
     <td class="px-6 py-4">
-        <div class="text-sm text-gray-900">{{ $order->nama_barang }}</div>
-        <div class="text-xs text-gray-500">{{ $order->keluhan }}</div>
+        <div class="text-sm text-gray-900">{{ \Illuminate\Support\Str::limit($order->keluhan, 75) }}</div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
         <div class="text-sm text-gray-900">{{ $order->kategori?->name ?? '-' }}</div>

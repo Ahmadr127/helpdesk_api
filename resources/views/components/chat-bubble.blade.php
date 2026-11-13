@@ -9,6 +9,8 @@
     - $photo: path storage foto (mis. 'ticket-replies/xxx.jpg') atau null. Default null.
     - $timestamp: string datetime. Default null.
     - $action: null | 'confirm' | 'reject' (badge status khusus pesan pengaju). Default null.
+    - $status: label status pengajuan pada saat bubble terbentuk (mis. 'Dalam Proses'). Default null.
+    - $statusKey: raw status key (untuk warna badge), mis. 'open'|'in_progress'|'ditutup'|'confirmed'|'rejected'. Default null.
 --}}
 @php
     $align = $align ?? 'left';
@@ -18,6 +20,8 @@
     $photo = $photo ?? null;
     $timestamp = $timestamp ?? null;
     $action = $action ?? null;
+    $status = $status ?? null;
+    $statusKey = $statusKey ?? null;
     $isRight = $align === 'right';
     $formattedTime = $timestamp ? \Carbon\Carbon::parse($timestamp)->format('d M Y H:i') : '';
 @endphp
@@ -74,8 +78,34 @@
         border-radius: 9999px;
         white-space: nowrap;
     }
-    .cbubble__badge--admin { background-color: rgba(255, 255, 255, 0.25); color: #ffffff; }
-    .cbubble__badge--pengaju { background-color: #dcfce7; color: #15803d; }
+    .cbubble-row--right .cbubble__badge--admin { background-color: rgba(255, 255, 255, 0.25); color: #ffffff; }
+    .cbubble-row--left .cbubble__badge--pengaju { background-color: #dcfce7; color: #15803d; }
+
+    /* Pill status saat bubble terbentuk */
+    .cbubble__statuskey {
+        font-size: 9px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        white-space: nowrap;
+    }
+    .cbubble__statuskey--open { background-color: #dbeafe; color: #1e40af; }
+    .cbubble__statuskey--in_progress { background-color: #fef3c7; color: #92400e; }
+    .cbubble__statuskey--ditutup { background-color: #ede9fe; color: #5b21b6; }
+    .cbubble__statuskey--confirmed { background-color: #dcfce7; color: #166534; }
+    .cbubble__statuskey--rejected { background-color: #fee2e2; color: #991b1b; }
+    .cbubble__statuskey--default { background-color: #f3f4f6; color: #374151; }
+    .cbubble-row--right .cbubble__statuskey--open,
+    .cbubble-row--right .cbubble__statuskey--in_progress,
+    .cbubble-row--right .cbubble__statuskey--ditutup,
+    .cbubble-row--right .cbubble__statuskey--confirmed,
+    .cbubble-row--right .cbubble__statuskey--rejected,
+    .cbubble-row--right .cbubble__statuskey--default {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+    }
     .cbubble__text {
         font-size: 0.875rem;
         line-height: 1.5;
@@ -132,6 +162,9 @@
             @else
                 <span class="cbubble__name">{{ $senderName }}</span>
                 <span class="cbubble__badge cbubble__badge--pengaju">Pengaju</span>
+            @endif
+            @if($status)
+                <span class="cbubble__statuskey cbubble__statuskey--{{ $statusKey ?? 'default' }}">{{ $status }}</span>
             @endif
         </div>
         @if($role !== 'admin' && $action === 'confirm')

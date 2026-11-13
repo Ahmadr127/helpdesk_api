@@ -242,10 +242,10 @@
                                 <select id="unit_proses_code" name="unit_proses_code" required
                                     class="w-1/3 px-3 py-1.5 border border-gray-300 rounded-md text-sm">
                                     <option value="">Pilih Kode</option>
-                                    @foreach($unitProses as $unit)
-                                    <option value="{{ $unit->code }}" data-name="{{ $unit->name }}">{{ $unit->code }}
+                                    {{-- @foreach($unitProses as $unit) --}}
+                                    {{-- <option value="{{ $unit->code }}" data-name="{{ $unit->name }}">{{ $unit->code }} --}}
                                     </option>
-                                    @endforeach
+                                    {{-- @endforeach --}}
                                 </select>
                                 <input type="text" id="unit_proses_name" name="unit_proses_name" readonly
                                     class="w-2/3 px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md text-sm">

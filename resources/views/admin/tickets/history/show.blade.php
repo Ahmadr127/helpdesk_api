@@ -157,13 +157,18 @@
                 <div class="bg-white p-3 rounded-lg border border-gray-200">
                     <p class="text-sm text-gray-700">{{ $ticket->description }}</p>
 
-                    @if(isset($ticket->initialPhoto) && $ticket->initialPhoto)
+                    @php $initialLampirans = \App\Support\Conversation::initialLampirans($ticket); @endphp
+                    @if($initialLampirans->isNotEmpty())
                     <div class="mt-3">
                         <h3 class="text-sm font-medium text-gray-700 mb-2">Initial Photo</h3>
-                        <a href="{{ Storage::url($ticket->initialPhoto->photo_path) }}" target="_blank">
-                            <img src="{{ Storage::url($ticket->initialPhoto->photo_path) }}" alt="Initial Ticket Photo"
-                                class="max-h-48 rounded-lg shadow-sm hover:shadow-md transition-all">
-                        </a>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($initialLampirans as $lampiran)
+                            <a href="{{ Storage::url($lampiran->path) }}" target="_blank">
+                                <img src="{{ Storage::url($lampiran->path) }}" alt="Initial Ticket Photo"
+                                    class="max-h-48 rounded-lg shadow-sm hover:shadow-md transition-all">
+                            </a>
+                            @endforeach
+                        </div>
                     </div>
                     @endif
                 </div>

@@ -44,7 +44,7 @@
     <div>
         <h3 class="text-xs font-medium text-gray-500 mb-1">Foto Tiket</h3>
         <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-40 flex items-center justify-center overflow-hidden">
-            @php $initialLampiran = $ticket->lampirans->where('kind', 'initial')->first(); @endphp
+            @php $initialLampiran = \App\Support\Conversation::initialLampirans($ticket)->first(); @endphp
             @if($initialLampiran)
             <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto Tiket"
                 class="max-w-full max-h-full object-contain rounded">
@@ -89,50 +89,7 @@
 </div>
 
 @php
-$lampiranByPesan = $ticket->lampirans->whereNotNull('pesan_id')->groupBy('pesan_id');
-$allResponses = $ticket->pesans->map(function ($pesan) use ($lampiranByPesan) {
-    $photo = $lampiranByPesan->get($pesan->id)?->first()?->path;
-    $isAdmin = ($pesan->sender_type ?? '') === 'admin';
-    return [
-        'type' => $isAdmin ? 'admin' : 'user',
-        'notes' => $pesan->body,
-        'message' => $pesan->body,
-        'admin_name' => $pesan->sender?->name ?? ($isAdmin ? 'Admin' : null),
-        'photo' => $photo,
-        'timestamp' => $pesan->created_at?->toDateTimeString() ?? $pesan->created_at,
-        'action' => null,
-    ];
-})->sortBy('timestamp')->values()->all();
-// Balasan konfirmasi hanya jadi histori confirmed — gabungkan sebagai bubble pengaju.
-if (count($allResponses) > 0) {
-    $confirmBubbles = $ticket->historis
-        ->where('action', 'confirmed')
-        ->filter(fn ($h) => ($h->actor_type ?? '') === 'user' && trim((string) ($h->notes ?? '')) !== '' && $h->notes !== 'Pengajuan dikonfirmasi.')
-        ->map(fn ($h) => [
-            'type' => 'user',
-            'notes' => $h->notes,
-            'message' => $h->notes,
-            'admin_name' => null,
-            'photo' => null,
-            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
-            'action' => 'confirm',
-        ])->values()->all();
-    $allResponses = collect($allResponses)->concat($confirmBubbles)->sortBy('timestamp')->values()->all();
-}
-if (count($allResponses) === 0) {
-    $allResponses = $ticket->historis->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])->map(function ($h) {
-        $isAdmin = ($h->action ?? '') === 'admin_response';
-        return [
-            'type' => $isAdmin ? 'admin' : 'user',
-            'notes' => $h->notes,
-            'message' => $h->notes,
-            'admin_name' => $h->actor?->name ?? ($isAdmin ? 'Admin' : null),
-            'photo' => null,
-            'timestamp' => $h->created_at?->toDateTimeString() ?? $h->created_at,
-            'action' => ($h->action ?? '') === 'confirmed' ? 'confirm' : null,
-        ];
-    })->sortBy('timestamp')->values()->all();
-}
+$allResponses = \App\Support\Conversation::responses($ticket);
 @endphp
 <div class="mt-4">
     <h3 class="text-sm font-medium text-gray-800 mb-2">Riwayat Percakapan</h3>

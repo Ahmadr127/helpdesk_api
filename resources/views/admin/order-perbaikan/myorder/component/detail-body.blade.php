@@ -1,7 +1,4 @@
 {{-- Isi modal detail order milik sendiri (dimuat via AJAX ?modal=1). Mirip halaman detail user, ringkas untuk modal. --}}
-@php
-    $unitProsesModel = $order->relationLoaded('unitProses') ? $order->getRelation('unitProses') : $order->unitProses()->getResults();
-@endphp
 <div class="flex items-center gap-3 flex-wrap">
     <h3 class="text-base font-bold text-gray-900">Order #{{ $order->nomor }}</h3>
     <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold {{ $order->getStatusBadgeClass() }}">
@@ -30,7 +27,7 @@
             </div>
             <div>
                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Proses</dt>
-                <dd class="mt-1 text-sm font-medium text-gray-900">{{ $unitProsesModel?->name ? $unitProsesModel->name.' ('.$unitProsesModel->code.')' : '-' }}</dd>
+                <dd class="mt-1 text-sm font-medium text-gray-900">-</dd>
             </div>
             <div>
                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Penerima</dt>
@@ -78,13 +75,13 @@
     </div>
 </div>
 
-@if($order->foto)
+@if($order->lampirans->isNotEmpty())
 <div class="mt-3 bg-white rounded-lg border border-gray-200 overflow-hidden">
     <div class="px-4 py-2 border-b border-gray-100 bg-gray-50/50">
         <h4 class="text-sm font-semibold text-gray-900">Foto</h4>
     </div>
     <div class="p-4">
-        <img src="{{ Storage::url($order->foto) }}" alt="Foto Order Perbaikan" class="w-full max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-100">
+        <img src="{{ Storage::url($order->lampirans->first()->path) }}" alt="Foto Order Perbaikan" class="w-full max-h-64 object-contain rounded-lg border border-gray-200 bg-gray-100">
     </div>
 </div>
 @endif

@@ -45,7 +45,7 @@
         </div>
 
         <div class="mb-4">
-            <h4 class="text-sm font-semibold text-gray-900 mb-2">{{ $order->title }}</h4>
+            <h4 class="text-sm font-semibold text-gray-900 mb-2">{{ \Illuminate\Support\Str::limit($order->keluhan, 80) }}</h4>
             <div class="grid grid-cols-2 gap-4 mb-3">
                 <div class="text-xs">
                     <p class="text-gray-500 mb-1">Pengguna:</p>
@@ -56,8 +56,8 @@
                     <p class="font-medium text-gray-900">{{ $order->lokasi?->name ?? '-' }}</p>
                 </div>
                 <div class="text-xs col-span-2">
-                    <p class="text-gray-500 mb-1">Barang:</p>
-                    <p class="font-medium text-gray-900">{{ $order->nama_barang }}</p>
+                    <p class="text-gray-500 mb-1">Deskripsi:</p>
+                    <p class="font-medium text-gray-900">{{ \Illuminate\Support\Str::limit($order->keluhan, 60) }}</p>
                 </div>
             </div>
             <p class="text-sm text-gray-600 line-clamp-2">{{ $order->description }}</p>
