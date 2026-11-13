@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\JenisPengajuan;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
+use App\Support\TicketStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -26,8 +27,7 @@ class ReportService
     public const STATUSES = [
         'open' => 'Dibuka',
         'in_progress' => 'Dalam Proses',
-        'pending' => 'Menunggu',
-        'ditutup' => 'Ditutup',
+        'ditutup' => 'Menunggu Konfirmasi',
         'confirmed' => 'Selesai',
         'rejected' => 'Ditolak',
     ];
@@ -70,7 +70,10 @@ class ReportService
             });
         });
 
-        $query->when($request->filled('status'), fn (Builder $q) => $q->where('status', $request->input('status')));
+        // Status dinormalisasi (closed/tutup/pending → ditutup) supaya filter lama
+        // tetap menemukan baris yang benar-benar ada di DB.
+        $status = TicketStatus::normalize($request->input('status'));
+        $query->when($status, fn (Builder $q) => $q->where('status', $status));
         // Kategori (checkbox): bisa multi-select; string/int tunggal tetap didukung.
         $rawKategori = $request->input('kategori_id');
         $kategoris = is_array($rawKategori) ? $rawKategori : ($rawKategori !== null && $rawKategori !== '' ? [$rawKategori] : []);
@@ -131,6 +134,15 @@ class ReportService
     /**
      * Ringkasan status dari query yang sudah difilter.
      *
+     * Definisi status (selaras dengan App\Services\Pengajuan\PengajuanDashboardService
+     * dan endpoint ringkasan mobile):
+     * - active  = open + in_progress   → sedang dikerjakan
+     * - pending = ditutup             → sudah ditutup, MENUNGGU konfirmasi pemohon
+     * - done    = confirmed + rejected → sudah final (selesai / ditolak)
+     *
+     * Catatan: status 'pending' tidak pernah tersimpan di DB (bukan status kanonik),
+     * jadi angka "menunggu" harus dibaca dari status 'ditutup'.
+     *
      * @return array{total:int,open:int,in_progress:int,pending:int,ditutup:int,confirmed:int,rejected:int,active:int,done:int,completion_rate:float}
      */
     public function summary(Builder $query): array
@@ -141,8 +153,7 @@ class ReportService
                 "COUNT(*) AS total,
                  SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) AS open,
                  SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
-                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
-                 SUM(CASE WHEN status = 'ditutup' THEN 1 ELSE 0 END) AS ditutup,
+                 SUM(CASE WHEN status = 'ditutup' THEN 1 ELSE 0 END) AS pending,
                  SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
                  SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected"
             )
@@ -151,21 +162,22 @@ class ReportService
         $total = (int) ($row->total ?? 0);
         $open = (int) ($row->open ?? 0);
         $inProgress = (int) ($row->in_progress ?? 0);
+        // Status 'ditutup' = sudah ditutup tapi masih menunggu konfirmasi pemohon.
         $pending = (int) ($row->pending ?? 0);
-        $ditutup = (int) ($row->ditutup ?? 0);
         $confirmed = (int) ($row->confirmed ?? 0);
         $rejected = (int) ($row->rejected ?? 0);
-        $done = $ditutup + $confirmed;
+        // Selesai = sudah final: dikonfirmasi (confirmed) atau ditolak (rejected).
+        $done = $confirmed + $rejected;
 
         return [
             'total' => $total,
             'open' => $open,
             'in_progress' => $inProgress,
             'pending' => $pending,
-            'ditutup' => $ditutup,
+            'ditutup' => $pending,
             'confirmed' => $confirmed,
             'rejected' => $rejected,
-            'active' => $open + $inProgress + $pending,
+            'active' => $open + $inProgress,
             'done' => $done,
             'completion_rate' => $total > 0 ? round(($done / $total) * 100, 1) : 0.0,
         ];

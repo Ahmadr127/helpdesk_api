@@ -18,45 +18,21 @@
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-        <form action="{{ route('admin.tickets.myticket') }}" method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari Tiket</label>
-                    <input type="text" name="search" id="search" value="{{ request('search') }}"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white/80 text-gray-900"
-                        placeholder="Nomor tiket atau deskripsi">
-                </div>
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select name="status" id="status"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>Semua Status
-                        </option>
-                        @foreach(\App\Support\TicketStatus::options() as $value => $label)
-                        <option value="{{ $value }}" @selected(\App\Support\TicketStatus::normalize(request('status')) === $value)>
-                            {{ $label }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="space-x-2">
-                <button type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Terapkan Filter
-                </button>
-                <a href="{{ route('admin.tickets.myticket') }}"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Reset
-                </a>
-            </div>
-        </form>
+        <p class="text-sm text-gray-600">
+            Filter melekat pada tabel di bawah — gunakan kolom tabel untuk menyaring
+            (nomor tiket, pemohon, kategori, departemen, deskripsi, status, tanggal dibuat).
+        </p>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="overflow-x-auto">
-            @include('admin.tickets.partials.ticket-table', ['tickets' => $tickets, 'myticketActions' => true])
-        </div>
+    <div class="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
+        @include('admin.tickets.partials.ticket-table', [
+            'tickets' => $tickets,
+            'myticketActions' => true,
+            'filter' => $filter,
+            'kategoris' => $kategoris,
+            'departments' => $departments,
+            'filterAction' => route('admin.tickets.myticket'),
+        ])
     </div>
 
     @include('admin.tickets.myticket.component.modal-view')

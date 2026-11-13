@@ -5,10 +5,13 @@
 @section('content')
 <div class="w-full">
     <!-- Header with Back Button -->
-    <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+    {{-- <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
         <div class="bg-white p-5">
             <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800">Semua Tiket</h2>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">Semua Tiket</h2>
+                    <p class="text-sm text-gray-600 mt-1">Filter melekat pada tabel — satu klik "Terapkan" untuk semua kolom</p>
+                </div>
                 <a href="{{ route('admin.tickets.index') }}"
                     class="text-xs font-medium text-gray-800 hover:text-black px-3 py-1.5 rounded-lg hover:bg-gray-400 transition-all duration-200 flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,77 +22,19 @@
                 </a>
             </div>
         </div>
-    </div>
+    </div> --}}
 
-    <!-- Filter Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-100">
-        <form action="{{ route('admin.tickets.all') }}" method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <!-- Status Filter -->
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select name="status" id="status"
-                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                        <option value="">Semua Status</option>
-                        @foreach(\App\Support\TicketStatus::options() as $value => $label)
-                        <option value="{{ $value }}" @selected(\App\Support\TicketStatus::normalize(request('status')) === $value)>
-                            {{ $label }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Start Date Filter -->
-                <div>
-                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}"
-                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                </div>
-
-                <!-- End Date Filter -->
-                <div>
-                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
-                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}"
-                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                </div>
-
-                <!-- Confirmation Status -->
-                <div>
-                    <label for="confirmation" class="block text-sm font-medium text-gray-700 mb-1">Status
-                        Konfirmasi</label>
-                    <select name="confirmation" id="confirmation"
-                        class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                        <option value="">Semua</option>
-                        <option value="pending" {{ request('confirmation') == 'pending' ? 'selected' : '' }}>Menunggu
-                            Konfirmasi</option>
-                        <option value="confirmed" {{ request('confirmation') == 'confirmed' ? 'selected' : '' }}>
-                            Dikonfirmasi</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-2">
-                <a href="{{ route('admin.tickets.all') }}"
-                    class="bg-slate-500 text-white px-4 py-2 rounded-md hover:bg-slate-600 transition-all shadow-sm">
-                    Atur Ulang
-                </a>
-                <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all shadow-sm">
-                    Terapkan Filter
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Tickets Table -->
-    <div class="bg-white rounded-lg shadow-md overflow-x-auto border border-gray-100">
-        @if($tickets->count() > 0)
-        @include('admin.tickets.partials.ticket-table', ['tickets' => $tickets])
-        @else
-        <div class="p-6 text-center text-gray-500">
-            Tidak ada tiket yang ditemukan sesuai filter yang dipilih.
-        </div>
-        @endif
+    <!-- Tickets Table (+ filter per kolom di dalam tabel) -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
+        @include('admin.tickets.partials.ticket-table', [
+            'tickets' => $tickets,
+            'filter' => $filter,
+            'kategoris' => $kategoris,
+            'departments' => $departments,
+            'filterAction' => route('admin.tickets.all'),
+            'showConfirmation' => $showConfirmation,
+            'showPrioritas' => $showPrioritas,
+        ])
     </div>
 
     <!-- Pagination -->

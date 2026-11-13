@@ -63,6 +63,9 @@ class PengajuanWorkflowService
             $pengajuan->update([
                 'status' => 'ditutup',
                 'closed_at' => now(),
+                // Jika ditutup dari status open (mis. admin langsung merespons
+                // lalu menutup), mulai tunggu waktu respon dari sini juga.
+                'started_at' => $pengajuan->started_at ?: now(),
                 'updated_by' => $actor->id,
             ]);
 
@@ -236,6 +239,8 @@ class PengajuanWorkflowService
                 $pengajuan->update([
                     'status' => 'confirmed',
                     'confirmed_at' => now(),
+                    'user_confirmation' => true,
+                    'user_confirmed_at' => now(),
                     'updated_by' => null,
                 ]);
 

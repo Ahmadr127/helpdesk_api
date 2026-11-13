@@ -16,7 +16,7 @@
 @php
     $pengajuans = $pengajuans ?? null;
 
-    $columns = $columns ?? ['nomor', 'tanggal', 'pemohon', 'jenis', 'kategori', 'department', 'prioritas', 'status', 'pj', 'aksi'];
+    $columns = $columns ?? ['nomor', 'tanggal', 'pemohon', 'jenis', 'kategori', 'department', 'prioritas', 'status', 'pj', 'closed_at', 'aksi'];
     $statuses = \App\Services\Report\ReportService::STATUSES;
     $prioritasList = \App\Services\Report\ReportService::PRIORITAS;
     $perPageOptions = \App\Services\Report\ReportService::PER_PAGE_OPTIONS;
@@ -47,23 +47,43 @@
     $route = $route ?? url()->current();
 
     // Kartu ringkasan: gunakan $summaryCards bila diberikan, selainnya bangun dari $summary.
+    // Definisi status (selaras dengan dashboard & ringkasan mobile):
+    // - aktif    = open + in_progress (sedang dikerjakan)
+    // - menunggu = ditutup (menunggu konfirmasi pemohon)
+    // - selesai  = confirmed + rejected (sudah final)
     $summaryCards = $summaryCards ?? null;
     if (! $summaryCards && ! empty($summary)) {
         $summaryCards = [
-            ['label' => 'Total Pengajuan', 'value' => number_format($summary['total'], 0, ',', '.'), 'color' => 'blue'],
+            [
+                'label' => 'Total Pengajuan',
+                'value' => number_format($summary['total'], 0, ',', '.'),
+                'sub' => $summary['active'].' aktif · '.$summary['pending'].' menunggu · '.$summary['completion_rate'].'% selesai',
+                'color' => 'blue',
+            ],
             [
                 'label' => 'Sedang Diproses',
                 'value' => number_format($summary['active'], 0, ',', '.'),
-                'sub' => $summary['open'].' dibuka · '.$summary['in_progress'].' proses · '.$summary['pending'].' menunggu',
+                'sub' => $summary['open'].' dibuka · '.$summary['in_progress'].' proses',
                 'color' => 'yellow',
+            ],
+            [
+                'label' => 'Menunggu Konfirmasi',
+                'value' => number_format($summary['pending'], 0, ',', '.'),
+                'sub' => 'Menunggu konfirmasi pemohon',
+                'color' => 'orange',
             ],
             [
                 'label' => 'Selesai',
                 'value' => number_format($summary['done'], 0, ',', '.'),
-                'sub' => 'Tingkat penyelesaian '.$summary['completion_rate'].'%',
+                'sub' => $summary['confirmed'].' dikonfirmasi · '.$summary['rejected'].' ditolak',
                 'color' => 'green',
             ],
-            ['label' => 'Ditolak', 'value' => number_format($summary['rejected'], 0, ',', '.'), 'color' => 'red'],
+            [
+                'label' => 'Ditolak',
+                'value' => number_format($summary['rejected'], 0, ',', '.'),
+                'sub' => 'Permintaan ditolak',
+                'color' => 'red',
+            ],
         ];
     }
 
@@ -72,6 +92,7 @@
             'blue' => 'border-blue-500',
             'green' => 'border-green-500',
             'yellow' => 'border-yellow-500',
+            'orange' => 'border-orange-500',
             'red' => 'border-red-500',
             'purple' => 'border-purple-500',
             'gray' => 'border-gray-500',
@@ -163,7 +184,7 @@
 <div class="space-y-6">
     {{-- Ringkasan --}}
     @if(! empty($summaryCards))
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid {{ count($summaryCards) >= 5 ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5' : 'grid-cols-2 lg:grid-cols-4' }} gap-4">
             @foreach($summaryCards as $card)
                 <div class="bg-white rounded-lg shadow-md p-5 border-l-4 {{ $cardBorder($card['color'] ?? null) }}">
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $card['label'] }}</p>

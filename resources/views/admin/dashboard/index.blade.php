@@ -80,6 +80,7 @@
             <h3 class="text-gray-700 mb-2">Total Tiket</h3>
             <div class="text-2xl font-bold mb-2">{{ $totalTickets }}/{{ $totalActiveTickets }}</div>
             <div class="text-sm text-gray-500 mb-4">Sisa: {{ $remainingTickets }} Tiket</div>
+            <div class="text-xs text-gray-500 mb-4">Aktif: {{ $totalActiveTickets }} &middot; Menunggu Konfirmasi: {{ $pendingTickets }}</div>
 
             <div class="mb-4">
                 <div class="flex justify-between text-sm mb-1">

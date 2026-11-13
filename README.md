@@ -1,6 +1,6 @@
 php artisan users:import-simutu
 
-psql -U postgres -d db_helpdesk_prod -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+psql -U postgres -d helpdesk -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 psql -U postgres -d helpdesk -f C:\programming\helpdesk_api\sql\db_helpdesk.sql
 

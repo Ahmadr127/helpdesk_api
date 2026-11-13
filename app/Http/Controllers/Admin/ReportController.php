@@ -82,7 +82,7 @@ class ReportController extends Controller
                 [
                     'label' => 'Total Pengajuan',
                     'value' => number_format($summary['total'], 0, ',', '.'),
-                    'sub' => $summary['active'].' aktif',
+                    'sub' => $summary['active'].' aktif · '.$summary['pending'].' menunggu konfirmasi',
                     'color' => 'blue',
                 ],
                 [

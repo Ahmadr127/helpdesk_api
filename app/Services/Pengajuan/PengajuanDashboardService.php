@@ -247,10 +247,19 @@ class PengajuanDashboardService
             $baseQuery->where('status', $statusFilter);
         }
 
-        $totalActiveTickets = (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'ditutup'])->count();
+        // Definisi status diseragamkan (sama dengan endpoint ringkasan mobile):
+        // - aktif   = open + in_progress (sedang dikerjakan)
+        // - pending = ditutup (menunggu konfirmasi user) → TIDAK masuk aktif
+        // - selesai = confirmed + rejected
+        $openTickets = (clone $baseQuery)->where('status', 'open')->count();
+        $inProgressTickets = (clone $baseQuery)->where('status', 'in_progress')->count();
+        $pendingTickets = (clone $baseQuery)->where('status', 'ditutup')->count();
         $completedTickets = (clone $baseQuery)->whereIn('status', ['confirmed', 'rejected'])->count();
-        $totalTickets = $totalActiveTickets + $completedTickets;
-        $remainingTickets = $totalActiveTickets;
+
+        $totalActiveTickets = $openTickets + $inProgressTickets;
+        $totalTickets = $totalActiveTickets + $pendingTickets + $completedTickets;
+        // "Sisa" = seluruh yang belum selesai (aktif + menunggu konfirmasi).
+        $remainingTickets = $totalActiveTickets + $pendingTickets;
         $processingPercentage = $totalTickets > 0 ? round(($completedTickets / $totalTickets) * 100, 1) : 0;
         $ticketProgress = $processingPercentage;
 
@@ -280,8 +289,9 @@ class PengajuanDashboardService
             'recentTickets' => $recentTickets,
             'recentUsers' => \App\Models\User::latest()->take(5)->get(),
             'priorityDistribution' => $priorityDistribution,
-            'openTickets' => (clone $baseQuery)->where('status', 'open')->count(),
-            'inProgressTickets' => (clone $baseQuery)->where('status', 'in_progress')->count(),
+            'openTickets' => $openTickets,
+            'inProgressTickets' => $inProgressTickets,
+            'pendingTickets' => $pendingTickets,
             'closedAndConfirmedTickets' => (clone $baseQuery)->whereIn('status', ['ditutup', 'confirmed', 'rejected'])->count(),
         ];
     }

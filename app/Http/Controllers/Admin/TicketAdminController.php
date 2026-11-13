@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
+use App\Services\Pengajuan\PengajuanListFilter;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
-use App\Support\TicketStatus;
 use Illuminate\Http\Request;
 
 class TicketAdminController extends Controller
@@ -17,6 +17,7 @@ class TicketAdminController extends Controller
         protected PengajuanService $service,
         protected PengajuanWorkflowService $workflow,
         protected PengajuanScopeService $scope,
+        protected PengajuanListFilter $filter,
     ) {}
 
     private function itQuery()
@@ -36,32 +37,8 @@ class TicketAdminController extends Controller
         $query = $this->itQuery()->with(['pemohon', 'kategori', 'department']);
 
         try {
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('nomor', 'like', "%{$search}%")
-                        ->orWhere('deskripsi', 'like', "%{$search}%")
-                        ->orWhereHas('pemohon', function ($q) use ($search) {
-                            $q->where('name', 'like', "%{$search}%");
-                        });
-                });
-            }
-
-            if ($request->filled('start_date')) {
-                $query->whereDate('created_at', '>=', $request->start_date);
-            }
-            if ($request->filled('end_date')) {
-                $query->whereDate('created_at', '<=', $request->end_date);
-            }
-
-            if ($request->filled('status') && $request->status !== 'all') {
-                $status = TicketStatus::normalize($request->status);
-                if ($status !== null) {
-                    // `closed`/`tutup`/`pending` adalah alias lama; DB menyimpan
-                    // `ditutup`. Tanpa normalisasi filter ini selalu 0 baris.
-                    $query->where('status', $status);
-                }
-            }
+            // Filter terpusat; alias lama (search/start_date/end_date) tetap didukung.
+            $this->filter->apply($query, $request);
 
             $tickets = $query->orderBy('created_at', 'desc')
                 ->paginate(10)
@@ -75,10 +52,20 @@ class TicketAdminController extends Controller
         $mediumPriorityTickets = collect($tickets->items())->where('prioritas', 'medium');
         $lowPriorityTickets = collect($tickets->items())->where('prioritas', 'low');
 
-        return view('admin.tickets.index', compact(
-            'tickets', 'totalTickets', 'openTickets', 'inProgressTickets', 'closedTickets',
-            'pendingConfirmationTickets', 'highPriorityTickets', 'mediumPriorityTickets', 'lowPriorityTickets'
-        ));
+        return view('admin.tickets.index', array_merge([
+            'tickets' => $tickets,
+            'totalTickets' => $totalTickets,
+            'openTickets' => $openTickets,
+            'inProgressTickets' => $inProgressTickets,
+            'closedTickets' => $closedTickets,
+            'pendingConfirmationTickets' => $pendingConfirmationTickets,
+            'highPriorityTickets' => $highPriorityTickets,
+            'mediumPriorityTickets' => $mediumPriorityTickets,
+            'lowPriorityTickets' => $lowPriorityTickets,
+            'filter' => $this->filter,
+            'kategoris' => $this->filter->options()['kategoris'],
+            'departments' => $this->filter->options()['departments'],
+        ]));
     }
 
     public function show(Pengajuan $ticket)
@@ -154,8 +141,30 @@ class TicketAdminController extends Controller
                 }
                 throw $e;
             }
+        } elseif ($status === 'in_progress') {
+            // Lewati workflow.start() supaya started_at + histori tercatat
+            // (sama seperti alur update()); tanpa ini report menganggap
+            // tiket belum pernah direspon ("Belum Direspon").
+            if ($ticket->status === 'open') {
+                try {
+                    $this->workflow->start(auth()->user(), $ticket->fresh(), $validated['notes']);
+                } catch (\Exception $e) {
+                    if ($e->getCode() === 422) {
+                        return back()->with('error', $e->getMessage())->withInput();
+                    }
+                    if ($e->getCode() === 403) {
+                        return back()->with('error', $e->getMessage())->withInput();
+                    }
+                    throw $e;
+                }
+            } else {
+                $ticket->update(['status' => 'in_progress']);
+            }
         } else {
-            $ticket->update(['status' => $status]);
+            // Konfirmasi/ditolak langsung dari respons admin: tunggu waktu
+            // respon wajib dihitung dari started_at (jika belum ada, respons ini
+            // adalah saat pertama tiket "digerakkan").
+            $ticket->update(['status' => $status, 'started_at' => $ticket->started_at ?: now()]);
         }
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
@@ -200,82 +209,67 @@ class TicketAdminController extends Controller
 
     public function all(Request $request)
     {
-        $query = $this->itQuery()->with(['pemohon', 'kategori', 'department'])->latest();
+        $query = $this->itQuery()->with(['pemohon', 'kategori', 'department']);
 
-        if ($request->filled('status')) {
-            $status = TicketStatus::normalize($request->status);
-            if ($status !== null) {
-                $query->where('status', $status);
-            }
-        }
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
-        // Filter konfirmasi pengguna — INDEPENDEN dari filter status.
-        // Sebelumnya filter ini ikut memaksa `status = confirmed` / `status =
-        // ditutup`, sehingga bila dikombinasikan dengan filter Status bisa
-        // saling bertentangan dan hasilnya selalu 0 baris.
-        if ($request->filled('confirmation')) {
-            if ($request->confirmation === 'confirmed') {
-                $query->where('user_confirmation', true);
-            } elseif ($request->confirmation === 'pending') {
-                $query->where('user_confirmation', false);
-            }
-        }
+        // Filter terpusat (semua kolom tabel + pencarian global).
+        $this->filter->apply($query, $request);
 
-        $tickets = $query->paginate(10)->withQueryString();
-        return view('admin.tickets.all', compact('tickets'));
+        $tickets = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        return view('admin.tickets.all', array_merge([
+            'tickets' => $tickets,
+            'filter' => $this->filter,
+            'showConfirmation' => true,
+            'showPrioritas' => true,
+        ], $this->filter->options()));
     }
 
     public function open(Request $request)
     {
-        $query = $this->itQuery()->with('pemohon')->where('status', 'open');
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month)->whereYear('created_at', $request->year ?? now()->year);
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query = $this->itQuery()->with(['pemohon', 'kategori', 'department'])->where('status', 'open');
+
+        // Status dikunci halaman ini (filter status di tabel dinonaktifkan).
+        $this->filter->apply($query, $request, 'open');
+
         $tickets = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-        return view('admin.tickets.open', compact('tickets'));
+
+        return view('admin.tickets.open', array_merge([
+            'tickets' => $tickets,
+            'filter' => $this->filter,
+            'lockedStatus' => 'open',
+        ], $this->filter->options()));
     }
 
     public function inProgress(Request $request)
     {
-        $query = $this->itQuery()->with('pemohon')->where('status', 'in_progress');
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month)->whereYear('created_at', $request->year ?? now()->year);
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query = $this->itQuery()->with(['pemohon', 'kategori', 'department'])->where('status', 'in_progress');
+
+        $this->filter->apply($query, $request, 'in_progress');
+
         $tickets = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-        return view('admin.tickets.in-progress', compact('tickets'));
+
+        return view('admin.tickets.in-progress', array_merge([
+            'tickets' => $tickets,
+            'filter' => $this->filter,
+            'lockedStatus' => 'in_progress',
+        ], $this->filter->options()));
     }
 
     public function closed(Request $request)
     {
-        $query = $this->itQuery()->with('pemohon')->where('status', 'ditutup')->where('user_confirmation', false);
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month)->whereYear('created_at', $request->year ?? now()->year);
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        $query = $this->itQuery()->with(['pemohon', 'kategori', 'department'])
+            ->where('status', 'ditutup')
+            ->where('user_confirmation', false);
+
+        $this->filter->apply($query, $request, 'ditutup');
+
         $tickets = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-        return view('admin.tickets.closed', compact('tickets'));
+
+        return view('admin.tickets.closed', array_merge([
+            'tickets' => $tickets,
+            'filter' => $this->filter,
+            'lockedStatus' => 'ditutup',
+        ], $this->filter->options()));
     }
 
     public function exportHistory(Request $request)
@@ -287,24 +281,15 @@ class TicketAdminController extends Controller
     {
         $query = $this->itQuery()->with(['pemohon', 'kategori', 'department'])->where('pemohon_id', auth()->id());
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nomor', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%");
-            });
-        }
-        if ($request->filled('status') && $request->status !== 'all') {
-            $status = TicketStatus::normalize($request->status);
-            if ($status !== null) {
-                // `closed`/`tutup`/`pending` adalah alias lama; DB menyimpan
-                // `ditutup`. Tanpa normalisasi filter ini selalu 0 baris.
-                $query->where('status', $status);
-            }
-        }
+        // Filter terpusat; parameter lama (search/status) tetap didukung.
+        $this->filter->apply($query, $request);
 
         $tickets = $query->latest()->paginate(10)->withQueryString();
-        return view('admin.tickets.myticket.index', compact('tickets'));
+
+        return view('admin.tickets.myticket.index', array_merge([
+            'tickets' => $tickets,
+            'filter' => $this->filter,
+        ], $this->filter->options()));
     }
 
     public function showMyticket(Request $request, Pengajuan $ticket)

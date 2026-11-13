@@ -191,6 +191,32 @@ class DashboardSummaryTest extends TestCase
         $this->assertNull($res->json('data.admin.tickets'));
     }
 
+    public function test_dashboard_web_admin_it_tidak_masukan_ditutup_ke_aktif(): void
+    {
+        $adminIt = User::create([
+            'name' => 'Admin IT', 'email' => 'it@x.com', 'password' => Hash::make('123'),
+            'phone' => '0813', 'position' => 'IT', 'role' => 'admin', 'department' => 'IT', 'status' => 1,
+        ]);
+
+        $this->makePengajuan($this->userB, $this->kategoriTiket, 'open', 'T-V1');
+        $this->makePengajuan($this->userB, $this->kategoriTiket, 'in_progress', 'T-V2');
+        $this->makePengajuan($this->userB, $this->kategoriTiket, 'ditutup', 'T-V3');
+        $this->makePengajuan($this->userB, $this->kategoriTiket, 'confirmed', 'T-V4');
+
+        $svc = new \App\Services\Pengajuan\PengajuanDashboardService(
+            new \App\Services\Pengajuan\PengajuanScopeService()
+        );
+        $data = $svc->itDashboardData('all', 'all', $adminIt);
+
+        // Aktif = open + in_progress (tidak termasuk 'ditutup').
+        $this->assertSame(2, $data['totalActiveTickets'], 'Aktif hanya open + in_progress.');
+        $this->assertSame(1, $data['pendingTickets'], 'Status ditutup harus dihitung terpisah sebagai pending.');
+        $this->assertSame(4, $data['totalTickets'], 'Total = aktif + pending + selesai.');
+        // Sisa = aktif + menunggu konfirmasi.
+        $this->assertSame(3, $data['remainingTickets']);
+        $this->assertSame(1, $data['completedTickets']);
+    }
+
     public function test_angka_admin_sama_dengan_jumlah_baris_list(): void
     {
         $adminIt = User::create([

@@ -5,12 +5,12 @@
 @section('content')
 <div class="w-full">
     <!-- Header with Notification -->
-    <div class="flex justify-between items-center mb-6">
+    {{-- <div class="flex justify-between items-center mb-6">
         <div></div>
-    </div>
+    </div> --}}
 
     <!-- Filter Form -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+    {{-- <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
         <form action="{{ route('admin.tickets.index') }}" method="GET" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Search Input -->
@@ -78,7 +78,7 @@
                 </div>
             </div>
         </form>
-    </div>
+    </div> --}}
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -198,7 +198,14 @@
                 </button>
             </div>
             <div id="section-high-priority" class="overflow-x-auto">
-                @include('admin.tickets.partials.ticket-table', ['tickets' => $highPriorityTickets])
+                @include('admin.tickets.partials.ticket-table', [
+                    'tickets' => $highPriorityTickets,
+                    'showFilter' => true,
+                    'filter' => $filter,
+                    'kategoris' => $kategoris,
+                    'departments' => $departments,
+                    'filterAction' => route('admin.tickets.index'),
+                ])
             </div>
         </div>
 
@@ -221,7 +228,14 @@
                 </button>
             </div>
             <div id="section-medium-priority" class="overflow-x-auto">
-                @include('admin.tickets.partials.ticket-table', ['tickets' => $mediumPriorityTickets])
+                @include('admin.tickets.partials.ticket-table', [
+                    'tickets' => $mediumPriorityTickets,
+                    'showFilter' => true,
+                    'filter' => $filter,
+                    'kategoris' => $kategoris,
+                    'departments' => $departments,
+                    'filterAction' => route('admin.tickets.index'),
+                ])
             </div>
         </div>
 
@@ -244,7 +258,14 @@
                 </button>
             </div>
             <div id="section-low-priority" class="overflow-x-auto">
-                @include('admin.tickets.partials.ticket-table', ['tickets' => $lowPriorityTickets])
+                @include('admin.tickets.partials.ticket-table', [
+                    'tickets' => $lowPriorityTickets,
+                    'showFilter' => true,
+                    'filter' => $filter,
+                    'kategoris' => $kategoris,
+                    'departments' => $departments,
+                    'filterAction' => route('admin.tickets.index'),
+                ])
             </div>
         </div>
     </div>

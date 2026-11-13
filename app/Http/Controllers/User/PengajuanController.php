@@ -51,7 +51,7 @@ class PengajuanController extends Controller
             'showDepartment' => false,
             'showYear' => false,
             'selectable' => false,
-            'columns' => ['nomor', 'tanggal', 'jenis', 'kategori', 'prioritas', 'status', 'pj', 'aksi'],
+            'columns' => ['nomor', 'tanggal', 'jenis', 'kategori', 'prioritas', 'status', 'pj', 'closed_at', 'aksi'],
         ], $this->reportService->options()));
     }
 
