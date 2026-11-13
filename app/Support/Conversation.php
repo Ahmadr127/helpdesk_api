@@ -22,6 +22,44 @@ class Conversation
      *                          admin_name: string|null, photo: string|null,
      *                          timestamp: string|null, action: string|null}>
      */
+    /** Timeline histori urut waktu — dipakai untuk menentukan status pada saat tertentu. */
+    private static function timelineAt(Pengajuan $pengajuan, ?string $timestamp): ?string
+    {
+        $ts = $timestamp ? strtotime($timestamp) : false;
+        if ($ts === false) {
+            return null;
+        }
+
+        $status = null;
+        foreach ($pengajuan->historis->sortBy(fn ($h) => $h->created_at?->getTimestamp() ?? 0) as $h) {
+            if (! $h->created_at || $h->created_at->getTimestamp() > $ts) {
+                break;
+            }
+            $status = $h->status ?: $status;
+        }
+
+        return $status ?? 'open';
+    }
+
+    /** Tambahkan status saat itu (point-in-time) ke setiap bubble. */
+    private static function annotateStatus(array $responses, Pengajuan $pengajuan): array
+    {
+        return array_map(function ($item) use ($pengajuan) {
+            $status = self::timelineAt($pengajuan, $item['timestamp'] ?? null);
+            $item['status'] = $status;
+            $item['status_label'] = match ($status) {
+                'open' => 'Terbuka',
+                'in_progress' => 'Dalam Proses',
+                'ditutup' => 'Ditutup',
+                'confirmed' => 'Dikonfirmasi',
+                'rejected' => 'Ditolak',
+                default => ucfirst(str_replace('_', ' ', (string) $status)),
+            };
+
+            return $item;
+        }, $responses);
+    }
+
     public static function responses(Pengajuan $pengajuan): array
     {
         $lampiranByPesan = self::lampiranByPesan($pengajuan);
@@ -64,15 +102,17 @@ class Conversation
                 ->values()
                 ->all();
 
-            return collect($responses)
+            $final = collect($responses)
                 ->concat($confirmBubbles)
                 ->sortBy('timestamp')
                 ->values()
                 ->all();
+
+            return self::annotateStatus($final, $pengajuan);
         }
 
         // Fallback: histori lama (pra-unifikasi) yang belum jadi pesan.
-        return $pengajuan->historis
+        $fallback = $pengajuan->historis
             ->whereIn('action', ['admin_response', 'user_reply', 'confirmed'])
             ->map(function ($h) {
                 $isAdmin = ($h->action ?? '') === 'admin_response';
@@ -90,6 +130,8 @@ class Conversation
             ->sortBy('timestamp')
             ->values()
             ->all();
+
+        return self::annotateStatus($fallback, $pengajuan);
     }
 
     /** Lampiran yang menempel pada pesan (pesan_id), dikelompokkan per pesan. */

@@ -336,13 +336,43 @@
     // Cek apakah ada pesan flash dari server saat halaman dimuat
     document.addEventListener('DOMContentLoaded', function() {
         @if(session('success'))
-        createNotification("{{ session('success') }}", 'success');
+        createNotification(@js(session('success')), 'success');
         @endif
 
         @if(session('error'))
-        createNotification("{{ session('error') }}", 'error');
+        createNotification(@js(session('error')), 'error');
         @endif
     });
+    </script>
+
+    <!-- Proteksi double-submit: kunci semua tombol submit pada form saat disubmit -->
+    <script>
+    (function () {
+        'use strict';
+        document.addEventListener('submit', function (event) {
+            // Hanya intersepsi submit yang berasal dari klik/Enter user — bukan script
+            // yang memanggil form.submit() (mis. alur kompresi foto).
+            if (event.isTrusted === false) return;
+            var form = event.target;
+            if (!form || form.nodeName !== 'FORM') return;
+            if (form.hasAttribute('data-no-double-submit-guard')) return;
+
+            var submitted = form.dataset.doubleSubmitGuarded === '1';
+            if (submitted) {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            form.dataset.doubleSubmitGuarded = '1';
+
+            var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+            buttons.forEach(function (btn) {
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            });
+        }, true);
+    })();
     </script>
 
     @stack('scripts')

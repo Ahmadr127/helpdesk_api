@@ -12,7 +12,7 @@
                 </span>
             </div>
             <div class="mb-3">
-                <h3 class="text-sm font-medium text-gray-900">{{ $order->nama_barang }}</h3>
+                <h3 class="text-sm font-medium text-gray-900">{{ \Illuminate\Support\Str::limit($order->keluhan, 50) }}</h3>
                 <p class="text-xs text-gray-600 line-clamp-2">{{ $order->keluhan }}</p>
             </div>
             <div class="flex justify-between items-center">

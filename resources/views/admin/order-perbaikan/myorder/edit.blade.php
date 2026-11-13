@@ -96,25 +96,19 @@ function previewImage(input) {
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Inventaris</label>
-                        <input type="text" name="kode_inventaris"
-                            value="{{ old('kode_inventaris', $orderPerbaikan->kode_inventaris) }}"
-                            class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
-                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                         <select name="prioritas"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
-                            <option value="RENDAH"
-                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'RENDAH' ? 'selected' : '' }}>RENDAH
+                            <option value="low"
+                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'low' ? 'selected' : '' }}>Rendah
                             </option>
-                            <option value="SEDANG"
-                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'SEDANG' ? 'selected' : '' }}>SEDANG
+                            <option value="medium"
+                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'medium' ? 'selected' : '' }}>Sedang
                             </option>
-                            <option value="TINGGI/URGENT"
-                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'TINGGI/URGENT' ? 'selected' : '' }}>
-                                TINGGI/URGENT</option>
+                            <option value="high"
+                                {{ old('prioritas', $orderPerbaikan->prioritas) === 'high' ? 'selected' : '' }}>
+                                Tinggi/Urgent</option>
                         </select>
                     </div>
                 </div>
@@ -122,12 +116,12 @@ function previewImage(input) {
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Order</label>
-                        <select name="kategori_order"
+                        <select name="kategori_id"
                             class="w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-2 text-sm focus:ring-green-500 focus:border-green-500">
                             <option value="">Pilih Kategori</option>
                             @foreach($kategoriOrders as $kat)
-                            <option value="{{ $kat->name }}"
-                                {{ old('kategori_order', $orderPerbaikan->kategori_order) == $kat->name ? 'selected' : '' }}>
+                            <option value="{{ $kat->id }}"
+                                {{ (string) old('kategori_id', $orderPerbaikan->kategori_id) === (string) $kat->id ? 'selected' : '' }}>
                                 {{ $kat->name }}
                             </option>
                             @endforeach
@@ -154,7 +148,7 @@ function previewImage(input) {
                             <option value="">Pilih Lokasi (opsional)</option>
                             @foreach($locations as $location)
                             <option value="{{ $location->id }}"
-                                {{ old('lokasi', $orderPerbaikan->lokasi) == $location->id ? 'selected' : '' }}>
+                                {{ (string) old('lokasi', $orderPerbaikan->lokasi_id) === (string) $location->id ? 'selected' : '' }}>
                                 {{ $location->name }}
                             </option>
                             @endforeach
@@ -185,12 +179,13 @@ function previewImage(input) {
                         <div class="bg-gray-100 p-2 rounded-lg">
                             <h4 class="text-sm font-medium text-gray-700 mb-2">Preview Foto</h4>
                             <div class="bg-white rounded-lg overflow-hidden">
+                    @php $initialLampiran = \App\Support\Conversation::initialLampirans($orderPerbaikan)->first(); @endphp
                                 <div id="preview-container" class="flex items-center justify-center h-48">
                                     <img id="preview-image"
-                                        src="{{ $orderPerbaikan->foto ? Storage::url($orderPerbaikan->foto) : '' }}"
+                                        src="{{ $initialLampiran ? Storage::url($initialLampiran->path) : '' }}"
                                         alt="Preview Photo"
-                                        class="w-full h-48 object-contain {{ $orderPerbaikan->foto ? '' : 'hidden' }}">
-                                    <p id="no-photo-text" class="text-sm text-gray-500 {{ $orderPerbaikan->foto ? 'hidden' : '' }}">
+                                        class="w-full h-48 object-contain {{ $initialLampiran ? '' : 'hidden' }}">
+                                    <p id="no-photo-text" class="text-sm text-gray-500 {{ $initialLampiran ? 'hidden' : '' }}">
                                         Tidak ada foto
                                     </p>
                                 </div>

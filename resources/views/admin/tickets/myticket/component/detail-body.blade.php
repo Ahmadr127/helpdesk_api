@@ -44,7 +44,7 @@
     <div>
         <h3 class="text-xs font-medium text-gray-500 mb-1">Foto Tiket</h3>
         <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-40 flex items-center justify-center overflow-hidden">
-            @php $initialLampiran = $ticket->lampirans->where('kind', 'initial')->first(); @endphp
+            @php $initialLampiran = \App\Support\Conversation::initialLampirans($ticket)->first(); @endphp
             @if($initialLampiran)
             <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto Tiket"
                 class="max-w-full max-h-full object-contain rounded">

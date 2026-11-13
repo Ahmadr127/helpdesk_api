@@ -60,8 +60,8 @@
                 </div>
 
                 <!-- Ticket Content -->
-                <div class="p-4">
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="p-3">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
                             <h3 class="text-sm font-medium text-gray-500 mb-1">Kategori</h3>
                             <p class="text-sm text-gray-800">{{ ucfirst($ticket->category) }}</p>
@@ -81,19 +81,19 @@
                     </div>
 
                     <!-- Tiket Information and Photo -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-3">
                         <!-- Foto Tiket -->
                         <div>
                             <h3 class="text-sm font-medium text-gray-500 mb-2">Foto Tiket</h3>
                             <div
-                                class="bg-gray-50 p-3 rounded-lg border border-gray-100 h-40 flex items-center justify-center">
-                                @php $initialLampiran = $ticket->lampirans->where('kind', 'initial')->first(); @endphp
+                                class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-32 flex items-center justify-center">
+                                @php $initialLampiran = \App\Support\Conversation::initialLampirans($ticket)->first(); @endphp
                                 @if($initialLampiran)
                                 <a href="{{ asset('storage/' . $initialLampiran->path) }}" target="_blank" title="Klik untuk perbesar"
                                     onclick="openTicketPhoto(event, '{{ asset('storage/' . $initialLampiran->path) }}')"
                                     class="flex items-center justify-center h-full max-h-full max-w-full overflow-hidden cursor-zoom-in group relative">
                                     <img src="{{ asset('storage/' . $initialLampiran->path) }}" alt="Foto Tiket - klik untuk perbesar"
-                                        class="max-w-full max-h-36 object-contain rounded-lg shadow-sm group-hover:opacity-90 transition"
+                                        class="max-w-full max-h-28 object-contain rounded-lg shadow-sm group-hover:opacity-90 transition"
                                         onerror="this.onerror=null; this.closest('a').outerHTML = '<div class=\'text-center p-4\'><svg class=\'mx-auto h-12 w-12 text-gray-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><p class=\'mt-2 text-sm text-gray-500\'>Gagal memuat gambar</p></div>';">
                                     <span
                                         class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">Perbesar</span>
@@ -116,7 +116,7 @@
                         <!-- Deskripsi Tiket -->
                         <div>
                             <h3 class="text-sm font-medium text-gray-500 mb-2">Deskripsi</h3>
-                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 h-40 overflow-auto">
+                            <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 h-32 overflow-auto">
                                 <p class="text-sm whitespace-pre-line text-gray-800">{{ $ticket->description }}</p>
                             </div>
                         </div>
@@ -125,7 +125,7 @@
                     <!-- Penanggung Jawab -->
                     @if(($ticket->penugasan && $ticket->penugasan->isNotEmpty()) || (!empty($canAssign) && !empty($candidates) && $candidates->isNotEmpty()))
                     @php $pjNames = ($activePj ?? collect())->pluck('user.name')->filter()->join(', '); @endphp
-                    <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="mt-3 pt-3 border-t border-gray-100">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-1.5 min-w-0">
                                 <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -327,7 +327,7 @@
 
     <!-- Admin Response Form -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        <div class="bg-white px-4 py-3 border-b border-gray-200">
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 class="text-base font-semibold text-gray-800">
                 @if($ticket->status === 'in_progress')
                 Balasan Admin
@@ -335,15 +335,16 @@
                 Tanggapan Admin
                 @endif
             </h3>
+            <span class="text-xs text-gray-500">Aksi wajib: isi catatan, lalu pilih aksi di kanan bawah</span>
         </div>
         <div class="p-4">
             <form action="{{ route('admin.tickets.update', $ticket) }}" method="POST" enctype="multipart/form-data"
-                class="space-y-4">
+                class="space-y-3">
                 @csrf
                 @method('PUT')
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <!-- Message Input -->
+                    <!-- Message Input (2/3) -->
                     <div class="lg:col-span-2">
                         <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
                             @if($ticket->status === 'in_progress')
@@ -352,65 +353,65 @@
                             Catatan Tanggapan
                             @endif
                         </label>
-                        <textarea id="notes" name="notes" rows="3" required
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors"
+                        <textarea id="notes" name="notes" rows="4" required
+                            class="w-full h-full min-h-[7rem] px-3 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors resize-y"
                             placeholder="Ketik pesan Anda di sini...">{{ old('notes', $ticket->admin_notes) }}</textarea>
                     </div>
 
-                    <!-- Image Upload -->
+                    <!-- Image Upload (1/3) -->
                     <div class="lg:col-span-1">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Lampirkan Foto (Opsional)
+                            Lampirkan Foto <span class="text-gray-400 font-normal">(opsional)</span>
                         </label>
-                        <div class="relative border border-dashed border-gray-300 rounded-lg p-3">
-                            <input type="file" name="photo" accept="image/*" class="hidden" id="photo-upload"
+                        <label for="photo-upload" class="block border border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors min-h-[7rem] flex flex-col items-center justify-center">
+                            <input type="file" name="photo" accept="image/*" class="sr-only" id="photo-upload"
                                 onchange="handleImagePreview(this)">
-                            <label for="photo-upload" class="cursor-pointer block text-center">
-                                <div class="flex flex-col items-center justify-center" id="upload-placeholder">
-                                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <span class="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700">Unggah
-                                        Foto</span>
-                                    <span class="mt-1 text-sm text-gray-500">Maks 5MB</span>
-                                </div>
-                            </label>
-                            <div id="image-preview" class="hidden mt-2">
-                                <img src="" alt="Preview" class="max-h-28 mx-auto rounded">
-                                <button type="button" onclick="removeImage()"
-                                    class="mt-2 text-sm text-red-600 hover:text-red-700">
+                            <div id="upload-placeholder" class="flex flex-col items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <span class="mt-1 text-sm font-medium text-blue-600 hover:text-blue-700">Unggah Foto</span>
+                                <span class="mt-0.5 text-[11px] text-gray-500">Maks 5MB · JPG/PNG/GIF · <span id="photo-name">Belum ada file</span></span>
+                            </div>
+                            <div id="image-preview" class="hidden">
+                                <img src="" alt="Preview" class="max-h-28 mx-auto rounded" id="preview-image">
+                                <span id="photo-name-preview" class="mt-1 block text-xs text-gray-500"></span>
+                                <button type="button" onclick="event.preventDefault();removeImage()"
+                                    class="mt-1 inline-flex text-xs font-medium text-red-600 hover:text-red-700">
                                     Hapus Foto
                                 </button>
                             </div>
-                        </div>
+                        </label>
                     </div>
                 </div>
 
-                <div class="flex justify-between items-center pt-3">
-                    <div class="flex space-x-3">
-                        @if($ticket->status === 'in_progress')
-                        <button type="submit" name="action" value="reply"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm">
-                            Kirim Balasan
-                        </button>
-                        <button type="submit" name="status" value="pending_confirmation"
-                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm">
-                            Tutup Tiket
-                        </button>
-                        @else
-                        <button type="submit" name="status" value="in_progress"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm">
-                            Tandai sebagai Dalam Proses
-                        </button>
-                        <button type="submit" name="status" value="pending_confirmation"
-                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm">
-                            Tutup Tiket
-                        </button>
-                        @endif
-                    </div>
+                <div class="flex flex-wrap justify-end items-center gap-2 pt-1">
+                    @if($ticket->status === 'in_progress')
+                    <button type="submit" name="action" value="reply"
+                        class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        Kirim Balasan
+                    </button>
+                    <button type="submit" name="status" value="pending_confirmation"
+                        class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Tutup Tiket
+                    </button>
+                    @else
+                    <button type="submit" name="status" value="in_progress"
+                        class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Tandai sebagai Dalam Proses
+                    </button>
+                    <button type="submit" name="status" value="pending_confirmation"
+                        class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Tutup Tiket
+                    </button>
+                    @endif
                 </div>
             </form>
         </div>
@@ -450,18 +451,23 @@
 function handleImagePreview(input) {
     const preview = document.getElementById('image-preview');
     const placeholder = document.getElementById('upload-placeholder');
-    const previewImg = preview.querySelector('img');
+    const previewImg = document.getElementById('preview-image');
+    const photoNamePreview = document.getElementById('photo-name-preview');
+    const photoName = document.getElementById('photo-name');
 
     if (input.files && input.files[0]) {
+        const file = input.files[0];
         const reader = new FileReader();
 
         reader.onload = function(e) {
             previewImg.src = e.target.result;
+            photoNamePreview.textContent = file.name;
+            photoName.textContent = file.name;
             preview.classList.remove('hidden');
             placeholder.classList.add('hidden');
         }
 
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
     }
 }
 
@@ -469,10 +475,12 @@ function removeImage() {
     const input = document.getElementById('photo-upload');
     const preview = document.getElementById('image-preview');
     const placeholder = document.getElementById('upload-placeholder');
+    const photoName = document.getElementById('photo-name');
 
     input.value = '';
     preview.classList.add('hidden');
     placeholder.classList.remove('hidden');
+    photoName.textContent = 'Belum ada file dipilih';
 }
 
 document.addEventListener('DOMContentLoaded', function() {

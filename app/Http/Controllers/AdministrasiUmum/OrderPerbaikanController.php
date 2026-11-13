@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
-use App\Services\Pengajuan\PengajuanAttachmentService;
 use App\Services\Pengajuan\PengajuanListFilter;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
@@ -315,8 +314,8 @@ class OrderPerbaikanController extends Controller
             $orderPerbaikan->update(['follow_up' => $validated['follow_up']]);
         }
 
-        // Catatan & lampiran menempel pada entri riwayat status (bukan pesan
-        // terpisah) agar tidak muncul dua kali.
+        // Admin response (catatan + foto) = pengajuan_pesan + lampiran (pesan_id),
+        // seragam dengan alur admin tiket. Histori hanya mencatat perubahan status.
         $lampiranFile = $request->file('lampiran');
         $status = $validated['status'];
 
@@ -336,19 +335,12 @@ class OrderPerbaikanController extends Controller
             $orderPerbaikan->update(['status' => $status]);
         }
 
-        // Simpan lampiran pada histori terakhir agar muncul di bubble Riwayat Status.
-        if (isset($lampiranFile) && $lampiranFile instanceof \Illuminate\Http\UploadedFile) {
-            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
-            if ($latestHistori) {
-                app(PengajuanAttachmentService::class)->store(
-                    $orderPerbaikan->fresh(),
-                    [$lampiranFile],
-                    'admin_response',
-                    auth()->user(),
-                    $latestHistori,
-                    null
-                );
-            }
+        // Simpan respons admin sebagai Pesan (chat bubble) + lampiran pesan_id —
+        // seragam dengan admin tiket; Riwayat Status hanya timeline perubahan status.
+        $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
+        if (! empty($validated['follow_up']) || ! empty($files)) {
+            $pesanBody = trim((string) ($validated['follow_up'] ?? '')) !== '' ? $validated['follow_up'] : '(lampiran)';
+            $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
         }
         $newlyAssigned = [];
         if (array_key_exists('penanggung_jawab_ids', $validated)) {
@@ -384,18 +376,10 @@ class OrderPerbaikanController extends Controller
         $this->workflow->start(auth()->user(), $orderPerbaikan, $notes);
 
         $lampiranFile = $request->file('lampiran');
-        if ($lampiranFile instanceof \Illuminate\Http\UploadedFile) {
-            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
-            if ($latestHistori) {
-                app(PengajuanAttachmentService::class)->store(
-                    $orderPerbaikan->fresh(),
-                    [$lampiranFile],
-                    'admin_response',
-                    auth()->user(),
-                    $latestHistori,
-                    null
-                );
-            }
+        $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
+        if (! empty($notes) || ! empty($files)) {
+            $pesanBody = trim((string) $notes) !== '' ? $notes : '(lampiran)';
+            $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
         }
 
         return redirect()->back()->with('success', 'Order berhasil dimulai.');
@@ -414,19 +398,9 @@ class OrderPerbaikanController extends Controller
         $this->workflow->close(auth()->user(), $orderPerbaikan, $notes);
 
         $lampiranFile = $request->file('lampiran');
-        if ($lampiranFile instanceof \Illuminate\Http\UploadedFile) {
-            $latestHistori = $orderPerbaikan->fresh()->historis()->latest()->first();
-            if ($latestHistori) {
-                app(PengajuanAttachmentService::class)->store(
-                    $orderPerbaikan->fresh(),
-                    [$lampiranFile],
-                    'admin_response',
-                    auth()->user(),
-                    $latestHistori,
-                    null
-                );
-            }
-        }
+        $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
+        $pesanBody = trim((string) $notes) !== '' ? $notes : '(lampiran)';
+        $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
 
         return redirect()->route('admin.order-perbaikan.show', $orderPerbaikan)
             ->with('success', 'Order ditutup dan menunggu konfirmasi selesai dari user.');
