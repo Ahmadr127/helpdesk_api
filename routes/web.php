@@ -261,6 +261,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Audit Logs - permission protected (fitur auto-capture created/updated/deleted)
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index')->middleware('permission:audit.logs');
+        Route::get('/audit-logs/{id}', [AuditLogController::class, 'show'])->name('audit-logs.show')->middleware('permission:audit.logs');
         Route::get('/it-dashboard/stats', [AdminController::class, 'getStats'])->name('dashboard.stats')->middleware('permission:dashboard.it');
 
         // Tickets History (index/show ikut grup tickets.* di atas; di sini tinggal export)

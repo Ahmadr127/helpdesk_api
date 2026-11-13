@@ -32,4 +32,14 @@ class AuditLogController extends Controller
             'events' => ['created', 'updated', 'deleted'],
         ]);
     }
+
+    public function show($id)
+    {
+        $log = AuditLog::with('user')->findOrFail((int) $id);
+
+        return view('admin.audit-logs.show', [
+            'log' => $log,
+            'events' => ['created', 'updated', 'deleted'],
+        ]);
+    }
 }

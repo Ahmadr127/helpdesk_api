@@ -88,6 +88,7 @@
                             <th class="px-4 py-3">IP</th>
                             <th class="px-4 py-3">User Agent</th>
                             <th class="px-4 py-3">URL</th>
+                            <th class="px-4 py-3">Detail</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -102,10 +103,13 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-gray-600">{{ $log->ip_address }}</td>
                                 <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ Str::limit($log->user_agent ?? '-', 50) }}</td>
                                 <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $log->url }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <a href="{{ route('admin.audit-logs.show', $log) }}" class="text-blue-600 hover:text-blue-900">Detail</a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada audit log ditemukan.</td>
+                                <td colspan="8" class="px-4 py-4 text-center text-sm text-gray-500">Tidak ada audit log ditemukan.</td>
                             </tr>
                         @endforelse
                     </tbody>
