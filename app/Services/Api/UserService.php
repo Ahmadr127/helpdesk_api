@@ -103,20 +103,22 @@ class UserService
     public function dashboardStats(User $user): array
     {
         if ($user->hasPermission('dashboard.it')) {
+            $sirs = \App\Models\Pengajuan::query()->sirs();
+
             return [
                 'users' => User::count(),
-                'tickets_total' => \App\Models\Ticket::count(),
-                'tickets_open' => \App\Models\Ticket::where('status', 'open')->count(),
-                'tickets_in_progress' => \App\Models\Ticket::where('status', 'in_progress')->count(),
-                'tickets_confirmed' => \App\Models\Ticket::where('status', 'confirmed')->count(),
-                'orders_total' => \App\Models\OrderPerbaikan::count(),
+                'tickets_total' => (clone $sirs)->count(),
+                'tickets_open' => (clone $sirs)->where('status', 'open')->count(),
+                'tickets_in_progress' => (clone $sirs)->where('status', 'in_progress')->count(),
+                'tickets_confirmed' => (clone $sirs)->where('status', 'confirmed')->count(),
+                'orders_total' => \App\Models\Pengajuan::query()->umum()->count(),
             ];
         }
 
         // default user stats
         return [
-            'my_tickets' => \App\Models\Ticket::where('user_id', $user->id)->count(),
-            'my_orders' => \App\Models\OrderPerbaikan::where('created_by', $user->id)->count(),
+            'my_tickets' => \App\Models\Pengajuan::query()->sirs()->where('pemohon_id', $user->id)->count(),
+            'my_orders' => \App\Models\Pengajuan::query()->umum()->where('pemohon_id', $user->id)->count(),
         ];
     }
 

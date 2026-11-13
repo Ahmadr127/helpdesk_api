@@ -3,11 +3,9 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BuildingController;
-use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\FcmMonitoringController;
 use App\Http\Controllers\Admin\FeedbackController;
-use App\Http\Controllers\Admin\KategoriOrderController;
 use App\Http\Controllers\Admin\KategoriPengajuanController;
 use App\Http\Controllers\Admin\JenisPengajuanController;
 use App\Http\Controllers\Admin\PengajuanController;
@@ -18,7 +16,6 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TicketAdminController;
-use App\Http\Controllers\Admin\UnitProsesController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\AdministrasiUmum\DashboardController as AdministrasiUmumDashboardController;
 use App\Http\Controllers\AdministrasiUmum\OrderPerbaikanController;
@@ -32,7 +29,6 @@ use App\Http\Controllers\User\KnowledgeBaseController;
 use App\Http\Controllers\User\NotificationController as UserNotificationController;
 use App\Http\Controllers\User\TicketController;
 use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\User\UserReportController;
 use App\Http\Controllers\User\UserSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -133,8 +129,6 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/change-password', [UserController::class, 'changePassword'])->name('user.password.update');
     Route::get('/settings', [UserSettingsController::class, 'index'])->name('user.settings');
     Route::post('/settings', [UserSettingsController::class, 'update'])->name('user.settings.update');
-    Route::get('/report', [UserReportController::class, 'index'])->name('user.report');
-    Route::post('/report', [UserReportController::class, 'store'])->name('user.report.store');
     Route::post('/feedback', [UserFeedbackController::class, 'store'])
         ->name('user.feedback.store');
 
@@ -162,12 +156,9 @@ Route::middleware(['auth'])->group(function () {
         // dan show {x} men-shadow GET /master/{type}/data di bawah.
         Route::prefix('master')->name('master.')->middleware('permission:master')->group(function () {
             Route::get('/', [MasterDataController::class, 'index'])->name('index');
-            Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('buildings', BuildingController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('locations', LocationController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
-            Route::resource('unit-proses', UnitProsesController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
-            Route::resource('kategori-order', KategoriOrderController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('kategori-pengajuan', KategoriPengajuanController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('jenis-pengajuan', JenisPengajuanController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');
             Route::resource('positions', PositionController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('permission:master');

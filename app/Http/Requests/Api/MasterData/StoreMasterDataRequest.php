@@ -16,11 +16,6 @@ class StoreMasterDataRequest extends FormRequest
         $type = $this->route('type');
 
         return match ($type) {
-            'categories' => [
-                'name' => 'required|string|max:255',
-                'status' => 'required|boolean',
-                'unit_proses_id' => 'required|exists:unit_proses,id',
-            ],
             'departments' => [
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:50|unique:departments,code',
@@ -37,19 +32,9 @@ class StoreMasterDataRequest extends FormRequest
                 'name' => 'required|string|max:255',
                 'status' => 'required|boolean',
             ],
-            'unit-proses','unit_proses' => [
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:50|unique:unit_proses,code',
-                'status' => 'required|boolean',
-            ],
             'positions' => [
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:50|unique:positions,code',
-                'status' => 'required|boolean',
-            ],
-            'kategori-order','kategori_order' => [
-                'name' => 'required|string|max:255|unique:kategori_order,name',
-                'code' => 'nullable|string|max:50|unique:kategori_order,code',
                 'status' => 'required|boolean',
             ],
             default => [

@@ -56,7 +56,6 @@ class TicketController extends Controller
         $categories = KategoriPengajuan::where('status', 1)->sirs()->orderBy('name')->get();
         $buildings = \App\Models\Building::where('status', 1)->get();
         $locations = \App\Models\Location::where('status', 1)->get();
-        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
 
         $user = auth()->user();
         $userDepartment = null;
@@ -71,7 +70,7 @@ class TicketController extends Controller
                 ?? \App\Models\Department::with(['location', 'building'])->whereRaw('LOWER(name) = LOWER(?)', [$deptValue])->first();
         }
 
-        return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'unitProses', 'userDepartment'));
+        return view('user.ticket.create', compact('categories', 'buildings', 'locations', 'userDepartment'));
     }
 
     public function store(Request $request)

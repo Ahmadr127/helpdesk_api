@@ -2,10 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\OrderPerbaikan;
-use App\Models\Ticket;
-use App\Services\Pengajuan\LegacyPengajuanResolver;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;

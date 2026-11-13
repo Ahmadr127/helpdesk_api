@@ -4,13 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Building;
-use App\Models\Category;
 use App\Models\Department;
-use App\Models\KategoriOrder;
 use App\Models\KategoriPengajuan;
 use App\Models\Location;
 use App\Models\Position;
-use App\Models\UnitProses;
 use Illuminate\Http\Request;
 
 class MasterDataController extends Controller
@@ -20,24 +17,18 @@ class MasterDataController extends Controller
         // Tampilkan 5 data terbaru untuk setiap model
         $limit = 5;
 
-        $categories = Category::with('unitProses')->latest()->limit($limit)->get();
         $departments = Department::latest()->limit($limit)->get();
         $buildings = Building::latest()->limit($limit)->get();
         $locations = Location::query()->latest()->limit($limit)->get();
-        $unitProses = UnitProses::latest()->limit($limit)->get();
         $positions = Position::latest()->limit($limit)->get();
-        $kategoriOrders = KategoriOrder::latest()->limit($limit)->get();
         $kategoriPengajuan = KategoriPengajuan::with('jenisList')->latest()->limit($limit)->get();
         $jenisList = \App\Models\JenisPengajuan::latest()->limit($limit)->get();
 
         return view('admin.master.index', compact(
-            'categories',
             'departments',
             'buildings',
             'locations',
-            'unitProses',
             'positions',
-            'kategoriOrders',
             'kategoriPengajuan',
             'jenisList'
         ));
@@ -50,13 +41,10 @@ class MasterDataController extends Controller
     protected function masterMap(): array
     {
         return [
-            'categories' => [Category::class, ['unitProses'], ['name']],
             'departments' => [Department::class, ['location', 'building'], ['name', 'code']],
             'buildings' => [Building::class, [], ['name', 'code']],
             'locations' => [Location::class, [], ['name']],
-            'unit_proses' => [UnitProses::class, ['categories'], ['name', 'code']],
             'positions' => [Position::class, [], ['name', 'code']],
-            'kategori_order' => [KategoriOrder::class, [], ['name', 'code']],
         ];
     }
 
@@ -141,10 +129,6 @@ class MasterDataController extends Controller
         $message = '';
 
         switch ($type) {
-            case 'unit-proses':
-                $model = UnitProses::whereIn('id', $selected);
-                $typeMessage = 'Unit Proses';
-                break;
             case 'departments':
                 $model = Department::whereIn('id', $selected);
                 $typeMessage = 'Departemen';
@@ -156,14 +140,6 @@ class MasterDataController extends Controller
             case 'locations':
                 $model = Location::whereIn('id', $selected);
                 $typeMessage = 'Lokasi';
-                break;
-            case 'categories':
-                $model = Category::whereIn('id', $selected);
-                $typeMessage = 'Kategori';
-                break;
-            case 'kategori-order':
-                $model = KategoriOrder::whereIn('id', $selected);
-                $typeMessage = 'Kategori Order';
                 break;
             case 'positions':
                 $model = Position::whereIn('id', $selected);

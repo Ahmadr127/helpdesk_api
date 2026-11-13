@@ -58,7 +58,6 @@ class AdministrasiUmumController extends Controller
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
 
         $locations = \App\Models\Location::all();
-        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
         $kategoriOrders = \App\Models\KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
 
         $stats = [
@@ -76,7 +75,7 @@ class AdministrasiUmumController extends Controller
             ]);
         }
 
-        return view('user.administrasi-umum.order-perbaikan.index', compact('orders', 'locations', 'unitProses', 'status', 'stats', 'kategoriOrders'));
+        return view('user.administrasi-umum.order-perbaikan.index', compact('orders', 'locations', 'status', 'stats', 'kategoriOrders'));
     }
 
     public function createOrderPerbaikan()
@@ -333,11 +332,10 @@ class AdministrasiUmumController extends Controller
 
     // stubs for other methods
     public function orderBarang(Request $request) {
-        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
         $kategoriOrders = \App\Models\KategoriPengajuan::where('status', 1)->umum()->orderBy('name')->get();
         $inProgressOrders = \App\Models\Pengajuan::umum()->where('pemohon_id', auth()->id())->where('status', 'in_progress')->get();
         $orders = \App\Models\Pengajuan::umum()->where('pemohon_id', auth()->id())->where('status', 'open')->latest()->paginate(10);
-        return view('user.administrasi-umum.order-barang', compact('kategoriOrders', 'unitProses', 'inProgressOrders', 'orders'));
+        return view('user.administrasi-umum.order-barang', compact('kategoriOrders', 'inProgressOrders', 'orders'));
     }
     public function orderBarangKonfirmasi(Request $request) {
         $orders = $this->ipsrsQuery()->where('pemohon_id', auth()->id())->where('status', 'confirmed')->latest()->paginate(10);

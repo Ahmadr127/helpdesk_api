@@ -18,8 +18,15 @@ class ClearPengajuanData extends Command
 
     /**
      * Tables to clear, ordered child-first to respect foreign keys.
+     * Legacy tables are listed first; tables dropped by migrations are
+     * skipped automatically (Schema::hasTable check in handle()).
      */
     protected array $tables = [
+        'pengajuan_penugasan',
+        'pengajuan_pesan',
+        'pengajuan_lampiran',
+        'pengajuan_histori',
+        'pengajuan',
         'ticket_photos',
         'tickets',
         'order_photos',

@@ -58,7 +58,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/departments', [LookupController::class, 'departments'])->name('departments');
         Route::get('/buildings', [LookupController::class, 'buildings'])->name('buildings');
         Route::get('/locations', [LookupController::class, 'locations'])->name('locations');
-        Route::get('/unit-proses', [LookupController::class, 'unitProses'])->name('unit-proses');
         Route::get('/positions', [LookupController::class, 'positions'])->name('positions');
         Route::get('/priorities', [LookupController::class, 'priorities'])->name('priorities');
         Route::get('/kategori-order', [LookupController::class, 'kategoriOrders'])->name('kategori-order');
@@ -185,7 +184,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
         });
 
-        $masterTypes = 'categories|departments|buildings|locations|unit-proses|unit_proses|positions|kategori-order|kategori_order';
+        $masterTypes = 'departments|buildings|locations|positions';
         Route::prefix('master')->name('master.')->group(function () use ($masterTypes) {
             Route::get('/{type}', [AdminMasterController::class, 'index'])->where('type', $masterTypes)->name('index');
             Route::post('/{type}', [AdminMasterController::class, 'store'])->where('type', $masterTypes)->name('store');

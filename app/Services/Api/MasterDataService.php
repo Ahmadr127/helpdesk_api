@@ -3,26 +3,18 @@
 namespace App\Services\Api;
 
 use App\Models\Building;
-use App\Models\Category;
 use App\Models\Department;
-use App\Models\KategoriOrder;
 use App\Models\Location;
 use App\Models\Position;
-use App\Models\UnitProses;
 use Illuminate\Database\Eloquent\Model;
 
 class MasterDataService
 {
     protected array $map = [
-        'categories' => Category::class,
         'departments' => Department::class,
         'buildings' => Building::class,
         'locations' => Location::class,
-        'unit-proses' => UnitProses::class,
-        'unit_proses' => UnitProses::class,
         'positions' => Position::class,
-        'kategori_order' => KategoriOrder::class,
-        'kategori-order' => KategoriOrder::class,
     ];
 
     public function getModelClass(string $type): string
@@ -40,9 +32,6 @@ class MasterDataService
         $class = $this->getModelClass($type);
         $query = $class::query();
 
-        if ($type === 'categories') {
-            $query->with('unitProses');
-        }
         if ($type === 'departments') {
             $query->with(['location', 'building']);
         }
@@ -69,9 +58,6 @@ class MasterDataService
         $model = $class::find($id);
         if (! $model) {
             throw new \Exception('Data tidak ditemukan', 404);
-        }
-        if ($type === 'categories') {
-            $model->load('unitProses');
         }
         if ($type === 'departments') {
             $model->load(['location', 'building']);

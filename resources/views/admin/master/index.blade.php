@@ -9,111 +9,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Unit Proses Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
-            <div
-                class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    Unit Proses
-                </h2>
-                <a href="{{ route('admin.master.unit-proses.index') }}" title="Kelola Unit Proses"
-                    class="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200 shadow-sm">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 5l7 7-7 7M5 12h15" />
-                    </svg>
-                </a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="unitProsesTable">
-                        @foreach($unitProses as $unit)
-                        <tr class="hover:bg-slate-50 transition-all">
-                            <td class="px-6 py-4">{{ $unit->name }}</td>
-                            <td class="px-6 py-4">{{ $unit->code }}</td>
-                            <td class="px-6 py-4">
-                                <span
-                                    class="px-2 py-1 text-xs rounded-full 
-                                    {{ $unit->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $unit->status ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">{{ $unit->created_at->format('d M Y') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Categories Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-green-200">
-            <div
-                class="flex justify-between items-center mb-4 bg-green-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-green-800 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.29 3.71l1.42 1.42 1.42-1.42 1.42-1.42 1.42 1.42M11 5v4m3 0v3-4 0v1m3 0v5M11 9v5" />
-                    </svg>
-                    Categories
-                </h2>
-                <a href="{{ route('admin.master.categories.index') }}" title="Kelola Categories"
-                    class="p-3 rounded-lg bg-green-500 hover:bg-green-600 transition-all duration-200 shadow-sm">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 5l7 7-7 7M5 12h15" />
-                    </svg>
-                </a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Unit Proses</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($categories as $category)
-                        <tr class="hover:bg-slate-50 transition-all">
-                            <td class="px-6 py-4">{{ $category->name }}</td>
-                            <td class="px-6 py-4">{{ $category->unitProses ? $category->unitProses->name : '-' }}</td>
-                            <td class="px-6 py-4">
-                                <span
-                                    class="px-2 py-1 text-xs rounded-full 
-                                    {{ $category->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $category->status ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">{{ $category->created_at->format('d M Y') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        
 
         <!-- Departments Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-purple-200">
@@ -315,53 +211,6 @@
                 </table>
             </div>
         </div>
-    </div>
-
-    <!-- Kategori Order & Kategori Pengajuan side by side -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        <!-- Kategori Order Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
-            <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold text-blue-800 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.5 11.5l-1.5 1.5 1.5 1.5 1.5-1.5 1.5-1.5M6.5 11.5h6.5m7.5 11.5a3 3 0 013.5-1.5l.707.707m.414-.414M11.5 6.5v2" />
-                    </svg>
-                    Kategori Order
-                </h2>
-                <a href="{{ route('admin.master.kategori-order.index') }}" title="Kelola Kategori Order" class="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-all duration-200 shadow-sm">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h15" />
-                    </svg>
-                </a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($kategoriOrders as $kategori)
-                        <tr class="hover:bg-slate-50 transition-all">
-                            <td class="px-6 py-4">{{ $kategori->name }}</td>
-                            <td class="px-6 py-4">{{ $kategori->code ?? '-' }}</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full {{ $kategori->status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $kategori->status ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">{{ $kategori->created_at->format('d M Y') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
         <!-- Jenis Pengajuan Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
@@ -406,7 +255,7 @@
                 </table>
             </div>
         </div>
-
+        
         <!-- Kategori Pengajuan Card -->
         <div class="bg-white rounded-lg shadow-md p-6 border border-blue-200">
             <div class="flex justify-between items-center mb-4 bg-blue-50 p-4 rounded-lg">
@@ -449,5 +298,11 @@
                 </table>
             </div>
         </div>
+    </div>
+
+
+        
+
+        
     </div>
 @endsection

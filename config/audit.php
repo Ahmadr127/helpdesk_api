@@ -13,8 +13,6 @@ return [
     */
 
     'models' => [
-        App\Models\Pengajuan::class,
-        // App\Models\Ticket::class,
-        // App\Models\OrderPerbaikan::class,
+        // Daftarkan model yang ingin diaudit di sini. Kosong = tidak ada yang dicatat.
     ],
 ];

@@ -149,7 +149,6 @@ class OrderPerbaikanController extends Controller
         $nomor = $prefix.($lastOrder ? str_pad(((int) substr($lastOrder->nomor, -3)) + 1, 3, '0', STR_PAD_LEFT) : '001');
 
         $locations = \App\Models\Location::orderBy('name', 'asc')->get();
-        $unitProses = \App\Models\UnitProses::where('status', 1)->where('code', '!=', 'SIRS')->get();
         // `jenis` hanyalah accessor BC (bukan relasi Eloquent), sehingga
         // whereHas('jenis') melempar RelationNotFoundException. Pakai scope
         // umum() — sumber kebenaran yang sama dengan halaman web lain.
@@ -163,7 +162,7 @@ class OrderPerbaikanController extends Controller
         $unitPengajuCode = $department?->code ?? $user->department ?? 'GENERAL';
         $unitPengajuName = $department?->name ?? \App\Models\Department::where('code', $unitPengajuCode)->value('name') ?? $unitPengajuCode;
 
-        return view('admin.order-perbaikan.myorder.create', compact('nomor', 'locations', 'unitProses', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
+        return view('admin.order-perbaikan.myorder.create', compact('nomor', 'locations', 'user', 'unitPengajuCode', 'unitPengajuName', 'kategoriOrders', 'departmentId', 'departmentLocation', 'departmentBuilding'));
     }
 
     public function storeMyorder(Request $request)

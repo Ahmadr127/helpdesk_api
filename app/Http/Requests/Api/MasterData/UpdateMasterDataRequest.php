@@ -18,11 +18,6 @@ class UpdateMasterDataRequest extends FormRequest
         $id = $this->route('id');
 
         return match ($type) {
-            'categories' => [
-                'name' => 'required|string|max:255',
-                'status' => 'required|boolean',
-                'unit_proses_id' => 'required|exists:unit_proses,id',
-            ],
             'departments' => [
                 'name' => 'required|string|max:255',
                 'code' => ['required', 'string', 'max:50', Rule::unique('departments', 'code')->ignore($id)],
@@ -39,19 +34,9 @@ class UpdateMasterDataRequest extends FormRequest
                 'name' => 'required|string|max:255',
                 'status' => 'required|boolean',
             ],
-            'unit-proses','unit_proses' => [
-                'name' => 'required|string|max:255',
-                'code' => ['required', 'string', 'max:50', Rule::unique('unit_proses', 'code')->ignore($id)],
-                'status' => 'required|boolean',
-            ],
             'positions' => [
                 'name' => 'required|string|max:255',
                 'code' => ['required', 'string', 'max:50', Rule::unique('positions', 'code')->ignore($id)],
-                'status' => 'required|boolean',
-            ],
-            'kategori-order','kategori_order' => [
-                'name' => ['required', 'string', 'max:255', Rule::unique('kategori_order', 'name')->ignore($id)],
-                'code' => ['nullable', 'string', 'max:50', Rule::unique('kategori_order', 'code')->ignore($id)],
                 'status' => 'required|boolean',
             ],
             default => [

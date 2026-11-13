@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Building;
-use App\Models\Category;
 use App\Models\Department;
 use App\Models\KategoriPengajuan;
 use App\Models\Location;
 use App\Models\Position;
-use App\Models\UnitProses;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -30,41 +28,33 @@ class LookupController extends BaseApiController
         }
         $items = $query->orderBy('name')->get();
 
-        if ($items->isNotEmpty()) {
-            $mapped = $items->map(function ($k) {
-                $jenisList = $k->jenisList;
+        $mapped = $items->map(function ($k) {
+            $jenisList = $k->jenisList;
 
-                return [
-                    'id' => $k->id,
-                    'name' => $k->name,
-                    'code' => $k->code ?? null,
-                    // BC: kategori kini bisa punya banyak jenis, field ini
-                    // mengikuti jenis pertama agar kontrak API lama tetap jalan.
-                    'jenis_id' => $k->jenis_id,
-                    'jenis' => $jenisList->isNotEmpty()
-                        ? [
-                            'id' => $jenisList->first()->id,
-                            'code' => $jenisList->first()->code,
-                            'name' => $jenisList->first()->name,
-                        ]
-                        : null,
-                    'jenis_list' => $jenisList->map(fn ($j) => [
-                        'id' => $j->id,
-                        'code' => $j->code,
-                        'name' => $j->name,
-                    ])->values()->all(),
-                    'jenis_codes' => $k->jenis_codes,
-                ];
-            });
-            return $this->success($mapped, 'Categories');
-        }
+            return [
+                'id' => $k->id,
+                'name' => $k->name,
+                'code' => $k->code ?? null,
+                // BC: kategori kini bisa punya banyak jenis, field ini
+                // mengikuti jenis pertama agar kontrak API lama tetap jalan.
+                'jenis_id' => $k->jenis_id,
+                'jenis' => $jenisList->isNotEmpty()
+                    ? [
+                        'id' => $jenisList->first()->id,
+                        'code' => $jenisList->first()->code,
+                        'name' => $jenisList->first()->name,
+                    ]
+                    : null,
+                'jenis_list' => $jenisList->map(fn ($j) => [
+                    'id' => $j->id,
+                    'code' => $j->code,
+                    'name' => $j->name,
+                ])->values()->all(),
+                'jenis_codes' => $k->jenis_codes,
+            ];
+        });
 
-        // Legacy fallback only when unified table has no data
-        $legacy = Category::with('unitProses')->where('status', 1);
-        if ($request->filled('search')) {
-            $legacy->where('name', 'like', "%{$request->search}%");
-        }
-        return $this->success($legacy->orderBy('name')->get(), 'Categories');
+        return $this->success($mapped, 'Categories');
     }
 
     public function departments(Request $request)
@@ -98,19 +88,6 @@ class LookupController extends BaseApiController
         }
 
         return $this->success($query->get(), 'Locations');
-    }
-
-    public function unitProses(Request $request)
-    {
-        $query = UnitProses::where('status', 1);
-        if ($request->filled('exclude_sirs') && $request->exclude_sirs) {
-            $query->where('code', '!=', 'SIRS');
-        }
-        if ($request->filled('search')) {
-            $query->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($request->search).'%']);
-        }
-
-        return $this->success($query->get(), 'Unit Proses');
     }
 
     public function positions(Request $request)

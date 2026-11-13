@@ -81,11 +81,6 @@ class Pengajuan extends Model
     // di tabel order_perbaikan, kini ditiadakan dari schema pengajuan
     // (lihat migration 2026_11_07 unified). Return null agar view
     // admin/order-perbaikan/show tidak error & menampilkan '-'.
-    public function unitProses()
-    {
-        return $this->belongsTo(UnitProses::class, 'unit_proses_id');
-    }
-
     public function getUnitProsesNameAttribute(): ?string
     {
         return null;

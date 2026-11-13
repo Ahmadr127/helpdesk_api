@@ -12,8 +12,6 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             PositionSeeder::class,
             MasterDataSeeder::class,
-            UnitProsesSeeder::class,
-            KategoriOrderSeeder::class,
             RoleSeeder::class,
             PermissionSeeder::class,
             UnifiedPengajuanSeeder::class,
