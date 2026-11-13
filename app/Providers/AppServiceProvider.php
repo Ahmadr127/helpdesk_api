@@ -3,9 +3,7 @@
 namespace App\Providers;
 
 use App\Models\OrderPerbaikan;
-use App\Models\Pengajuan;
 use App\Models\Ticket;
-use App\Observers\PengajuanAuditObserver;
 use App\Services\Pengajuan\LegacyPengajuanResolver;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
@@ -27,8 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Pengajuan::observe(PengajuanAuditObserver::class);
-
+        // Audit log otomatis untuk semua model yang terdaftar di config/audit.php
+        // (satu lokasi — menambah model baru cukup menambah entri di config).
+        foreach (config('audit.models') ?? [] as $model) {
+            $model::observe(\App\Observers\AuditObserver::class);
+        }
 
         // Paksa https hanya jika FORCE_HTTPS=true di .env — bisa dimatikan untuk local/dev
         if (config('app.force_https')) {

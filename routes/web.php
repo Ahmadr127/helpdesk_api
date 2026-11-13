@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BuildingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DepartmentController;
@@ -54,7 +55,7 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 // Middleware auth group untuk semua user yang sudah login
 Route::middleware(['auth'])->group(function () {
     Route::resource('pengajuan', \App\Http\Controllers\User\PengajuanController::class)->names('user.pengajuan');
-    // Route::resource skip method `show` di projek ini → daftarkan eksplisit.
+    // Route::resource skip method `show` di projek ini â†’ daftarkan eksplisit.
     Route::get('pengajuan/{pengajuan}', [\App\Http\Controllers\User\PengajuanController::class, 'show'])->name('user.pengajuan.show');
     Route::post('pengajuan/{pengajuan}/start', [\App\Http\Controllers\User\PengajuanController::class, 'start'])->name('user.pengajuan.start');
     Route::post('pengajuan/{pengajuan}/close', [\App\Http\Controllers\User\PengajuanController::class, 'close'])->name('user.pengajuan.close');
@@ -121,7 +122,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{ticket}/confirm', [TicketController::class, 'confirm'])->name('confirm');
         Route::post('/{ticket}/reply', [TicketController::class, 'reply'])->name('reply');
     });
-    // FIX duplicate name user.ticket.reply (sebelumnya bentrok dengan ticket/{ticket}/reply di atas) — ganti jadi user.ticket.reply.legacy agar artisan optimize bisa cache
+    // FIX duplicate name user.ticket.reply (sebelumnya bentrok dengan ticket/{ticket}/reply di atas) â€” ganti jadi user.ticket.reply.legacy agar artisan optimize bisa cache
     Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('user.ticket.reply.legacy')->middleware('permission:ticket|myticket');
     Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('user.ticket.destroy')->middleware('permission:ticket|myticket');
 
@@ -137,7 +138,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/feedback', [UserFeedbackController::class, 'store'])
         ->name('user.feedback.store');
 
-    // Fitur admin — URL datar tanpa prefix (nama route tetap berawalan admin.).
+    // Fitur admin â€” URL datar tanpa prefix (nama route tetap berawalan admin.).
     // Fitur user terpisah (user/ticket/*, user/administrasi-umum/*) karena beda layout.
     Route::name('admin.')->middleware('permission:layout.admin')->group(function () {
         // Dashboard IT - BLUE theme, requires permission
@@ -222,7 +223,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{ticket}/respond', [TicketAdminController::class, 'respond'])->name('respond');
         });
 
-        // (grup legacy admin/ticket/* dihapus — admin memakai tickets.* di atas)
+        // (grup legacy admin/ticket/* dihapus â€” admin memakai tickets.* di atas)
 
         // Report (berbasis model baru) - permission protected
         Route::prefix('reports')->name('reports.')->middleware('permission:report')->group(function () {
@@ -258,12 +259,14 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/', [AdminNotificationController::class, 'deleteAll'])->name('delete-all');
         });
 
+        // Audit Logs - permission protected (fitur auto-capture created/updated/deleted)
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index')->middleware('permission:audit.logs');
         Route::get('/it-dashboard/stats', [AdminController::class, 'getStats'])->name('dashboard.stats')->middleware('permission:dashboard.it');
 
         // Tickets History (index/show ikut grup tickets.* di atas; di sini tinggal export)
         Route::post('tickets/history/export', [TicketAdminController::class, 'exportHistory'])->name('tickets.history.export')->middleware('permission:ticket');
 
-        // (FCM Monitoring cukup lewat grup /fcm di bawah — nama route fcm.*)
+        // (FCM Monitoring cukup lewat grup /fcm di bawah â€” nama route fcm.*)
 
       
         Route::get('/ipsrs-dashboard', [AdministrasiUmumDashboardController::class, 'index'])
@@ -271,7 +274,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ipsrs-dashboard/stats', [AdministrasiUmumDashboardController::class, 'stats'])
             ->name('ipsrs.stats')->middleware('permission:dashboard.ipsrs');
 
-        // Order milik sendiri — di luar grup order.* agar satu menu cukup satu
+        // Order milik sendiri â€” di luar grup order.* agar satu menu cukup satu
         // permission (myorder), tanpa batasan lain. Wajib sebelum wildcard.
         Route::get('/order-perbaikan/myorder', [OrderPerbaikanController::class, 'myorder'])
             ->name('order-perbaikan.myorder')->middleware('permission:myorder');
@@ -330,7 +333,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/fcm/jobs/flush', [FcmMonitoringController::class, 'flushFailed'])->name('fcm.jobs.flushFailed')->middleware('permission:fcm');
 });
 
-// (Grup legacy administrasi-umum/* dihapus — tanpa prefix, URL lama kini
+// (Grup legacy administrasi-umum/* dihapus â€” tanpa prefix, URL lama kini
 // jatuh ke fallback login di bawah.)
 
 Route::fallback(function () {
