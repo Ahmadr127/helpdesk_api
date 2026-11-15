@@ -141,6 +141,12 @@ class AdminPengajuanController extends BaseApiController
             $files[] = $single;
         }
 
+        // `lampiran` tunggal — dipakai form web order-perbaikan.
+        $singleLampiran = $request->file('lampiran');
+        if ($singleLampiran instanceof \Illuminate\Http\UploadedFile) {
+            $files[] = $singleLampiran;
+        }
+
         return array_values(array_filter($files));
     }
 
@@ -410,29 +416,26 @@ class AdminPengajuanController extends BaseApiController
                 $pengajuan->update(['follow_up' => $validated['follow_up']]);
             }
 
-            // Lampiran pada update status menempel pada entri riwayat status
-            // (bukan pesan terpisah) agar tidak muncul dua kali.
+            // Lampiran + catatan = pesan chat (paritas tiket /respond dan web
+            // order), BUKAN lampiran histori — supaya muncul di Riwayat
+            // Percakapan, bukan di Timeline.
             $files = $this->uploadedFiles($request);
+            $notes = $validated['notes'] ?? $validated['follow_up'] ?? null;
 
             $statusBefore = $pengajuan->status;
-            $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
+            $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $notes);
             $pengajuan->refresh();
             $statusChanged = $pengajuan->status !== $statusBefore;
 
-            // Simpan lampiran juga pada entri riwayat status agar muncul di
-            // bubble "Riwayat Status" (selain di percakapan).
-            if (! empty($files)) {
-                $latestHistori = $pengajuan->fresh()->historis()->latest()->first();
-                if ($latestHistori) {
-                    app(\App\Services\Pengajuan\PengajuanAttachmentService::class)->store(
-                        $pengajuan->fresh(),
-                        $files,
-                        'admin_response',
-                        $request->user(),
-                        $latestHistori,
-                        null
-                    );
-                }
+            // Buat bubble percakapan bila ada catatan/lampiran — sama seperti
+            // tiket (notes → pesan) dan web order (follow_up → pesan).
+            if (trim((string) $notes) !== '' || ! empty($files)) {
+                $this->service->addMessage(
+                    $request->user(),
+                    $pengajuan->fresh(),
+                    trim((string) $notes) !== '' ? $notes : '(lampiran)',
+                    $files
+                );
             }
 
             $newlyAssigned = [];
