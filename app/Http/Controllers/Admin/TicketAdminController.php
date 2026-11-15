@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KategoriPengajuan;
 use App\Models\Pengajuan;
+use App\Models\User;
 use App\Services\Pengajuan\PengajuanListFilter;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanStatusService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Support\TicketStatus;
 use Illuminate\Http\Request;
 
 class TicketAdminController extends Controller
@@ -18,6 +21,7 @@ class TicketAdminController extends Controller
         protected PengajuanWorkflowService $workflow,
         protected PengajuanScopeService $scope,
         protected PengajuanListFilter $filter,
+        protected PengajuanStatusService $statusService,
     ) {}
 
     private function itQuery()
@@ -82,9 +86,23 @@ class TicketAdminController extends Controller
 
     public function updateStatus(Request $request, Pengajuan $ticket)
     {
-        $status = $request->status;
-        $ticket->update(['status' => $status]);
-        return redirect()->back()->with('success', 'Status ticket berhasil diperbarui.');
+        $validated = $request->validate([
+            'status' => 'required|in:open,in_progress,pending_confirmation,confirmed,rejected,ditutup,tutup,closed',
+        ]);
+
+        if (! $this->scope->canAct(auth()->user(), $ticket)) {
+            return back()->with('error', 'Anda tidak berhak mengubah tiket ini.');
+        }
+
+        $changed = $this->applyStatus(auth()->user(), $ticket, $validated['status']);
+        $ticket->refresh();
+
+        return redirect()->back()->with(
+            'success',
+            $changed
+                ? 'Status tiket diperbarui menjadi '.TicketStatus::label($ticket->status).'.'
+                : 'Status tiket tidak berubah (sudah '.TicketStatus::label($ticket->status).').'
+        );
     }
 
     public function updatePriority(Request $request, Pengajuan $ticket)
@@ -128,88 +146,124 @@ class TicketAdminController extends Controller
     {
         $validated = $request->validate([
             'notes' => 'required|string',
-            'status' => 'required|in:in_progress,pending_confirmation,confirmed,rejected',
+            'status' => 'required|in:in_progress,pending_confirmation,confirmed,rejected,ditutup,tutup,closed',
             'photo' => 'nullable|image|max:5120',
         ]);
-        $files = $request->file('photo') ? [$request->file('photo')] : [];
-        $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], $files);
-        $status = $validated['status'] === 'pending_confirmation' ? 'ditutup' : $validated['status'];
-        if ($status === 'ditutup') {
-            try {
-                $this->workflow->close(auth()->user(), $ticket->fresh(), $validated['notes']);
-            } catch (\Exception $e) {
-                if ($e->getCode() === 422) {
-                    return back()->with('error', $e->getMessage())->withInput();
-                }
-                throw $e;
-            }
-        } elseif ($status === 'in_progress') {
-            // Lewati workflow.start() supaya started_at + histori tercatat
-            // (sama seperti alur update()); tanpa ini report menganggap
-            // tiket belum pernah direspon ("Belum Direspon").
-            if ($ticket->status === 'open') {
-                try {
-                    $this->workflow->start(auth()->user(), $ticket->fresh(), $validated['notes']);
-                } catch (\Exception $e) {
-                    if ($e->getCode() === 422) {
-                        return back()->with('error', $e->getMessage())->withInput();
-                    }
-                    if ($e->getCode() === 403) {
-                        return back()->with('error', $e->getMessage())->withInput();
-                    }
-                    throw $e;
-                }
-            } else {
-                $ticket->update(['status' => 'in_progress']);
-            }
-        } else {
-            // Konfirmasi/ditolak langsung dari respons admin: tunggu waktu
-            // respon wajib dihitung dari started_at (jika belum ada, respons ini
-            // adalah saat pertama tiket "digerakkan").
-            $ticket->update(['status' => $status, 'started_at' => $ticket->started_at ?: now()]);
+
+        if (! $this->scope->canAct(auth()->user(), $ticket)) {
+            return back()->with('error', 'Anda tidak berhak mengubah tiket ini.')->withInput();
         }
+
+        try {
+            $files = $request->file('photo') ? [$request->file('photo')] : [];
+            $this->service->addMessage(auth()->user(), $ticket, $validated['notes'], $files);
+
+            // Satu pintu transisi status (timestamp + histori + notifikasi),
+            // sama seperti update() dan API.
+            $this->statusService->change(auth()->user(), $ticket, $validated['status'], $validated['notes']);
+        } catch (\Exception $e) {
+            if (in_array($e->getCode(), [403, 422], true)) {
+                return back()->with('error', $e->getMessage())->withInput();
+            }
+            throw $e;
+        }
+
         return redirect()->route('admin.tickets.show', $ticket)
             ->with('success', 'Response berhasil ditambahkan.');
     }
 
     public function update(Request $request, Pengajuan $ticket)
     {
+        if (! $this->scope->canAct(auth()->user(), $ticket)) {
+            return back()->with('error', 'Anda tidak berhak mengubah tiket ini.')->withInput();
+        }
+
         $validated = $request->validate([
             'notes' => 'nullable|string',
-            'status' => 'nullable|in:open,in_progress,pending_confirmation,confirmed,rejected',
+            // `status` boleh kosong: tombol "Kirim Balasan" memang tidak
+            // mengubah status. Alias lama tetap diterima lalu dinormalisasi.
+            'status' => 'nullable|in:open,in_progress,pending_confirmation,confirmed,rejected,ditutup,tutup,closed',
+            'action' => 'nullable|in:reply,start,close,confirm,reject',
             'photo' => 'nullable|image|max:5120',
         ]);
-        if (!empty($validated['notes']) || $request->hasFile('photo')) {
-            $files = $request->file('photo') ? [$request->file('photo')] : [];
-            $body = trim((string) ($validated['notes'] ?? '')) !== '' ? $validated['notes'] : '(lampiran)';
-            $this->service->addMessage(auth()->user(), $ticket, $body, $files);
+
+        $target = $this->resolveTargetStatus($validated['status'] ?? null, $validated['action'] ?? null);
+        $notes = trim((string) ($validated['notes'] ?? ''));
+        $hasPhoto = $request->hasFile('photo');
+
+        // Jangan pernah "sukses diam-diam": sebelumnya request tanpa `status`
+        // (mis. submit programatik / tombol balasan) tetap flash "berhasil"
+        // padahal status tidak berubah sama sekali.
+        if ($target === null && $notes === '' && ! $hasPhoto) {
+            return back()
+                ->with('error', 'Tidak ada yang diperbarui. Pilih aksi (Dalam Proses / Tutup Tiket) atau isi catatan balasan.')
+                ->withInput();
         }
-        if (isset($validated['status'])) {
-            $status = $validated['status'] === 'pending_confirmation' ? 'ditutup' : $validated['status'];
-            if ($status === 'ditutup') {
-                try {
-                    $this->workflow->close(auth()->user(), $ticket, $validated['notes'] ?? null);
-                } catch (\Exception $e) {
-                    if ($e->getCode() === 422) {
-                        return back()->with('error', $e->getMessage())->withInput();
-                    }
-                    throw $e;
-                }
-            } elseif ($status === 'in_progress' && $ticket->status === 'open') {
-                try {
-                    $this->workflow->start(auth()->user(), $ticket->fresh());
-                } catch (\Exception $e) {
-                    if ($e->getCode() === 403) {
-                        return back()->with('error', $e->getMessage())->withInput();
-                    }
-                    throw $e;
-                }
-            } else {
-                $ticket->update(['status' => $status]);
+
+        try {
+            if ($notes !== '' || $hasPhoto) {
+                $this->service->addMessage(
+                    auth()->user(),
+                    $ticket,
+                    $notes !== '' ? $notes : '(lampiran)',
+                    $hasPhoto ? [$request->file('photo')] : []
+                );
             }
+
+            $changed = $target !== null
+                ? $this->applyStatus(auth()->user(), $ticket, $target, $notes !== '' ? $notes : null)
+                : false;
+
+            $ticket->refresh();
+
+            $message = match (true) {
+                $changed => 'Status tiket diperbarui menjadi '.TicketStatus::label($ticket->status).'.',
+                $target !== null => 'Status tiket tidak berubah (sudah '.TicketStatus::label($ticket->status).').',
+                default => 'Balasan berhasil dikirim.',
+            };
+
+            return redirect()->route('admin.tickets.show', $ticket)->with('success', $message);
+        } catch (\Exception $e) {
+            return back()
+                ->with('error', $e->getMessage() ?: 'Gagal memperbarui tiket.')
+                ->withInput();
         }
-        return redirect()->route('admin.tickets.show', $ticket)
-            ->with('success', 'Ticket berhasil diperbarui.');
+    }
+
+    /**
+     * Terjemahkan input tombol menjadi status kanonik target.
+     *
+     * `status` (nilai tombol) diprioritaskan; `action` menjadi fallback supaya
+     * tombol yang tidak mengirim `status` (mis. "Kirim Balasan") tetap jelas
+     * maksudnya. `reply` berarti status tidak diubah.
+     */
+    protected function resolveTargetStatus(?string $status, ?string $action): ?string
+    {
+        $normalized = TicketStatus::normalize($status);
+
+        if ($normalized !== null) {
+            return $normalized;
+        }
+
+        return match ($action) {
+            'start' => TicketStatus::IN_PROGRESS,
+            'close' => TicketStatus::DITUTUP,
+            'confirm' => TicketStatus::CONFIRMED,
+            'reject' => TicketStatus::REJECTED,
+            default => null,
+        };
+    }
+
+    /**
+     * Terapkan transisi status lewat service terpusat supaya timestamp
+     * (started_at/closed_at/confirmed_at/rejected_at) + histori selalu sama
+     * dengan alur API dan halaman order perbaikan.
+     *
+     * @return bool true bila status benar-benar berubah (bukan no-op).
+     */
+    protected function applyStatus(User $actor, Pengajuan $ticket, string $status, ?string $notes = null): bool
+    {
+        return $this->statusService->change($actor, $ticket, $status, $notes)['changed'];
     }
 
     public function all(Request $request)

@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\BaseApiController;
 use App\Http\Resources\Api\PengajuanResource;
 use App\Models\Pengajuan;
-use App\Models\PengajuanHistori;
 use App\Models\User;
 use App\Services\Pengajuan\PengajuanNotificationService;
 use App\Services\Pengajuan\PengajuanPenugasanService;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanStatusService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Support\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -34,6 +35,7 @@ class AdminPengajuanController extends BaseApiController
         protected PengajuanScopeService $scope,
         protected PengajuanPenugasanService $penugasan,
         protected PengajuanNotificationService $notificationService,
+        protected PengajuanStatusService $statusService,
     ) {}
 
     protected function jenis(Request $request): ?string
@@ -156,69 +158,22 @@ class AdminPengajuanController extends BaseApiController
 
     protected function normalizeStatus(string $status): string
     {
-        return match ($status) {
-            'pending', 'pending_confirmation', 'closed', 'tutup' => 'ditutup',
-            default => $status,
-        };
+        return TicketStatus::normalize($status) ?? $status;
     }
 
     /**
-     * Transisi status lewat workflow agar started_at/closed_at/histori/notifikasi
-     * konsisten dengan web.
+     * Transisi status lewat PengajuanStatusService agar timestamp
+     * (started_at/closed_at/confirmed_at/rejected_at), histori, dan
+     * pembersihan saat buka ulang konsisten dengan web.
      *
-     * @return bool true bila workflow sudah mengirim notifikasi sendiri
+     * @return bool true bila notifikasi status sudah dikirim oleh service
      *              (close/start), sehingga pemanggil tidak perlu mengirim lagi.
      */
     protected function applyStatus(User $actor, Pengajuan $pengajuan, string $status, ?string $notes = null): bool
     {
-        $status = $this->normalizeStatus($status);
-        $current = $pengajuan->status;
+        $result = $this->statusService->change($actor, $pengajuan, $status, $notes, notify: false);
 
-        if ($status === $current) {
-            return false;
-        }
-
-        if ($status === 'ditutup') {
-            if (in_array($current, ['open', 'in_progress'], true)) {
-                // close() sudah memanggil notifyStatusChanged('closed').
-                $this->workflow->close($actor, $pengajuan->fresh(), $notes);
-
-                return true;
-            }
-            $pengajuan->update(['status' => 'ditutup', 'closed_at' => $pengajuan->closed_at ?: now()]);
-            $this->logTransition($actor, $pengajuan, 'ditutup', $notes);
-
-            return false;
-        }
-
-        if ($status === 'in_progress' && $current === 'open') {
-            // start() sudah memanggil notifyStatusChanged('started').
-            $this->workflow->start($actor, $pengajuan->fresh());
-
-            return true;
-        }
-
-        $extra = match ($status) {
-            'confirmed' => ['confirmed_at' => $pengajuan->confirmed_at ?: now()],
-            'rejected' => ['rejected_at' => $pengajuan->rejected_at ?: now()],
-            default => [],
-        };
-
-        $pengajuan->update(['status' => $status, ...$extra]);
-        $this->logTransition($actor, $pengajuan, $status, $notes);
-
-        return false;
-    }
-
-    protected function logTransition(User $actor, Pengajuan $pengajuan, string $status, ?string $notes = null): void
-    {
-        $pengajuan->historis()->create([
-            'status' => $status,
-            'action' => 'status_updated',
-            'notes' => $notes ?: 'Status pengajuan diperbarui menjadi '.$status.'.',
-            'actor_id' => $actor->id,
-            'actor_type' => PengajuanHistori::actorTypeFor($actor),
-        ]);
+        return $result['notified'];
     }
 
     public function index(Request $request)
@@ -336,7 +291,10 @@ class AdminPengajuanController extends BaseApiController
                 $validated['notes'],
                 $this->uploadedFiles($request)
             );
+            $statusBefore = $pengajuan->status;
             $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes']);
+            $pengajuan->refresh();
+            $statusChanged = $pengajuan->status !== $statusBefore;
 
             $newlyAssigned = [];
             if (array_key_exists('penanggung_jawab_ids', $validated)) {
@@ -348,7 +306,7 @@ class AdminPengajuanController extends BaseApiController
             }
 
             $pengajuan->refresh()->load($this->relations());
-            if (! $workflowNotified) {
+            if ($statusChanged && ! $workflowNotified) {
                 $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'responded');
             }
             if (! empty($newlyAssigned)) {
@@ -395,8 +353,10 @@ class AdminPengajuanController extends BaseApiController
             $statusChanged = false;
             $workflowNotified = false;
             if (isset($validated['status'])) {
+                $before = $pengajuan->status;
                 $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? null);
-                $statusChanged = true;
+                $pengajuan->refresh();
+                $statusChanged = $pengajuan->status !== $before;
             }
 
             $newlyAssigned = [];
@@ -454,7 +414,10 @@ class AdminPengajuanController extends BaseApiController
             // (bukan pesan terpisah) agar tidak muncul dua kali.
             $files = $this->uploadedFiles($request);
 
+            $statusBefore = $pengajuan->status;
             $workflowNotified = $this->applyStatus($request->user(), $pengajuan, $validated['status'], $validated['notes'] ?? $validated['follow_up'] ?? null);
+            $pengajuan->refresh();
+            $statusChanged = $pengajuan->status !== $statusBefore;
 
             // Simpan lampiran juga pada entri riwayat status agar muncul di
             // bubble "Riwayat Status" (selain di percakapan).
@@ -482,14 +445,17 @@ class AdminPengajuanController extends BaseApiController
             }
 
             $pengajuan->refresh()->load($this->relations());
-            if (! $workflowNotified) {
+            if ($statusChanged && ! $workflowNotified) {
                 $this->notificationService->notifyStatusChanged($pengajuan, $request->user(), 'status_updated');
             }
             if (! empty($newlyAssigned)) {
                 $this->notificationService->notifyAssigned($pengajuan, $newlyAssigned, $request->user());
             }
 
-            return $this->success(new PengajuanResource($pengajuan), 'Status berhasil diperbarui');
+            return $this->success(
+                new PengajuanResource($pengajuan),
+                $statusChanged ? 'Status berhasil diperbarui' : 'Status tidak berubah'
+            );
         } catch (ValidationException $e) {
             return $this->error('Penugasan ditolak', 422, $e->errors());
         } catch (\Exception $e) {

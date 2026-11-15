@@ -339,9 +339,11 @@
         </div>
         <div class="p-4">
             <form action="{{ route('admin.tickets.update', $ticket) }}" method="POST" enctype="multipart/form-data"
-                class="space-y-3">
+                class="space-y-3" data-ticket-update>
                 @csrf
                 @method('PUT')
+                {{-- Diisi otomatis oleh JS saat submit; fallback-nya `action` tombol. --}}
+                <input type="hidden" name="status" id="ticket-target-status" value="">
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Message Input (2/3) -->
@@ -395,18 +397,18 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         Kirim Balasan
                     </button>
-                    <button type="submit" name="status" value="pending_confirmation"
+                    <button type="submit" name="action" value="close" data-ticket-status="pending_confirmation"
                         class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm font-medium">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         Tutup Tiket
                     </button>
                     @else
-                    <button type="submit" name="status" value="in_progress"
+                    <button type="submit" name="action" value="start" data-ticket-status="in_progress"
                         class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm text-sm font-medium">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Tandai sebagai Dalam Proses
                     </button>
-                    <button type="submit" name="status" value="pending_confirmation"
+                    <button type="submit" name="action" value="close" data-ticket-status="pending_confirmation"
                         class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-sm text-sm font-medium">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         Tutup Tiket
@@ -491,6 +493,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const messages = document.querySelector('.conversation-messages');
     if (messages) {
         messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Pastikan `status` selalu ikut terkirim. Tombol hanya membawa `action`;
+    // `data-ticket-status` dipindahkan ke hidden input saat submit supaya
+    // controller tidak pernah menerima request tanpa status (dulu jadi
+    // "sukses" padahal status tiket tidak berubah).
+    const ticketForm = document.querySelector('form[data-ticket-update]');
+    if (ticketForm) {
+        ticketForm.addEventListener('submit', function(event) {
+            const target = ticketForm.querySelector('#ticket-target-status');
+            if (!target) return;
+            target.value = (event.submitter && event.submitter.dataset.ticketStatus) || '';
+        });
     }
 });
 

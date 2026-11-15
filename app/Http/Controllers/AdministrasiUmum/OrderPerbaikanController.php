@@ -9,7 +9,9 @@ use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanListFilter;
 use App\Services\Pengajuan\PengajuanScopeService;
 use App\Services\Pengajuan\PengajuanService;
+use App\Services\Pengajuan\PengajuanStatusService;
 use App\Services\Pengajuan\PengajuanWorkflowService;
+use App\Support\TicketStatus;
 use Illuminate\Http\Request;
 
 class OrderPerbaikanController extends Controller
@@ -19,6 +21,7 @@ class OrderPerbaikanController extends Controller
         protected PengajuanWorkflowService $workflow,
         protected PengajuanScopeService $scope,
         protected PengajuanListFilter $filter,
+        protected PengajuanStatusService $statusService,
     ) {}
 
     private function ipsrsQuery()
@@ -298,9 +301,9 @@ class OrderPerbaikanController extends Controller
     public function updateStatus(Request $request, Pengajuan $orderPerbaikan)
     {
         $validated = $request->validate([
-            // View mengirim 'tutup' untuk "Tutup (Konfirmasi Selesai)" — dulu
-            // tidak ada di aturan in:, sehingga submit selalu gagal validasi.
-            'status' => 'required|in:in_progress,pending_confirmation,rejected,tutup,closed,ditutup',
+            // Alias lama (tutup/closed/pending_confirmation) tetap diterima
+            // lalu dinormalisasi ke status kanonik oleh TicketStatus.
+            'status' => 'required|in:open,in_progress,pending_confirmation,confirmed,rejected,tutup,closed,ditutup',
             'follow_up' => 'nullable|string',
             'penanggung_jawab_ids' => 'nullable|array',
             'penanggung_jawab_ids.*' => 'integer|exists:users,id',
@@ -314,34 +317,37 @@ class OrderPerbaikanController extends Controller
             $orderPerbaikan->update(['follow_up' => $validated['follow_up']]);
         }
 
-        // Admin response (catatan + foto) = pengajuan_pesan + lampiran (pesan_id),
-        // seragam dengan alur admin tiket. Histori hanya mencatat perubahan status.
-        $lampiranFile = $request->file('lampiran');
-        $status = $validated['status'];
+        // Transisi status lewat service terpusat: started_at/closed_at/
+        // confirmed_at/rejected_at, pembersihan saat buka ulang, histori, dan
+        // notifikasi jadi konsisten dengan halaman tiket & API.
+        $target = TicketStatus::normalize($validated['status']) ?? $validated['status'];
+        $notes = $validated['follow_up'] ?? null;
 
-        if (in_array($status, ['tutup', 'closed', 'ditutup'], true)) {
-            if (! in_array($orderPerbaikan->status, ['open', 'in_progress'], true)) {
-                // Sudah ditutup/confirmed/rejected — tidak perlu close lagi.
-            } else {
-                $this->workflow->close(
-                    auth()->user(),
-                    $orderPerbaikan->fresh(),
-                    $validated['follow_up'] ?? 'Pengerjaan selesai, menunggu konfirmasi user.'
-                );
+        try {
+            $result = $this->statusService->change(
+                auth()->user(),
+                $orderPerbaikan,
+                $target,
+                $notes ?: 'Status order diperbarui menjadi '.TicketStatus::label($target).'.'
+            );
+        } catch (\Exception $e) {
+            if (in_array($e->getCode(), [403, 422], true)) {
+                return back()->with('error', $e->getMessage())->withInput();
             }
-        } elseif ($status === 'in_progress' && $orderPerbaikan->status === 'open') {
-            $this->workflow->start(auth()->user(), $orderPerbaikan->fresh(), $validated['follow_up'] ?? $validated['notes'] ?? null);
-        } else {
-            $orderPerbaikan->update(['status' => $status]);
+            throw $e;
         }
+
+        $orderPerbaikan->refresh();
 
         // Simpan respons admin sebagai Pesan (chat bubble) + lampiran pesan_id —
         // seragam dengan admin tiket; Riwayat Status hanya timeline perubahan status.
+        $lampiranFile = $request->file('lampiran');
         $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
         if (! empty($validated['follow_up']) || ! empty($files)) {
             $pesanBody = trim((string) ($validated['follow_up'] ?? '')) !== '' ? $validated['follow_up'] : '(lampiran)';
             $this->service->addMessage(auth()->user(), $orderPerbaikan->fresh(), $pesanBody, $files);
         }
+
         $newlyAssigned = [];
         if (array_key_exists('penanggung_jawab_ids', $validated)) {
             try {
@@ -360,7 +366,13 @@ class OrderPerbaikanController extends Controller
                 ->notifyAssigned($orderPerbaikan->fresh(), $newlyAssigned, auth()->user());
         }
 
-        return redirect()->back()->with('success', 'Status order berhasil diperbarui.');
+        $message = $result['changed']
+            ? 'Status order diperbarui menjadi '.TicketStatus::label($orderPerbaikan->status).'.'
+            : (filled($validated['follow_up'] ?? null)
+                ? 'Catatan berhasil disimpan (status tetap '.TicketStatus::label($orderPerbaikan->status).').'
+                : 'Tidak ada perubahan pada order.');
+
+        return redirect()->back()->with($result['changed'] || filled($validated['follow_up'] ?? null) ? 'success' : 'info', $message);
     }
 
     public function start(Request $request, Pengajuan $orderPerbaikan)
@@ -373,7 +385,14 @@ class OrderPerbaikanController extends Controller
 
         $notes = $validated['follow_up'] ?? $validated['notes'] ?? null;
 
-        $this->workflow->start(auth()->user(), $orderPerbaikan, $notes);
+        // Lewat service terpusat agar klik ganda / order yang sudah berjalan
+        // tidak menghasilkan error 500, dan histori tetap tercatat.
+        $this->statusService->change(
+            auth()->user(),
+            $orderPerbaikan,
+            TicketStatus::IN_PROGRESS,
+            $notes ?: 'Pengerjaan order dimulai.'
+        );
 
         $lampiranFile = $request->file('lampiran');
         $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
@@ -395,7 +414,12 @@ class OrderPerbaikanController extends Controller
 
         $notes = $validated['follow_up'] ?? $validated['notes'] ?? 'Pengerjaan selesai, menunggu konfirmasi user.';
 
-        $this->workflow->close(auth()->user(), $orderPerbaikan, $notes);
+        $this->statusService->change(
+            auth()->user(),
+            $orderPerbaikan,
+            TicketStatus::DITUTUP,
+            $notes
+        );
 
         $lampiranFile = $request->file('lampiran');
         $files = ($lampiranFile instanceof \Illuminate\Http\UploadedFile) ? [$lampiranFile] : [];
