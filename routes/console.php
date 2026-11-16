@@ -11,4 +11,4 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command('pengajuan:auto-confirm')->hourly();
+Schedule::command('pengajuan:auto-confirm')->everyMinute()->withoutOverlapping();
