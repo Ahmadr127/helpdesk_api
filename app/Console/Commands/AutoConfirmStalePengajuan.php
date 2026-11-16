@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Pengajuan;
 use App\Services\Pengajuan\PengajuanWorkflowService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class AutoConfirmStalePengajuan extends Command
 {
@@ -21,6 +22,10 @@ class AutoConfirmStalePengajuan extends Command
         $confirmed = $workflow->autoConfirmStale($hours);
 
         $this->info("Selesai: {$confirmed} pengajuan di-auto-confirm.");
+        Log::info("pengajuan:auto-confirm selesai, {$confirmed} pengajuan di-auto-confirm.", [
+            'hours' => $hours,
+            'confirmed' => $confirmed,
+        ]);
 
         return self::SUCCESS;
     }
